@@ -1128,4 +1128,106 @@ void foldCurrent(View& v, bool expand)
     foldLine(v, v.send(SCI_LINEFROMPOSITION, U(v.send(SCI_GETCURRENTPOS))), expand);
 }
 
+// --- Editar > Editor de columnas ---------------------------------------------------------------
+
+namespace {
+
+bool hasColumnSelections(View& v)
+{
+    return v.send(SCI_SELECTIONISRECTANGLE) || v.send(SCI_GETSELECTIONS) > 1;
+}
+
+// getColumnModeSelectInfo: cada selección, con su espacio virtual, en orden de posición
+struct ColumnSelection
+{
+    sptr_t start = 0;
+    sptr_t end = 0;
+    sptr_t startVirtual = 0; // columnas pasado el final de la línea
+    sptr_t endVirtual = 0;
+};
+
+std::vector<ColumnSelection> columnSelections(View& v)
+{
+    std::vector<ColumnSelection> list;
+    const sptr_t count = v.send(SCI_GETSELECTIONS);
+    for (sptr_t i = 0; i < count; ++i) {
+        sptr_t anchor = v.send(SCI_GETSELECTIONNANCHOR, U(i));
+        sptr_t caret = v.send(SCI_GETSELECTIONNCARET, U(i));
+        sptr_t anchorVirtual = v.send(SCI_GETSELECTIONNANCHORVIRTUALSPACE, U(i));
+        sptr_t caretVirtual = v.send(SCI_GETSELECTIONNCARETVIRTUALSPACE, U(i));
+        if (anchor > caret || (anchor == caret && anchorVirtual > caretVirtual)) {
+            std::swap(anchor, caret);
+            std::swap(anchorVirtual, caretVirtual);
+        }
+        list.push_back({anchor, caret, anchorVirtual, caretVirtual});
+    }
+    std::sort(list.begin(), list.end(), [](const ColumnSelection& a, const ColumnSelection& b) { return a.start < b.start; });
+    return list;
+}
+
+} // namespace
+
+std::size_t columnInsertCount(ScintillaEditBase& view)
+{
+    if (hasColumnSelections(view))
+        return static_cast<std::size_t>(view.send(SCI_GETSELECTIONS));
+    const sptr_t line = view.send(SCI_LINEFROMPOSITION, U(view.send(SCI_GETCURRENTPOS)));
+    return static_cast<std::size_t>(lastLine(view) - line + 1);
+}
+
+void columnInsert(ScintillaEditBase& view, const std::vector<std::string>& texts)
+{
+    if (texts.empty())
+        return;
+    auto textAt = [&texts](std::size_t i) -> const std::string& { return texts[std::min(i, texts.size() - 1)]; };
+    view.send(SCI_BEGINUNDOACTION);
+    if (hasColumnSelections(view)) {
+        // columnReplace: cada selección por su texto; el espacio virtual se rellena
+        std::vector<ColumnSelection> selections = columnSelections(view);
+        sptr_t shift = 0;
+        std::vector<std::pair<sptr_t, sptr_t>> inserted;
+        for (std::size_t i = 0; i < selections.size(); ++i) {
+            ColumnSelection s = selections[i];
+            s.start += shift;
+            s.end += shift;
+            if (s.startVirtual > 0) {
+                const std::string spaces(static_cast<std::size_t>(s.startVirtual), ' ');
+                insertText(view, s.start, spaces);
+                shift += s.startVirtual;
+                s.end = s.start + s.startVirtual; // la selección estaba toda en espacio virtual
+                s.start += s.startVirtual;
+            }
+            const std::string& text = textAt(i);
+            replaceRange(view, s.start, s.end, text);
+            shift += static_cast<sptr_t>(text.size()) - (s.end - s.start);
+            inserted.emplace_back(s.start, s.start + static_cast<sptr_t>(text.size()));
+        }
+        // setMultiSelections: quedan seleccionados los textos puestos
+        view.send(SCI_CLEARSELECTIONS);
+        for (std::size_t i = 0; i < inserted.size(); ++i) {
+            const auto [start, end] = inserted[i];
+            if (i == 0)
+                view.send(SCI_SETSELECTION, U(end), start);
+            else
+                view.send(SCI_ADDSELECTION, U(end), start);
+        }
+    } else {
+        // Desde la línea del cursor, en su columna (como el IDOK de ColumnEditorDlg)
+        const sptr_t caret = view.send(SCI_GETCURRENTPOS);
+        const sptr_t column = view.send(SCI_GETCOLUMN, U(caret));
+        const sptr_t first = view.send(SCI_LINEFROMPOSITION, U(caret));
+        for (sptr_t line = first; line <= lastLine(view); ++line) {
+            const std::string& text = textAt(static_cast<std::size_t>(line - first));
+            const sptr_t end = lineEnd(view, line);
+            const sptr_t endColumn = view.send(SCI_GETCOLUMN, U(end));
+            if (endColumn < column)
+                insertText(view, end, std::string(static_cast<std::size_t>(column - endColumn), ' ') + text);
+            else
+                insertText(view, view.send(SCI_FINDCOLUMN, U(line), column), text);
+        }
+        view.send(SCI_GOTOPOS, U(caret));
+    }
+    view.send(SCI_ENDUNDOACTION);
+}
+
 } // namespace edita

@@ -24,6 +24,7 @@
 #include "core/Paths.h"
 #include "ui/Appearance.h"
 #include "ui/AutoCompletion.h"
+#include "ui/ColumnEditorDialog.h"
 #include "ui/DocStatusBar.h"
 #include "ui/DocTabBar.h"
 #include "ui/EditorPane.h"
@@ -153,7 +154,7 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionRecordMacro", 42018},    {"actionPlayMacro", 42021},      {"actionSaveMacro", 42025},
         {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionEol0", 45001},
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
-        {"actionPluginsAdmin", 48015},
+        {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},
     };
     for (const auto& [name, idm] : kCommands) {
         if (actionName == QLatin1String(name))
@@ -799,6 +800,12 @@ void MainWindow::createMenus()
     addAction(complete, tr("P&ath Completion"), "actionCompletePath", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Space),
               [this] { autoCompletion(_activePane)->showPathCompletion(); });
     edit->addSeparator();
+    // IDM_EDIT_COLUMNMODE: Editor de columnas (Alt+C)
+    addAction(edit, tr("Colu&mn Editor…"), "actionColumnEditor", QKeySequence(Qt::ALT | Qt::Key_C), [this] {
+        ColumnEditorDialog dialog(*editor(), _syntax.config(), this);
+        dialog.exec();
+    });
+    edit->addSeparator();
     edit->addMenu(createEolMenu());
     edit->addSeparator();
     _readOnlyAction = addAction(edit, tr("Read-&Only"), "actionReadOnly", QKeySequence(), [this](bool checked) {
@@ -1211,7 +1218,7 @@ QMenu* MainWindow::createEolMenu()
 
 QMenu* MainWindow::createEncodingMenu()
 {
-    auto* menu = new QMenu(tr("En&coding"), this);
+    auto* menu = new QMenu(tr("E&ncoding"), this); // como N++: Alt+C es el editor de columnas
     _encodingGroup = new QActionGroup(this);
     _encodingGroup->setExclusionPolicy(QActionGroup::ExclusionPolicy::ExclusiveOptional);
 

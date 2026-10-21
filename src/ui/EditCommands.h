@@ -136,4 +136,14 @@ void foldAll(ScintillaEditBase& view, bool expand);
 void foldLevel(ScintillaEditBase& view, int level, bool expand);
 void foldCurrent(ScintillaEditBase& view, bool expand);
 
+// --- Editar > Editor de columnas -------------------------------------------------------------
+// ColumnEditorDlg (IDM_EDIT_COLUMNMODE): cuántos sitios recibirán texto. Con selección
+// rectangular o varias selecciones, cada una; si no, desde la línea del cursor hasta
+// la última.
+std::size_t columnInsertCount(ScintillaEditBase& view);
+// Pone `texts[i]` en el sitio i (en orden de posición): sustituye cada selección, o
+// inserta en la columna del cursor rellenando con espacios las líneas más cortas.
+// Una sola acción de deshacer.
+void columnInsert(ScintillaEditBase& view, const std::vector<std::string>& texts);
+
 } // namespace edita

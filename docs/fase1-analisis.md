@@ -294,6 +294,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 18 — Una sola instancia | Repositorio git; la segunda instancia pasa los archivos a la primera por un socket local (`-multiInst` y la preferencia de N++ para abrir otra) | ✅ [fase18.md](fase18.md) |
 | 19 — Configurador de estilos | `WordStyleDlg`: tema, lenguaje, estilo, colores, fuente, Global override (ahora en `config.xml`), extensiones y palabras del usuario; vista previa y guardar el tema | ✅ [fase19.md](fase19.md) |
 | 20 — Asignación de atajos | Shortcut Mapper: menú (por `IDM_*`), macros, plugins y 88 órdenes de Scintilla; `shortcuts.xml` de N++ | ✅ [fase20.md](fase20.md) |
+| 21 — Editor de columnas | `ColumnEditorDlg` (Alt+C): texto o números en columna, con selección rectangular, varias selecciones o desde el cursor | ✅ [fase21.md](fase21.md) |
 
 ---
 

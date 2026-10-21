@@ -15,6 +15,8 @@ add_library(edita_core STATIC
     core/Backup.h
     core/Codec.cpp
     core/Codec.h
+    core/ColumnEditor.cpp
+    core/ColumnEditor.h
     core/ConfigXml.cpp
     core/ConfigXml.h
     core/Encoding.cpp
@@ -115,6 +117,8 @@ set_target_properties(edita_search PROPERTIES AUTOMOC ON)
 add_library(edita_ui STATIC
     ui/AutoCompletion.cpp
     ui/AutoCompletion.h
+    ui/ColumnEditorDialog.cpp
+    ui/ColumnEditorDialog.h
     ui/DocStatusBar.cpp
     ui/DocStatusBar.h
     ui/DocTabBar.cpp

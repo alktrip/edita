@@ -881,6 +881,84 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::ColumnEditorDialog</name>
+    <message>
+        <location filename="../src/ui/ColumnEditorDialog.cpp" line="+55"/>
+        <source>Column / Multi-Selection Editor</source>
+        <translation>Editor de columnas y selecciones múltiples</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Text to Insert</source>
+        <translation>&amp;Texto que insertar</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>&amp;Number to Insert</source>
+        <translation>&amp;Número que insertar</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>None</source>
+        <translation>Ninguno</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Zeros</source>
+        <translation>Ceros</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Spaces</source>
+        <translation>Espacios</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Initial number:</source>
+        <translation>Número &amp;inicial:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Increase b&amp;y:</source>
+        <translation>In&amp;cremento:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Repeat:</source>
+        <translation>&amp;Repetir:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Leading:</source>
+        <translation>R&amp;elleno:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Format</source>
+        <translation>Formato</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Dec</source>
+        <translation>&amp;Dec</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Hex</source>
+        <translation>&amp;Hex</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Oct</source>
+        <translation>&amp;Oct</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Bin</source>
+        <translation>&amp;Bin</translation>
+    </message>
+</context>
+<context>
     <name>edita::DocStatusBar</name>
     <message>
         <location filename="../src/ui/DocStatusBar.cpp" line="+69"/>
@@ -1125,13 +1203,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+345"/>
-        <location line="+2034"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+346"/>
+        <location line="+2040"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2034"/>
+        <location line="-2040"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1421,7 +1499,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Completar &amp;ruta</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+11"/>
         <source>Read-&amp;Only</source>
         <translation>Solo &amp;lectura</translation>
     </message>
@@ -1612,12 +1690,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Convertir a &amp;Macintosh (CR)</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <source>En&amp;coding</source>
-        <translation>Codifi&amp;cación</translation>
-    </message>
-    <message>
-        <location line="+6"/>
+        <location line="+22"/>
         <source>Encode in %1</source>
         <translation>Codificar en %1</translation>
     </message>
@@ -1820,7 +1893,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-829"/>
+        <location line="-835"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
@@ -2025,7 +2098,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;AlEaToRiO</translation>
     </message>
     <message>
-        <location line="+147"/>
+        <location line="+54"/>
+        <source>Colu&amp;mn Editor…</source>
+        <translation>Editor de colu&amp;mnas…</translation>
+    </message>
+    <message>
+        <location line="+99"/>
         <source>&amp;Style Configurator…</source>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
@@ -2045,7 +2123,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+406"/>
+        <location line="+86"/>
+        <source>E&amp;ncoding</source>
+        <translation>C&amp;odificación</translation>
+    </message>
+    <message>
+        <location line="+320"/>
         <source>Using &amp;1st Style</source>
         <translation>Estilo &amp;1</translation>
     </message>
