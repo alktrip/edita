@@ -86,6 +86,7 @@ private:
     QCheckBox* _quitOnEmpty = nullptr;
     QComboBox* _language = nullptr;
     QComboBox* _appearance = nullptr;
+    QComboBox* _multiInst = nullptr;
     QComboBox* _toolbar = nullptr;
     QCheckBox* _systemMonospace = nullptr;
     QCheckBox* _qtFileDialog = nullptr;

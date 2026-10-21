@@ -145,6 +145,8 @@ add_library(edita_ui STATIC
     ui/Prompter.h
     ui/SearchResultsPanel.cpp
     ui/SearchResultsPanel.h
+    ui/SingleInstance.cpp
+    ui/SingleInstance.h
     ui/SmartHighlighter.cpp
     ui/SmartHighlighter.h
     ui/Appearance.cpp

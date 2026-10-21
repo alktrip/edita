@@ -291,6 +291,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 15 — Plugins de N++ desde su código | Recetas que descargan el código original, lo verifican, le aplican el port (capa de compatibilidad Win32, parches, overlay), lo compilan y lo reempaquetan en local; MIME Tools y XML Tools | ✅ [fase15.md](fase15.md) |
 | 16 — Internacionalización | Código en inglés y traducción completa al español con el sistema de Qt (plurales, traducciones de Qt), idioma del sistema o elegido en Preferencias, `NPPM_GETNATIVELANGFILENAME` para los plugins | ✅ [fase16.md](fase16.md) |
 | 17 — Interfaz moderna | Fusion con paletas y hoja de estilos propias, modo claro/oscuro (DarkMode de N++) siguiendo al sistema con un tema por modo, barra de herramientas de N++ con iconos propios, pestañas planas, letra del sistema | ✅ [fase17.md](fase17.md) |
+| 18 — Una sola instancia | Repositorio git; la segunda instancia pasa los archivos a la primera por un socket local (`-multiInst` y la preferencia de N++ para abrir otra) | ✅ [fase18.md](fase18.md) |
 
 ---
 

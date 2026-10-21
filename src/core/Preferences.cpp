@@ -289,6 +289,7 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("DetectEncoding", p.detectEncoding);
     r.intAttr("EditaFallbackCodepage", "codepage", p.fallbackCodepage, 1, 100000);
     p.language = r.get("EditaLanguage", "value");
+    r.enumAttr("multiInst", "setting", p.multiInstSetting, 0, 2);
     r.boolAttr("DarkMode", "enable", p.darkModeEnabled);
     r.boolAttr("DarkMode", "enableWindowsMode", p.darkModeFollowSystem);
     if (const QString dark = r.get("DarkMode", "darkThemeName"); !dark.isEmpty())
@@ -422,6 +423,7 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("DetectEncoding", yesNo(p.detectEncoding));
     w.attr("EditaFallbackCodepage", "codepage", p.fallbackCodepage);
     w.attr("EditaLanguage", "value", p.language);
+    w.attr("multiInst", "setting", static_cast<int>(p.multiInstSetting));
     w.attr("DarkMode", "enable", p.darkModeEnabled);
     w.attr("DarkMode", "enableWindowsMode", p.darkModeFollowSystem);
     w.attr("DarkMode", "darkThemeName", p.darkThemeName);

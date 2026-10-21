@@ -47,6 +47,10 @@ class QFileSystemWatcher;
 class QMenu;
 class QSplitter;
 class QToolBar;
+
+namespace edita {
+struct InstanceRequest;
+}
 class QPagedPaintDevice;
 class QTimer;
 class ScintillaEditBase;
@@ -196,6 +200,9 @@ public:
     void applyAppearance();
     // La barra de herramientas (los botones de N++, en su orden)
     QToolBar* toolBar() const { return _toolBar; }
+    // Lo que pide otra instancia (o la línea de comandos): abrir archivos, ir a una
+    // línea; con `raise`, traer la ventana al frente (NPPM_INTERNAL_RESTOREFROMMINIMIZED)
+    void openFromOtherInstance(const InstanceRequest& request, bool raise);
     // Sin el menú de QMainWindow para ocultar barras: eso va en Preferencias
     QMenu* createPopupMenu() override { return nullptr; }
 

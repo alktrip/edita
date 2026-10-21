@@ -247,6 +247,9 @@ void PreferencesDialog::buildGeneral()
     // Modo oscuro de N++ (con "seguir a Windows"): aquí, seguir al sistema
     _appearance = addCombo(form, tr("Appearance:"), "appearance",
                            {{tr("Follow the system"), 0}, {tr("Light"), 1}, {tr("Dark"), 2}});
+    // Multi-Instance de N++ (la sesión en una instancia nueva no aplica: como una sola)
+    _multiInst = addCombo(form, tr("Instances:"), "multiInst",
+                          {{tr("Open files in the running window"), 0}, {tr("Always open a new window"), 2}});
     _toolbar = addCombo(form, tr("Toolbar:"), "toolbar",
                         {{tr("Hide"), -1}, {tr("Small icons"), 0}, {tr("Standard icons"), 1}, {tr("Large icons"), 2}});
     _qtFileDialog = addCheck(form, tr("Use Edita's file dialogs (in the language of Edita, not of the desktop)"),
@@ -550,6 +553,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _smoothFont->setChecked(p.smoothFont);
     _systemMonospace->setChecked(p.systemMonospaceFont);
     setComboValue(_appearance, p.darkModeFollowSystem ? 0 : p.darkModeEnabled ? 2 : 1);
+    setComboValue(_multiInst, p.multiInstSetting == MultiInst::Always ? 2 : 0);
     setComboValue(_toolbar, p.toolbarVisible ? static_cast<int>(p.toolbarIcons) : -1);
     _whiteSpace->setChecked(p.whiteSpaceShow);
     _eol->setChecked(p.eolShow);
@@ -678,6 +682,7 @@ Preferences PreferencesDialog::preferences() const
     p.darkModeFollowSystem = comboValue(_appearance) == 0;
     if (!p.darkModeFollowSystem)
         p.darkModeEnabled = comboValue(_appearance) == 2;
+    p.multiInstSetting = comboValue(_multiInst) == 2 ? MultiInst::Always : MultiInst::Mono;
     p.toolbarVisible = comboValue(_toolbar) >= 0;
     if (p.toolbarVisible)
         p.toolbarIcons = static_cast<ToolbarIcons>(comboValue(_toolbar));

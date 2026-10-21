@@ -36,6 +36,7 @@
 #include "ui/Printer.h"
 #include "ui/Prompter.h"
 #include "ui/SearchResultsPanel.h"
+#include "ui/SingleInstance.h"
 #include "ui/SmartHighlighter.h"
 #include "ui/Translations.h"
 #include "ui/UserLanguageDialog.h"
@@ -873,6 +874,20 @@ void MainWindow::createToolBar()
             _toolBar->addSeparator();
         else if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
             _toolBar->addAction(action);
+    }
+}
+
+void MainWindow::openFromOtherInstance(const InstanceRequest& request, bool raise)
+{
+    openFiles(request.files, /*askToCreate*/ true);
+    if (request.line > 0)
+        goToLine(request.line, request.column > 0 ? request.column : 1);
+    if (raise) {
+        if (isMinimized())
+            showNormal();
+        show();
+        this->raise();
+        activateWindow();
     }
 }
 

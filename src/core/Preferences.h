@@ -80,6 +80,14 @@ enum class OpenSaveDir : int
     Custom = 2,
 };
 
+// Instancias (MultiInstSetting de N++): una sola, una nueva para cada sesión, o varias
+enum class MultiInst : int
+{
+    Mono = 0,      // monoInst: los archivos se abren en la ventana que ya está
+    OnSession = 1, // multiInstOnSession (Edita no abre sesiones desde la línea de comandos: como Mono)
+    Always = 2,    // multiInst
+};
+
 // Tamaño de los iconos de la barra de herramientas (<GUIConfig name="ToolBar">small|standard|large</GUIConfig>)
 enum class ToolbarIcons : int
 {
@@ -113,6 +121,8 @@ struct Preferences
     // Diálogos de archivos de Qt en lugar de los del escritorio (que siguen el idioma
     // del escritorio, no el de Edita): <GUIConfig name="EditaQtFileDialog">yes</GUIConfig>
     bool qtFileDialog = false;
+    // <GUIConfig name="multiInst" setting="0" …/>
+    MultiInst multiInstSetting = MultiInst::Mono;
     // Modo oscuro de N++: <GUIConfig name="DarkMode" enable="no" enableWindowsMode="yes"
     // darkThemeName="DarkModeDefault.xml" lightThemeName=""/>. Con enableWindowsMode sigue
     // al sistema (en N++ es "seguir a Windows"; en Edita viene activado). Cada modo tiene

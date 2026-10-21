@@ -22,10 +22,12 @@
 #include "core/Paths.h"
 #include "core/Preferences.h"
 #include "ui/MainWindow.h"
+#include "ui/SingleInstance.h"
 #include "ui/Translations.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QFileInfo>
 
 int main(int argc, char* argv[])
 {
@@ -37,10 +39,11 @@ int main(int argc, char* argv[])
     QApplication::setWindowIcon(edita::MainWindow::applicationIcon());
     QGuiApplication::setDesktopFileName(QString::fromUtf8(edita::kAppId)); // Wayland: une la ventana con su .desktop
     // El idioma antes de crear cualquier texto: el de config.xml o el del sistema
+    edita::Preferences prefs;
     {
         edita::ConfigXml config;
         config.load(edita::paths::configDir() + QStringLiteral("/config.xml"));
-        const edita::Preferences prefs = edita::loadPreferences(config);
+        prefs = edita::loadPreferences(config);
         edita::i18n::installFromPreference(prefs.language);
         QCoreApplication::setAttribute(Qt::AA_DontUseNativeDialogs, prefs.qtFileDialog);
     }
@@ -58,22 +61,47 @@ int main(int argc, char* argv[])
     // -nosession de N++: ni se restaura ni se guarda la sesión
     const QCommandLineOption noSessionOption(QStringLiteral("nosession"),
                                              QCoreApplication::translate("main", "Do not restore or save the session."));
+    // -multiInst de N++: otra ventana aunque ya haya una abierta
+    const QCommandLineOption multiInstOption(QStringLiteral("multiInst"),
+                                             QCoreApplication::translate("main", "Open a new instance even if Edita is already running."));
     parser.addOption(lineOption);
     parser.addOption(columnOption);
     parser.addOption(noSessionOption);
+    parser.addOption(multiInstOption);
     parser.addPositionalArgument(QCoreApplication::translate("main", "files"), QCoreApplication::translate("main", "Files to open."),
                                  QCoreApplication::translate("main", "[files…]"));
     parser.process(app);
+
+    // Rutas completas: la instancia que las recibe puede estar en otra carpeta
+    edita::InstanceRequest request;
+    for (const QString& file : parser.positionalArguments())
+        request.files << QFileInfo(file).absoluteFilePath();
+    if (parser.isSet(lineOption))
+        request.line = parser.value(lineOption).toInt();
+    if (parser.isSet(columnOption))
+        request.column = parser.value(columnOption).toInt();
+
+    // winmain.cpp de N++: con una sola instancia (lo normal), si ya hay una abierta se
+    // le pasan los archivos y esta termina
+    const QString socket = edita::InstanceServer::socketName(edita::paths::configDir());
+    const bool multiInst = parser.isSet(multiInstOption) || prefs.multiInstSetting == edita::MultiInst::Always;
+    if (!multiInst && edita::InstanceServer::send(socket, request))
+        return 0;
+    // Con varias instancias, solo la primera recuerda la sesión
+    const bool firstInstance = !edita::InstanceServer::isRunning(socket);
 
     edita::MainWindow window;
     window.restoreWindowGeometry();
     window.show();
     // Como N++: primero la sesión anterior y después los archivos de la línea de comandos
-    window.setSessionEnabled(!parser.isSet(noSessionOption));
+    window.setSessionEnabled(!parser.isSet(noSessionOption) && firstInstance);
     window.restoreLastSession();
-    window.openFiles(parser.positionalArguments(), /*askToCreate*/ true);
-    if (parser.isSet(lineOption))
-        window.goToLine(parser.value(lineOption).toInt(), parser.isSet(columnOption) ? parser.value(columnOption).toInt() : 1);
+    window.openFromOtherInstance(request, /*raise*/ false);
     window.notifyPluginsReady(); // NPPN_READY: todo listo
+
+    edita::InstanceServer server;
+    if (firstInstance && server.listen(socket))
+        QObject::connect(&server, &edita::InstanceServer::requestReceived, &window,
+                         [&window](const edita::InstanceRequest& r) { window.openFromOtherInstance(r, /*raise*/ true); });
     return QApplication::exec();
 }

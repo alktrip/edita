@@ -1120,13 +1120,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+268"/>
-        <location line="+1824"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+269"/>
+        <location line="+1838"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-1824"/>
+        <location line="-1838"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1587,7 +1587,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+82"/>
+        <location line="+96"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -1815,7 +1815,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-631"/>
+        <location line="-645"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
@@ -2025,7 +2025,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+392"/>
+        <location line="+406"/>
         <source>Using &amp;1st Style</source>
         <translation>Estilo &amp;1</translation>
     </message>
@@ -3149,12 +3149,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+126"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+130"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+20"/>
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
@@ -3169,7 +3169,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location line="+64"/>
+        <location line="+87"/>
         <source>General</source>
         <translation>General</translation>
     </message>
@@ -3184,7 +3184,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Idioma:</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+9"/>
         <source>Use Edita&apos;s file dialogs (in the language of Edita, not of the desktop)</source>
         <translation>Usar los diálogos de archivos de Edita (en el idioma de Edita, no en el del escritorio)</translation>
     </message>
@@ -3205,7 +3205,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Ocultar</translation>
     </message>
     <message>
-        <location line="-8"/>
+        <location line="-11"/>
         <source>Appearance:</source>
         <translation>Apariencia:</translation>
     </message>
@@ -3223,6 +3223,21 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+0"/>
         <source>Dark</source>
         <translation>Oscuro</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Instances:</source>
+        <translation>Instancias:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open files in the running window</source>
+        <translation>Abrir los archivos en la ventana que ya está abierta</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Always open a new window</source>
+        <translation>Abrir siempre una ventana nueva</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -4809,7 +4824,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="+50"/>
+        <location filename="../src/main.cpp" line="+53"/>
         <source>Text editor inspired by Notepad++</source>
         <translation>Editor de texto inspirado en Notepad++</translation>
     </message>
@@ -4829,7 +4844,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>No restaurar ni guardar la sesión.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+3"/>
+        <source>Open a new instance even if Edita is already running.</source>
+        <translation>Abrir una instancia nueva aunque Edita ya esté abierto.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>files</source>
         <translation>archivos</translation>
     </message>
