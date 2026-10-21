@@ -197,6 +197,20 @@ int virtualKeyFromQtKey(int qtKey)
     case Qt::Key_Down: return 0x28;
     case Qt::Key_Insert: return 0x2D;
     case Qt::Key_Delete: return 0x2E;
+    // Teclado numérico (VK_MULTIPLY, VK_ADD, VK_DIVIDE) y signos (VK_OEM_*, teclado de EE. UU.)
+    case Qt::Key_Asterisk: return 0x6A;
+    case Qt::Key_Plus: return 0x6B;
+    case Qt::Key_Semicolon: return 0xBA;
+    case Qt::Key_Equal: return 0xBB;
+    case Qt::Key_Comma: return 0xBC;
+    case Qt::Key_Minus: return 0xBD;
+    case Qt::Key_Period: return 0xBE;
+    case Qt::Key_Slash: return 0xBF;
+    case Qt::Key_QuoteLeft: return 0xC0;
+    case Qt::Key_BracketLeft: return 0xDB;
+    case Qt::Key_Backslash: return 0xDC;
+    case Qt::Key_BracketRight: return 0xDD;
+    case Qt::Key_Apostrophe: return 0xDE;
     default: return 0;
     }
 }
@@ -207,9 +221,16 @@ int qtKeyFromVirtualKey(int vk)
         return vk;
     if (vk >= 0x70 && vk <= 0x87)
         return Qt::Key_F1 + (vk - 0x70);
+    if (vk == 0x6D) // VK_SUBTRACT: el menos del teclado numérico
+        return Qt::Key_Minus;
+    if (vk == 0x6F) // VK_DIVIDE
+        return Qt::Key_Slash;
     for (const int key : {Qt::Key_Backspace, Qt::Key_Tab, Qt::Key_Return, Qt::Key_Escape, Qt::Key_Space, Qt::Key_PageUp,
                           Qt::Key_PageDown, Qt::Key_End, Qt::Key_Home, Qt::Key_Left, Qt::Key_Up, Qt::Key_Right,
-                          Qt::Key_Down, Qt::Key_Insert, Qt::Key_Delete}) {
+                          Qt::Key_Down, Qt::Key_Insert, Qt::Key_Delete, Qt::Key_Asterisk, Qt::Key_Plus,
+                          Qt::Key_Semicolon, Qt::Key_Equal, Qt::Key_Comma, Qt::Key_Minus, Qt::Key_Period,
+                          Qt::Key_Slash, Qt::Key_QuoteLeft, Qt::Key_BracketLeft, Qt::Key_Backslash,
+                          Qt::Key_BracketRight, Qt::Key_Apostrophe}) {
         if (virtualKeyFromQtKey(key) == vk)
             return key;
     }

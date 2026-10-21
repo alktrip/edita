@@ -36,6 +36,7 @@
 #include "ui/Printer.h"
 #include "ui/Prompter.h"
 #include "ui/SearchResultsPanel.h"
+#include "ui/ShortcutMapperDialog.h"
 #include "ui/SingleInstance.h"
 #include "ui/SmartHighlighter.h"
 #include "ui/StyleConfiguratorDialog.h"
@@ -80,6 +81,8 @@
 #include <QFormLayout>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QRegularExpression>
+#include <QSet>
 #include <QScopedValueRollback>
 #include <QSpinBox>
 #include <QSplitter>
@@ -131,6 +134,78 @@ constexpr UniMode kMenuUnicodeModes[] = {UniMode::Utf8, UniMode::Utf8Bom, UniMod
 QString displayName(const TextEncoding& encoding)
 {
     return QString::fromStdString(encodingDisplayName(encoding));
+}
+
+// IDM_* de N++ de las órdenes que no se graban en las macros (para shortcuts.xml)
+int shortcutOnlyCommandFor(const QString& actionName)
+{
+    static const std::pair<const char*, int> kCommands[] = {
+        {"actionOpen", 41002},           {"actionReload", 41014},         {"actionSaveCopy", 41015},
+        {"actionPrint", 41010},          {"actionPrintNow", 1001},        {"actionReopenClosed", 41021},
+        {"actionQuit", 41011},           {"actionCompleteFunction", 50000}, {"actionCompleteWord", 50001},
+        {"actionFunctionHint", 50002},   {"actionCompletePath", 50006},   {"actionReadOnly", 42028},
+        {"actionFind", 43001},           {"actionFindInFiles", 43013},    {"actionReplace", 43003},
+        {"actionGoTo", 43004},           {"actionNextResult", 43046},     {"actionPreviousResult", 43047},
+        {"actionWrap", 44022},           {"actionShowWhiteSpace", 44025}, {"actionShowEol", 44026},
+        {"actionShowIndentGuides", 44020}, {"actionShowWrapSymbol", 44041}, {"actionShowAll", 44019},
+        {"actionMoveToOtherView", 10001}, {"actionCloneToOtherView", 10002}, {"actionSwitchView", 44072},
+        {"actionPreferences", 48011},    {"actionStyleConfigurator", 46001}, {"actionShortcutMapper", 48009},
+        {"actionRecordMacro", 42018},    {"actionPlayMacro", 42021},      {"actionSaveMacro", 42025},
+        {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionEol0", 45001},
+        {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
+        {"actionPluginsAdmin", 48015},
+    };
+    for (const auto& [name, idm] : kCommands) {
+        if (actionName == QLatin1String(name))
+            return idm;
+    }
+    return 0;
+}
+
+// Órdenes de Scintilla del Shortcut Mapper (scintKeyDefs de N++)
+struct ScintillaKeyDef
+{
+    const char* name;
+    int command;
+    bool ctrl;
+    bool alt;
+    bool shift;
+    int key;
+};
+
+constexpr ScintillaKeyDef kScintillaKeys[] = {
+#include "ui/ScintillaKeyTable.inc"
+};
+
+struct ScintillaCommand
+{
+    QString name;
+    int command = 0;
+    std::vector<KeyCombo> defaults;
+};
+
+const std::vector<ScintillaCommand>& scintillaCommands()
+{
+    static const std::vector<ScintillaCommand> commands = [] {
+        std::vector<ScintillaCommand> list;
+        for (const ScintillaKeyDef& def : kScintillaKeys) {
+            if (def.name[0] || list.empty())
+                list.push_back({QString::fromLatin1(def.name), def.command, {}});
+            if (def.key)
+                list.back().defaults.push_back(KeyCombo{def.ctrl, def.alt, def.shift, def.key});
+        }
+        return list;
+    }();
+    return commands;
+}
+
+QString plainMenuText(QString text)
+{
+    text.remove(QRegularExpression(QStringLiteral("&(?!&)")));
+    text.replace(QStringLiteral("&&"), QStringLiteral("&"));
+    if (text.endsWith(QStringLiteral("…")))
+        text.chop(1);
+    return text;
 }
 
 QString absolutePath(const QString& path)
@@ -820,6 +895,7 @@ void MainWindow::createMenus()
     // IDM_LANGSTYLE_CONFIG_DLG
     addAction(settings, tr("&Style Configurator…"), "actionStyleConfigurator", QKeySequence(),
               [this] { showStyleConfigurator(); });
+    addAction(settings, tr("Shortcut &Mapper…"), "actionShortcutMapper", QKeySequence(), [this] { showShortcutMapper(); });
 
     createMacroMenu();
     loadPlugins();
@@ -840,6 +916,186 @@ void MainWindow::createMenus()
     about->setObjectName(QStringLiteral("actionAbout"));
     help->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
     createToolBar();
+    applyShortcuts();
+}
+
+void MainWindow::applyShortcuts()
+{
+    for (QAction* action : findChildren<QAction*>()) {
+        if (action->objectName().startsWith(QLatin1String("action")) && !action->property("defaultShortcut").isValid())
+            action->setProperty("defaultShortcut", action->shortcut());
+    }
+    if (!readShortcuts(shortcutsPath(), _shortcutConfig))
+        return; // un shortcuts.xml que no se entiende: los de serie
+    for (QAction* action : findChildren<QAction*>()) {
+        const QString name = action->objectName();
+        if (action->property("pluginModule").isValid()) {
+            for (const PluginShortcut& p : _shortcutConfig.plugins) {
+                if (p.module == action->property("pluginModule").toString() && p.index == action->property("pluginIndex").toInt())
+                    action->setShortcut(p.key.toKeySequence());
+            }
+            continue;
+        }
+        if (!name.startsWith(QLatin1String("action")))
+            continue;
+        const int nppCommand = action->property("nppCommand").toInt();
+        const int id = nppCommand ? nppCommand : shortcutOnlyCommandFor(name);
+        if (const auto it = _shortcutConfig.internal.find(id); id && it != _shortcutConfig.internal.end())
+            action->setShortcut(it->second.toKeySequence());
+        else if (const auto e = _shortcutConfig.edita.find(name); e != _shortcutConfig.edita.end())
+            action->setShortcut(e->second.toKeySequence());
+    }
+    for (const ScintillaCommand& command : scintillaCommands()) {
+        if (const auto it = _shortcutConfig.scintilla.find(command.command); it != _shortcutConfig.scintilla.end())
+            applyScintillaKeys(command.command, command.defaults, it->second);
+    }
+}
+
+void MainWindow::applyScintillaKeys(int sciCommand, const std::vector<KeyCombo>& before, const std::vector<KeyCombo>& after)
+{
+    for (EditorPane* pane : {_mainPane, _subPane}) {
+        for (const KeyCombo& key : before) {
+            if (const int def = scintillaKeyDefinition(key))
+                pane->editor()->send(SCI_CLEARCMDKEY, static_cast<uptr_t>(def));
+        }
+        for (const KeyCombo& key : after) {
+            if (const int def = scintillaKeyDefinition(key))
+                pane->editor()->send(SCI_ASSIGNCMDKEY, static_cast<uptr_t>(def), sciCommand);
+        }
+    }
+}
+
+std::vector<ShortcutEntry> MainWindow::shortcutEntries() const
+{
+    using Kind = ShortcutEntry::Kind;
+    std::vector<ShortcutEntry> entries;
+    auto combos = [](const QKeySequence& sequence) {
+        std::vector<KeyCombo> list;
+        if (const KeyCombo combo = KeyCombo::fromKeySequence(sequence); !combo.isEmpty())
+            list.push_back(combo);
+        return list;
+    };
+    // Menú principal: las órdenes de cada menú, con el menú como categoría
+    QSet<const QAction*> seen;
+    std::function<void(const QMenu*, const QString&)> walk = [&](const QMenu* menu, const QString& category) {
+        for (QAction* action : menu->actions()) {
+            if (action->menu() && !action->menu()->objectName().startsWith(QLatin1String("plugin"))) {
+                walk(action->menu(), category);
+                continue;
+            }
+            const QString name = action->objectName();
+            if (!name.startsWith(QLatin1String("action")) || name.startsWith(QLatin1String("actionMacro"))
+                || seen.contains(action))
+                continue;
+            seen.insert(action);
+            entries.push_back({Kind::Menu, name, plainMenuText(action->text()), category, combos(action->shortcut()),
+                               combos(action->property("defaultShortcut").value<QKeySequence>())});
+        }
+    };
+    for (QAction* top : menuBar()->actions()) {
+        if (top->menu())
+            walk(top->menu(), plainMenuText(top->text()));
+    }
+    // Macros
+    for (std::size_t i = 0; i < _savedMacros.size(); ++i) {
+        const SavedMacro& m = _savedMacros[i];
+        std::vector<KeyCombo> keys;
+        if (m.key)
+            keys.push_back(KeyCombo{m.ctrl, m.alt, m.shift, m.key});
+        entries.push_back({Kind::Macros, QString::number(i), m.name, tr("Macro"), keys, {}});
+    }
+    // Órdenes de los plugins
+    for (QAction* action : findChildren<QAction*>()) {
+        if (!action->property("pluginModule").isValid())
+            continue;
+        const QString id = action->property("pluginModule").toString() + QLatin1Char(':')
+                         + QString::number(action->property("pluginIndex").toInt());
+        const auto* menu = qobject_cast<QMenu*>(action->parent());
+        entries.push_back({Kind::Plugin, id, action->text(), menu ? menu->title() : QString(), combos(action->shortcut()),
+                           combos(action->property("defaultShortcut").value<QKeySequence>())});
+    }
+    // Scintilla
+    for (const ScintillaCommand& command : scintillaCommands()) {
+        const auto it = _shortcutConfig.scintilla.find(command.command);
+        entries.push_back({Kind::Scintilla, QString::number(command.command), command.name, QString(),
+                           it != _shortcutConfig.scintilla.end() ? it->second : command.defaults, command.defaults});
+    }
+    return entries;
+}
+
+bool MainWindow::setShortcutKeys(ShortcutEntry::Kind kind, const QString& id, const std::vector<KeyCombo>& keys)
+{
+    using Kind = ShortcutEntry::Kind;
+    const KeyCombo combo = keys.empty() ? KeyCombo{} : keys.front();
+    switch (kind) {
+    case Kind::Macros: {
+        const int index = id.toInt();
+        if (index < 0 || static_cast<std::size_t>(index) >= _savedMacros.size())
+            return false;
+        SavedMacro& macro = _savedMacros[static_cast<std::size_t>(index)];
+        macro.ctrl = combo.ctrl;
+        macro.alt = combo.alt;
+        macro.shift = combo.shift;
+        macro.key = combo.key;
+        const bool ok = writeMacros(shortcutsPath(), _savedMacros);
+        rebuildMacroMenu();
+        return ok;
+    }
+    case Kind::Menu: {
+        QAction* action = findChild<QAction*>(id);
+        if (!action)
+            return false;
+        action->setShortcut(combo.toKeySequence());
+        const bool isDefault = combo == KeyCombo::fromKeySequence(action->property("defaultShortcut").value<QKeySequence>());
+        const int nppCommand = action->property("nppCommand").toInt();
+        if (const int idm = nppCommand ? nppCommand : shortcutOnlyCommandFor(id)) {
+            if (isDefault)
+                _shortcutConfig.internal.erase(idm);
+            else
+                _shortcutConfig.internal[idm] = combo;
+        } else if (isDefault) {
+            _shortcutConfig.edita.erase(id);
+        } else {
+            _shortcutConfig.edita[id] = combo;
+        }
+        break;
+    }
+    case Kind::Plugin: {
+        const QString module = id.section(QLatin1Char(':'), 0, 0);
+        const int index = id.section(QLatin1Char(':'), 1).toInt();
+        QAction* target = nullptr;
+        for (QAction* action : findChildren<QAction*>()) {
+            if (action->property("pluginModule").toString() == module && action->property("pluginIndex").toInt() == index)
+                target = action;
+        }
+        if (!target)
+            return false;
+        target->setShortcut(combo.toKeySequence());
+        auto& plugins = _shortcutConfig.plugins;
+        plugins.erase(std::remove_if(plugins.begin(), plugins.end(),
+                                     [&](const PluginShortcut& p) { return p.module == module && p.index == index; }),
+                      plugins.end());
+        if (combo != KeyCombo::fromKeySequence(target->property("defaultShortcut").value<QKeySequence>()))
+            plugins.push_back({module, index, combo});
+        break;
+    }
+    case Kind::Scintilla: {
+        const int command = id.toInt();
+        const auto commands = scintillaCommands();
+        const auto def = std::find_if(commands.begin(), commands.end(), [&](const ScintillaCommand& c) { return c.command == command; });
+        if (def == commands.end())
+            return false;
+        const auto it = _shortcutConfig.scintilla.find(command);
+        const std::vector<KeyCombo> before = it != _shortcutConfig.scintilla.end() ? it->second : def->defaults;
+        if (keys == def->defaults)
+            _shortcutConfig.scintilla.erase(command);
+        else
+            _shortcutConfig.scintilla[command] = keys;
+        applyScintillaKeys(command, before, keys);
+        break;
+    }
+    }
+    return writeShortcuts(shortcutsPath(), _shortcutConfig);
 }
 
 void MainWindow::createToolBar()
@@ -853,7 +1109,7 @@ void MainWindow::createToolBar()
         {"actionWrap", "wrap"}, {"actionShowAll", "show-all"}, {"actionShowIndentGuides", "indent-guide"},
         {"actionDefineLanguage", "language"}, {"actionRecordMacro", "record"}, {"actionPlayMacro", "play"},
         {"actionRunMacro", "run-multiple"}, {"actionSaveMacro", "save-macro"}, {"actionPreferences", "preferences"},
-        {"actionPluginsAdmin", "plugins"}, {"actionStyleConfigurator", "highlighting"}, {"actionAbout", "about"}, {"actionFindInFiles", "find"},
+        {"actionPluginsAdmin", "plugins"}, {"actionStyleConfigurator", "highlighting"}, {"actionShortcutMapper", "keyboard"}, {"actionAbout", "about"}, {"actionFindInFiles", "find"},
     };
     for (const auto& [name, icon] : kIcons) {
         if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
@@ -1723,6 +1979,12 @@ int MainWindow::exportToPdf(const QString& path, bool selectionOnly)
 
 // --- Preferencias -------------------------------------------------------------------------
 
+void MainWindow::showShortcutMapper()
+{
+    ShortcutMapperDialog dialog(*this, *_prompter, this);
+    dialog.exec();
+}
+
 void MainWindow::showStyleConfigurator()
 {
     StyleConfiguratorDialog dialog(_syntax, *_prompter, [this](const QString& path) { return setTheme(path); }, this);
@@ -2201,12 +2463,17 @@ void MainWindow::loadPlugins()
     for (const auto& plugin : _plugins->plugins()) {
         QMenu* sub = _pluginsMenu->addMenu(plugin->name);
         sub->setObjectName(QStringLiteral("plugin:") + plugin->name); // sus textos son del plugin
+        int index = -1;
         for (const PluginManager::Command& command : plugin->commands) {
+            ++index; // internalID de <PluginCommand>: la posición en getFuncsArray
             if (!command.function) {
                 sub->addSeparator();
                 continue;
             }
             QAction* action = sub->addAction(command.name);
+            action->setProperty("pluginModule", QFileInfo(plugin->path).fileName());
+            action->setProperty("pluginIndex", index);
+            action->setProperty("defaultShortcut", command.shortcut);
             action->setObjectName(QStringLiteral("pluginCommand%1").arg(command.cmdId));
             action->setProperty("nppCommand", command.cmdId); // grabable en macros, como en N++
             action->setShortcut(command.shortcut);

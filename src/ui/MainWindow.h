@@ -31,6 +31,7 @@
 #include "ui/EditCommands.h"
 #include "ui/FindReplaceDialog.h"
 #include "ui/PluginsAdminDialog.h"
+#include "ui/Shortcuts.h"
 
 #include <edita_plugin.h>
 
@@ -162,6 +163,12 @@ public:
     void showPreferences();
     // Configuración > Configurador de estilos…
     void showStyleConfigurator();
+    // Configuración > Shortcut Mapper… (ShortcutMapper de N++)
+    void showShortcutMapper();
+    // Todas las órdenes con sus atajos (menú, macros, plugins y Scintilla)
+    std::vector<ShortcutEntry> shortcutEntries() const;
+    // Cambia los atajos de una orden, los aplica y los guarda en shortcuts.xml
+    bool setShortcutKeys(ShortcutEntry::Kind kind, const QString& id, const std::vector<KeyCombo>& keys);
 
     // --- Archivos recientes (<History> de config.xml) ------------------------------------
     // El más reciente primero; como N++, se añaden al cerrarlos y salen al abrirlos
@@ -292,6 +299,9 @@ protected:
 private:
     void createMenus();
     void createToolBar();
+    // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
+    void applyShortcuts();
+    void applyScintillaKeys(int sciCommand, const std::vector<KeyCombo>& before, const std::vector<KeyCombo>& after);
     // El tema (ruta, "" = el de serie) que corresponde a un nombre de DarkMode
     QString themePathFor(const QString& name, bool dark) const;
     QMenu* createEncodingMenu();
@@ -421,6 +431,7 @@ private:
     QStringList _pluginWarnings;
     QMenu* _pluginsMenu = nullptr;
     QToolBar* _toolBar = nullptr;
+    ShortcutsConfig _shortcutConfig;
     // Paneles de los plugins (NPPM_DMMREGASDCKDLG): se destruyen antes de descargar los plugins
     struct PluginDock
     {

@@ -145,6 +145,10 @@ add_library(edita_ui STATIC
     ui/Prompter.h
     ui/SearchResultsPanel.cpp
     ui/SearchResultsPanel.h
+    ui/ShortcutMapperDialog.cpp
+    ui/ShortcutMapperDialog.h
+    ui/Shortcuts.cpp
+    ui/Shortcuts.h
     ui/SingleInstance.cpp
     ui/SingleInstance.h
     ui/SmartHighlighter.cpp
@@ -163,7 +167,7 @@ add_library(edita_ui STATIC
     ui/XmlTagMatcher.h)
 target_link_libraries(edita_ui
     PUBLIC  edita_doc edita_syntax edita_search lexilla Qt6::Widgets Qt6::PrintSupport Qt6::Network Qt6::Svg
-    PRIVATE edita_warnings)
+    PRIVATE pugixml edita_warnings)
 target_include_directories(edita_ui PUBLIC ${PROJECT_SOURCE_DIR}/plugin-sdk)
 set_target_properties(edita_ui PROPERTIES AUTOMOC ON)
 # Logo e ícono (resources/), dentro del binario

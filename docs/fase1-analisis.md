@@ -293,6 +293,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 17 — Interfaz moderna | Fusion con paletas y hoja de estilos propias, modo claro/oscuro (DarkMode de N++) siguiendo al sistema con un tema por modo, barra de herramientas de N++ con iconos propios, pestañas planas, letra del sistema | ✅ [fase17.md](fase17.md) |
 | 18 — Una sola instancia | Repositorio git; la segunda instancia pasa los archivos a la primera por un socket local (`-multiInst` y la preferencia de N++ para abrir otra) | ✅ [fase18.md](fase18.md) |
 | 19 — Configurador de estilos | `WordStyleDlg`: tema, lenguaje, estilo, colores, fuente, Global override (ahora en `config.xml`), extensiones y palabras del usuario; vista previa y guardar el tema | ✅ [fase19.md](fase19.md) |
+| 20 — Asignación de atajos | Shortcut Mapper: menú (por `IDM_*`), macros, plugins y 88 órdenes de Scintilla; `shortcuts.xml` de N++ | ✅ [fase20.md](fase20.md) |
 
 ---
 

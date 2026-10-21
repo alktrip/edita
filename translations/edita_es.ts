@@ -1125,13 +1125,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+270"/>
-        <location line="+1847"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+345"/>
+        <location line="+2034"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-1847"/>
+        <location line="-2034"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1567,7 +1567,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+10"/>
         <source>&amp;Help</source>
         <translation>A&amp;yuda</translation>
     </message>
@@ -1592,7 +1592,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+276"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -1643,12 +1643,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+720"/>
+        <location line="+726"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-696"/>
+        <location line="-702"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -1820,12 +1820,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-648"/>
+        <location line="-829"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-520"/>
+        <location line="-592"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -1905,7 +1905,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+487"/>
+        <location line="+559"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2030,7 +2030,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+2"/>
+        <source>Shortcut &amp;Mapper…</source>
+        <translation>Asignación de a&amp;tajos…</translation>
+    </message>
+    <message>
+        <location line="+107"/>
+        <source>Macro</source>
+        <translation>Macro</translation>
+    </message>
+    <message>
+        <location line="+123"/>
         <source>Toolbar</source>
         <translation>Barra de herramientas</translation>
     </message>
@@ -2190,12 +2200,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+247"/>
         <location line="+20"/>
-        <location line="+1365"/>
+        <location line="+1376"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1628"/>
+        <location line="-1639"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2319,7 +2329,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+145"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -2436,7 +2446,7 @@ Do you want to save the file anyway?</source>
         <translation>&amp;Administrador de plugins…</translation>
     </message>
     <message>
-        <location line="+30"/>
+        <location line="+35"/>
         <source>Open Plugins &amp;Folder</source>
         <translation>Abrir la &amp;carpeta de plugins</translation>
     </message>
@@ -4218,6 +4228,107 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+2"/>
         <source>Word</source>
         <translation>Palabra</translation>
+    </message>
+</context>
+<context>
+    <name>edita::ShortcutMapperDialog</name>
+    <message>
+        <location filename="../src/ui/ShortcutMapperDialog.cpp" line="+56"/>
+        <location line="+38"/>
+        <source>Shortcut</source>
+        <translation>Atajo</translation>
+    </message>
+    <message>
+        <location line="-25"/>
+        <source>Press the new key combination.</source>
+        <translation>Pulse la nueva combinación de teclas.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Shortcut Mapper</source>
+        <translation>Asignación de atajos</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Main menu</source>
+        <translation>Menú principal</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Macros</source>
+        <translation>Macros</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Plugin commands</source>
+        <translation>Órdenes de plugins</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Scintilla commands</source>
+        <translation>Órdenes de Scintilla</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Name</source>
+        <translation>Nombre</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Plugin</source>
+        <translation>Plugin</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Category</source>
+        <translation>Categoría</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Filter</source>
+        <translation>Filtrar</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Modify</source>
+        <translation>Modificar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Clear</source>
+        <translation>Borrar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Delete</source>
+        <translation>Eliminar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Close</source>
+        <translation>Cerrar</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Delete macro</source>
+        <translation>Eliminar macro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Delete the macro &quot;%1&quot;?</source>
+        <translation>¿Eliminar la macro «%1»?</translation>
+    </message>
+    <message>
+        <location line="+90"/>
+        <source>Shortcut conflict</source>
+        <translation>Atajo repetido</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 is already used by &quot;%2&quot;.
+Assign it here and remove it from there?</source>
+        <translation>%1 ya lo usa «%2».
+¿Asignarlo aquí y quitárselo?</translation>
     </message>
 </context>
 <context>

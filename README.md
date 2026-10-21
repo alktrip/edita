@@ -4,7 +4,7 @@ Editor de texto nativo para Linux inspirado en Notepad++. Usa el mismo motor de
 edición que Notepad++ (Scintilla 5 + Lexilla, con sus parches y su regex Boost)
 y una interfaz en Qt 6. Licencia GPL v3 o posterior (ver `COPYING` y `NOTICE`).
 
-Estado: **completo** (MVP en las fases 0-5 y ampliaciones en las 6-19): pestañas, abrir/guardar con detección
+Estado: **completo** (MVP en las fases 0-5 y ampliaciones en las 6-20): pestañas, abrir/guardar con detección
 de codificación y fin de línea idéntica a Notepad++, resaltado de sintaxis con
 `langs.xml`/`stylers.xml` y sus temas, buscar/reemplazar (normal, extendido y
 regex de Boost) también en archivos, vista dividida con clones y restauración
@@ -25,10 +25,11 @@ Después del MVP:
 - Fase 17: **interfaz moderna**: modo claro u oscuro siguiendo al sistema (con un tema de colores para cada modo), barra de herramientas con los botones de N++, iconos de línea propios, pestañas planas con un punto para «sin guardar» y la letra monoespaciada del sistema en el editor.
 - Fase 18: repositorio git y **una sola instancia**: con Edita abierto, los archivos se abren en esa ventana (`--multiInst` o Preferencias para abrir otra).
 - Fase 19: **Configurador de estilos** como el de N++ (Configuración > Configurador de estilos…): colores, fuentes, Global override, extensiones y palabras clave del usuario, con vista previa; guarda el tema (los de la aplicación, en una copia en `~/.config/edita/themes`).
+- Fase 20: **Asignación de atajos** (Shortcut Mapper de N++): menú, macros, plugins y órdenes de Scintilla, guardados en `shortcuts.xml` con el formato de N++.
 
 Plan en [docs/fase1-analisis.md](docs/fase1-analisis.md);
 registro de cada fase: [0](docs/fase0.md), [1](docs/fase1.md), [2](docs/fase2.md),
-[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md).
+[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md).
 
 Uso: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst]`
 
