@@ -124,13 +124,14 @@ struct Preferences
     // <GUIConfig name="multiInst" setting="0" …/>
     MultiInst multiInstSetting = MultiInst::Mono;
     // Modo oscuro de N++: <GUIConfig name="DarkMode" enable="no" enableWindowsMode="yes"
-    // darkThemeName="DarkModeDefault.xml" lightThemeName=""/>. Con enableWindowsMode sigue
-    // al sistema (en N++ es "seguir a Windows"; en Edita viene activado). Cada modo tiene
-    // su tema de colores: el nombre del archivo en themes/ ("stylers.xml" = el de serie)
+    // darkThemeName="" lightThemeName=""/>. Con enableWindowsMode sigue al sistema (en N++
+    // es "seguir a Windows"; en Edita viene activado). Cada modo tiene su tema de colores:
+    // el nombre del archivo en themes/; vacío = el de Edita para ese modo (Edita Light.xml
+    // o Edita Dark.xml); "stylers.xml" = el de serie de N++
     bool darkModeEnabled = false;
     bool darkModeFollowSystem = true;
-    QString darkThemeName = QStringLiteral("DarkModeDefault.xml");
-    QString lightThemeName; // vacío = stylers.xml
+    QString darkThemeName;
+    QString lightThemeName;
     // Barra de herramientas: <GUIConfig name="ToolBar" visible="yes">standard</GUIConfig>
     bool toolbarVisible = true;
     ToolbarIcons toolbarIcons = ToolbarIcons::Standard;

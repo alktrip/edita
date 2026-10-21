@@ -247,6 +247,9 @@ std::string SyntaxStyler::resolveFontName(std::string_view requested, bool repla
     static const QStringList kWindowsFonts{QStringLiteral("Courier New"), QStringLiteral("Consolas"),
                                            QStringLiteral("Lucida Console")};
     const bool windowsFont = kWindowsFonts.contains(family, Qt::CaseInsensitive);
+    // "Monospace" (los temas de Edita): la monoespaciada del sistema, con su nombre real
+    if (family.compare(QLatin1String("Monospace"), Qt::CaseInsensitive) == 0)
+        return QFontDatabase::systemFont(QFontDatabase::FixedFont).family().toStdString();
     if (QFontDatabase::hasFamily(family) && !(replaceWindowsFonts && windowsFont))
         return std::string(requested);
     return QFontDatabase::systemFont(QFontDatabase::FixedFont).family().toStdString();

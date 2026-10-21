@@ -296,6 +296,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 20 — Asignación de atajos | Shortcut Mapper: menú (por `IDM_*`), macros, plugins y 88 órdenes de Scintilla; `shortcuts.xml` de N++ | ✅ [fase20.md](fase20.md) |
 | 21 — Editor de columnas | `ColumnEditorDlg` (Alt+C): texto o números en columna, con selección rectangular, varias selecciones o desde el cursor | ✅ [fase21.md](fase21.md) |
 | 22 — Paneles | Lista de documentos, Mapa del documento, Lista de funciones (port de `functionParser.cpp` y los XML de N++) y Explorador de carpetas (en `session.xml`) | ✅ [fase22.md](fase22.md) |
+| 23 — Temas de Edita | «Edita Light» y «Edita Dark», generados de `stylers.model.xml`, como temas de serie | ✅ [fase23.md](fase23.md) |
 
 ---
 

@@ -367,7 +367,7 @@ private slots:
             const auto deepBlack = std::find_if(themes.begin(), themes.end(),
                                                 [](const SyntaxManager::Theme& t) { return t.name == "Deep Black"; });
             QVERIFY(deepBlack != themes.end());
-            QCOMPARE(themes.size(), std::size_t{23}); // predeterminado + 22 temas de N++
+            QCOMPARE(themes.size(), std::size_t{25}); // predeterminado + 22 temas de N++ + los 2 de Edita
             QVERIFY(manager.setTheme(deepBlack->path));
 
             StyleSheet expected;

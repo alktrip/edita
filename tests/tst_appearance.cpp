@@ -95,11 +95,11 @@ private slots:
     {
         ConfigXml config;
         config.load(_tmp.filePath("a.xml"));
-        // Por defecto: seguir al sistema, DarkModeDefault.xml en oscuro, barra visible
+        // Por defecto: seguir al sistema, los temas de Edita, barra visible
         const Preferences defaults = loadPreferences(config);
         QVERIFY(defaults.darkModeFollowSystem);
         QVERIFY(!defaults.darkModeEnabled);
-        QCOMPARE(defaults.darkThemeName, QStringLiteral("DarkModeDefault.xml"));
+        QVERIFY(defaults.darkThemeName.isEmpty()); // los temas de Edita
         QVERIFY(defaults.lightThemeName.isEmpty());
         QVERIFY(defaults.toolbarVisible);
         QCOMPARE(defaults.toolbarIcons, ToolbarIcons::Standard);
@@ -161,11 +161,11 @@ private slots:
     {
         const Preferences darkPrefs = withMode(true);
         auto w = window(&darkPrefs);
-        // Modo oscuro: paleta oscura, hoja de estilos y DarkModeDefault.xml
+        // Modo oscuro: paleta oscura, hoja de estilos y el tema oscuro de Edita
         QVERIFY(appearance::isDarkApplied());
         QVERIFY(QApplication::palette().color(QPalette::Window).lightness() < 60);
         QCOMPARE(qApp->styleSheet(), appearance::styleSheet(true));
-        QCOMPARE(QFileInfo(w->syntax().activeThemePath()).fileName(), QStringLiteral("DarkModeDefault.xml"));
+        QCOMPARE(QFileInfo(w->syntax().activeThemePath()).fileName(), QStringLiteral("Edita Dark.xml"));
 
         // Un tema elegido en el menú queda como el del modo oscuro…
         QString monokai;
@@ -181,7 +181,7 @@ private slots:
         p.darkModeEnabled = false;
         w->setPreferences(p);
         QVERIFY(!appearance::isDarkApplied());
-        QVERIFY(w->syntax().activeThemePath().isEmpty());
+        QCOMPARE(QFileInfo(w->syntax().activeThemePath()).fileName(), QStringLiteral("Edita Light.xml"));
         QVERIFY(QApplication::palette().color(QPalette::Window).lightness() > 220);
         p.darkModeEnabled = true;
         w->setPreferences(p);
@@ -339,6 +339,11 @@ private slots:
         const Preferences light = withMode(false);
         auto w = window(&light);
         char font[256] = {};
+        // El tema de Edita pide "Monospace": la del sistema con su nombre
+        w->editor()->send(SCI_STYLEGETFONT, STYLE_DEFAULT, reinterpret_cast<sptr_t>(font));
+        QCOMPARE(std::string(font), system);
+        // El de serie de N++ (stylers.xml) pide Courier New
+        QVERIFY(w->setTheme(QString()));
         w->editor()->send(SCI_STYLEGETFONT, STYLE_DEFAULT, reinterpret_cast<sptr_t>(font));
         QCOMPARE(std::string(font), system);
         if (!QFontDatabase::hasFamily(QStringLiteral("Courier New")))

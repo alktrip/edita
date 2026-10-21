@@ -1328,9 +1328,10 @@ void MainWindow::openFromOtherInstance(const InstanceRequest& request, bool rais
 
 QString MainWindow::themePathFor(const QString& name, bool dark) const
 {
-    // DarkMode de N++: sin nombre, DarkModeDefault.xml en oscuro y stylers.xml en claro
-    const QString file = name.isEmpty() && dark ? QStringLiteral("DarkModeDefault.xml") : name;
-    if (file.isEmpty() || file == QLatin1String("stylers.xml"))
+    // DarkMode de N++ (sin nombre, DarkModeDefault.xml o stylers.xml); en Edita, sin
+    // nombre son sus temas, que combinan con la interfaz
+    const QString file = !name.isEmpty() ? name : dark ? QStringLiteral("Edita Dark.xml") : QStringLiteral("Edita Light.xml");
+    if (file == QLatin1String("stylers.xml"))
         return {};
     for (const SyntaxManager::Theme& theme : _syntax.themes()) {
         if (!theme.path.isEmpty() && QFileInfo(theme.path).fileName() == file)
@@ -1623,7 +1624,7 @@ bool MainWindow::setTheme(const QString& path)
     if (appearance::isDarkApplied())
         _prefs.darkThemeName = name;
     else
-        _prefs.lightThemeName = path.isEmpty() ? QString() : name;
+        _prefs.lightThemeName = name;
     storePreferences(_syntax.config(), _prefs);
     _syntax.config().save();
     return true;

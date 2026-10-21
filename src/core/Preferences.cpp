@@ -292,8 +292,11 @@ Preferences loadPreferences(const ConfigXml& config)
     r.enumAttr("multiInst", "setting", p.multiInstSetting, 0, 2);
     r.boolAttr("DarkMode", "enable", p.darkModeEnabled);
     r.boolAttr("DarkMode", "enableWindowsMode", p.darkModeFollowSystem);
-    if (const QString dark = r.get("DarkMode", "darkThemeName"); !dark.isEmpty())
-        p.darkThemeName = dark;
+    p.darkThemeName = r.get("DarkMode", "darkThemeName");
+    // Hasta la fase 22, Edita guardaba el tema oscuro de serie de N++ aunque nadie lo
+    // hubiera elegido: ahora el de serie es el de Edita (themesVersion marca lo nuevo)
+    if (r.get("DarkMode", "themesVersion").isEmpty() && p.darkThemeName == QLatin1String("DarkModeDefault.xml"))
+        p.darkThemeName.clear();
     if (config.guiConfig(QStringLiteral("DarkMode"), QStringLiteral("enable")).isEmpty()) {
         // Sin <DarkMode> (config.xml de antes): el tema claro es el que se eligió en el menú
         const QString theme = r.get("stylerTheme", "path");
@@ -428,6 +431,7 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.attr("DarkMode", "enableWindowsMode", p.darkModeFollowSystem);
     w.attr("DarkMode", "darkThemeName", p.darkThemeName);
     w.attr("DarkMode", "lightThemeName", p.lightThemeName);
+    w.attr("DarkMode", "themesVersion", QStringLiteral("2"));
     w.attr("ToolBar", "visible", p.toolbarVisible);
     static const char* const kToolbarIcons[] = {"small", "standard", "large"};
     w.text("ToolBar", QString::fromLatin1(kToolbarIcons[static_cast<int>(p.toolbarIcons)]));
