@@ -1,0 +1,55 @@
+Edita — editor de texto para Linux inspirado en Notepad++
+Copyright (C) 2026 Edita contributors
+
+Edita es software libre bajo la GNU General Public License v3 o posterior
+(ver COPYING). Es una obra derivada de Notepad++:
+
+  Notepad++ — Copyright (C) Don HO <don.h@free.fr> y el equipo de Notepad++
+  https://github.com/notepad-plus-plus/notepad-plus-plus — GPL v3 o posterior
+
+Incluye código de terceros en third_party/, cada uno con su propia licencia:
+
+  Scintilla 5.6.6 (con parches de Notepad++) — Copyright 1998-2021 Neil Hodgson
+      Licencia tipo HPND/historical: third_party/scintilla/License.txt
+  Lexilla 5.5.3 (con parches y lexers adicionales de Notepad++) — Copyright 1998-2021 Neil Hodgson
+      Licencia tipo HPND/historical: third_party/lexilla/License.txt
+  LexUser, LexSearchResult — Copyright (C) 2003 Don HO — GPL v2 o posterior
+  LexObjC — Copyright Neil Hodgson, modificado por Notepad++
+  boostregex (integración de Boost.Regex en Scintilla, Notepad++)
+      e incluye Boost.Regex — Boost Software License 1.0
+      third_party/boostregex/boost/
+
+  uchardet (copia de Notepad++, PowerEditor/src/uchardet; Mozilla universalchardet)
+      MPL 1.1 / GPL 2 o posterior / LGPL 2.1 o posterior: third_party/uchardet/
+
+  pugixml 1.16 (copia de Notepad++) — Copyright Arseny Kapoulkine — MIT
+      third_party/pugixml/LICENSE.md
+
+Datos de Notepad++ incluidos en data/ (langs.model.xml, stylers.model.xml,
+los temas de installer/themes/ y los archivos de autocompletado de
+installer/APIs/), con su licencia GPL. Algunos temas indican su
+autor en el propio archivo.
+
+data/userDefineLangs/: los lenguajes Markdown que Notepad++ trae preinstalados,
+de Markdown-plus-plus (Copyright (c) Edditoria, licencia MIT, indicada en cada archivo).
+
+plugins/PythonScript/: reimplementación para Edita de la API del plugin
+PythonScript para Notepad++ (Copyright (C) Dave Brotherstone y colaboradores,
+https://github.com/bruderstein/PythonScript, GPL). El código es propio; los
+nombres de la API, los enums, el startup.py de la máquina y el formato de
+PythonScriptStartup.cnf siguen a PythonScript para que sus scripts funcionen.
+
+data/plugins/recipes/: recetas para compilar en el equipo del usuario plugins de
+Notepad++ a partir de su código original, que se descarga de su repositorio y no
+se incluye en Edita. Las recetas contienen solo los archivos del port:
+  MIME Tools — Copyright (C) Don HO — GPL v3
+      https://github.com/npp-plugins/mimetools (receta: solo un CMakeLists.txt)
+  XML Tools — Copyright (C) Nicolas Crittin y colaboradores — GPL v3
+      https://github.com/morbac/xmltools (receta: un parche y XMLToolsEdita.cpp,
+      que usa su biblioteca QuickXml; libxml2 y libxslt, licencia MIT)
+
+resources/: el logo y los iconos de la interfaz (resources/icons/ui/) son
+obra propia de Edita, con la misma licencia (GPL v3 o posterior).
+
+Bibliotecas del sistema enlazadas dinámicamente: Qt 6 (LGPL v3), glibc (iconv, LGPL 2.1),
+Python 3 (licencia PSF, solo el plugin Python Script).

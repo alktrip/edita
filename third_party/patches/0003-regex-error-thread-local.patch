@@ -1,0 +1,23 @@
+--- a/scintilla/include/BoostRegexSearch.h
++++ b/scintilla/include/BoostRegexSearch.h
+@@ -10,7 +10,7 @@
+ #define SCFIND_REGEXP_SKIPCRLFASONE			   0x08000000
+ 
+ #ifdef SCI_OWNREGEX
+-extern std::string g_exceptionMessage;
++extern thread_local std::string g_exceptionMessage; // Edita: thread_local (busqueda en archivos en otro hilo)
+ #endif
+ 
+ #endif
+\ No hay ningún carácter de nueva línea al final del archivo
+--- a/boostregex/BoostRegExSearch.cxx
++++ b/boostregex/BoostRegExSearch.cxx
+@@ -271,7 +271,7 @@
+ #endif
+ }
+ 
+-std::string g_exceptionMessage;
++thread_local std::string g_exceptionMessage; // Edita: thread_local (busqueda en archivos en otro hilo)
+ 
+ /**
+  * Find text in document, supporting both forward and backward

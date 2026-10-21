@@ -1,0 +1,20 @@
+--- a/lexilla/lexers/LexUser.cxx
++++ b/lexilla/lexers/LexUser.cxx
+@@ -21,7 +21,16 @@
+ #include <map>
+ #include <vector>
+ #include <assert.h>
+-#include <windows.h>
++// Edita: <windows.h> sustituido por cabeceras estándar. De Windows solo se usaban
++// strlen/strcmp (que llegaban de forma indirecta) y _itoa de MSVC.
++#include <cstdio>
++#include <cstring>
++
++static inline char* _itoa(int value, char* buffer, int /*radix: siempre 10 aquí*/)
++{
++	std::sprintf(buffer, "%d", value);
++	return buffer;
++}
+ 
+ #include "ILexer.h"
+ #include "LexAccessor.h"

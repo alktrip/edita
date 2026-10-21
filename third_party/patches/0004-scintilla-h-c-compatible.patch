@@ -1,0 +1,18 @@
+--- a/scintilla/include/Scintilla.h
++++ b/scintilla/include/Scintilla.h
+@@ -1494,6 +1494,7 @@
+ 	int characterSource;	/* SCN_CHARADDED */
+ };
+ 
++#ifdef __cplusplus
+ #include <vector>
+ struct SearchResultMarkingLine { // each line could have several segments if user want to see only 1 found line which contains several results
+ 	std::vector<std::pair<intptr_t, intptr_t>> _segmentPostions; // a vector of pair of start & end of occurrence for colourizing
+@@ -1503,6 +1504,7 @@
+ 	intptr_t _length;
+ 	SearchResultMarkingLine *_markings;
+ };
++#endif
+ #ifdef INCLUDE_DEPRECATED_FEATURES
+ 
+ #define SCI_SETKEYSUNICODE 2521

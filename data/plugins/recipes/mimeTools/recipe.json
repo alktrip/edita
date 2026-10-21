@@ -1,0 +1,18 @@
+{
+	"folder-name": "mimeTools",
+	"display-name": "MIME Tools",
+	"version": "3.1",
+	"npp-compatible-versions": "[0.0.1,]",
+	"description": "Base64, Quoted-printable, URL encode/decode y SAML decode. Es el código original del plugin de Notepad++ (npp-plugins/mimetools, v3.1), sin cambios, compilado en tu equipo con la capa de compatibilidad de Edita.",
+	"author": "Don HO, Paul Nankervis (port a Edita: Edita contributors)",
+	"homepage": "https://github.com/npp-plugins/mimetools",
+	"source": {
+		"url": "https://github.com/npp-plugins/mimetools/archive/refs/tags/v3.1.zip",
+		"sha256": "dae7ce6aa67e0fa17fcff080e11e9273ac5ff0ad482be972509157b01e069b3f",
+		"strip-components": 1
+	},
+	"remove": ["src/Scintilla.h", "src/Sci_Position.h"],
+	"overlay": "overlay",
+	"build-dir": "edita",
+	"requires": ["cmake", "c++"]
+}

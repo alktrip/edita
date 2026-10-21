@@ -1,0 +1,29 @@
+{
+	"name": "Edita plugin list",
+	"version": "1.0.0",
+	"arch": "linux-x86_64",
+	"npp-plugins": [
+		{
+			"folder-name": "PythonScript",
+			"display-name": "Python Script",
+			"version": "1.0.0",
+			"npp-compatible-versions": "[0.0.1,]",
+			"id": "",
+			"repository": "",
+			"description": "Python integrado con la API del plugin PythonScript de Notepad++: objetos notepad, editor y console, callbacks, consola acoplable y scripts en el menú. Se incluye con Edita (necesita Python 3).",
+			"author": "Edita contributors (API de PythonScript de Dave Brotherstone)",
+			"homepage": "https://github.com/bruderstein/PythonScript"
+		},
+		{
+			"folder-name": "EditaDemo",
+			"display-name": "Demo",
+			"version": "1.0",
+			"npp-compatible-versions": "[0.0.1,]",
+			"id": "",
+			"repository": "",
+			"description": "Plugin de ejemplo en C con la estructura del Plugin Template de Notepad++: insertar fecha y hora, ordenar líneas, contar palabras. Se incluye con Edita.",
+			"author": "Edita contributors",
+			"homepage": ""
+		}
+	]
+}

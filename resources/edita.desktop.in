@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=@PROJECT_NAME@
+GenericName=Editor de texto
+GenericName[en]=Text Editor
+Comment=Editor de texto inspirado en Notepad++
+Comment[en]=Text editor inspired by Notepad++
+Exec=@EDITA_APP_ID@ %F
+Icon=@EDITA_APP_ID@
+Terminal=false
+StartupNotify=true
+StartupWMClass=@EDITA_APP_ID@
+Categories=Utility;TextEditor;
+MimeType=text/plain;text/x-csrc;text/x-chdr;text/x-c++src;text/x-c++hdr;text/x-python;text/x-shellscript;text/xml;application/xml;text/html;text/css;text/markdown;application/json;application/x-yaml;
+Keywords=texto;editor;código;notepad;text;code;

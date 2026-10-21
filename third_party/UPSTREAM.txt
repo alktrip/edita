@@ -1,0 +1,3 @@
+notepad-plus-plus 6ea1128fae166ec429f9cf1fba2fc7cf61b981cd
+scintilla 566
+lexilla 553

@@ -1,0 +1,10 @@
+// Generado por CMake a partir de src/config/AppInfo.h.in. No editar.
+#pragma once
+
+namespace edita {
+
+inline constexpr const char* kAppId = "@EDITA_APP_ID@";
+inline constexpr const char* kAppName = "@PROJECT_NAME@";
+inline constexpr const char* kAppVersion = "@PROJECT_VERSION@";
+
+} // namespace edita

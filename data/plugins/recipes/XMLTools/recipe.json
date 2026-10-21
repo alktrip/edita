@@ -1,0 +1,25 @@
+{
+	"folder-name": "XMLTools",
+	"display-name": "XML Tools",
+	"version": "3.1.1.13",
+	"npp-compatible-versions": "[0.0.1,]",
+	"description": "Comprobar la sintaxis y validar XML (DTD y XSD), formatear (pretty print), linealizar, ruta XPath actual, evaluar XPath, transformación XSL, escapar y comentar. Port de XML Tools (morbac/xmltools 3.1.1.13): usa su biblioteca QuickXml tal cual y libxml2/libxslt donde el original usa MSXML de Windows. Se compila en tu equipo.",
+	"author": "Nicolas Crittin y colaboradores (port a Edita: Edita contributors)",
+	"homepage": "https://github.com/morbac/xmltools",
+	"source": {
+		"url": "https://github.com/morbac/xmltools/archive/refs/tags/3.1.1.13.zip",
+		"sha256": "37aeb36b0747ea824fd3d7cea85e96c46ed581992a6c1b8db74db5a58ced7813",
+		"strip-components": 1
+	},
+	"patches": [
+		"gcc-tolower.patch"
+	],
+	"overlay": "overlay",
+	"build-dir": "edita",
+	"requires": [
+		"cmake",
+		"c++",
+		"pkg-config",
+		"pkg-config:libxml-2.0"
+	]
+}

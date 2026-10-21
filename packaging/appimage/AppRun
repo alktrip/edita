@@ -1,0 +1,5 @@
+#!/bin/sh
+# Lanza Edita con su ruta real: Qt y Edita buscan qt.conf, los plugins y los datos
+# junto al ejecutable (usr/bin), no junto a AppRun
+HERE=$(dirname "$(readlink -f "$0")")
+exec "$HERE/usr/bin/edita" "$@"

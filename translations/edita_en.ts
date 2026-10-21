@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS>
+<TS version="2.1" language="en">
+<context>
+    <name>edita::MainWindow</name>
+    <message numerus="yes">
+        <location filename="../src/ui/MainWindow.cpp" line="+3561"/>
+        <source>Replace All: %Ln occurrence(s) were replaced %1</source>
+        <translation>
+            <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
+            <numerusform>Replace All: %Ln occurrences were replaced %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+17"/>
+        <source>Count: %Ln match(es) %1</source>
+        <translation>
+            <numerusform>Count: %Ln match %1</numerusform>
+            <numerusform>Count: %Ln matches %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+28"/>
+        <source>Find All in Current Document: %Ln hit(s)</source>
+        <translation>
+            <numerusform>Find All in Current Document: %Ln hit</numerusform>
+            <numerusform>Find All in Current Document: %Ln hits</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+48"/>
+        <source>Find All in All Opened Documents: %Ln hit(s)</source>
+        <translation>
+            <numerusform>Find All in All Opened Documents: %Ln hit</numerusform>
+            <numerusform>Find All in All Opened Documents: %Ln hits</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+28"/>
+        <source>Replace All in All Opened Documents: %Ln occurrence(s) were replaced in %1</source>
+        <translation>
+            <numerusform>Replace All in All Opened Documents: %Ln occurrence was replaced in %1</numerusform>
+            <numerusform>Replace All in All Opened Documents: %Ln occurrences were replaced in %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%Ln document(s)</source>
+        <translation>
+            <numerusform>%Ln document</numerusform>
+            <numerusform>%Ln documents</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+46"/>
+        <source>Replace in Files: %Ln occurrence(s) were replaced in %1</source>
+        <translation>
+            <numerusform>Replace in Files: %Ln occurrence was replaced in %1</numerusform>
+            <numerusform>Replace in Files: %Ln occurrences were replaced in %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <location line="+5"/>
+        <source>%Ln file(s)</source>
+        <translation>
+            <numerusform>%Ln file</numerusform>
+            <numerusform>%Ln files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="-2"/>
+        <source>Find in Files: %Ln hit(s) in %1 of %2 searched</source>
+        <translation>
+            <numerusform>Find in Files: %Ln hit in %1 of %2 searched</numerusform>
+            <numerusform>Find in Files: %Ln hits in %1 of %2 searched</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+8"/>
+        <source> — %Ln file(s) with errors</source>
+        <translation>
+            <numerusform> — %Ln file with errors</numerusform>
+            <numerusform> — %Ln files with errors</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>edita::PluginsAdminDialog</name>
+    <message numerus="yes">
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+348"/>
+        <source>%n plugin(s) will be installed.</source>
+        <translation>
+            <numerusform>%n plugin will be installed.</numerusform>
+            <numerusform>%n plugins will be installed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+24"/>
+        <source>%n plugin(s) will be updated.</source>
+        <translation>
+            <numerusform>%n plugin will be updated.</numerusform>
+            <numerusform>%n plugins will be updated.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+140"/>
+        <source>%n plugin(s) will be removed.</source>
+        <translation>
+            <numerusform>%n plugin will be removed.</numerusform>
+            <numerusform>%n plugins will be removed.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+35"/>
+        <source>%n plugin(s) will be enabled.</source>
+        <translation>
+            <numerusform>%n plugin will be enabled.</numerusform>
+            <numerusform>%n plugins will be enabled.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n plugin(s) will be disabled.</source>
+        <translation>
+            <numerusform>%n plugin will be disabled.</numerusform>
+            <numerusform>%n plugins will be disabled.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+75"/>
+        <source>Notepad++ list %1: %n plugin(s) (incompatible)</source>
+        <translation>
+            <numerusform>Notepad++ list %1: %n plugin (incompatible)</numerusform>
+            <numerusform>Notepad++ list %1: %n plugins (incompatible)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>edita::SearchResultsPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/SearchResultsPanel.cpp" line="+42"/>
+        <source>(%Ln hit(s))</source>
+        <translation>
+            <numerusform>(%Ln hit)</numerusform>
+            <numerusform>(%Ln hits)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+98"/>
+        <source>%Ln selection(s)</source>
+        <translation>
+            <numerusform>%Ln selection</numerusform>
+            <numerusform>%Ln selections</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%Ln file(s)</source>
+        <translation>
+            <numerusform>%Ln file</numerusform>
+            <numerusform>%Ln files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>(%Ln hit(s) in %1 of %2 searched)</source>
+        <translation>
+            <numerusform>(%Ln hit in %1 of %2 searched)</numerusform>
+            <numerusform>(%Ln hits in %1 of %2 searched)</numerusform>
+        </translation>
+    </message>
+</context>
+</TS>

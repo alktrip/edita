@@ -1,0 +1,10 @@
+--- a/scintilla/include/Sci_Position.h
++++ b/scintilla/include/Sci_Position.h
+@@ -10,6 +10,7 @@
+ #define SCI_POSITION_H
+ 
+ #include <stddef.h>
++#include <stdint.h> // Edita: N++ usa intptr_t en Sci_PositionCR y no incluía su cabecera
+ 
+ // Basic signed type used throughout interface
+ typedef ptrdiff_t Sci_Position;
