@@ -37,5 +37,5 @@ Descarga el sistema base de Ubuntu (comprobado con su SHA-256) a `build-portable
 
 ## Limitaciones
 
-- **Plugins compilados desde su código (recetas, fase 15):** se compilan con el Qt y el compilador del sistema, y dentro del AppImage se cargan con el Qt del AppImage (6.8 en el portable). Funciona si el Qt del sistema no es más nuevo que el del AppImage. Hacen falta cmake, un compilador de C++ y las cabeceras de desarrollo de Qt 6.
+- **Plugins compilados desde su código (recetas, fase 15):** dentro del AppImage se compilan con el Qt del AppImage, cuyas cabeceras públicas (QtCore, QtGui, QtWidgets) van en `share/edita/plugin-sdk/qt/include`, y no con el del sistema. Así cargan aunque el Qt del sistema sea más nuevo ([fase 24](fase24.md)). Hacen falta cmake y un compilador de C++; las cabeceras de Qt del sistema no.
 - La integración con el escritorio va por el portal de XDG (`xdgdesktopportal`), que también da el diálogo de archivos del escritorio. El tema de Plasma no va incluido.

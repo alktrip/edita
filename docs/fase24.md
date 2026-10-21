@@ -30,7 +30,7 @@ La primera vez descarga unos 30 MB del sistema base, unos 300 MB de paquetes y u
 | libstdc++ que piden Edita y sus plugins | `GLIBCXX_3.4.29` (GCC 11; Ubuntu 22.04 trae la de GCC 12) |
 | Arranca en Ubuntu 22.04 (el mismo sistema base, sin pantalla): `--version` y la ventana con un archivo | ✅ |
 | Arranca en Arch (glibc 2.44) | ✅ |
-| Tamaño | 48 MB (antes 60 MB: el Qt oficial trae menos dependencias que el de Arch) |
+| Tamaño | 49 MB (antes 60 MB: el Qt oficial trae menos dependencias que el de Arch) |
 
 Funciona en Ubuntu 22.04 o posterior, Debian 12 o posterior, Fedora 36 o posterior y en las distribuciones de esa época en adelante.
 
@@ -41,4 +41,20 @@ Ninguna con N++: es empaquetado propio de Linux.
 ## Limitaciones
 
 - Necesita `unshare` con `--map-auto`, es decir, rangos para el usuario en `/etc/subuid` y `/etc/subgid` (vienen de serie en la mayoría de las distribuciones).
-- Las recetas de plugins (fase 15) se compilan en el equipo del usuario, con su Qt. Dentro del AppImage se cargan con el Qt 6.8 del AppImage, así que funcionan si el Qt del sistema no es más nuevo que el 6.8. Con un Qt del sistema más nuevo, el plugin compilado puede pedir símbolos que el 6.8 no tiene. En ese caso se puede usar Edita instalado desde el código.
+
+## Corrección: plugins compilados desde su código dentro del AppImage
+
+Problema: MIME Tools y XML Tools (recetas de la fase 15) aparecían como actualizables y no se cargaban, ni siquiera después de actualizarlos y reiniciar. Se compilaban con el Qt del sistema (6.12 en Arch) y el AppImage los cargaba con su Qt 6.8. Un plugin compilado con un Qt más nuevo pide símbolos de esa versión (`version 'Qt_6.12' not found`), así que no cargaba. Al no cargar, el administrador lo ofrecía como actualización. Y actualizar reinstalaba el paquete ya compilado de `plugins/local`, que fallaba otra vez.
+
+Solución:
+
+| Parte | Qué hace |
+|---|---|
+| Cabeceras de Qt en el AppImage | `build-appimage.sh` copia las cabeceras públicas de QtCore, QtGui y QtWidgets a `share/edita/plugin-sdk/qt/include` (9 MB sin comprimir, 1 MB en el AppImage) |
+| `findPluginSdk` | Si el SDK trae `qt/include`, las recetas se compilan con esas cabeceras y con las bibliotecas del Qt en uso (`QLibraryInfo::LibrariesPath`, es decir, `usr/lib` del AppImage). El Qt del sistema no se usa |
+| `EditaNppPlugin.cmake` | Con `EDITA_QT_INCLUDE` y `EDITA_QT_LIBDIR` usa un destino importado con ese Qt en lugar de `find_package(Qt6)` |
+| Paquetes de `plugins/local` | Junto a cada paquete se guarda con qué se compiló (`<paquete>.build`: versión de Qt y si es el del sistema o el del AppImage). Un paquete compilado con otro Qt no se reutiliza: se vuelve a compilar. Así se arreglan solos los plugins ya instalados: basta con actualizarlos desde el administrador |
+
+Comprobado: XML Tools compilado con el SDK del AppImage pide `Qt_6.8` y carga con las bibliotecas del AppImage. El compilado antes con el Qt del sistema da `version 'Qt_6.12' not found`. Pruebas: `tst_recipes` `builderUsesTheQtOfEdita` (un SDK con cabeceras de Qt: la receta se compila sin `find_package(Qt6)` y el plugin carga) y `pluginsAdminBuildsAndCaches` (un paquete compilado con otro Qt se vuelve a compilar).
+
+Fuera del AppImage, las recetas se siguen compilando con el Qt del sistema, que es el mismo con el que se ejecuta Edita.

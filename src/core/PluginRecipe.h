@@ -54,9 +54,18 @@ struct PluginSdk
 {
     QString sdkDir;
     QString scintillaInclude;
+    // Las cabeceras de Qt que trae el SDK (solo en el AppImage, en plugin-sdk/qt/include)
+    // y la carpeta de las bibliotecas del Qt con el que se ejecuta Edita: las recetas se
+    // compilan con ese Qt y no con el del sistema, que puede ser más nuevo
+    QString qtInclude;
+    QString qtLibDir;
     bool isValid() const { return !sdkDir.isEmpty(); }
 };
 PluginSdk findPluginSdk();
+
+// Con qué se compila un plugin (el Qt de Edita): un paquete de plugins/local compilado
+// con otro no se reutiliza
+QString recipeBuildTag(const PluginSdk& sdk);
 
 // Lo que falta de `requires` (programas que no están en el PATH, módulos de pkg-config)
 QStringList missingRequirements(const QStringList& requirements);

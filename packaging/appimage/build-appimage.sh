@@ -81,6 +81,16 @@ DESTDIR="$APPDIR" cmake --install "$WORK/build"
 # recetas, en share/edita/plugin-sdk, sí)
 rm -rf "$APPDIR/usr/include"
 
+# Las cabeceras de Qt (Core, Gui y Widgets, sin las privadas) para las recetas de plugins:
+# se compilan con el Qt del AppImage y no con el del sistema, que si es más nuevo da
+# plugins que este Qt no puede cargar
+QT_HEADERS=$("$QMAKE_BIN" -query QT_INSTALL_HEADERS)
+QT_SDK=$APPDIR/usr/share/edita/plugin-sdk/qt/include
+mkdir -p "$QT_SDK"
+for module in QtCore QtGui QtWidgets; do
+    tar -C "$QT_HEADERS" --exclude="$module/[0-9]*" -cf - "$module" | tar -C "$QT_SDK" -xf -
+done
+
 PLUGINS=$APPDIR/usr/lib/edita/plugins
 DEPS_ONLY=()
 for plugin in "$PLUGINS"/*/; do

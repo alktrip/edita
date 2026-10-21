@@ -16,10 +16,12 @@
 
 #include <QAction>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLibraryInfo>
 #include <QPlainTextEdit>
 #include <QProcess>
 #include <QSettings>
@@ -262,6 +264,53 @@ private slots:
         QCOMPARE(plugin->messageProc(1, 0, 0), intptr_t{1}); // NPPN_READY llegó a su beNotified
     }
 
+    void builderUsesTheQtOfEdita()
+    {
+        // Un SDK con cabeceras de Qt (como el del AppImage): la receta se compila con ellas y
+        // con las bibliotecas del Qt en uso, sin buscar el Qt del sistema
+        const QString sdkDir = _tmp.filePath("sdk-with-qt");
+        QDir().mkpath(sdkDir + "/qt/include");
+        const QString source = QStringLiteral(EDITA_SOURCE_DIR "/plugin-sdk");
+        for (const char* name : {"compat", "cmake", "edita_plugin.h"})
+            QVERIFY(QFile::link(source + '/' + name, sdkDir + '/' + name));
+        const QDir scintilla(QStringLiteral(EDITA_SOURCE_DIR "/third_party/scintilla/include"));
+        for (const QString& name : scintilla.entryList(QDir::Files))
+            QVERIFY(QFile::link(scintilla.filePath(name), sdkDir + '/' + name));
+        const QString headers = QLibraryInfo::path(QLibraryInfo::HeadersPath);
+        for (const char* module : {"QtCore", "QtGui", "QtWidgets"})
+            QVERIFY(QFile::link(headers + '/' + module, sdkDir + "/qt/include/" + module));
+        qputenv("EDITA_PLUGIN_SDK", QFile::encodeName(sdkDir));
+        const PluginSdk sdk = findPluginSdk();
+        qunsetenv("EDITA_PLUGIN_SDK");
+        QCOMPARE(sdk.qtInclude, QDir(sdkDir + "/qt/include").absolutePath());
+        QCOMPARE(sdk.qtLibDir, QDir(QLibraryInfo::path(QLibraryInfo::LibrariesPath)).absolutePath());
+        QVERIFY(recipeBuildTag(sdk) != recipeBuildTag(findPluginSdk()));
+
+        const QByteArray zip = upstreamSource();
+        writeRecipe(recipesDir() + "/Win32Demo", "x", plugin_installer::sha256Hex(zip));
+        PluginRecipe recipe;
+        QVERIFY(PluginRecipe::parse(recipesDir() + "/Win32Demo/recipe.json", recipe));
+        RecipeBuilder builder(recipe, sdk, _tmp.filePath("cache/Win32DemoQt"));
+        QSignalSpy finished(&builder, &RecipeBuilder::finished);
+        builder.start(zip);
+        QVERIFY(finished.wait(180000));
+        QVERIFY2(finished.first().at(0).toBool(), qPrintable(builder.log().right(3000)));
+        QDirIterator caches(_tmp.filePath("cache/Win32DemoQt"), {QStringLiteral("CMakeCache.txt")}, QDir::Files,
+                            QDirIterator::Subdirectories);
+        QVERIFY(caches.hasNext());
+        const QByteArray cache = readFile(caches.next());
+        QVERIFY(cache.contains("EDITA_QT_INCLUDE"));
+        QVERIFY(!cache.contains("Qt6_DIR")); // find_package(Qt6) no se usó
+        QVERIFY(plugin_installer::installPackage(readFile(builder.packagePath()), "Win32Demo", builder.packageSha256(),
+                                                 userPlugins(), false));
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        bool loaded = false;
+        for (const auto& p : w.plugins()->plugins())
+            loaded = loaded || p->name == QLatin1String("Win32 Demo");
+        QVERIFY2(loaded, qPrintable(w.pluginWarnings().join('\n')));
+    }
+
     void builderFailures()
     {
         const QByteArray source = upstreamSource();
@@ -347,6 +396,19 @@ private slots:
         QVERIFY(dialog.installChecked());
         QVERIFY(dialog.lastBuildLog().contains(QStringLiteral("Package already built")));
         QVERIFY(QFileInfo::exists(userPlugins() + "/Win32Demo/Win32Demo.so"));
+        // Compilado con otro Qt (el paquete de Edita instalado, abierto desde el AppImage): se
+        // vuelve a compilar, porque ese Qt podría no poder cargarlo
+        QCOMPARE(readFile(userPlugins() + "/local/Win32Demo-1.zip.build").trimmed(), recipeBuildTag(findPluginSdk()).toUtf8());
+        writeFile(userPlugins() + "/local/Win32Demo-1.zip.build", "Qt 6.99.0 (system)\n");
+        QVERIFY(dialog.setChecked(PluginsAdminDialog::Installed, "Win32Demo"));
+        prompter.confirmations.enqueue(true);
+        QVERIFY(dialog.removeChecked(PluginsAdminDialog::Installed));
+        QVERIFY(dialog.setChecked(PluginsAdminDialog::Available, "Win32Demo"));
+        prompter.confirmations.enqueue(true);
+        QVERIFY(dialog.installChecked());
+        QVERIFY(!dialog.lastBuildLog().contains(QStringLiteral("Package already built")));
+        QVERIFY(dialog.lastBuildLog().contains(QStringLiteral("Building")));
+        QCOMPARE(readFile(userPlugins() + "/local/Win32Demo-1.zip.build").trimmed(), recipeBuildTag(findPluginSdk()).toUtf8());
 
         // Una versión nueva de la receta: Actualizaciones, y se vuelve a compilar
         writeRecipe(recipesDir() + "/Win32Demo", _tmp.filePath("demo-src.zip"), plugin_installer::sha256Hex(source), false,

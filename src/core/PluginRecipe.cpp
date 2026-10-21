@@ -14,6 +14,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLibraryInfo>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QThread>
@@ -120,7 +121,9 @@ std::vector<PluginRecipe> loadRecipes(const QStringList& directories, QStringLis
     return recipes;
 }
 
-PluginSdk findPluginSdk()
+namespace {
+
+PluginSdk locatePluginSdk()
 {
     PluginSdk sdk;
     auto valid = [](const QString& dir) { return QFileInfo::exists(QDir(dir).filePath(QStringLiteral("compat/npp_compat.h"))); };
@@ -148,6 +151,33 @@ PluginSdk findPluginSdk()
         }
     }
     return sdk;
+}
+
+} // namespace
+
+PluginSdk findPluginSdk()
+{
+    PluginSdk sdk = locatePluginSdk();
+    const QString qtInclude = QDir(sdk.sdkDir).filePath(QStringLiteral("qt/include"));
+    if (!sdk.isValid() || !QFileInfo::exists(QDir(qtInclude).filePath(QStringLiteral("QtWidgets/QWidget"))))
+        return sdk;
+    // Las bibliotecas del Qt en uso (las del AppImage: <usr>/lib, junto a share/edita/plugin-sdk)
+    const QStringList libDirs = {QLibraryInfo::path(QLibraryInfo::LibrariesPath),
+                                 QDir(sdk.sdkDir).filePath(QStringLiteral("../../../lib"))};
+    for (const QString& dir : libDirs) {
+        if (QFileInfo::exists(QDir(dir).filePath(QStringLiteral("libQt6Widgets.so.6")))) {
+            sdk.qtInclude = QDir(qtInclude).absolutePath();
+            sdk.qtLibDir = QDir(dir).absolutePath();
+            break;
+        }
+    }
+    return sdk;
+}
+
+QString recipeBuildTag(const PluginSdk& sdk)
+{
+    return QStringLiteral("Qt %1 (%2)").arg(QString::fromLatin1(qVersion()),
+                                            sdk.qtInclude.isEmpty() ? QStringLiteral("system") : QStringLiteral("bundled"));
 }
 
 QStringList missingRequirements(const QStringList& requirements)
@@ -352,6 +382,8 @@ void RecipeBuilder::runNext()
                             QStringLiteral("-DEDITA_PLUGIN_VERSION=") + _recipe.info.version.toString(),
                             QStringLiteral("-DEDITA_PLUGIN_DISPLAY_NAME=") + _recipe.info.displayName,
                             QStringLiteral("-DEDITA_PLUGIN_HOMEPAGE=") + _recipe.info.homepage};
+        if (!_sdk.qtInclude.isEmpty())
+            args << QStringLiteral("-DEDITA_QT_INCLUDE=") + _sdk.qtInclude << QStringLiteral("-DEDITA_QT_LIBDIR=") + _sdk.qtLibDir;
         if (!QStandardPaths::findExecutable(QStringLiteral("ninja")).isEmpty())
             args << QStringLiteral("-G") << QStringLiteral("Ninja");
         runProcess(QStringLiteral("cmake"), args, _sourceDir);

@@ -420,10 +420,15 @@ bool PluginsAdminDialog::obtainPackage(const PluginInfo& info, QByteArray& zip, 
 bool PluginsAdminDialog::buildFromRecipe(const PluginRecipe& recipe, QByteArray& zip, QString* error)
 {
     const PluginInfo& info = recipe.info;
-    // Un paquete ya compilado de esa versión (plugins/local) no se vuelve a compilar
+    // Un paquete ya compilado de esa versión (plugins/local) no se vuelve a compilar, si se
+    // compiló con el mismo Qt (<paquete>.build): el AppImage y Edita instalado usan Qts distintos
     const QString cached = QDir(_context.localPackagesDir)
                                .filePath(QStringLiteral("%1-%2.zip").arg(info.folderName, info.version.toString()));
-    if (QFile file(cached); file.open(QIODevice::ReadOnly)) {
+    const QString stamp = cached + QStringLiteral(".build");
+    const QString buildTag = recipeBuildTag(_context.sdk);
+    QFile stampFile(stamp);
+    const bool sameBuild = stampFile.open(QIODevice::ReadOnly) && QString::fromUtf8(stampFile.readAll()).trimmed() == buildTag;
+    if (QFile file(cached); sameBuild && file.open(QIODevice::ReadOnly)) {
         zip = file.readAll();
         _lastBuildLog = tr("Package already built: %1\n").arg(cached);
         return true;
@@ -495,6 +500,8 @@ bool PluginsAdminDialog::buildFromRecipe(const PluginRecipe& recipe, QByteArray&
     QDir().mkpath(_context.localPackagesDir);
     QFile::remove(cached);
     QFile::copy(builder.packagePath(), cached);
+    if (QFile out(stamp); out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        out.write(buildTag.toUtf8() + '\n');
     QFile file(builder.packagePath());
     if (!file.open(QIODevice::ReadOnly)) {
         *error = tr("cannot read the built package");
