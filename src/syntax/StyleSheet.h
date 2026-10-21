@@ -93,15 +93,23 @@ public:
     bool loadFromString(std::string_view xml, QString* error = nullptr);
 
     const std::vector<LexerStyles>& lexers() const { return _lexers; }
+    std::vector<LexerStyles>& lexers() { return _lexers; }
     const LexerStyles* lexer(std::string_view name) const;
 
     const std::vector<Style>& globalStyles() const { return _globalStyles; }
+    std::vector<Style>& globalStyles() { return _globalStyles; }
     const Style* globalById(int id) const;
     const Style* globalByName(std::string_view name) const;
 
     // Primera parte de getLangFromExt: extensiones que el usuario añadió a un
     // lexer en el Configurador de estilos. Text si ninguno la declara.
     LangType langFromUserExtension(std::string_view extension) const;
+
+    // NppParameters::writeStyles: escribe los estilos en el XML de `path` (stylers.xml
+    // o un tema), que ya tiene que existir. Solo cambia los atributos de los estilos
+    // (colores, fuente, extensiones del usuario, palabras clave): el resto del archivo
+    // (comentarios, orden, estilos que Edita no conoce) queda como estaba.
+    bool save(const QString& path, QString* error = nullptr) const;
 
     GlobalOverride& globalOverride() { return _globalOverride; }
     const GlobalOverride& globalOverride() const { return _globalOverride; }

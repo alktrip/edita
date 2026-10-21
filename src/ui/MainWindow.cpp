@@ -38,6 +38,7 @@
 #include "ui/SearchResultsPanel.h"
 #include "ui/SingleInstance.h"
 #include "ui/SmartHighlighter.h"
+#include "ui/StyleConfiguratorDialog.h"
 #include "ui/Translations.h"
 #include "ui/UserLanguageDialog.h"
 #include "ui/XmlTagMatcher.h"
@@ -816,6 +817,9 @@ void MainWindow::createMenus()
     // Configuración
     QMenu* settings = menuBar()->addMenu(tr("Se&ttings"));
     addAction(settings, tr("&Preferences…"), "actionPreferences", QKeySequence(), [this] { showPreferences(); });
+    // IDM_LANGSTYLE_CONFIG_DLG
+    addAction(settings, tr("&Style Configurator…"), "actionStyleConfigurator", QKeySequence(),
+              [this] { showStyleConfigurator(); });
 
     createMacroMenu();
     loadPlugins();
@@ -849,7 +853,7 @@ void MainWindow::createToolBar()
         {"actionWrap", "wrap"}, {"actionShowAll", "show-all"}, {"actionShowIndentGuides", "indent-guide"},
         {"actionDefineLanguage", "language"}, {"actionRecordMacro", "record"}, {"actionPlayMacro", "play"},
         {"actionRunMacro", "run-multiple"}, {"actionSaveMacro", "save-macro"}, {"actionPreferences", "preferences"},
-        {"actionPluginsAdmin", "plugins"}, {"actionAbout", "about"}, {"actionFindInFiles", "find"},
+        {"actionPluginsAdmin", "plugins"}, {"actionStyleConfigurator", "highlighting"}, {"actionAbout", "about"}, {"actionFindInFiles", "find"},
     };
     for (const auto& [name, icon] : kIcons) {
         if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
@@ -1718,6 +1722,12 @@ int MainWindow::exportToPdf(const QString& path, bool selectionOnly)
 }
 
 // --- Preferencias -------------------------------------------------------------------------
+
+void MainWindow::showStyleConfigurator()
+{
+    StyleConfiguratorDialog dialog(_syntax, *_prompter, [this](const QString& path) { return setTheme(path); }, this);
+    dialog.exec();
+}
 
 void MainWindow::showPreferences()
 {

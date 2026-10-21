@@ -160,6 +160,8 @@ public:
     void setPreferences(const Preferences& prefs);
     // Configuración > Preferencias…
     void showPreferences();
+    // Configuración > Configurador de estilos…
+    void showStyleConfigurator();
 
     // --- Archivos recientes (<History> de config.xml) ------------------------------------
     // El más reciente primero; como N++, se añaden al cerrarlos y salen al abrirlos

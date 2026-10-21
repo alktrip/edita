@@ -786,7 +786,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>StyleSheet</name>
     <message>
-        <location filename="../src/syntax/StyleSheet.cpp" line="+87"/>
+        <location filename="../src/syntax/StyleSheet.cpp" line="+88"/>
         <source>&lt;NotepadPlus&gt;&lt;LexerStyles&gt; is missing</source>
         <translation>Falta &lt;NotepadPlus&gt;&lt;LexerStyles&gt;</translation>
     </message>
@@ -794,6 +794,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+26"/>
         <source>Invalid XML (position %1): %2</source>
         <translation>XML no válido (posición %1): %2</translation>
+    </message>
+    <message>
+        <location line="+87"/>
+        <source>Cannot write %1</source>
+        <translation>No se puede escribir %1</translation>
     </message>
 </context>
 <context>
@@ -1120,13 +1125,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+269"/>
-        <location line="+1838"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+270"/>
+        <location line="+1847"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-1838"/>
+        <location line="-1847"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1562,7 +1567,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+9"/>
         <source>&amp;Help</source>
         <translation>A&amp;yuda</translation>
     </message>
@@ -1638,12 +1643,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+714"/>
+        <location line="+720"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-690"/>
+        <location line="-696"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -1815,7 +1820,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-645"/>
+        <location line="-648"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
@@ -2020,7 +2025,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;AlEaToRiO</translation>
     </message>
     <message>
-        <location line="+195"/>
+        <location line="+147"/>
+        <source>&amp;Style Configurator…</source>
+        <translation>Configurador de &amp;estilos…</translation>
+    </message>
+    <message>
+        <location line="+51"/>
         <source>Toolbar</source>
         <translation>Barra de herramientas</translation>
     </message>
@@ -2180,12 +2190,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+247"/>
         <location line="+20"/>
-        <location line="+1359"/>
+        <location line="+1365"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1622"/>
+        <location line="-1628"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2309,7 +2319,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+139"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -4211,9 +4221,174 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
 </context>
 <context>
+    <name>edita::StyleConfiguratorDialog</name>
+    <message>
+        <location filename="../src/ui/StyleConfiguratorDialog.cpp" line="+88"/>
+        <location line="+371"/>
+        <location line="+5"/>
+        <location line="+16"/>
+        <source>Style Configurator</source>
+        <translation>Configurador de estilos</translation>
+    </message>
+    <message>
+        <location line="-379"/>
+        <source>Select theme:</source>
+        <translation>Tema:</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Language:</source>
+        <translation>Lenguaje:</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Style:</source>
+        <translation>Estilo:</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Colour Style</source>
+        <translation>Colores</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <location line="+318"/>
+        <source>Foreground colour</source>
+        <translation>Color del texto</translation>
+    </message>
+    <message>
+        <location line="-317"/>
+        <location line="+317"/>
+        <source>Background colour</source>
+        <translation>Color de fondo</translation>
+    </message>
+    <message>
+        <location line="-312"/>
+        <source>Font Style</source>
+        <translation>Fuente</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Bold</source>
+        <translation>Negrita</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Italic</source>
+        <translation>Cursiva</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Underline</source>
+        <translation>Subrayado</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Font name:</source>
+        <translation>Fuente:</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Font size:</source>
+        <translation>Tamaño:</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Global override</source>
+        <translation>Global override</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Force foreground color for all styles</source>
+        <translation>Forzar el color del texto en todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Force background color for all styles</source>
+        <translation>Forzar el color de fondo en todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Force font choice for all styles</source>
+        <translation>Forzar la fuente en todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Force font size choice for all styles</source>
+        <translation>Forzar el tamaño de letra en todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Force bold choice for all styles</source>
+        <translation>Forzar la negrita en todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Force italic choice for all styles</source>
+        <translation>Forzar la cursiva en todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Force underline choice for all styles</source>
+        <translation>Forzar el subrayado en todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>File extensions</source>
+        <translation>Extensiones de archivo</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Default ext.:</source>
+        <translation>De serie:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>User ext.:</source>
+        <translation>Del usuario:</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Keywords</source>
+        <translation>Palabras clave</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Default keywords</source>
+        <translation>Palabras clave de serie</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>User-defined keywords</source>
+        <translation>Palabras clave del usuario</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Save &amp;&amp; Close</source>
+        <translation>Guardar y cerrar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>Global Styles</source>
+        <translation>Estilos globales</translation>
+    </message>
+    <message>
+        <location line="+159"/>
+        <source>Unsaved changes are about to be discarded!
+Do you want to save your changes before switching themes?</source>
+        <translation>¡Se van a perder los cambios sin guardar!
+¿Quiere guardarlos antes de cambiar de tema?</translation>
+    </message>
+</context>
+<context>
     <name>edita::SyntaxManager</name>
     <message>
-        <location filename="../src/syntax/SyntaxManager.cpp" line="+65"/>
+        <location filename="../src/syntax/SyntaxManager.cpp" line="+87"/>
         <source>%1 was not found in the application data</source>
         <translation>No se encuentra %1 en los datos de la aplicación</translation>
     </message>
@@ -4253,9 +4428,14 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Tampoco se puede leer stylers.model.xml: no habrá colores</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+28"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
+    </message>
+    <message>
+        <location line="+35"/>
+        <source>Cannot create %1</source>
+        <translation>No se puede crear %1</translation>
     </message>
 </context>
 <context>

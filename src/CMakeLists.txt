@@ -149,6 +149,8 @@ add_library(edita_ui STATIC
     ui/SingleInstance.h
     ui/SmartHighlighter.cpp
     ui/SmartHighlighter.h
+    ui/StyleConfiguratorDialog.cpp
+    ui/StyleConfiguratorDialog.h
     ui/Appearance.cpp
     ui/Appearance.h
     ui/Icons.cpp

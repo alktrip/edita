@@ -80,6 +80,14 @@ public:
     // Cambia de tema y lo recuerda en config.xml. Ruta vacía = predeterminado.
     bool setTheme(const QString& path, QString* error = nullptr);
 
+    // Configurador de estilos (WordStyleDlg): aplica unos estilos sin guardarlos
+    // (vista previa; Cancelar vuelve a aplicar los de antes)
+    void previewStyles(const StyleSheet& styles);
+    // Los guarda en el archivo de estilos en uso y el Global override en config.xml.
+    // Un tema de la aplicación (que no está en ~/.config/edita) se copia antes a
+    // ~/.config/edita/themes, que lo sustituye.
+    bool saveStyles(const StyleSheet& styles, QString* error = nullptr);
+
     // Opciones de vista que dependen de las preferencias; si cambian se emite stylesChanged
     const StylerOptions& options() const { return _options; }
     void setOptions(const StylerOptions& options);

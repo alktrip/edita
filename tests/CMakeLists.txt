@@ -36,6 +36,7 @@ edita_add_test(tst_perf LIBS edita_doc LABELS perf)
 edita_add_test(tst_engine LIBS edita_ui)
 edita_add_test(tst_mainwindow LIBS edita_ui)
 edita_add_test(tst_appearance LIBS edita_ui)
+edita_add_test(tst_styleconfigurator LIBS edita_ui)
 # Una sola instancia: también arranca el binario de verdad
 edita_add_test(tst_singleinstance LIBS edita_ui)
 add_dependencies(tst_singleinstance ${EDITA_APP_ID})

@@ -38,6 +38,28 @@ QString samePath(const QString& path)
     return QDir::cleanPath(QFileInfo(path).absoluteFilePath());
 }
 
+// <GUIConfig name="globalOverride" fg="no" bg="no" font="no" fontSize="no" bold="no" italic="no" underline="no" />
+const QString kGlobalOverrideConfig = QStringLiteral("globalOverride");
+constexpr std::pair<const char*, bool GlobalOverride::*> kOverrideFlags[] = {
+    {"fg", &GlobalOverride::foreground}, {"bg", &GlobalOverride::background}, {"font", &GlobalOverride::font},
+    {"fontSize", &GlobalOverride::fontSize}, {"bold", &GlobalOverride::bold}, {"italic", &GlobalOverride::italic},
+    {"underline", &GlobalOverride::underline},
+};
+
+GlobalOverride readGlobalOverride(const ConfigXml& config)
+{
+    GlobalOverride go;
+    for (const auto& [name, flag] : kOverrideFlags)
+        go.*flag = config.guiConfig(kGlobalOverrideConfig, QString::fromLatin1(name)) == QLatin1String("yes");
+    return go;
+}
+
+void writeGlobalOverride(ConfigXml& config, const GlobalOverride& go)
+{
+    for (const auto& [name, flag] : kOverrideFlags)
+        config.setGuiConfig(kGlobalOverrideConfig, QString::fromLatin1(name), go.*flag ? QStringLiteral("yes") : QStringLiteral("no"));
+}
+
 } // namespace
 
 SyntaxManager::SyntaxManager(const QString& configDir, QObject* parent)
@@ -120,6 +142,7 @@ QStringList SyntaxManager::loadAll()
         if (model.isEmpty() || !_styles.load(model, &error))
             warnings << tr("stylers.model.xml cannot be read either: there will be no colors");
     }
+    _styles.globalOverride() = readGlobalOverride(_config);
     warnings << _userLanguages.load(_configDir);
     return warnings;
 }
@@ -159,6 +182,39 @@ bool SyntaxManager::setTheme(const QString& path, QString* error)
     _styles = std::move(candidate);
     _themePath = path;
     _config.setGuiConfig(kThemeConfig, QStringLiteral("path"), path);
+    _config.save();
+    emit stylesChanged();
+    return true;
+}
+
+void SyntaxManager::previewStyles(const StyleSheet& styles)
+{
+    _styles = styles;
+    emit stylesChanged();
+}
+
+bool SyntaxManager::saveStyles(const StyleSheet& styles, QString* error)
+{
+    QString target = activeStylePath();
+    const QString configDir = QDir(_configDir).absolutePath() + QLatin1Char('/');
+    if (!QFileInfo(target).absoluteFilePath().startsWith(configDir)) {
+        // Un tema de la aplicación: se edita una copia en ~/.config/edita/themes
+        const QString copy = QDir(_configDir).filePath(QStringLiteral("themes/") + QFileInfo(target).fileName());
+        QDir().mkpath(QFileInfo(copy).absolutePath());
+        if (!QFileInfo::exists(copy) && !QFile::copy(target, copy)) {
+            if (error)
+                *error = tr("Cannot create %1").arg(copy);
+            return false;
+        }
+        QFile::setPermissions(copy, QFile::permissions(copy) | QFileDevice::WriteOwner);
+        target = copy;
+        _themePath = copy;
+        _config.setGuiConfig(kThemeConfig, QStringLiteral("path"), copy);
+    }
+    if (!styles.save(target, error))
+        return false;
+    _styles = styles;
+    writeGlobalOverride(_config, _styles.globalOverride());
     _config.save();
     emit stylesChanged();
     return true;

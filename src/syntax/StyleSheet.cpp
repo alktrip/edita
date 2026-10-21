@@ -26,6 +26,7 @@
 #include <QCoreApplication>
 
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 
 namespace edita {
@@ -116,6 +117,92 @@ QString parseError(const pugi::xml_parse_result& result)
 }
 
 } // namespace
+
+namespace {
+
+// 0x00BBGGRR → "RRGGBB" (writeStyle2Element: "%.6lX")
+std::string hexFromColor(int bgr)
+{
+    const auto c = static_cast<unsigned int>(bgr);
+    const unsigned int rgb = ((c & 0xFF) << 16) | (c & 0xFF00) | ((c >> 16) & 0xFF);
+    char text[8];
+    std::snprintf(text, sizeof text, "%.6X", rgb);
+    return text;
+}
+
+// writeStyle2Element de N++
+void writeStyle(const Style& style, pugi::xml_node node)
+{
+    auto set = [&node](const char* name, const std::string& value) {
+        pugi::xml_attribute attr = node.attribute(name);
+        if (!attr)
+            attr = node.append_attribute(name);
+        attr.set_value(value.c_str());
+    };
+    if (style.fgColor != kStyleNotUsed)
+        set("fgColor", hexFromColor(style.fgColor));
+    if (style.bgColor != kStyleNotUsed)
+        set("bgColor", hexFromColor(style.bgColor));
+    if (style.colorStyle != kColorStyleAll)
+        set("colorStyle", std::to_string(style.colorStyle));
+    else
+        node.remove_attribute("colorStyle");
+    if (!style.fontName.empty() || node.attribute("fontName"))
+        set("fontName", style.fontName);
+    if (style.fontSize != kStyleNotUsed)
+        set("fontSize", style.fontSize == 0 ? std::string() : std::to_string(style.fontSize));
+    if (style.fontStyle != kStyleNotUsed)
+        set("fontStyle", std::to_string(style.fontStyle));
+    if (style.keywordClass != kStyleNotUsed || !style.keywords.empty()) {
+        pugi::xml_node text = node.first_child();
+        if (!text || text.type() != pugi::node_pcdata) {
+            node.remove_children();
+            text = node.append_child(pugi::node_pcdata);
+        }
+        text.set_value(style.keywords.c_str());
+    }
+}
+
+} // namespace
+
+bool StyleSheet::save(const QString& path, QString* error) const
+{
+    pugi::xml_document doc;
+    const QByteArray file = path.toUtf8();
+    const pugi::xml_parse_result result = doc.load_file(file.constData(), pugi::parse_default | pugi::parse_comments);
+    if (!result) {
+        if (error)
+            *error = parseError(result);
+        return false;
+    }
+    pugi::xml_node root = doc.child("NotepadPlus");
+    for (pugi::xml_node lexerNode : root.child("LexerStyles").children("LexerType")) {
+        const LexerStyles* ls = lexer(lexerNode.attribute("name").as_string(""));
+        if (!ls)
+            continue;
+        if (!ls->userExtensions.empty() || lexerNode.attribute("ext")) {
+            pugi::xml_attribute ext = lexerNode.attribute("ext");
+            if (!ext)
+                ext = lexerNode.append_attribute("ext");
+            ext.set_value(ls->userExtensions.c_str());
+        }
+        for (pugi::xml_node styleNode : lexerNode.children("WordsStyle")) {
+            if (const Style* style = ls->findById(styleNode.attribute("styleID").as_int(-1)))
+                writeStyle(*style, styleNode);
+        }
+    }
+    // Los globales, por nombre: varios comparten styleID (0)
+    for (pugi::xml_node styleNode : root.child("GlobalStyles").children("WidgetStyle")) {
+        if (const Style* style = globalByName(styleNode.attribute("name").as_string("")))
+            writeStyle(*style, styleNode);
+    }
+    if (!doc.save_file(file.constData(), "    ", pugi::format_default, pugi::encoding_utf8)) {
+        if (error)
+            *error = QCoreApplication::translate("StyleSheet", "Cannot write %1").arg(path);
+        return false;
+    }
+    return true;
+}
 
 const Style* LexerStyles::findById(int id) const
 {
