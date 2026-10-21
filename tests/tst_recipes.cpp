@@ -8,6 +8,7 @@
 #include "FakePrompter.h"
 #include "core/PluginInstaller.h"
 #include "core/PluginRecipe.h"
+#include "ui/DocStatusBar.h"
 #include "ui/EditorView.h"
 #include "ui/MainWindow.h"
 #include "ui/PluginManager.h"
@@ -19,7 +20,9 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPlainTextEdit>
 #include <QProcess>
+#include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
@@ -445,6 +448,115 @@ private slots:
             w.editor()->sci(SCI_SELECTALL);
             QVERIFY(run(QStringLiteral("Escape characters in selection (<> → &&lt;&&gt;)")));
             QCOMPARE(w.documents().text(w.currentBuffer()), "&lt;x&gt;&amp;&lt;/x&gt;"s);
+
+            // El menú completo del original (nppMenu.cpp): 29 órdenes y 9 separadores
+            int commands = 0;
+            for (const PluginManager::Command& c : plugin->commands)
+                commands += c.function ? 1 : 0;
+            QCOMPARE(commands, 29);
+            QCOMPARE(static_cast<int>(plugin->commands.size()), 38);
+            auto command = [&](const QString& name) -> const PluginManager::Command* {
+                for (const PluginManager::Command& c : plugin->commands) {
+                    if (c.name == name)
+                        return &c;
+                }
+                return nullptr;
+            };
+            for (const char* name : {"First error", "Previous error", "Next error", "Last error", "Tag auto-close",
+                                     "Set XML type automatically", "Prevent XXE", "Allow huge files", "Apply to all open files",
+                                     "Tokenize (debug)", "Options...", "Debug window..."})
+                QVERIFY2(command(QString::fromUtf8(name)), name);
+            QVERIFY(command(QStringLiteral("Tag auto-close"))->checked);
+            QVERIFY(command(QStringLiteral("Prevent XXE"))->checked);
+            QVERIFY(!command(QStringLiteral("Allow huge files"))->checked);
+
+            auto notify = [&](unsigned code, int ch = 0) {
+                SCNotification n{};
+                n.nmhdr.hwndFrom = w.editor();
+                n.nmhdr.code = code;
+                n.ch = ch;
+                n.updated = SC_UPDATE_SELECTION;
+                w.plugins()->notify(n);
+            };
+            const auto language = [&] { return w.documents().buffer(w.currentBuffer())->language(); };
+
+            // Set XML type automatically y Tag auto-close: al escribir el '>' de <root>
+            w.setLanguage(LangType::Text);
+            w.editor()->sends(SCI_SETTEXT, 0, "<?xml version=\"1.0\"?>\n<root a=\"1\">");
+            w.editor()->sci(SCI_DOCUMENTEND);
+            notify(SCN_CHARADDED, '>');
+            QCOMPARE(language(), LangType::Xml);
+            QCOMPARE(w.documents().text(w.currentBuffer()), "<?xml version=\"1.0\"?>\n<root a=\"1\"></root>"s);
+            QCOMPARE(w.editor()->sci(SCI_GETCURRENTPOS), intptr_t{34});
+            // No después de />, de </x> ni de comentarios
+            w.editor()->sends(SCI_SETTEXT, 0, "<a/>");
+            w.editor()->sci(SCI_DOCUMENTEND);
+            notify(SCN_CHARADDED, '>');
+            QCOMPARE(w.documents().text(w.currentBuffer()), "<a/>"s);
+            w.editor()->sends(SCI_SETTEXT, 0, "<!-- c -->");
+            w.editor()->sci(SCI_DOCUMENTEND);
+            notify(SCN_CHARADDED, '>');
+            QCOMPARE(w.documents().text(w.currentBuffer()), "<!-- c -->"s);
+
+            // La ruta del nodo actual, en la barra de estado (xpathOnStatusbar), con los
+            // atributos de identidad sin su nombre (dumpAttributeName de serie, false)
+            w.editor()->sends(SCI_SETTEXT, 0, "<a><b id=\"x\"><c/></b></a>");
+            w.editor()->sci(SCI_GOTOPOS, 15);
+            notify(SCN_UPDATEUI);
+            QCOMPARE(w.docStatusBar()->languageText(), QStringLiteral("/a/b[x]/c"));
+
+            // Errores: anotaciones bajo sus líneas y First/Last error
+            const auto caretLine = [&] {
+                return w.editor()->sci(SCI_LINEFROMPOSITION, static_cast<uintptr_t>(w.editor()->sci(SCI_GETCURRENTPOS)));
+            };
+            w.editor()->sends(SCI_SETTEXT, 0, "<a>\n  <b>\n</a>\n<c>");
+            QVERIFY(run(QStringLiteral("Check XML syntax now")));
+            const intptr_t firstLine = caretLine();
+            QVERIFY(w.editor()->sci(SCI_ANNOTATIONGETTEXT, static_cast<uintptr_t>(firstLine)) > 0);
+            QVERIFY(run(QStringLiteral("Last error")));
+            const intptr_t lastLine = caretLine();
+            QVERIFY(lastLine >= firstLine);
+            QVERIFY(run(QStringLiteral("First error")));
+            QCOMPARE(caretLine(), firstLine);
+            // Al editar, las anotaciones se quitan
+            w.editor()->sends(SCI_INSERTTEXT, 0, " ");
+            QCOMPARE(w.editor()->sci(SCI_ANNOTATIONGETTEXT, static_cast<uintptr_t>(firstLine)), intptr_t{0});
+
+            // Apply to all open files: Pretty print en todos los documentos
+            QVERIFY(run(QStringLiteral("Apply to all open files")));
+            QVERIFY(command(QStringLiteral("Apply to all open files"))->checked);
+            w.editor()->sends(SCI_SETTEXT, 0, "<a><b/></a>");
+            const BufferId first = w.currentBuffer();
+            w.newDocument();
+            w.editor()->sends(SCI_SETTEXT, 0, "<x><y/></x>");
+            const BufferId second = w.currentBuffer();
+            QVERIFY(run(QStringLiteral("Pretty print")));
+            QCOMPARE(w.documents().text(first), "<a>\n\t<b/>\n</a>"s);
+            QCOMPARE(w.documents().text(second).substr(0, 3), "<x>"s);
+            QVERIFY(w.documents().text(second).find("<y/>") != std::string::npos);
+            QVERIFY(w.documents().text(second) != "<x><y/></x>");
+            QCOMPARE(w.currentBuffer(), second); // vuelve al documento en el que se estaba
+            QVERIFY(run(QStringLiteral("Apply to all open files")));
+            QVERIFY(!command(QStringLiteral("Apply to all open files"))->checked);
+            // Las opciones se guardan en XMLTools.ini, con las claves del original
+            QVERIFY(QFileInfo::exists(QDir(userPlugins()).filePath("config/XMLTools.ini")));
+            QSettings ini(QDir(userPlugins()).filePath("config/XMLTools.ini"), QSettings::IniFormat);
+            QCOMPARE(ini.value("XML Tools/doPrettyPrintAllOpenFiles").toInt(), 0);
+            QCOMPARE(ini.value("XML Tools/doCloseTag").toInt(), 1);
+
+            // Tokenize (debug): los tokens de QuickXml, en la ventana de depuración
+            w.editor()->sends(SCI_SETTEXT, 0, "<a>t</a>");
+            QVERIFY(run(QStringLiteral("Tokenize (debug)")));
+            QWidget* debug = nullptr;
+            for (QWidget* top : QApplication::topLevelWidgets()) {
+                if (top->objectName() == QLatin1String("XMLToolsDebug") && top->isVisible())
+                    debug = top;
+            }
+            QVERIFY(debug);
+            const auto* log = debug->findChild<QPlainTextEdit*>();
+            QVERIFY(log);
+            QVERIFY2(log->toPlainText().contains(QLatin1String("TokenizeFast")), qPrintable(log->toPlainText()));
+            debug->close();
         }
     }
 };

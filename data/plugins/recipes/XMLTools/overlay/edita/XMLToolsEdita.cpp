@@ -8,7 +8,9 @@
 // cambios. Donde el original usa MSXML (COM de Windows) se usa libxml2: comprobar
 // la sintaxis, validar con DTD o XSD y evaluar XPath; libxslt para XSLT. Los
 // diálogos MFC se sustituyen por diálogos de Qt. Las opciones se guardan en
-// XMLTools.ini, en la carpeta de configuración de los plugins, como en N++.
+// XMLTools.ini, en la carpeta de configuración de los plugins, como en N++, con
+// las mismas claves. Los errores se muestran como anotaciones de Scintilla bajo la
+// línea (errorDisplayMode "Annotation", el de serie), en una ventana o en un aviso.
 
 #include <edita_plugin.h>
 
@@ -28,25 +30,34 @@
 #endif
 
 #include <QApplication>
+#include <QCheckBox>
 #include <QClipboard>
+#include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFormLayout>
 #include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
+#include <QFontDatabase>
 #include <QPlainTextEdit>
+#include <QPointer>
 #include <QPushButton>
 #include <QSettings>
+#include <QSpinBox>
 #include <QVBoxLayout>
 
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
+#include <functional>
+#include <map>
 #include <stack>
 #include <string>
 #include <vector>
@@ -55,11 +66,38 @@ namespace {
 
 EditaData g_data;
 QString g_iniPath;
-bool g_doCheckXML = true;     // XmlToolsConfig: doCheckXML
-bool g_doValidation = false;  // doValidation
-bool g_doPreventXXE = true;   // doPreventXXE
+// XmlToolsConfig (Config.h), con sus valores de serie
+bool g_doCheckXML = true;
+bool g_doValidation = false;
+bool g_doCloseTag = true;
+bool g_doAutoXMLType = true;
+bool g_doPreventXXE = true;
+bool g_doAllowHuge = false;
+bool g_doPrettyPrintAllOpenFiles = false;
+
+// struct_xmltoolsoptions: lo que se cambia en Options...
+struct Options
+{
+    QString errorDisplayMode = QStringLiteral("Annotation"); // Annotation / Dialog / Alert
+    int maxErrorsNum = 10;
+    int maxIndentLevel = 0;
+    bool xpathOnStatusbar = true;
+    bool dumpAttributeName = false;
+    bool printXPathIndex = false;
+    QString identityAttributes = QStringLiteral("id;name");
+    bool ppAutoclose = true;
+    bool ensureConformity = true;
+    bool applySpacePreserve = false;
+};
+Options g_options;
+
 constexpr int kLangXml = 9;   // L_XML
 constexpr int kFileNew = 41001; // IDM_FILE_NEW
+constexpr int kPrimaryView = 1; // PRIMARY_VIEW
+constexpr int kSecondView = 2;  // SECOND_VIEW
+// La ruta en la barra de estado se calcula al mover el cursor: en documentos
+// enormes, no (lo que tarde QuickXml en recorrerlo se notaría al escribir)
+constexpr intptr_t kXPathStatusMaxLength = 4 * 1024 * 1024;
 
 // --- Scintilla -------------------------------------------------------------------------
 
@@ -114,6 +152,65 @@ void error(const QString& text)
     QMessageBox::warning(QApplication::activeWindow(), QStringLiteral("XML Tools"), text);
 }
 
+intptr_t currentBufferId()
+{
+    return g_data.send(g_data.host, NPPM_GETCURRENTBUFFERID, 0, 0);
+}
+
+int currentLangType()
+{
+    int lang = 0;
+    g_data.send(g_data.host, NPPM_GETCURRENTLANGTYPE, 0, reinterpret_cast<intptr_t>(&lang));
+    return lang;
+}
+
+// --- Ventana de depuración (Debug.cpp, DebugDlg.cpp) ------------------------------------------
+
+QStringList g_debugLog;
+QPointer<QDialog> g_debugDialog;
+QPointer<QPlainTextEdit> g_debugText;
+
+void dbgln(const QString& text)
+{
+    // Lo último, como el original (que también recorta el registro)
+    g_debugLog << text;
+    while (g_debugLog.size() > 2000)
+        g_debugLog.removeFirst();
+    if (g_debugText)
+        g_debugText->appendPlainText(text);
+}
+
+void showDebugDlg()
+{
+    if (!g_debugDialog) {
+        auto* dialog = new QDialog(QApplication::activeWindow());
+        dialog->setObjectName(QStringLiteral("XMLToolsDebug"));
+        dialog->setWindowTitle(QStringLiteral("XML Tools - Debug window"));
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        auto* layout = new QVBoxLayout(dialog);
+        auto* text = new QPlainTextEdit(dialog);
+        text->setReadOnly(true);
+        text->setLineWrapMode(QPlainTextEdit::NoWrap);
+        text->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+        text->setPlainText(g_debugLog.join(QLatin1Char('\n')));
+        layout->addWidget(text, 1);
+        auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog);
+        QPushButton* clear = buttons->addButton(QStringLiteral("Clear"), QDialogButtonBox::ResetRole);
+        QObject::connect(clear, &QPushButton::clicked, text, [text] {
+            g_debugLog.clear();
+            text->clear();
+        });
+        QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::close);
+        layout->addWidget(buttons);
+        dialog->resize(720, 480);
+        g_debugDialog = dialog;
+        g_debugText = text;
+    }
+    g_debugDialog->show();
+    g_debugDialog->raise();
+    g_debugDialog->activateWindow();
+}
+
 // ScintillaDoc::GetWorkText: la selección o, si no hay, todo el documento
 struct WorkText
 {
@@ -162,27 +259,90 @@ std::string indentChars()
     return std::string(static_cast<size_t>(width > 0 ? width : 4), ' ');
 }
 
+// --- Varios documentos (nppHelpers.cpp: nppMultiDocumentCommand) -----------------------------
+
+// La orden en el documento actual o, con "Apply to all open files", en todos los
+// abiertos de las dos vistas (activándolos uno a uno, como el original). Al terminar
+// vuelve al documento en el que se estaba
+void forEachDocument(const QString& name, const std::function<void()>& action)
+{
+    dbgln(QStringLiteral("+ nppMultiDocumentCommand(\"%1\")").arg(name));
+    const std::clock_t start = std::clock();
+    auto run = [&] {
+        if (sci(SCI_GETREADONLY))
+            return;
+        const std::clock_t docStart = std::clock();
+        action();
+        dbgln(QStringLiteral("%1 => time taken: %2 ms").arg(currentFile()).arg((std::clock() - docStart) * 1000 / CLOCKS_PER_SEC));
+        sci(SCI_SETXOFFSET, 0);
+    };
+    if (!g_doPrettyPrintAllOpenFiles) {
+        run();
+    } else {
+        int view = 0;
+        g_data.send(g_data.host, NPPM_GETCURRENTSCINTILLA, 0, reinterpret_cast<intptr_t>(&view));
+        const intptr_t index = g_data.send(g_data.host, NPPM_GETCURRENTDOCINDEX, 0, view);
+        const int views[] = {kPrimaryView, kSecondView};
+        for (int v = 0; v < 2; ++v) {
+            if (g_data.send(g_data.host, NPPM_GETCURRENTDOCINDEX, 0, v) < 0)
+                continue;
+            const intptr_t count = g_data.send(g_data.host, NPPM_GETNBOPENFILES, 0, views[v]);
+            for (intptr_t i = 0; i < count; ++i) {
+                if (g_data.send(g_data.host, NPPM_ACTIVATEDOC, static_cast<uintptr_t>(v), i))
+                    run();
+            }
+        }
+        if (index >= 0)
+            g_data.send(g_data.host, NPPM_ACTIVATEDOC, static_cast<uintptr_t>(view), index);
+    }
+    dbgln(QStringLiteral("- nppMultiDocumentCommand(\"%1\") => time taken: %2 ms").arg(name).arg((std::clock() - start) * 1000 / CLOCKS_PER_SEC));
+}
+
+// --- Tipo XML automático (ToolsEditor.cpp: setAutoXMLType) ----------------------------------
+
+int setAutoXMLType(bool force = false)
+{
+    int docType = currentLangType();
+    if (force || (g_doAutoXMLType && docType != kLangXml)) {
+        char head[8] = {};
+        sci(SCI_GETTEXT, 7, reinterpret_cast<intptr_t>(head));
+        if (std::strlen(head) >= 6 && std::strncmp(head, "<?xml ", 6) == 0) {
+            g_data.send(g_data.host, NPPM_SETCURRENTLANGTYPE, 0, kLangXml);
+            docType = kLangXml;
+        }
+    }
+    return docType;
+}
+
 // --- Formateo (ToolsPrettyPrintFast.cpp, con QuickXml) -----------------------------------------
 
-enum class Format { PrettyPrint, IndentAttributes, IndentOnly, Linearize };
+enum class Format { PrettyPrint, IndentAttributes, IndentOnly, Linearize, Tokenize };
 
-void format(Format kind)
+QuickXml::XmlFormaterParamsType formatParams(Format kind)
 {
-    if (sci(SCI_GETREADONLY))
-        return;
-    const WorkText w = workText();
-    if (w.text.empty())
-        return;
     QuickXml::XmlFormaterParamsType params;
     params.indentChars = indentChars();
     params.eolChars = eolChars();
-    params.maxIndentLevel = 0; // xmltoolsoptions.maxIndentLevel
-    params.ensureConformity = true;
-    params.autoCloseTags = true; // ppAutoclose
+    params.maxIndentLevel = static_cast<size_t>(std::max(0, g_options.maxIndentLevel));
+    params.ensureConformity = g_options.ensureConformity;
+    params.autoCloseTags = g_options.ppAutoclose;
     params.indentAttributes = kind == Format::IndentAttributes;
     params.indentOnly = kind == Format::IndentOnly;
-    params.applySpacePreserve = false;
-    QuickXml::XmlFormater formater(w.text.data(), w.text.size(), params);
+    params.applySpacePreserve = g_options.applySpacePreserve;
+    return params;
+}
+
+void formatDocument(Format kind)
+{
+    const WorkText w = workText();
+    if (w.text.empty())
+        return;
+    QuickXml::XmlFormater formater(w.text.data(), w.text.size(), formatParams(kind));
+    if (kind == Format::Tokenize) {
+        // sciDocTokenizeQuickXml: los tokens de QuickXml, en la ventana de depuración
+        dbgln(QString::fromStdString(formater.debugTokens("\n", true)));
+        return;
+    }
     std::stringstream* out = kind == Format::Linearize ? formater.linearize() : formater.prettyPrint();
     const std::string result = out->str();
     if (result != w.text) {
@@ -192,24 +352,47 @@ void format(Format kind)
     }
 }
 
+void format(Format kind)
+{
+    static const char* const names[] = {"PrettyPrintFast (quickxml)", "PrettyPrintAttrFast (quickxml)",
+                                        "PrettyPrintIndentOnlyFast (quickxml)", "LinearizeFast (quickxml)",
+                                        "TokenizeFast (quickxml)"};
+    forEachDocument(QString::fromLatin1(names[static_cast<int>(kind)]), [kind] { formatDocument(kind); });
+    if (kind == Format::Tokenize)
+        showDebugDlg();
+    else
+        setAutoXMLType();
+}
+
 // --- Ruta actual (ToolsXPath.cpp: currentXPath) ----------------------------------------------
 
-QString currentXPath(bool precise)
+QString currentXPath(int mode)
 {
     const std::string text = documentText();
     QuickXml::XmlFormaterParamsType params = QuickXml::XmlFormater::getDefaultParams();
-    int mode = precise ? (XPATH_MODE_WITHNAMESPACE | XPATH_MODE_KEEPIDATTRIBUTE) : XPATH_MODE_BASIC;
-    if (precise) {
-        params.identityAttribues = {"id", "name"}; // identityAttributes = "id;name"
-        params.dumpIdAttributesName = true;
+    if ((mode & XPATH_MODE_KEEPIDATTRIBUTE) && !g_options.identityAttributes.isEmpty()) {
+        params.dumpIdAttributesName = g_options.dumpAttributeName;
+        for (const QString& attribute : g_options.identityAttributes.split(QLatin1Char(';'), Qt::SkipEmptyParts))
+            params.identityAttribues.push_back(attribute.trimmed().toStdString());
     }
+    if (g_options.printXPathIndex)
+        mode |= XPATH_MODE_WITHNODEINDEX;
     QuickXml::XmlFormater formater(text.data(), text.size(), params);
     return QString::fromStdString(formater.currentPath(static_cast<size_t>(sci(SCI_GETCURRENTPOS)), mode)->str());
 }
 
+// printCurrentXPathInStatusbar
+void printCurrentXPathInStatusbar()
+{
+    if (sci(SCI_GETLENGTH) > kXPathStatusMaxLength)
+        return;
+    const QString path = currentXPath(XPATH_MODE_WITHNAMESPACE | XPATH_MODE_KEEPIDATTRIBUTE);
+    setStatus(path.isEmpty() ? QStringLiteral(" ") : path);
+}
+
 void showCurrentXPath(bool precise)
 {
-    const QString path = currentXPath(precise);
+    const QString path = currentXPath(precise ? (XPATH_MODE_WITHNAMESPACE | XPATH_MODE_KEEPIDATTRIBUTE) : XPATH_MODE_BASIC);
     if (path.isEmpty()) {
         info(QStringLiteral("Current node cannot be resolved."));
         return;
@@ -257,12 +440,16 @@ void removeCollector()
 
 int parseOptions(bool loadDtd)
 {
-    // doPreventXXE: sin red y sin sustituir entidades externas
+    // doPreventXXE (prohibitDTD/resolveExternals de MSXML): sin red y sin sustituir
+    // entidades externas. Sin la protección, se cargan la DTD y las entidades
     int options = XML_PARSE_NONET;
     if (loadDtd)
         options |= XML_PARSE_DTDLOAD | XML_PARSE_DTDATTR;
     if (!g_doPreventXXE)
-        options &= ~XML_PARSE_NONET;
+        options = (options & ~XML_PARSE_NONET) | XML_PARSE_DTDLOAD | XML_PARSE_NOENT;
+    // doAllowHuge: sin los límites de tamaño de libxml2 (nodos de más de 10 MB, anidamiento…)
+    if (g_doAllowHuge)
+        options |= XML_PARSE_HUGE;
     return options;
 }
 
@@ -276,24 +463,192 @@ xmlDocPtr parseDocument(const std::string& text, ErrorCollector& collector, bool
     return doc;
 }
 
-// Report de errores: el primero se selecciona; todos en la barra de estado y en un aviso
-void reportErrors(const std::vector<XmlError>& errors, const QString& what, bool silent)
+// --- Errores (ToolsErrors.cpp) ----------------------------------------------------------------
+
+// Los errores de cada documento (xmlErrors[bufferid]) y el que está resaltado
+struct BufferErrors
 {
-    const XmlError& first = errors.front();
-    if (first.line > 0) {
-        const intptr_t pos = sci(SCI_POSITIONFROMLINE, static_cast<uintptr_t>(first.line - 1));
-        sci(SCI_ENSUREVISIBLEENFORCEPOLICY, static_cast<uintptr_t>(first.line - 1));
-        sci(SCI_GOTOPOS, static_cast<uintptr_t>(pos + std::max(0, first.column - 1)));
+    std::vector<XmlError> errors;
+    size_t current = 0;
+    void* view = nullptr;
+};
+std::map<intptr_t, BufferErrors> g_errors;
+std::map<void*, int> g_annotationStyles; // el primero de los dos estilos de anotación de cada editor
+
+// Los dos estilos (error y error resaltado) con colores que se leen en temas claros y oscuros
+int annotationStyle(void* view)
+{
+    auto it = g_annotationStyles.find(view);
+    if (it == g_annotationStyles.end())
+        it = g_annotationStyles.emplace(view, static_cast<int>(g_data.send(view, SCI_ALLOCATEEXTENDEDSTYLES, 2, 0))).first;
+    const int style = it->second;
+    const intptr_t back = g_data.send(view, SCI_STYLEGETBACK, STYLE_DEFAULT, 0);
+    const int luma = static_cast<int>((back & 0xFF) * 3 + ((back >> 8) & 0xFF) * 6 + ((back >> 16) & 0xFF)) / 10;
+    const bool dark = luma < 128;
+    // Scintilla: 0xBBGGRR
+    const intptr_t fore = dark ? 0x9C9CFF : 0x1C1CA0;
+    const intptr_t errorBack = dark ? 0x2A2A4A : 0xE6E6FF;
+    const intptr_t highlightBack = dark ? 0x30309C : 0x4040D8;
+    std::string font(static_cast<size_t>(g_data.send(view, SCI_STYLEGETFONT, STYLE_DEFAULT, 0)) + 1, '\0');
+    g_data.send(view, SCI_STYLEGETFONT, STYLE_DEFAULT, reinterpret_cast<intptr_t>(font.data()));
+    for (int i = 0; i < 2; ++i) {
+        g_data.send(view, SCI_STYLESETFONT, static_cast<uintptr_t>(style + i), reinterpret_cast<intptr_t>(font.c_str()));
+        g_data.send(view, SCI_STYLESETSIZE, static_cast<uintptr_t>(style + i), g_data.send(view, SCI_STYLEGETSIZE, STYLE_DEFAULT, 0));
+        g_data.send(view, SCI_STYLESETITALIC, static_cast<uintptr_t>(style + i), 1);
     }
-    setStatus(QStringLiteral("XML Tools: %1 – line %2: %3").arg(what).arg(first.line).arg(first.message));
+    g_data.send(view, SCI_STYLESETFORE, static_cast<uintptr_t>(style), fore);
+    g_data.send(view, SCI_STYLESETBACK, static_cast<uintptr_t>(style), errorBack);
+    g_data.send(view, SCI_STYLESETFORE, static_cast<uintptr_t>(style + 1), 0xFFFFFF);
+    g_data.send(view, SCI_STYLESETBACK, static_cast<uintptr_t>(style + 1), highlightBack);
+    g_data.send(view, SCI_ANNOTATIONSETSTYLEOFFSET, static_cast<uintptr_t>(style), 0);
+    return style;
+}
+
+// clearErrors / clearAnnotations
+void clearErrors(intptr_t bufferId)
+{
+    auto it = g_errors.find(bufferId);
+    if (it == g_errors.end())
+        return;
+    if (it->second.view && bufferId == currentBufferId())
+        g_data.send(it->second.view, SCI_ANNOTATIONCLEARALL, 0, 0);
+    g_errors.erase(it);
+}
+
+// displayXMLError: el texto de cada error, bajo su línea (varios en la misma, juntos)
+void annotate(BufferErrors& entry)
+{
+    void* view = entry.view;
+    annotationStyle(view);
+    std::map<int, std::string> lines;
+    for (const XmlError& e : entry.errors) {
+        if (e.line <= 0)
+            continue;
+        std::string& text = lines[e.line - 1];
+        if (!text.empty())
+            text += '\n';
+        text += QStringLiteral("Line %1, pos %2: %3").arg(e.line).arg(e.column).arg(e.message).toStdString();
+    }
+    for (const auto& [line, text] : lines) {
+        g_data.send(view, SCI_ANNOTATIONSETTEXT, static_cast<uintptr_t>(line), reinterpret_cast<intptr_t>(text.c_str()));
+        g_data.send(view, SCI_ANNOTATIONSETSTYLE, static_cast<uintptr_t>(line), 0);
+    }
+    g_data.send(view, SCI_ANNOTATIONSETVISIBLE, ANNOTATION_BOXED, 0);
+}
+
+// highlightCurrentError: va al error y, con anotaciones, lo resalta
+void highlightCurrentError()
+{
+    auto it = g_errors.find(currentBufferId());
+    if (it == g_errors.end() || it->second.errors.empty())
+        return;
+    BufferErrors& entry = it->second;
+    const XmlError& err = entry.errors[entry.current];
+    setStatus(QStringLiteral("XML Tools: line %1: %2").arg(err.line).arg(err.message));
+    if (err.line <= 0)
+        return;
+    const auto line = static_cast<uintptr_t>(err.line - 1);
+    // centerOnPosition: la línea del error, con su anotación, en el centro
+    sci(SCI_ENSUREVISIBLEENFORCEPOLICY, line);
+    const intptr_t visible = sci(SCI_VISIBLEFROMDOCLINE, line);
+    const intptr_t onScreen = sci(SCI_LINESONSCREEN);
+    sci(SCI_SETFIRSTVISIBLELINE, static_cast<uintptr_t>(std::max<intptr_t>(0, visible - onScreen / 2)));
+    sci(SCI_GOTOPOS, static_cast<uintptr_t>(sci(SCI_POSITIONFROMLINE, line) + std::max(0, err.column - 1)));
+    if (g_options.errorDisplayMode != QLatin1String("Annotation"))
+        return;
+    // El error actual con el estilo resaltado; los demás de su línea, con el normal
+    std::string styles;
+    size_t offset = 0;
+    for (const XmlError& e : entry.errors) {
+        if (e.line != err.line)
+            continue;
+        const std::string text = QStringLiteral("Line %1, pos %2: %3").arg(e.line).arg(e.column).arg(e.message).toStdString();
+        if (offset > 0) {
+            styles += '\0';
+            ++offset;
+        }
+        styles.append(text.size(), &e == &err ? '\1' : '\0');
+        offset += text.size();
+    }
+    g_data.send(entry.view, SCI_ANNOTATIONSETSTYLES, line, reinterpret_cast<intptr_t>(styles.data()));
+}
+
+void highlightError(int which) // 0 primero, -1 anterior, 1 siguiente, 2 último
+{
+    auto it = g_errors.find(currentBufferId());
+    if (it == g_errors.end() || it->second.errors.empty())
+        return;
+    BufferErrors& entry = it->second;
+    switch (which) {
+    case 0: entry.current = 0; break;
+    case -1: if (entry.current > 0) --entry.current; break;
+    case 1: if (entry.current + 1 < entry.errors.size()) ++entry.current; break;
+    default: entry.current = entry.errors.size() - 1; break;
+    }
+    highlightCurrentError();
+}
+
+void highlightFirstError() { highlightError(0); }
+void highlightPreviousError() { highlightError(-1); }
+void highlightNextError() { highlightError(1); }
+void highlightLastError() { highlightError(2); }
+
+// La lista de errores, en una ventana que no bloquea (CMessageDlg)
+void showErrorsWindow(const QString& what, const std::vector<XmlError>& errors, size_t total)
+{
+    auto* dialog = new QDialog(QApplication::activeWindow());
+    dialog->setWindowTitle(QStringLiteral("XML Tools"));
+    dialog->setAttribute(Qt::WA_DeleteOnClose);
+    auto* layout = new QVBoxLayout(dialog);
+    auto* text = new QPlainTextEdit(dialog);
+    text->setReadOnly(true);
+    QStringList lines{what, QString()};
+    for (const XmlError& e : errors)
+        lines << (e.line > 0 ? QStringLiteral("Line %1, pos %2: %3").arg(e.line).arg(e.column).arg(e.message) : e.message);
+    if (total > errors.size())
+        lines << (total - errors.size() > 1 ? QStringLiteral("%1 errors follow but are not displayed").arg(total - errors.size())
+                                            : QStringLiteral("1 error follows but is not displayed"));
+    text->setPlainText(lines.join(QLatin1Char('\n')));
+    layout->addWidget(text, 1);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, dialog);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, dialog, &QDialog::close);
+    layout->addWidget(buttons);
+    dialog->resize(600, 320);
+    dialog->show();
+}
+
+// displayXMLErrors: se guardan para First/Previous/Next/Last error y se muestran según
+// errorDisplayMode; sin `silent` (comprobación al guardar), las ventanas no se abren
+void reportErrors(std::vector<XmlError> errors, const QString& what, bool silent)
+{
+    const intptr_t bufferId = currentBufferId();
+    clearErrors(bufferId);
+    const size_t total = errors.size();
+    if (g_options.maxErrorsNum >= 0 && errors.size() > static_cast<size_t>(g_options.maxErrorsNum))
+        errors.resize(static_cast<size_t>(std::max(1, g_options.maxErrorsNum)));
+    BufferErrors& entry = g_errors[bufferId];
+    entry.errors = errors;
+    entry.view = editor();
+    dbgln(what);
+    for (const XmlError& e : errors)
+        dbgln(QStringLiteral("  line %1, pos %2: %3").arg(e.line).arg(e.column).arg(e.message));
+    const bool positioned = errors.front().line > 0;
+    if (g_options.errorDisplayMode == QLatin1String("Annotation") && positioned)
+        annotate(entry);
+    if (g_options.errorDisplayMode != QLatin1String("Alert"))
+        highlightFirstError();
+    else
+        setStatus(QStringLiteral("XML Tools: %1 – line %2: %3").arg(what).arg(errors.front().line).arg(errors.front().message));
     if (silent)
         return;
-    QStringList lines;
-    for (size_t i = 0; i < errors.size() && i < 20; ++i)
-        lines << QStringLiteral("Line %1, column %2: %3").arg(errors[i].line).arg(errors[i].column).arg(errors[i].message);
-    if (errors.size() > 20)
-        lines << QStringLiteral("… (%1 errores en total)").arg(errors.size());
-    error(what + QStringLiteral(":\n\n") + lines.join(QLatin1Char('\n')));
+    if (g_options.errorDisplayMode == QLatin1String("Dialog")) {
+        showErrorsWindow(what, errors, total);
+    } else if (g_options.errorDisplayMode == QLatin1String("Alert") || !positioned) {
+        QStringList lines;
+        for (const XmlError& e : errors)
+            lines << (e.line > 0 ? QStringLiteral("Line %1, pos %2: %3").arg(e.line).arg(e.column).arg(e.message) : e.message);
+        error(what + QStringLiteral(":\n\n") + lines.join(QLatin1Char('\n')));
+    }
 }
 
 // manualXMLCheck / XMLValidation
@@ -305,6 +660,7 @@ bool checkSyntax(bool silent)
     if (doc)
         xmlFreeDoc(doc);
     if (ok) {
+        clearErrors(currentBufferId());
         setStatus(QStringLiteral("XML Tools: no error detected"));
         if (!silent)
             info(QStringLiteral("No error detected."));
@@ -398,11 +754,13 @@ bool validate(bool silent)
     removeCollector();
     xmlFreeDoc(doc);
     if (!validated) {
+        clearErrors(currentBufferId());
         if (!silent)
             info(QStringLiteral("No DTD or schema to validate against."));
         return true;
     }
     if (valid && collector.errors.empty()) {
+        clearErrors(currentBufferId());
         setStatus(QStringLiteral("XML Tools: XML is valid"));
         if (!silent)
             info(QStringLiteral("XML is valid."));
@@ -506,8 +864,9 @@ void xslTransform()
     ErrorCollector collector;
     xmlDocPtr doc = parseDocument(documentText(), collector, false);
     if (!doc) {
-        reportErrors(collector.errors.empty() ? std::vector<XmlError>{{0, 0, QStringLiteral("document is not XML")}} : collector.errors,
-                     QStringLiteral("XML Parsing error"), false);
+        if (collector.errors.empty())
+            collector.errors.push_back({0, 0, QStringLiteral("document is not XML")});
+        reportErrors(collector.errors, QStringLiteral("XML Parsing error"), false);
         return;
     }
     installCollector(&collector);
@@ -711,16 +1070,188 @@ void uncommentSelection()
     replaceSelection(str, start);
 }
 
+// --- Cierre de etiquetas (ToolsEditor.cpp: closeXMLTag) ---------------------------------------
+
+// Al escribir el '>' de <etiqueta ...>, añade </etiqueta> tras el cursor
+void closeXMLTag()
+{
+    constexpr intptr_t kBuffer = 511;
+    constexpr size_t kMaxTagName = 516;
+    const intptr_t currentPos = sci(SCI_GETCURRENTPOS);
+    const intptr_t startPos = std::max<intptr_t>(0, currentPos - kBuffer);
+    const intptr_t size = currentPos - startPos;
+    if (size < 3)
+        return;
+    const std::string buf = range(startPos, currentPos);
+    const char before = buf[static_cast<size_t>(size - 2)];
+    if (std::strchr("/-?])%", before))
+        return;
+    std::string insert = "</";
+    size_t cur = static_cast<size_t>(size - 2);
+    while (cur > 0 && buf[cur] != '<' && buf[cur] != '>')
+        --cur;
+    if (buf[cur] == '<') {
+        ++cur;
+        if (std::strchr("/!?[%", buf[cur]))
+            return;
+        while (cur < buf.size() && buf[cur] != '>' && buf[cur] != ' ' && buf[cur] != '\t' && buf[cur] != '\n' && buf[cur] != '\r') {
+            if (insert.size() == kMaxTagName - 1)
+                return;
+            insert += buf[cur++];
+        }
+    }
+    insert += '>';
+    if (insert.size() > 3) {
+        sci(SCI_BEGINUNDOACTION);
+        sci(SCI_REPLACESEL, 0, reinterpret_cast<intptr_t>(insert.c_str()));
+        sci(SCI_SETSEL, static_cast<uintptr_t>(currentPos), currentPos);
+        sci(SCI_ENDUNDOACTION);
+    }
+}
+
+// --- Opciones (OptionsDlg.cpp, Config.cpp) ----------------------------------------------------
+
+void saveOptions()
+{
+    QSettings ini(g_iniPath, QSettings::IniFormat);
+    ini.beginGroup(QStringLiteral("XML Tools"));
+    auto flag = [&](const char* key, bool value) { ini.setValue(QLatin1String(key), value ? 1 : 0); };
+    flag("doCheckXML", g_doCheckXML);
+    flag("doValidation", g_doValidation);
+    flag("doCloseTag", g_doCloseTag);
+    flag("doAutoXMLType", g_doAutoXMLType);
+    flag("doPreventXXE", g_doPreventXXE);
+    flag("doAllowHuge", g_doAllowHuge);
+    flag("doPrettyPrintAllOpenFiles", g_doPrettyPrintAllOpenFiles);
+    ini.setValue(QStringLiteral("errorDisplayMode"), g_options.errorDisplayMode);
+    ini.setValue(QStringLiteral("maxErrorsNum"), g_options.maxErrorsNum);
+    ini.setValue(QStringLiteral("maxIndentLevel"), g_options.maxIndentLevel);
+    flag("xpathOnStatusbar", g_options.xpathOnStatusbar);
+    flag("dumpAttributeName", g_options.dumpAttributeName);
+    flag("printXPathIndex", g_options.printXPathIndex);
+    ini.setValue(QStringLiteral("identityAttributes"), g_options.identityAttributes);
+    flag("ppAutoclose", g_options.ppAutoclose);
+    flag("ensureConformity", g_options.ensureConformity);
+    flag("applySpacePreserve", g_options.applySpacePreserve);
+}
+
+void loadOptions()
+{
+    QSettings ini(g_iniPath, QSettings::IniFormat);
+    ini.beginGroup(QStringLiteral("XML Tools"));
+    auto flag = [&](const char* key, bool& value) { value = ini.value(QLatin1String(key), value ? 1 : 0).toInt() == 1; };
+    flag("doCheckXML", g_doCheckXML);
+    flag("doValidation", g_doValidation);
+    flag("doCloseTag", g_doCloseTag);
+    flag("doAutoXMLType", g_doAutoXMLType);
+    flag("doPreventXXE", g_doPreventXXE);
+    flag("doAllowHuge", g_doAllowHuge);
+    flag("doPrettyPrintAllOpenFiles", g_doPrettyPrintAllOpenFiles);
+    const QString mode = ini.value(QStringLiteral("errorDisplayMode"), g_options.errorDisplayMode).toString();
+    if (mode == QLatin1String("Annotation") || mode == QLatin1String("Dialog") || mode == QLatin1String("Alert"))
+        g_options.errorDisplayMode = mode;
+    g_options.maxErrorsNum = ini.value(QStringLiteral("maxErrorsNum"), g_options.maxErrorsNum).toInt();
+    g_options.maxIndentLevel = std::max(0, ini.value(QStringLiteral("maxIndentLevel"), g_options.maxIndentLevel).toInt());
+    flag("xpathOnStatusbar", g_options.xpathOnStatusbar);
+    flag("dumpAttributeName", g_options.dumpAttributeName);
+    flag("printXPathIndex", g_options.printXPathIndex);
+    g_options.identityAttributes = ini.value(QStringLiteral("identityAttributes"), g_options.identityAttributes).toString();
+    flag("ppAutoclose", g_options.ppAutoclose);
+    flag("ensureConformity", g_options.ensureConformity);
+    flag("applySpacePreserve", g_options.applySpacePreserve);
+}
+
+// El original usa una cuadrícula de propiedades (CMFCPropertyGridCtrl); aquí, un formulario
+// con las mismas opciones, en sus grupos
+void optionsDlg()
+{
+    QDialog dialog(QApplication::activeWindow());
+    dialog.setWindowTitle(QStringLiteral("XML Tools options"));
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* form = new QFormLayout;
+    form->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
+    auto section = [&](const QString& title) {
+        auto* label = new QLabel(QStringLiteral("<b>%1</b>").arg(title), &dialog);
+        form->addRow(label);
+    };
+    auto check = [&](const QString& text, bool value, const QString& tip) {
+        auto* box = new QCheckBox(text, &dialog);
+        box->setChecked(value);
+        box->setToolTip(tip);
+        form->addRow(box);
+        return box;
+    };
+
+    section(QStringLiteral("Errors"));
+    auto* displayMode = new QComboBox(&dialog);
+    displayMode->addItem(QStringLiteral("Annotation"), QStringLiteral("Annotation"));
+    displayMode->addItem(QStringLiteral("Dialog"), QStringLiteral("Dialog"));
+    displayMode->addItem(QStringLiteral("Alert"), QStringLiteral("Alert"));
+    displayMode->setCurrentIndex(std::max(0, displayMode->findData(g_options.errorDisplayMode)));
+    displayMode->setToolTip(QStringLiteral("How the errors of the syntax check and the validation are shown: as annotations below "
+                                           "the lines, in a window, or in a message box."));
+    form->addRow(QStringLiteral("Error display mode:"), displayMode);
+    auto* maxErrors = new QSpinBox(&dialog);
+    maxErrors->setRange(-1, 10000);
+    maxErrors->setSpecialValueText(QStringLiteral("Unlimited"));
+    maxErrors->setValue(g_options.maxErrorsNum);
+    maxErrors->setToolTip(QStringLiteral("Maximum number of errors that are shown (-1: all)."));
+    form->addRow(QStringLiteral("Maximum number of errors:"), maxErrors);
+
+    section(QStringLiteral("Pretty print"));
+    auto* maxIndent = new QSpinBox(&dialog);
+    maxIndent->setRange(0, 1000);
+    maxIndent->setSpecialValueText(QStringLiteral("Unlimited"));
+    maxIndent->setValue(g_options.maxIndentLevel);
+    maxIndent->setToolTip(QStringLiteral("Deeper nodes are not indented any more (0: no limit)."));
+    form->addRow(QStringLiteral("Maximum indent level:"), maxIndent);
+    QCheckBox* autoclose = check(QStringLiteral("Auto-close empty tags (<a></a> → <a/>)"), g_options.ppAutoclose,
+                                 QStringLiteral("Tags without content are written as self-closing tags."));
+    QCheckBox* conformity = check(QStringLiteral("Ensure conformity"), g_options.ensureConformity,
+                                  QStringLiteral("Keep the whitespace that would change the meaning of the text nodes."));
+    QCheckBox* spacePreserve = check(QStringLiteral("Apply xml:space=\"preserve\""), g_options.applySpacePreserve,
+                                     QStringLiteral("Do not format the content of the nodes with xml:space=\"preserve\"."));
+
+    section(QStringLiteral("XPath"));
+    QCheckBox* statusbar = check(QStringLiteral("Show the current XML path in the status bar"), g_options.xpathOnStatusbar,
+                                 QStringLiteral("Updated as the caret moves in XML documents."));
+    QCheckBox* dumpName = check(QStringLiteral("Show the name of the identity attributes"), g_options.dumpAttributeName,
+                                QStringLiteral("item[@id='1'] instead of item['1']."));
+    QCheckBox* index = check(QStringLiteral("Show the node index"), g_options.printXPathIndex,
+                             QStringLiteral("item[2] for the second item of its parent."));
+    auto* identity = new QLineEdit(g_options.identityAttributes, &dialog);
+    identity->setToolTip(QStringLiteral("Attributes that identify a node in \"Current XML Path with predicates\", separated by ';'."));
+    form->addRow(QStringLiteral("Identity attributes:"), identity);
+
+    layout->addLayout(form);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+    g_options.errorDisplayMode = displayMode->currentData().toString();
+    g_options.maxErrorsNum = maxErrors->value();
+    g_options.maxIndentLevel = maxIndent->value();
+    g_options.ppAutoclose = autoclose->isChecked();
+    g_options.ensureConformity = conformity->isChecked();
+    g_options.applySpacePreserve = spacePreserve->isChecked();
+    g_options.xpathOnStatusbar = statusbar->isChecked();
+    g_options.dumpAttributeName = dumpName->isChecked();
+    g_options.printXPathIndex = index->isChecked();
+    g_options.identityAttributes = identity->text().trimmed();
+    saveOptions();
+}
+
 // --- Menú (nppMenu.cpp) -------------------------------------------------------------------
 
-void toggleCheckXML();
-void toggleValidation();
 void manualCheck() { checkSyntax(false); }
 void manualValidation() { validate(false); }
 void prettyPrint() { format(Format::PrettyPrint); }
 void prettyPrintAttributes() { format(Format::IndentAttributes); }
 void prettyPrintIndentOnly() { format(Format::IndentOnly); }
 void linearize() { format(Format::Linearize); }
+void tokenize() { format(Format::Tokenize); }
 void currentPath() { showCurrentXPath(false); }
 void currentPathPredicates() { showCurrentXPath(true); }
 void about()
@@ -729,6 +1260,21 @@ void about()
                         "the original QuickXml library with libxml2 instead of MSXML.\n%2")
              .arg(QString::fromUtf8(EDITA_PLUGIN_VERSION), QString::fromUtf8(EDITA_PLUGIN_HOMEPAGE)));
 }
+
+// Las opciones que se marcan en el menú
+struct Toggle
+{
+    bool* value;
+    int index; // en g_funcs
+};
+void toggle(int which);
+void toggleCheckXML() { toggle(0); }
+void toggleValidation() { toggle(1); }
+void toggleCloseTag() { toggle(2); }
+void toggleAutoXMLType() { toggle(3); }
+void togglePreventXXE() { toggle(4); }
+void toggleAllowHuge() { toggle(5); }
+void togglePrettyPrintAllFiles() { toggle(6); }
 
 // createShortcut: Ctrl+Alt+Mayús + letra
 EditaShortcutKey g_keyM{true, true, true, 'M'};
@@ -745,11 +1291,23 @@ EditaFuncItem g_funcs[] = {
     {"", nullptr, 0, false, nullptr},
     {"Enable auto-validation", toggleValidation, 0, false, nullptr},
     {"Validate now", manualValidation, 0, false, &g_keyM},
+    {"First error", highlightFirstError, 0, false, nullptr},
+    {"Previous error", highlightPreviousError, 0, false, nullptr},
+    {"Next error", highlightNextError, 0, false, nullptr},
+    {"Last error", highlightLastError, 0, false, nullptr},
+    {"", nullptr, 0, false, nullptr},
+    {"Tag auto-close", toggleCloseTag, 0, true, nullptr},
+    {"", nullptr, 0, false, nullptr},
+    {"Set XML type automatically", toggleAutoXMLType, 0, true, nullptr},
+    {"Prevent XXE", togglePreventXXE, 0, true, nullptr},
+    {"Allow huge files", toggleAllowHuge, 0, false, nullptr},
     {"", nullptr, 0, false, nullptr},
     {"Pretty print", prettyPrint, 0, false, &g_keyB},
     {"Pretty print - indent attributes", prettyPrintAttributes, 0, false, &g_keyA},
     {"Pretty print - indent only", prettyPrintIndentOnly, 0, false, nullptr},
     {"Linearize", linearize, 0, false, &g_keyL},
+    {"Apply to all open files", togglePrettyPrintAllFiles, 0, false, nullptr},
+    {"Tokenize (debug)", tokenize, 0, false, nullptr},
     {"", nullptr, 0, false, nullptr},
     {"Current XML Path", currentPath, 0, false, nullptr},
     {"Current XML Path with predicates", currentPathPredicates, 0, false, &g_keyP},
@@ -763,32 +1321,28 @@ EditaFuncItem g_funcs[] = {
     {"Comment selection", commentSelection, 0, false, &g_keyC},
     {"Uncomment selection", uncommentSelection, 0, false, &g_keyR},
     {"", nullptr, 0, false, nullptr},
+    {"Options...", optionsDlg, 0, false, nullptr},
+    {"Debug window...", showDebugDlg, 0, false, nullptr},
     {"About XML Tools...", about, 0, false, nullptr},
 };
-constexpr int kCheckIndex = 0;
-constexpr int kValidationIndex = 3;
 
-void saveOptions()
-{
-    QSettings ini(g_iniPath, QSettings::IniFormat);
-    ini.beginGroup(QStringLiteral("XML Tools"));
-    ini.setValue(QStringLiteral("doCheckXML"), g_doCheckXML ? 1 : 0);
-    ini.setValue(QStringLiteral("doValidation"), g_doValidation ? 1 : 0);
-    ini.setValue(QStringLiteral("doPreventXXE"), g_doPreventXXE ? 1 : 0);
-}
+const Toggle g_toggles[] = {
+    {&g_doCheckXML, 0},  {&g_doValidation, 3},  {&g_doCloseTag, 10},
+    {&g_doAutoXMLType, 12}, {&g_doPreventXXE, 13}, {&g_doAllowHuge, 14},
+    {&g_doPrettyPrintAllOpenFiles, 20},
+};
 
-void toggleCheckXML()
+void toggle(int which)
 {
-    g_doCheckXML = !g_doCheckXML;
-    g_data.send(g_data.host, NPPM_SETMENUITEMCHECK, static_cast<uintptr_t>(g_funcs[kCheckIndex].cmdID), g_doCheckXML);
+    const Toggle& t = g_toggles[which];
+    *t.value = !*t.value;
+    g_data.send(g_data.host, NPPM_SETMENUITEMCHECK, static_cast<uintptr_t>(g_funcs[t.index].cmdID), *t.value);
     saveOptions();
 }
 
-void toggleValidation()
+bool isEditor(void* from)
 {
-    g_doValidation = !g_doValidation;
-    g_data.send(g_data.host, NPPM_SETMENUITEMCHECK, static_cast<uintptr_t>(g_funcs[kValidationIndex].cmdID), g_doValidation);
-    saveOptions();
+    return from && (from == g_data.mainEditor || from == g_data.subEditor);
 }
 
 } // namespace
@@ -809,13 +1363,9 @@ EDITA_PLUGIN_EXPORT void setInfo(EditaData data)
     std::string buffer(4096, '\0');
     data.send(data.host, NPPM_GETPLUGINSCONFIGDIR, buffer.size(), reinterpret_cast<intptr_t>(buffer.data()));
     g_iniPath = QDir(QString::fromUtf8(buffer.c_str())).filePath(QStringLiteral("XMLTools.ini"));
-    QSettings ini(g_iniPath, QSettings::IniFormat);
-    ini.beginGroup(QStringLiteral("XML Tools"));
-    g_doCheckXML = ini.value(QStringLiteral("doCheckXML"), 1).toInt() == 1;
-    g_doValidation = ini.value(QStringLiteral("doValidation"), 0).toInt() == 1;
-    g_doPreventXXE = ini.value(QStringLiteral("doPreventXXE"), 1).toInt() == 1;
-    g_funcs[kCheckIndex].init2Check = g_doCheckXML;
-    g_funcs[kValidationIndex].init2Check = g_doValidation;
+    loadOptions();
+    for (const Toggle& t : g_toggles)
+        g_funcs[t.index].init2Check = *t.value;
 }
 
 EDITA_PLUGIN_EXPORT const char* getName(void)
@@ -829,17 +1379,54 @@ EDITA_PLUGIN_EXPORT EditaFuncItem* getFuncsArray(int* count)
     return g_funcs;
 }
 
+// XMLTools.cpp: beNotified
 EDITA_PLUGIN_EXPORT void beNotified(SCNotification* n)
 {
-    // Comprobación automática al guardar un documento XML (sin avisos que bloqueen)
-    if (n->nmhdr.hwndFrom != g_data.host || n->nmhdr.code != NPPN_FILESAVED)
+    const unsigned code = n->nmhdr.code;
+    if (isEditor(n->nmhdr.hwndFrom)) {
+        // Solo lo que pasa en el editor activo
+        if (n->nmhdr.hwndFrom != editor())
+            return;
+        if (code == SCN_CHARADDED) {
+            // closeXMLTag antes que lo demás
+            if (setAutoXMLType() == kLangXml && g_doCloseTag && n->ch == '>')
+                closeXMLTag();
+        } else if (code == SCN_MODIFIED) {
+            // Al cambiar el texto, las anotaciones de errores ya no corresponden
+            if ((n->modificationType & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) && g_errors.count(currentBufferId()))
+                clearErrors(currentBufferId());
+        } else if (code == SCN_UPDATEUI) {
+            if (g_options.xpathOnStatusbar && (n->updated & (SC_UPDATE_SELECTION | SC_UPDATE_CONTENT))
+                && setAutoXMLType() == kLangXml)
+                printCurrentXPathInStatusbar();
+        }
         return;
-    if (g_data.send(g_data.host, NPPM_GETBUFFERLANGTYPE, n->nmhdr.idFrom, 0) != kLangXml)
+    }
+    if (n->nmhdr.hwndFrom != g_data.host)
         return;
-    if (g_doValidation)
-        validate(true);
-    else if (g_doCheckXML)
-        checkSyntax(true);
+    switch (code) {
+    case NPPN_BUFFERACTIVATED:
+        setAutoXMLType();
+        break;
+    case NPPN_FILEBEFORECLOSE:
+        g_errors.erase(static_cast<intptr_t>(n->nmhdr.idFrom));
+        break;
+    case NPPN_FILESAVED:
+        // Comprobación automática al guardar un documento XML (sin avisos que bloqueen)
+        if (g_data.send(g_data.host, NPPM_GETBUFFERLANGTYPE, n->nmhdr.idFrom, 0) != kLangXml)
+            break;
+        if (g_doValidation)
+            validate(true);
+        else if (g_doCheckXML)
+            checkSyntax(true);
+        break;
+    case NPPN_SHUTDOWN:
+        if (g_debugDialog)
+            delete g_debugDialog.data();
+        break;
+    default:
+        break;
+    }
 }
 
 EDITA_PLUGIN_EXPORT intptr_t messageProc(unsigned int, uintptr_t, intptr_t)

@@ -29,10 +29,12 @@ Después del MVP:
 - Fase 21: **Editor de columnas** (Alt+C): texto o números (incremento, repetición, base, relleno) en la columna del cursor o en cada línea de una selección rectangular.
 - Fase 22: **paneles** de N++: Lista de documentos, Mapa del documento, Lista de funciones (con los analizadores `functionList` de N++) y Explorador de carpetas (Archivo > Abrir carpeta como espacio de trabajo).
 - Fase 23: temas **Edita Light** y **Edita Dark** (de serie), generados de los de N++ para combinar con la interfaz.
+- Fase 24: **AppImage portable**, generado en Ubuntu 22.04 con el Qt 6.8 oficial (`packaging/appimage/build-portable.sh`, sin Docker): funciona en Ubuntu 22.04+, Debian 12+, Fedora 36+…
+- Fase 25: **XML Tools completo**: navegación entre errores (con anotaciones), cierre automático de etiquetas, tipo XML automático, XXE, archivos enormes, aplicar a todos los archivos, tokenizar, opciones y ventana de depuración.
 
 Plan en [docs/fase1-analisis.md](docs/fase1-analisis.md);
 registro de cada fase: [0](docs/fase0.md), [1](docs/fase1.md), [2](docs/fase2.md),
-[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md).
+[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md).
 
 Uso: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst]`
 
@@ -63,7 +65,7 @@ Opciones de CMake:
 
 ## AppImage
 
-`editor/packaging/appimage/build-appimage.sh` genera `dist/Edita-<versión>-x86_64.AppImage`, con Qt, los plugins y Python incluidos. Funciona en sistemas con una glibc igual o más nueva que la del equipo donde se generó. Ver [docs/empaquetado.md](docs/empaquetado.md).
+`editor/packaging/appimage/build-portable.sh` genera `dist/Edita-<versión>-x86_64.AppImage`, con Qt, los plugins y Python incluidos. Lo genera en Ubuntu 22.04, así que funciona en Ubuntu 22.04+, Debian 12+, Fedora 36+ y posteriores. `build-appimage.sh` lo genera con el sistema propio, y entonces solo funciona en sistemas con una glibc igual o más nueva. Ver [docs/empaquetado.md](docs/empaquetado.md).
 
 ## Estructura
 
@@ -82,7 +84,7 @@ tools/         import-third-party.sh: regenera third_party/ desde referencia/npp
 plugin-sdk/    edita_plugin.h: API para escribir plugins (se instala en include/edita); compat/ y cmake/: capa Win32 y funciones de CMake para compilar plugins de N++ (en share/edita/plugin-sdk)
 plugins/       plugin de ejemplo en C (EditaDemo) y Python Script
 docs/          análisis, registro de cada fase, guía de plugins y empaquetado
-packaging/     appimage/: script para generar el AppImage
+packaging/     appimage/: scripts para generar el AppImage (el portable, en Ubuntu 22.04)
 ```
 
 `third_party/` se regenera con `tools/import-third-party.sh`. Los parches

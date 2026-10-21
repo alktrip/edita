@@ -297,6 +297,8 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 21 — Editor de columnas | `ColumnEditorDlg` (Alt+C): texto o números en columna, con selección rectangular, varias selecciones o desde el cursor | ✅ [fase21.md](fase21.md) |
 | 22 — Paneles | Lista de documentos, Mapa del documento, Lista de funciones (port de `functionParser.cpp` y los XML de N++) y Explorador de carpetas (en `session.xml`) | ✅ [fase22.md](fase22.md) |
 | 23 — Temas de Edita | «Edita Light» y «Edita Dark», generados de `stylers.model.xml`, como temas de serie | ✅ [fase23.md](fase23.md) |
+| 24 — AppImage portable | Generado en Ubuntu 22.04 (glibc 2.35) con Qt 6.8 oficial, con `unshare` + `chroot` y sin Docker | ✅ [fase24.md](fase24.md) |
+| 25 — XML Tools completo | Las 29 órdenes del original: errores (anotaciones y navegación), cierre de etiquetas, tipo XML automático, XXE, archivos enormes, todos los archivos, tokenizar, opciones y depuración | ✅ [fase25.md](fase25.md) |
 
 ---
 
