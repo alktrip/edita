@@ -59,3 +59,8 @@ obra propia de Edita, con la misma licencia (GPL v3 o posterior).
 
 Bibliotecas del sistema enlazadas dinámicamente: Qt 6 (LGPL v3), glibc (iconv, LGPL 2.1),
 Python 3 (licencia PSF, solo el plugin Python Script).
+
+El AppImage portable (packaging/appimage/build-portable.sh) incluye el Qt 6.8
+oficial de The Qt Company (LGPL v3, instalado con aqtinstall), bibliotecas de
+Ubuntu 22.04 que no forman parte del sistema base (cada una con su licencia,
+en su mayoría LGPL, MIT o BSD) y la biblioteca estándar de Python 3.10 (licencia PSF).

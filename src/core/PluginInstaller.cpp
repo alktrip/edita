@@ -33,6 +33,14 @@ namespace edita::plugin_installer {
 
 namespace {
 
+// ZIP_LENGTH_TO_END es de libzip 1.10; antes, -1 ya significaba «hasta el final»
+// (Ubuntu 22.04 trae la 1.7)
+#ifdef ZIP_LENGTH_TO_END
+constexpr zip_int64_t kZipLengthToEnd = ZIP_LENGTH_TO_END;
+#else
+constexpr zip_int64_t kZipLengthToEnd = -1;
+#endif
+
 void setError(QString* error, const QString& text)
 {
     if (error)
@@ -194,7 +202,7 @@ bool createZip(const QString& zipPath, const std::vector<std::pair<QString, QStr
         return false;
     }
     for (const auto& [name, path] : files) {
-        zip_source_t* source = zip_source_file(archive, QFile::encodeName(path).constData(), 0, ZIP_LENGTH_TO_END);
+        zip_source_t* source = zip_source_file(archive, QFile::encodeName(path).constData(), 0, kZipLengthToEnd);
         if (!source || zip_file_add(archive, name.toUtf8().constData(), source, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8) < 0) {
             if (source)
                 zip_source_free(source);

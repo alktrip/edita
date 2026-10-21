@@ -12,8 +12,12 @@
 #   4. empaqueta el AppDir en el AppImage.
 #
 # Uso: editor/packaging/appimage/build-appimage.sh
+# Los plugins van en usr/lib/edita/plugins también en Debian y Ubuntu (donde
+# GNUInstallDirs usaría lib/x86_64-linux-gnu).
 # Variables: WORK (carpeta de trabajo, por defecto build-appimage junto a editor/),
-#            OUT (dónde se deja el AppImage, por defecto dist/ junto a editor/).
+#            OUT (dónde se deja el AppImage, por defecto dist/ junto a editor/),
+#            QMAKE_BIN (el qmake del Qt que se empaqueta; por defecto qmake6),
+#            CMAKE_EXTRA (más opciones para cmake, p. ej. -DCMAKE_PREFIX_PATH=…).
 #
 # El AppImage usa la glibc del sistema donde se ejecuta: funciona en sistemas con una
 # glibc igual o más nueva que la del equipo donde se generó. Para que sirva en más
@@ -46,7 +50,8 @@ fetch() {
     fi
 }
 
-for tool in cmake ninja curl qmake6 python3; do
+QMAKE_BIN=${QMAKE_BIN:-qmake6}
+for tool in cmake ninja curl "$QMAKE_BIN" python3; do
     command -v "$tool" >/dev/null || { echo "Falta $tool" >&2; exit 1; }
 done
 mkdir -p "$TOOLS" "$OUT"
@@ -63,7 +68,9 @@ log "Compilando Edita (Release)"
 cmake -S "$SRC" -B "$WORK/build" -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr \
-    -DEDITA_BUILD_TESTS=OFF
+    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DEDITA_BUILD_TESTS=OFF \
+    ${CMAKE_EXTRA:-}
 cmake --build "$WORK/build"
 VERSION=$(sed -n 's/^CMAKE_PROJECT_VERSION:STATIC=//p' "$WORK/build/CMakeCache.txt")
 
@@ -106,7 +113,7 @@ log "Copiando Qt y las dependencias (linuxdeploy)"
 # instalan otros (KDE: kimg_*, el tema de Plasma, estilos), que arrastran sus propias
 # bibliotecas. Ve solo los de Qt: un qmake que apunta QT_INSTALL_PLUGINS a una copia
 # (con enlaces) sin esos
-QT_PLUGINS=$(qmake6 -query QT_INSTALL_PLUGINS)
+QT_PLUGINS=$("$QMAKE_BIN" -query QT_INSTALL_PLUGINS)
 FARM=$WORK/qt-plugins
 rm -rf "$FARM"
 for dir in "$QT_PLUGINS"/*/; do
@@ -124,12 +131,17 @@ for dir in "$QT_PLUGINS"/*/; do
 done
 cat > "$TOOLS/qmake" <<EOF
 #!/bin/sh
-qmake6 "\$@" | sed -e 's|^QT_INSTALL_PLUGINS\(/[a-z]*\)\{0,1\}:.*|QT_INSTALL_PLUGINS\1:$FARM|' -e 's|^$QT_PLUGINS\$|$FARM|'
+"$QMAKE_BIN" "\$@" | sed -e 's|^QT_INSTALL_PLUGINS\(/[a-z]*\)\{0,1\}:.*|QT_INSTALL_PLUGINS\1:$FARM|' -e 's|^$QT_PLUGINS\$|$FARM|'
 EOF
 chmod +x "$TOOLS/qmake"
 export QMAKE=$TOOLS/qmake
 # Wayland además de X11 (xcb); y los textos de Qt traducidos (qtbase_es…)
-export EXTRA_PLATFORM_PLUGINS="libqwayland.so;libqoffscreen.so" # offscreen: sin pantalla (pruebas)
+# (libqwayland.so desde Qt 6.10; antes, libqwayland-generic.so y libqwayland-egl.so)
+PLATFORMS="libqoffscreen.so" # offscreen: sin pantalla (pruebas)
+for file in "$FARM"/platforms/libqwayland*.so; do
+    [[ -e $file ]] && PLATFORMS+=";$(basename "$file")"
+done
+export EXTRA_PLATFORM_PLUGINS="$PLATFORMS"
 export EXTRA_QT_MODULES="waylandclient"
 export EXTRA_QT_PLUGINS="$EXTRA_QT_MODULES" # nombre en versiones anteriores del plugin
 export LDAI_OUTPUT="$OUT/Edita-$VERSION-$ARCH.AppImage"

@@ -23,9 +23,19 @@ Detalles:
 
 ## En qué sistemas funciona
 
-**El AppImage necesita una glibc igual o más nueva que la del equipo donde se generó.** Generado en Arch (glibc 2.44), solo funciona en distribuciones igual de recientes. Para que sirva en más, hay que generarlo en una distribución más antigua, por ejemplo en un contenedor, con Qt 6.7 o posterior (las distribuciones antiguas traen un Qt anterior; se puede instalar aparte).
+El AppImage usa la glibc del sistema donde se ejecuta: necesita una igual o más nueva que la del equipo donde se generó. Generado con `build-appimage.sh` en Arch (glibc 2.44), solo funciona en distribuciones igual de recientes.
+
+Para que funcione en casi todas, está `build-portable.sh` ([fase 24](fase24.md)). Genera el AppImage dentro de Ubuntu 22.04 (glibc 2.35) con el Qt 6.8 oficial, sin Docker ni privilegios:
+
+```sh
+editor/packaging/appimage/build-portable.sh     # Ubuntu 22.04+, Debian 12+, Fedora 36+…
+```
+
+Descarga el sistema base de Ubuntu (comprobado con su SHA-256) a `build-portable/rootfs`. Entra en él con `unshare` y `chroot`, instala allí el compilador, las bibliotecas y Qt (con aqtinstall), y ejecuta `build-appimage.sh`. Necesita `unshare` con `--map-auto` (rangos en `/etc/subuid` y `/etc/subgid`), `curl` e internet la primera vez.
+
+`build-appimage.sh` acepta `QMAKE_BIN` (el qmake del Qt que se empaqueta) y `CMAKE_EXTRA` (más opciones para cmake), para usarlo con otro Qt.
 
 ## Limitaciones
 
-- **Plugins compilados desde su código (recetas, fase 15):** se compilan con el Qt y el compilador del sistema, y dentro del AppImage se cargan con el Qt del AppImage. Funciona si el Qt del sistema no es más nuevo que el del AppImage. Hacen falta cmake, un compilador de C++ y las cabeceras de desarrollo de Qt 6.
+- **Plugins compilados desde su código (recetas, fase 15):** se compilan con el Qt y el compilador del sistema, y dentro del AppImage se cargan con el Qt del AppImage (6.8 en el portable). Funciona si el Qt del sistema no es más nuevo que el del AppImage. Hacen falta cmake, un compilador de C++ y las cabeceras de desarrollo de Qt 6.
 - La integración con el escritorio va por el portal de XDG (`xdgdesktopportal`), que también da el diálogo de archivos del escritorio. El tema de Plasma no va incluido.

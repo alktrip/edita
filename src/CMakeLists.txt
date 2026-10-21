@@ -5,6 +5,7 @@ target_compile_options(edita_warnings INTERFACE
     -Wnon-virtual-dtor -Woverloaded-virtual
     $<$<BOOL:${EDITA_WERROR}>:-Werror>)
 
+include(GNUInstallDirs) # CMAKE_INSTALL_LIBDIR, también en AppInfo.h
 configure_file(config/AppInfo.h.in ${CMAKE_CURRENT_BINARY_DIR}/generated/AppInfo.h @ONLY)
 
 # Núcleo sin widgets (documentos, encoding, configuración…): testeable por separado
@@ -215,7 +216,6 @@ qt_add_resources(edita_ui edita_translations
     BASE ${CMAKE_CURRENT_BINARY_DIR}
     FILES ${EDITA_QM_FILES})
 
-include(GNUInstallDirs)
 install(TARGETS ${EDITA_APP_ID} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ DESTINATION ${CMAKE_INSTALL_DATADIR}/${EDITA_APP_ID})
 # Menú del escritorio: <id>.desktop y el ícono <id>.png en el tema hicolor

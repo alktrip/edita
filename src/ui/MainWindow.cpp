@@ -2613,10 +2613,10 @@ QStringList MainWindow::pluginDirectories() const
     for (const QString& dir : qEnvironmentVariable("EDITA_PLUGIN_PATH").split(QLatin1Char(':'), Qt::SkipEmptyParts))
         dirs << dir;
     dirs << QDir(paths::configDir()).filePath(QStringLiteral("plugins"));
-    // Junto al binario (build de desarrollo) y en <prefijo>/lib/<id>/plugins (instalado)
+    // Junto al binario (build de desarrollo) y en <prefijo>/<libdir>/<id>/plugins (instalado)
     const QDir app(QCoreApplication::applicationDirPath());
     dirs << app.filePath(QStringLiteral("plugins"));
-    for (const char* lib : {"lib", "lib64"})
+    for (const char* lib : {kInstallLibDir, "lib", "lib64"})
         dirs << app.filePath(QStringLiteral("../%1/%2/plugins").arg(QLatin1String(lib), QString::fromUtf8(kAppId)));
     dirs.removeDuplicates();
     return dirs;

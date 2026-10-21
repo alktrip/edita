@@ -6,5 +6,7 @@ namespace edita {
 inline constexpr const char* kAppId = "@EDITA_APP_ID@";
 inline constexpr const char* kAppName = "@PROJECT_NAME@";
 inline constexpr const char* kAppVersion = "@PROJECT_VERSION@";
+// Donde se instalan los plugins, relativo al prefijo (lib, lib64, lib/x86_64-linux-gnu…)
+inline constexpr const char* kInstallLibDir = "@CMAKE_INSTALL_LIBDIR@";
 
 } // namespace edita
