@@ -50,6 +50,8 @@ public:
     BufferId bufferAt(int index) const;
     std::vector<BufferId> buffers() const;
     TabState stateAt(int index) const;
+    // El indicador de un estado (punto, candado o hueco), con los colores del modo actual
+    static QIcon iconForState(TabState state);
 
 signals:
     // Doble clic en la zona vacía de la barra (N++: nuevo documento)

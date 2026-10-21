@@ -48,6 +48,9 @@ se incluye en Edita. Las recetas contienen solo los archivos del port:
       https://github.com/morbac/xmltools (receta: un parche y XMLToolsEdita.cpp,
       que usa su biblioteca QuickXml; libxml2 y libxslt, licencia MIT)
 
+data/functionList/: los analizadores de la Lista de funciones de Notepad++
+(installer/functionList/), sin cambios, con su licencia GPL.
+
 resources/: el logo y los iconos de la interfaz (resources/icons/ui/) son
 obra propia de Edita, con la misma licencia (GPL v3 o posterior).
 

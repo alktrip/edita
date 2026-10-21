@@ -29,9 +29,11 @@
 #include "ui/DocTabBar.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
+#include "ui/FunctionParser.h"
 #include "ui/Icons.h"
 #include "ui/Indentation.h"
 #include "ui/MacroSteps.h"
+#include "ui/Panels.h"
 #include "ui/PluginManager.h"
 #include "ui/PreferencesDialog.h"
 #include "ui/Printer.h"
@@ -63,6 +65,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFileSystemWatcher>
+#include <QFileDialog>
 #include <QInputDialog>
 #include <QKeySequence>
 #include <QLocale>
@@ -154,7 +157,9 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionRecordMacro", 42018},    {"actionPlayMacro", 42021},      {"actionSaveMacro", 42025},
         {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionEol0", 45001},
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
-        {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},
+        {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
+        {"actionDocumentList", 44070},   {"actionFunctionList", 44084},   {"actionFolderAsWorkspace", 44085},
+        {"actionOpenFolderAsWorkspace", 41022},
     };
     for (const auto& [name, idm] : kCommands) {
         if (actionName == QLatin1String(name))
@@ -346,6 +351,7 @@ MainWindow::MainWindow(QWidget* parent)
             _prompter->warn(this, tr("Macros"), tr("Could not read %1").arg(shortcutsPath()));
         });
     }
+    createPanels();
     createMenus();
     resize(1000, 700);
 
@@ -379,7 +385,14 @@ MainWindow::MainWindow(QWidget* parent)
             notifyPlugins(NPPN_FILEOPENED, id);
         }
     });
-    connect(&_documents, &DocumentManager::bufferClosed, this, [this] { syncWatchedFiles(); });
+    connect(&_documents, &DocumentManager::bufferClosed, this, [this] {
+        syncWatchedFiles();
+        QTimer::singleShot(0, this, [this] { updatePanels(); });
+    });
+    connect(&_documents, &DocumentManager::bufferChanged, this, [this](BufferId, int mask) {
+        if (mask & (BufferChange::Dirty | BufferChange::Filename | BufferChange::ReadOnly | BufferChange::Language))
+            updatePanels();
+    });
 
     // Modo "snapshot": copias periódicas de los cambios sin guardar
     _backupTimer = new QTimer(this);
@@ -529,6 +542,12 @@ void MainWindow::showWarnings(const QString& title, const QStringList& warnings)
 
 MainWindow::~MainWindow()
 {
+    // Al cerrar, QWidget oculta los paneles cuando los miembros de esta clase ya no
+    // existen: que no avisen
+    for (const QPointer<QDockWidget>& dock : _panelDocks) {
+        if (dock)
+            dock->disconnect(this);
+    }
     if (_fileJob) {
         _fileJob->cancel();
         _fileJob->wait();
@@ -632,6 +651,11 @@ void MainWindow::createMenus()
     QMenu* file = menuBar()->addMenu(tr("&File"));
     addAction(file, tr("&New"), "actionNew", QKeySequence::New, [this] { newDocument(); });
     addAction(file, tr("&Open…"), "actionOpen", QKeySequence::Open, [this] { openWithDialog(); });
+    addAction(file, tr("Open Folder as Wor&kspace…"), "actionOpenFolderAsWorkspace", QKeySequence(), [this] {
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Open Folder as Workspace"));
+        if (!dir.isEmpty())
+            addFolderToWorkspace(dir);
+    });
     addAction(file, tr("Re&load from Disk"), "actionReload", QKeySequence(), [this] { reloadBuffer(currentBuffer()); });
     file->addSeparator();
     addAction(file, tr("&Save"), "actionSave", QKeySequence::Save, [this] { saveBuffer(currentBuffer()); });
@@ -818,6 +842,25 @@ void MainWindow::createMenus()
 
     // Ver
     QMenu* view = menuBar()->addMenu(tr("&View"));
+    // IDM_VIEW_DOC_MAP, IDM_VIEW_DOCLIST, IDM_VIEW_FUNC_LIST, IDM_VIEW_FILEBROWSER
+    const std::pair<const char*, QString> panelEntries[] = {
+        {"documentMap", tr("Document &Map")}, {"documentList", tr("Document &List")},
+        {"functionList", tr("&Function List")}, {"folderAsWorkspace", tr("Folder as &Workspace")},
+    };
+    for (const auto& [name, text] : panelEntries) {
+        QDockWidget* dock = panelDock(QString::fromLatin1(name));
+        QAction* toggle = view->addAction(text);
+        QString actionName = QString::fromLatin1(name);
+        actionName[0] = actionName[0].toUpper();
+        toggle->setObjectName(QStringLiteral("action") + actionName);
+        toggle->setCheckable(true);
+        toggle->setChecked(dock->isVisibleTo(this));
+        connect(toggle, &QAction::toggled, dock, &QDockWidget::setVisible);
+        connect(dock, &QDockWidget::visibilityChanged, toggle, [this, toggle, dock] {
+            toggle->setChecked(dock->isVisibleTo(this));
+        });
+    }
+    view->addSeparator();
     _wrapAction = addAction(view, tr("&Word wrap"), "actionWrap", QKeySequence(),
                             [this](bool checked) { toggleViewOption(&Preferences::wrap, checked); });
     _wrapAction->setCheckable(true);
@@ -1116,20 +1159,22 @@ void MainWindow::createToolBar()
         {"actionWrap", "wrap"}, {"actionShowAll", "show-all"}, {"actionShowIndentGuides", "indent-guide"},
         {"actionDefineLanguage", "language"}, {"actionRecordMacro", "record"}, {"actionPlayMacro", "play"},
         {"actionRunMacro", "run-multiple"}, {"actionSaveMacro", "save-macro"}, {"actionPreferences", "preferences"},
-        {"actionPluginsAdmin", "plugins"}, {"actionStyleConfigurator", "highlighting"}, {"actionShortcutMapper", "keyboard"}, {"actionAbout", "about"}, {"actionFindInFiles", "find"},
+        {"actionPluginsAdmin", "plugins"}, {"actionStyleConfigurator", "highlighting"}, {"actionShortcutMapper", "keyboard"},
+        {"actionDocumentMap", "doc-map"}, {"actionDocumentList", "doc-list"}, {"actionFunctionList", "function-list"},
+        {"actionFolderAsWorkspace", "folder-workspace"}, {"actionOpenFolderAsWorkspace", "folder-add"}, {"actionAbout", "about"}, {"actionFindInFiles", "find"},
     };
     for (const auto& [name, icon] : kIcons) {
         if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
             icons::setIcon(action, QString::fromLatin1(icon));
     }
 
-    // toolBarIcons de Notepad_plus.cpp: los mismos botones y grupos (sin los paneles
-    // que Edita no tiene: mapa del documento, lista de documentos, funciones, carpetas)
+    // toolBarIcons de Notepad_plus.cpp: los mismos botones y grupos
     static const char* const kButtons[] = {
         "actionNew", "actionOpen", "actionSave", "actionSaveAll", "actionClose", "actionCloseAll", "actionPrint", nullptr,
         "actionCut", "actionCopy", "actionPaste", nullptr, "actionUndo", "actionRedo", nullptr, "actionFind",
         "actionReplace", nullptr, "actionZoomIn", "actionZoomOut", nullptr, "actionWrap", "actionShowAll",
-        "actionShowIndentGuides", nullptr, "actionDefineLanguage", nullptr, "actionRecordMacro", "actionPlayMacro",
+        "actionShowIndentGuides", nullptr, "actionDefineLanguage", "actionDocumentMap", "actionDocumentList",
+        "actionFunctionList", "actionFolderAsWorkspace", nullptr, "actionRecordMacro", "actionPlayMacro",
         "actionRunMacro", "actionSaveMacro",
     };
     _toolBar = addToolBar(tr("Toolbar"));
@@ -1142,6 +1187,129 @@ void MainWindow::createToolBar()
         else if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
             _toolBar->addAction(action);
     }
+}
+
+void MainWindow::createPanels()
+{
+    _functionParsers = std::make_unique<FunctionParsers>();
+    _docListPanel = new DocumentListPanel;
+    _docMapPanel = new DocumentMapPanel;
+    _functionListPanel = new FunctionListPanel(*_functionParsers);
+    _folderPanel = new FileBrowserPanel;
+    // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
+    // mapa y las funciones a la derecha
+    const std::tuple<QWidget*, const char*, QString, Qt::DockWidgetArea> panels[] = {
+        {_docMapPanel, "documentMap", tr("Document Map"), Qt::RightDockWidgetArea},
+        {_docListPanel, "documentList", tr("Document List"), Qt::LeftDockWidgetArea},
+        {_functionListPanel, "functionList", tr("Function List"), Qt::RightDockWidgetArea},
+        {_folderPanel, "folderAsWorkspace", tr("Folder as Workspace"), Qt::LeftDockWidgetArea},
+    };
+    // <GUIConfig name="multiInst" … documentList="yes" documentMap="no" fuctionList="no" folderAsWorkspace="no">
+    // (los nombres de N++, con su "fuctionList")
+    auto configKey = [](const char* name) {
+        return std::strcmp(name, "functionList") == 0 ? QStringLiteral("fuctionList") : QString::fromLatin1(name);
+    };
+    for (const auto& [widget, name, title, area] : panels) {
+        auto* dock = new QDockWidget(title, this);
+        dock->setObjectName(QString::fromLatin1(name) + QStringLiteral("Dock"));
+        dock->setWidget(widget);
+        addDockWidget(area, dock);
+        dock->hide();
+        dock->setVisible(_syntax.config().guiConfig(QStringLiteral("multiInst"), configKey(name)) == QLatin1String("yes"));
+        connect(dock, &QDockWidget::visibilityChanged, this, [this, dock, key = configKey(name)] {
+            if (isVisible()) {
+                _syntax.config().setGuiConfig(QStringLiteral("multiInst"), key,
+                                              dock->isVisibleTo(this) ? QStringLiteral("yes") : QStringLiteral("no"));
+                _syntax.config().save();
+            }
+            updatePanels();
+        });
+        _panelDocks.push_back(dock);
+    }
+    connect(_docListPanel, &DocumentListPanel::activated, this, [this](BufferId id, int view) {
+        EditorPane* pane = view == 1 ? _subPane : _mainPane;
+        pane->activateBuffer(id);
+        setActivePane(pane);
+        editor()->setFocus();
+    });
+    connect(_docListPanel, &DocumentListPanel::closeRequested, this, [this](BufferId id, int view) {
+        EditorPane* pane = view == 1 ? _subPane : _mainPane;
+        pane->activateBuffer(id);
+        setActivePane(pane);
+        closeBuffer(id);
+    });
+    connect(_functionListPanel, &FunctionListPanel::goToPosition, this, [this](sptr_t pos) {
+        editor()->send(SCI_GOTOPOS, static_cast<uptr_t>(pos));
+        editor()->send(SCI_SCROLLCARET);
+        editor()->setFocus();
+    });
+    connect(_folderPanel, &FileBrowserPanel::openFile, this, [this](const QString& path) { openFile(path); });
+    connect(_folderPanel, &FileBrowserPanel::findInFolder, this, [this](const QString& dir) {
+        findDialog()->setDirectory(dir);
+        showFindDialog(FindReplaceDialog::Tab::FindInFiles);
+    });
+    connect(_folderPanel, &FileBrowserPanel::addFolderRequested, this, [this] {
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Open Folder as Workspace"));
+        if (!dir.isEmpty())
+            addFolderToWorkspace(dir);
+    });
+    connect(_folderPanel, &FileBrowserPanel::locateRequested, this, [this] {
+        if (const Buffer* buf = _documents.buffer(currentBuffer()); buf && !buf->isUntitled())
+            _folderPanel->locate(buf->filePath());
+    });
+    connect(&_syntax, &SyntaxManager::stylesChanged, _docMapPanel, &DocumentMapPanel::restyle);
+}
+
+QDockWidget* MainWindow::panelDock(const QString& name) const
+{
+    for (const QPointer<QDockWidget>& dock : _panelDocks) {
+        if (dock && dock->objectName() == name + QStringLiteral("Dock"))
+            return dock;
+    }
+    return nullptr;
+}
+
+bool MainWindow::addFolderToWorkspace(const QString& folder)
+{
+    const bool added = _folderPanel->addRoot(folder);
+    panelDock(QStringLiteral("folderAsWorkspace"))->show();
+    return added;
+}
+
+void MainWindow::updatePanels()
+{
+    const auto shown = [this](const char* name) {
+        const QDockWidget* dock = panelDock(QString::fromLatin1(name));
+        return dock && dock->isVisibleTo(this);
+    };
+    if (!_docListPanel)
+        return;
+    // Lista de documentos: las pestañas de las dos vistas
+    if (shown("documentList")) {
+        std::vector<DocumentListPanel::Document> docs;
+        for (EditorPane* pane : {_mainPane, _subPane}) {
+            for (const BufferId id : pane->buffers()) {
+                if (const Buffer* buf = _documents.buffer(id)) {
+                    const DocTabBar::TabState state = buf->isReadOnly() ? DocTabBar::TabState::ReadOnly
+                                                    : buf->isDirty()    ? DocTabBar::TabState::Dirty
+                                                                        : DocTabBar::TabState::Saved;
+                    docs.push_back({id, buf->displayName(), buf->isUntitled() ? QString() : buf->filePath(), state,
+                                    pane == _subPane ? 1 : 0});
+                }
+            }
+        }
+        _docListPanel->setDocuments(docs, currentBuffer(), _activePane == _subPane ? 1 : 0);
+    }
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    // Mapa: sigue al editor activo
+    if (shown("documentMap") && buf) {
+        _docMapPanel->setEditor(editor(), [this, lang = buf->language(), udl = buf->userLanguage()](ScintillaEditBase& view) {
+            _syntax.apply(view, lang, udl);
+        });
+    }
+    // Funciones del documento activo
+    if (shown("functionList") && buf)
+        _functionListPanel->setSource(editor(), buf->language(), buf->userLanguage(), buf->displayName());
 }
 
 void MainWindow::openFromOtherInstance(const InstanceRequest& request, bool raise)
@@ -4272,11 +4440,22 @@ Session MainWindow::captureSession()
         (k == 0 ? session.activeMainIndex : session.activeSubIndex) = activeIndex;
     }
     session.activeView = (_activePane == _subPane && !session.subView.empty()) ? 1 : 0;
+    // Las carpetas del Explorador de carpetas (session._includeFileBrowser)
+    if (_folderPanel && !_folderPanel->roots().isEmpty()) {
+        session.hasFileBrowser = true;
+        session.folderRoots = _folderPanel->state();
+        session.folderSelected = _folderPanel->selectedPath();
+    }
     return session;
 }
 
 void MainWindow::restoreSession(const Session& session, QStringList* missing)
 {
+    if (session.hasFileBrowser && _folderPanel) {
+        _folderPanel->setState(session.folderRoots, session.folderSelected);
+        if (!_folderPanel->roots().isEmpty())
+            panelDock(QStringLiteral("folderAsWorkspace"))->show();
+    }
     // Notepad_plus::loadSession. El "nuevo 1" inicial sin cambios desaparece si se abre algo.
     BufferId initialUntitled = kInvalidBuffer;
     if (_mainPane->count() == 1 && _subPane->count() == 0) {
@@ -4432,6 +4611,7 @@ void MainWindow::saveWindowState()
 
 void MainWindow::refreshCurrentDocument()
 {
+    updatePanels();
     const Buffer* buf = _documents.buffer(currentBuffer());
     _statusBar->updateDocument(buf);
     _statusBar->updateCaret(editor());

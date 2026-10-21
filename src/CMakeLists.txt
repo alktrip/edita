@@ -131,6 +131,8 @@ add_library(edita_ui STATIC
     ui/EditorView.h
     ui/FindReplaceDialog.cpp
     ui/FindReplaceDialog.h
+    ui/FunctionParser.cpp
+    ui/FunctionParser.h
     ui/Indentation.cpp
     ui/Indentation.h
     ui/MacroSteps.cpp
@@ -141,6 +143,8 @@ add_library(edita_ui STATIC
     ui/PreferencesDialog.h
     ui/Printer.cpp
     ui/Printer.h
+    ui/Panels.cpp
+    ui/Panels.h
     ui/PluginManager.cpp
     ui/PluginManager.h
     ui/PluginsAdminDialog.cpp

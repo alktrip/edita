@@ -768,7 +768,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Falta &lt;NotepadPlus&gt;&lt;Session&gt;</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+96"/>
         <source>%1 does not exist</source>
         <translation>No existe %1</translation>
     </message>
@@ -778,7 +778,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>%1 no es XML válido: %2</translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+70"/>
         <source>Could not save the session to %1</source>
         <translation>No se pudo guardar la sesión en %1</translation>
     </message>
@@ -1013,6 +1013,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::DocumentListPanel</name>
+    <message>
+        <location filename="../src/ui/Panels.cpp" line="+98"/>
+        <source>Name</source>
+        <translation>Nombre</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Folder</source>
+        <translation>Carpeta</translation>
+    </message>
+</context>
+<context>
     <name>edita::DocumentManager</name>
     <message>
         <location filename="../src/doc/DocumentManager.cpp" line="+241"/>
@@ -1034,6 +1047,64 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+21"/>
         <source>Nonexistent document</source>
         <translation>Documento inexistente</translation>
+    </message>
+</context>
+<context>
+    <name>edita::FileBrowserPanel</name>
+    <message>
+        <location filename="../src/ui/Panels.cpp" line="+368"/>
+        <source>Add folder</source>
+        <translation>Añadir carpeta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Locate current file</source>
+        <translation>Localizar el archivo actual</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Collapse all</source>
+        <translation>Plegar todo</translation>
+    </message>
+    <message>
+        <location line="+173"/>
+        <source>Add folder…</source>
+        <translation>Añadir carpeta…</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Open</source>
+        <translation>Abrir</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy path</source>
+        <translation>Copiar la ruta</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy file name</source>
+        <translation>Copiar el nombre del archivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open containing folder</source>
+        <translation>Abrir la carpeta contenedora</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Find in Files…</source>
+        <translation>Buscar en archivos…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove</source>
+        <translation>Quitar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Remove all</source>
+        <translation>Quitar todas</translation>
     </message>
 </context>
 <context>
@@ -1201,25 +1272,43 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::FunctionListPanel</name>
+    <message>
+        <location filename="../src/ui/Panels.cpp" line="-346"/>
+        <source>Search</source>
+        <translation>Buscar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sort</source>
+        <translation>Ordenar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reload</source>
+        <translation>Volver a cargar</translation>
+    </message>
+</context>
+<context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+346"/>
-        <location line="+2040"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+351"/>
+        <location line="+2203"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2040"/>
+        <location line="-2203"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+59"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+235"/>
+        <location line="+241"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1235,6 +1324,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+1"/>
+        <source>Open Folder as Wor&amp;kspace…</source>
+        <translation>Abrir carpeta como espacio de tra&amp;bajo…</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Re&amp;load from Disk</source>
         <translation>&amp;Recargar desde el disco</translation>
     </message>
@@ -1509,7 +1603,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+20"/>
         <source>&amp;Word wrap</source>
         <translation>&amp;Ajuste de línea</translation>
     </message>
@@ -1670,7 +1764,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+276"/>
+        <location line="+401"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -1893,12 +1987,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-835"/>
+        <location line="-979"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-592"/>
+        <location line="-613"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -1978,7 +2072,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+559"/>
+        <location line="+524"/>
+        <location line="+597"/>
+        <source>Open Folder as Workspace</source>
+        <translation>Abrir carpeta como espacio de trabajo</translation>
+    </message>
+    <message>
+        <location line="-541"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2103,7 +2203,27 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Editor de colu&amp;mnas…</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+19"/>
+        <source>Document &amp;Map</source>
+        <translation>Mapa del doc&amp;umento</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Document &amp;List</source>
+        <translation>&amp;Lista de documentos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Function List</source>
+        <translation>Lista de &amp;funciones</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Folder as &amp;Workspace</source>
+        <translation>&amp;Explorador de carpetas</translation>
+    </message>
+    <message>
+        <location line="+98"/>
         <source>&amp;Style Configurator…</source>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
@@ -2118,12 +2238,32 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Macro</translation>
     </message>
     <message>
-        <location line="+123"/>
+        <location line="+125"/>
         <source>Toolbar</source>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+86"/>
+        <location line="+22"/>
+        <source>Document Map</source>
+        <translation>Mapa del documento</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Document List</source>
+        <translation>Lista de documentos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Function List</source>
+        <translation>Lista de funciones</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Folder as Workspace</source>
+        <translation>Explorador de carpetas</translation>
+    </message>
+    <message>
+        <location line="+184"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2927,7 +3067,7 @@ Continue?</source>
         <translation>¿Reemplazar todas las apariciones de «%1» por «%2» en los archivos «%3» de %4?</translation>
     </message>
     <message>
-        <location line="+275"/>
+        <location line="+286"/>
         <location line="+10"/>
         <source>Session</source>
         <translation>Sesión</translation>

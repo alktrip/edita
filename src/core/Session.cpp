@@ -80,6 +80,22 @@ bool parseSession(const pugi::xml_document& doc, Session& session, QString* erro
             files.push_back(std::move(f));
         }
     }
+    // feedFileBrowserParameters
+    if (const pugi::xml_node browser = root.child("FileBrowser")) {
+        result.hasFileBrowser = true;
+        result.folderSelected = QString::fromUtf8(browser.attribute("latestSelectedItem").as_string(""));
+        for (const pugi::xml_node node : browser.children("root")) {
+            Session::FolderRoot folder;
+            folder.folder = QString::fromUtf8(node.attribute("foldername").as_string(""));
+            if (folder.folder.isEmpty())
+                continue;
+            for (const pugi::xml_node expanded : node.children("expanded")) {
+                if (const char* p = expanded.attribute("path").as_string(""); p[0])
+                    folder.expanded << QString::fromUtf8(p);
+            }
+            result.folderRoots.push_back(folder);
+        }
+    }
     session = std::move(result);
     return true;
 }
@@ -173,6 +189,16 @@ bool writeSessionFile(const QString& path, const Session& session, QString* erro
     subNode.append_attribute("activeIndex") = session.activeSubIndex;
     for (const SessionFile& f : session.subView)
         writeFileNode(subNode, f);
+    if (session.hasFileBrowser) {
+        pugi::xml_node browser = sessionNode.append_child("FileBrowser");
+        browser.append_attribute("latestSelectedItem") = session.folderSelected.toUtf8().constData();
+        for (const Session::FolderRoot& folder : session.folderRoots) {
+            pugi::xml_node node = browser.append_child("root");
+            node.append_attribute("foldername") = folder.folder.toUtf8().constData();
+            for (const QString& expanded : folder.expanded)
+                node.append_child("expanded").append_attribute("path") = expanded.toUtf8().constData();
+        }
+    }
 
     std::ostringstream out;
     doc.save(out, "    ", pugi::format_indent);

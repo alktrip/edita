@@ -218,7 +218,8 @@ private slots:
                  QStringLiteral("actionNew actionOpen actionSave actionSaveAll actionClose actionCloseAll actionPrint | "
                                 "actionCut actionCopy actionPaste | actionUndo actionRedo | actionFind actionReplace | "
                                 "actionZoomIn actionZoomOut | actionWrap actionShowAll actionShowIndentGuides | "
-                                "actionDefineLanguage | actionRecordMacro actionPlayMacro actionRunMacro actionSaveMacro"));
+                                "actionDefineLanguage actionDocumentMap actionDocumentList actionFunctionList actionFolderAsWorkspace | "
+                                "actionRecordMacro actionPlayMacro actionRunMacro actionSaveMacro"));
         // Cada botón con su icono (que también se ve en el menú)
         for (QAction* action : bar->actions()) {
             if (!action->isSeparator())

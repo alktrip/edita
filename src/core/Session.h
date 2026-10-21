@@ -22,6 +22,7 @@
 
 #include <QDateTime>
 #include <QString>
+#include <QStringList>
 
 #include <cstddef>
 #include <vector>
@@ -53,6 +54,17 @@ struct Session
     int activeSubIndex = 0;
     std::vector<SessionFile> mainView;
     std::vector<SessionFile> subView;
+    // Carpetas del Explorador de carpetas (Folder as Workspace): <FileBrowser
+    // latestSelectedItem="…"><root foldername="…"><expanded path="…"/></root></FileBrowser>
+    struct FolderRoot
+    {
+        QString folder;
+        QStringList expanded;
+        bool operator==(const FolderRoot&) const = default;
+    };
+    bool hasFileBrowser = false; // N++ solo escribe <FileBrowser> si el panel se usó
+    std::vector<FolderRoot> folderRoots;
+    QString folderSelected;
 
     bool isEmpty() const { return mainView.empty() && subView.empty(); }
 };

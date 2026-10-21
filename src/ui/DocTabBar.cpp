@@ -166,6 +166,11 @@ void DocTabBar::mouseReleaseEvent(QMouseEvent* event)
     QTabBar::mouseReleaseEvent(event);
 }
 
+QIcon DocTabBar::iconForState(TabState state)
+{
+    return stateIcon(state);
+}
+
 void DocTabBar::changeEvent(QEvent* event)
 {
     // Claro u oscuro: los indicadores con los colores nuevos

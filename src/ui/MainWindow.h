@@ -37,6 +37,7 @@
 
 #include <QIcon>
 #include <QMainWindow>
+#include <QPointer>
 
 #include <functional>
 #include <map>
@@ -48,9 +49,15 @@ class QFileSystemWatcher;
 class QMenu;
 class QSplitter;
 class QToolBar;
+class QDockWidget;
 
 namespace edita {
 struct InstanceRequest;
+class DocumentListPanel;
+class DocumentMapPanel;
+class FileBrowserPanel;
+class FunctionListPanel;
+class FunctionParsers;
 }
 class QPagedPaintDevice;
 class QTimer;
@@ -209,6 +216,15 @@ public:
     void applyAppearance();
     // La barra de herramientas (los botones de N++, en su orden)
     QToolBar* toolBar() const { return _toolBar; }
+    // Paneles de Ver (Lista de documentos, Mapa del documento, Lista de funciones,
+    // Explorador de carpetas), como los de N++
+    DocumentListPanel* documentListPanel() const { return _docListPanel; }
+    DocumentMapPanel* documentMapPanel() const { return _docMapPanel; }
+    FunctionListPanel* functionListPanel() const { return _functionListPanel; }
+    FileBrowserPanel* folderPanel() const { return _folderPanel; }
+    QDockWidget* panelDock(const QString& name) const;
+    // Archivo > Abrir carpeta como espacio de trabajo: la añade y muestra el panel
+    bool addFolderToWorkspace(const QString& folder);
     // Lo que pide otra instancia (o la línea de comandos): abrir archivos, ir a una
     // línea; con `raise`, traer la ventana al frente (NPPM_INTERNAL_RESTOREFROMMINIMIZED)
     void openFromOtherInstance(const InstanceRequest& request, bool raise);
@@ -299,6 +315,8 @@ protected:
 private:
     void createMenus();
     void createToolBar();
+    void createPanels();
+    void updatePanels();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
     void applyShortcuts();
     void applyScintillaKeys(int sciCommand, const std::vector<KeyCombo>& before, const std::vector<KeyCombo>& after);
@@ -431,6 +449,12 @@ private:
     QStringList _pluginWarnings;
     QMenu* _pluginsMenu = nullptr;
     QToolBar* _toolBar = nullptr;
+    std::unique_ptr<FunctionParsers> _functionParsers;
+    DocumentListPanel* _docListPanel = nullptr;
+    DocumentMapPanel* _docMapPanel = nullptr;
+    FunctionListPanel* _functionListPanel = nullptr;
+    FileBrowserPanel* _folderPanel = nullptr;
+    std::vector<QPointer<QDockWidget>> _panelDocks; // al cerrar se destruyen antes que la ventana
     ShortcutsConfig _shortcutConfig;
     // Paneles de los plugins (NPPM_DMMREGASDCKDLG): se destruyen antes de descargar los plugins
     struct PluginDock
