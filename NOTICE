@@ -60,6 +60,8 @@ data/functionList/: los analizadores de la Lista de funciones de Notepad++
 
 data/themes/Edita Light.xml y Edita Dark.xml: generados por
 tools/make-edita-themes.py a partir de stylers.model.xml de Notepad++ (GPL).
+One Dark, Dracula, Catppuccin Mocha, Catppuccin Latte, Nord y Tokyo Night: generados
+de la misma forma con colores inspirados en esas paletas (todas con licencia MIT).
 
 resources/: el logo y los iconos de la interfaz (resources/icons/ui/) son
 obra propia de Edita, con la misma licencia (GPL v3 o posterior).

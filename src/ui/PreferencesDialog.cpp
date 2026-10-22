@@ -259,6 +259,7 @@ void PreferencesDialog::buildGeneral()
     _tabBarHide = addCheck(form, tr("Hide"), "tabBarHide");
     _tabCloseButton = addCheck(form, tr("Show close button on each tab"), "tabCloseButton");
     _tabDoubleClick = addCheck(form, tr("Double click to close document"), "tabDoubleClickCloses");
+    _fileTypeIcons = addCheck(form, tr("File type icons (tabs, Document List, Folder as Workspace, Go to File)"), "fileTypeIcons");
     _quitOnEmpty = addCheck(form, tr("Exit on close the last tab"), "quitOnEmpty");
 }
 
@@ -285,6 +286,9 @@ void PreferencesDialog::buildEditing()
     _whiteSpace = addCheck(form, tr("Space and TAB"), "whiteSpaceShow");
     _eol = addCheck(form, tr("End of Line"), "eolShow");
     _indentGuides = addCheck(form, tr("Indent guides"), "indentGuideLine");
+    _activeIndentGuide = addCheck(form, tr("Highlight the indent guide of the current block"), "activeIndentGuide");
+    _colorPreview = addCheck(form, tr("Color preview (#rrggbb, rgb(), hsl() in CSS, HTML, JavaScript, Python…)"), "colorPreview");
+    _colorPreview->setToolTip(tr("Ctrl+click a color to change it with the color picker."));
     form->addRow(new QLabel(tr("<b>Line wrap</b>")));
     _wrap = addCheck(form, tr("Wrap long lines"), "wrap");
     _wrapIndent = addCombo(form, tr("Wrap indent:"), "wrapIndent",
@@ -308,6 +312,7 @@ void PreferencesDialog::buildMargins()
     _changeHistory = addCombo(form, tr("Change history:"), "changeHistory",
                               {{tr("Disabled"), 0}, {tr("Show in margin"), 1}, {tr("Show as indicators in text"), 2},
                                {tr("Show in margin and text"), 3}});
+    _currentLineNumber = addCheck(form, tr("Highlight the current line number"), "currentLineNumber");
     _gitMargin = addCheck(form, tr("Changes since the last Git commit"), "gitMargin");
     _gitMargin->setToolTip(tr("Green: added lines, blue: modified lines, red: deleted lines. Hover a mark to see the "
                               "original lines."));
@@ -542,6 +547,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _statusBar->setChecked(p.statusBarShow);
     _tabBarHide->setChecked(p.tabBarHide);
     _tabCloseButton->setChecked(p.tabCloseButton);
+    _fileTypeIcons->setChecked(p.fileTypeIcons);
     _tabDoubleClick->setChecked(p.tabDoubleClickCloses);
     _quitOnEmpty->setChecked(p.quitOnEmpty);
     _language->setCurrentIndex(std::max(0, _language->findData(p.language)));
@@ -563,6 +569,8 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _whiteSpace->setChecked(p.whiteSpaceShow);
     _eol->setChecked(p.eolShow);
     _indentGuides->setChecked(p.indentGuideLine);
+    _activeIndentGuide->setChecked(p.activeIndentGuide);
+    _colorPreview->setChecked(p.colorPreview);
     _wrap->setChecked(p.wrap);
     setComboValue(_wrapIndent, static_cast<int>(p.wrapIndent));
     _wrapSymbol->setChecked(p.wrapSymbolShow);
@@ -574,6 +582,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _edgeBackground->setChecked(p.edgeBackground);
     _bookmarkMargin->setChecked(p.bookmarkMargin);
     _gitMargin->setChecked(p.gitMargin);
+    _currentLineNumber->setChecked(p.currentLineNumber);
     _scrollBarMarks->setChecked(p.scrollBarMarks);
     setComboValue(_changeHistory, p.changeHistory);
 
@@ -671,6 +680,7 @@ Preferences PreferencesDialog::preferences() const
     p.statusBarShow = _statusBar->isChecked();
     p.tabBarHide = _tabBarHide->isChecked();
     p.tabCloseButton = _tabCloseButton->isChecked();
+    p.fileTypeIcons = _fileTypeIcons->isChecked();
     p.tabDoubleClickCloses = _tabDoubleClick->isChecked();
     p.quitOnEmpty = _quitOnEmpty->isChecked();
     p.language = _language->currentData().toString();
@@ -696,6 +706,8 @@ Preferences PreferencesDialog::preferences() const
     p.whiteSpaceShow = _whiteSpace->isChecked();
     p.eolShow = _eol->isChecked();
     p.indentGuideLine = _indentGuides->isChecked();
+    p.activeIndentGuide = _activeIndentGuide->isChecked();
+    p.colorPreview = _colorPreview->isChecked();
     p.wrap = _wrap->isChecked();
     p.wrapIndent = static_cast<WrapIndent>(comboValue(_wrapIndent));
     p.wrapSymbolShow = _wrapSymbol->isChecked();
@@ -707,6 +719,7 @@ Preferences PreferencesDialog::preferences() const
     p.edgeBackground = _edgeBackground->isChecked();
     p.bookmarkMargin = _bookmarkMargin->isChecked();
     p.gitMargin = _gitMargin->isChecked();
+    p.currentLineNumber = _currentLineNumber->isChecked();
     p.scrollBarMarks = _scrollBarMarks->isChecked();
     p.changeHistory = comboValue(_changeHistory);
 

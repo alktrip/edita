@@ -70,6 +70,21 @@ public:
     // cursor, o la marca en rojo si no tiene pareja
     void matchBraces();
 
+    // El número de la línea del cursor, resaltado (un marcador translúcido sobre el
+    // margen de números; N++ deja libre el 15: los de los plugins son 1–14)
+    static constexpr int kCurrentLineMarker = 15;
+    void updateCurrentLineNumber();
+    // La guía de sangría del bloque donde está el cursor (si no está junto a una llave):
+    // su columna y desde el final de la línea que abre el bloque hasta el final de su
+    // última línea (column 0: ninguna)
+    struct IndentBlock
+    {
+        int column = 0;
+        sptr_t start = -1;
+        sptr_t end = -1;
+    };
+    IndentBlock activeIndentBlock() const;
+
     bool isWrap() const { return sci(SCI_GETWRAPMODE) != SC_WRAP_NONE; }
     void setWrap(bool wrap) { sci(SCI_SETWRAPMODE, wrap ? SC_WRAP_WORD : SC_WRAP_NONE); }
 
@@ -78,6 +93,10 @@ private:
 
     int _lineNumberDigits = 0;
     bool _lineNumberMargin = true;
+    bool _highlightLineNumber = true;
+    bool _activeIndentGuide = true;
+    sptr_t _markedLine = -1;
+    sptr_t _markedDocument = 0;
     bool _lineNumberDynamicWidth = true;
 };
 

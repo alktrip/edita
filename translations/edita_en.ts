@@ -26,7 +26,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+4409"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+4455"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -104,6 +104,17 @@
         <translation>
             <numerusform> — %Ln file with errors</numerusform>
             <numerusform> — %Ln files with errors</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>edita::NotificationBar</name>
+    <message numerus="yes">
+        <location filename="../src/ui/NotificationBar.cpp" line="+91"/>
+        <source>…and %n more</source>
+        <translation>
+            <numerusform>…and %n more</numerusform>
+            <numerusform>…and %n more</numerusform>
         </translation>
     </message>
 </context>

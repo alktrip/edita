@@ -254,7 +254,9 @@ private slots:
 
     void tabsShowTheStateWithoutFloppies()
     {
-        const Preferences light = withMode(false);
+        // Con los iconos de estado (sin los iconos por tipo de archivo, que prueba tst_visual)
+        Preferences light = withMode(false);
+        light.fileTypeIcons = false;
         auto w = window(&light);
         DocTabBar* tabs = w->mainPane()->tabBar();
         // Guardado: sin indicador (un hueco transparente, para que el texto no salte)

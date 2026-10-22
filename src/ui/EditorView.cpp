@@ -50,6 +50,8 @@ void EditorView::applyBaseConfiguration()
     sci(SCI_SETFOLDFLAGS, SC_FOLDFLAG_LINEAFTER_CONTRACTED);
     sci(SCI_SETMARGINMASKN, kMarginFolder, static_cast<sptr_t>(SC_MASK_FOLDERS));
     sci(SCI_SETMARGINMASKN, kMarginSymbol, 1 << kBookmarkMarker);
+    sci(SCI_SETMARGINMASKN, kMarginLineNumber, 1 << kCurrentLineMarker);
+    sci(SCI_MARKERDEFINE, kCurrentLineMarker, SC_MARK_FULLRECT);
     sci(SCI_SETMARGINMASKN, kMarginChangeHistory,
         (1 << SC_MARKNUM_HISTORY_REVERTED_TO_ORIGIN) | (1 << SC_MARKNUM_HISTORY_SAVED) | (1 << SC_MARKNUM_HISTORY_MODIFIED)
             | (1 << SC_MARKNUM_HISTORY_REVERTED_TO_MODIFIED));
@@ -70,8 +72,10 @@ void EditorView::applyBaseConfiguration()
     updateLineNumberWidth();
     connect(this, &ScintillaEditBase::linesAdded, this, [this] { updateLineNumberWidth(); });
     connect(this, &ScintillaEditBase::updateUi, this, [this](Scintilla::Update updated) {
-        if (static_cast<int>(updated) & (SC_UPDATE_SELECTION | SC_UPDATE_CONTENT))
+        if (static_cast<int>(updated) & (SC_UPDATE_SELECTION | SC_UPDATE_CONTENT)) {
             matchBraces();
+            updateCurrentLineNumber();
+        }
         updateLineNumberWidth();
     });
     applyPreferences(Preferences{});
@@ -88,8 +92,12 @@ void EditorView::matchBraces()
         brace = caret;
 
     if (brace < 0) {
-        sci(SCI_BRACEHIGHLIGHT, static_cast<uptr_t>(-1), -1);
-        sci(SCI_SETHIGHLIGHTGUIDE, 0);
+        // Sin llave junto al cursor: la guía del bloque en el que está. Scintilla solo
+        // resalta la guía entre las dos «llaves»: se le dan los finales de la primera y
+        // la última línea del bloque, que no cambian de color (el fin de línea no se pinta)
+        const IndentBlock block = activeIndentBlock();
+        sci(SCI_BRACEHIGHLIGHT, static_cast<uptr_t>(block.start), block.end);
+        sci(SCI_SETHIGHLIGHTGUIDE, static_cast<uptr_t>(block.column));
         return;
     }
     const sptr_t opposite = sci(SCI_BRACEMATCH, static_cast<uptr_t>(brace), 0);
@@ -104,6 +112,85 @@ void EditorView::matchBraces()
                                        sci(SCI_GETCOLUMN, static_cast<uptr_t>(opposite)));
         sci(SCI_SETHIGHLIGHTGUIDE, static_cast<uptr_t>(column));
     }
+}
+
+// El bloque del cursor: lo abre la línea anterior con menos sangría y sigue mientras las
+// líneas tengan más sangría que ella. Las líneas en blanco toman la sangría de las vecinas
+EditorView::IndentBlock EditorView::activeIndentBlock() const
+{
+    IndentBlock block;
+    if (!_activeIndentGuide || sci(SCI_GETINDENTATIONGUIDES) == SC_IV_NONE)
+        return block;
+    const sptr_t lines = sci(SCI_GETLINECOUNT);
+    const sptr_t caretLine = sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(sci(SCI_GETCURRENTPOS)));
+    auto isBlank = [this](sptr_t line) {
+        return sci(SCI_GETLINEINDENTPOSITION, static_cast<uptr_t>(line)) >= sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line));
+    };
+    auto indentOf = [this](sptr_t line) { return sci(SCI_GETLINEINDENTATION, static_cast<uptr_t>(line)); };
+    constexpr sptr_t kLimit = 2000; // líneas que se miran hacia arriba o abajo
+    sptr_t indent = 0;
+    if (isBlank(caretLine)) {
+        sptr_t above = 0;
+        sptr_t below = 0;
+        for (sptr_t l = caretLine - 1; l >= 0 && caretLine - l < kLimit; --l) {
+            if (!isBlank(l)) {
+                above = indentOf(l);
+                break;
+            }
+        }
+        for (sptr_t l = caretLine + 1; l < lines && l - caretLine < kLimit; ++l) {
+            if (!isBlank(l)) {
+                below = indentOf(l);
+                break;
+            }
+        }
+        indent = std::min(above, below);
+    } else {
+        indent = indentOf(caretLine);
+    }
+    if (indent <= 0)
+        return block;
+    sptr_t opener = -1;
+    for (sptr_t l = caretLine - 1; l >= 0 && caretLine - l < kLimit; --l) {
+        if (!isBlank(l) && indentOf(l) < indent) {
+            opener = l;
+            break;
+        }
+    }
+    if (opener < 0)
+        return block;
+    const sptr_t column = indentOf(opener);
+    sptr_t last = caretLine;
+    for (sptr_t l = caretLine + 1; l < lines && l - caretLine < kLimit; ++l) {
+        if (isBlank(l))
+            continue;
+        if (indentOf(l) <= column)
+            break;
+        last = l;
+    }
+    block.column = static_cast<int>(column);
+    block.start = sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(opener));
+    block.end = sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(last));
+    return block;
+}
+
+// Un marcador translúcido (del color de los números) sobre el número de la línea actual
+void EditorView::updateCurrentLineNumber()
+{
+    const sptr_t document = sci(SCI_GETDOCPOINTER);
+    const sptr_t line = _highlightLineNumber ? sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(sci(SCI_GETCURRENTPOS))) : -1;
+    // El color, siempre: el tema puede haber cambiado
+    const sptr_t fore = sci(SCI_STYLEGETFORE, STYLE_LINENUMBER);
+    sci(SCI_MARKERSETBACKTRANSLUCENT, kCurrentLineMarker, fore | (static_cast<sptr_t>(0x38) << 24));
+    sci(SCI_MARKERSETFORETRANSLUCENT, kCurrentLineMarker, fore | (static_cast<sptr_t>(0x38) << 24));
+    if (line == _markedLine && document == _markedDocument
+        && (sci(SCI_MARKERGET, static_cast<uptr_t>(std::max<sptr_t>(line, 0))) & (1 << kCurrentLineMarker)))
+        return;
+    sci(SCI_MARKERDELETEALL, kCurrentLineMarker);
+    _markedLine = line;
+    _markedDocument = document;
+    if (line >= 0)
+        sci(SCI_MARKERADD, static_cast<uptr_t>(line), kCurrentLineMarker);
 }
 
 void EditorView::updateLineNumberWidth(bool force)
@@ -167,6 +254,11 @@ void EditorView::applyPreferences(const Preferences& p)
     _lineNumberMargin = p.lineNumberMargin;
     _lineNumberDynamicWidth = p.lineNumberDynamicWidth;
     updateLineNumberWidth(true);
+    _highlightLineNumber = p.currentLineNumber;
+    _activeIndentGuide = p.activeIndentGuide;
+    _markedLine = -2; // volver a poner (o quitar) el marcador
+    updateCurrentLineNumber();
+    matchBraces();
 }
 
 bool EditorView::setLexerByName(std::string_view lexerName)

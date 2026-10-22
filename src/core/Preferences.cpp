@@ -317,6 +317,10 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaQtFileDialog", p.qtFileDialog);
     r.boolText("EditaGitMargin", p.gitMargin);
     r.boolText("EditaScrollBarMarks", p.scrollBarMarks);
+    r.boolText("EditaCurrentLineNumber", p.currentLineNumber);
+    r.boolText("EditaActiveIndentGuide", p.activeIndentGuide);
+    r.boolText("EditaColorPreview", p.colorPreview);
+    r.boolText("EditaFileTypeIcons", p.fileTypeIcons);
     return p;
 }
 
@@ -441,6 +445,10 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaQtFileDialog", yesNo(p.qtFileDialog));
     w.text("EditaGitMargin", yesNo(p.gitMargin));
     w.text("EditaScrollBarMarks", yesNo(p.scrollBarMarks));
+    w.text("EditaCurrentLineNumber", yesNo(p.currentLineNumber));
+    w.text("EditaActiveIndentGuide", yesNo(p.activeIndentGuide));
+    w.text("EditaColorPreview", yesNo(p.colorPreview));
+    w.text("EditaFileTypeIcons", yesNo(p.fileTypeIcons));
 }
 
 QList<int> parseEdgeColumns(const QString& text)

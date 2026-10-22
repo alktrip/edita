@@ -40,6 +40,7 @@ edita_add_test(tst_styleconfigurator LIBS edita_ui)
 edita_add_test(tst_columneditor LIBS edita_ui)
 edita_add_test(tst_commandpalette LIBS edita_ui)
 edita_add_test(tst_gitchanges LIBS edita_ui)
+edita_add_test(tst_visual LIBS edita_ui)
 edita_add_test(tst_panels LIBS edita_ui)
 # Una sola instancia: también arranca el binario de verdad
 edita_add_test(tst_singleinstance LIBS edita_ui)

@@ -881,6 +881,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::ColorPreview</name>
+    <message>
+        <location filename="../src/ui/ColorPreview.cpp" line="+285"/>
+        <source>Choose a color</source>
+        <translation>Elige un color</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>Ctrl+click to choose a color</source>
+        <translation>Ctrl+clic para elegir un color</translation>
+    </message>
+</context>
+<context>
     <name>edita::ColumnEditorDialog</name>
     <message>
         <location filename="../src/ui/ColumnEditorDialog.cpp" line="+55"/>
@@ -1071,7 +1084,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocumentListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="+98"/>
+        <location filename="../src/ui/Panels.cpp" line="+99"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
@@ -1123,7 +1136,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Plegar todo</translation>
     </message>
     <message>
-        <location line="+173"/>
+        <location line="+188"/>
         <source>Add folder…</source>
         <translation>Añadir carpeta…</translation>
     </message>
@@ -1330,7 +1343,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FunctionListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="-346"/>
+        <location filename="../src/ui/Panels.cpp" line="-361"/>
         <source>Search</source>
         <translation>Buscar</translation>
     </message>
@@ -1369,23 +1382,23 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+355"/>
-        <location line="+2239"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+367"/>
+        <location line="+2264"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2239"/>
+        <location line="-2264"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="+66"/>
+        <location line="+75"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+253"/>
+        <location line="+258"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2069,7 +2082,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-632"/>
+        <location line="-654"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2149,7 +2162,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+543"/>
+        <location line="+565"/>
         <location line="+600"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -2525,12 +2538,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+247"/>
         <location line="+20"/>
-        <location line="+1382"/>
+        <location line="+1393"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1645"/>
+        <location line="-1656"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2654,7 +2667,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+162"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -2927,12 +2940,12 @@ Continue?</source>
         <translation>Codificación</translation>
     </message>
     <message>
-        <location line="+278"/>
+        <location line="+286"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
     <message>
-        <location line="+132"/>
+        <location line="+133"/>
         <source>Replace All</source>
         <translation>Reemplazar todo</translation>
     </message>
@@ -3183,6 +3196,22 @@ Continue?</source>
         <location line="-10"/>
         <source>session.xml was damaged; the backup copy has been used.</source>
         <translation>session.xml estaba dañado; se ha usado la copia de seguridad.</translation>
+    </message>
+</context>
+<context>
+    <name>edita::NotificationBar</name>
+    <message>
+        <location filename="../src/ui/NotificationBar.cpp" line="+47"/>
+        <source>Close</source>
+        <translation>Cerrar</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+44"/>
+        <source>…and %n more</source>
+        <translation>
+            <numerusform>…y %n más</numerusform>
+            <numerusform>…y %n más</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -3621,6 +3650,11 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
+        <source>File type icons (tabs, Document List, Folder as Workspace, Go to File)</source>
+        <translation>Iconos por tipo de archivo (pestañas, Lista de documentos, Explorador de carpetas, Ir a archivo)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Exit on close the last tab</source>
         <translation>Salir al cerrar el último documento</translation>
     </message>
@@ -3751,6 +3785,21 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
+        <source>Highlight the indent guide of the current block</source>
+        <translation>Resaltar la guía de sangría del bloque actual</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color preview (#rrggbb, rgb(), hsl() in CSS, HTML, JavaScript, Python…)</source>
+        <translation>Vista previa de colores (#rrggbb, rgb(), hsl() en CSS, HTML, JavaScript, Python…)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ctrl+click a color to change it with the color picker.</source>
+        <translation>Ctrl+clic en un color para cambiarlo con el selector de color.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>&lt;b&gt;Line wrap&lt;/b&gt;</source>
         <translation>&lt;b&gt;Ajuste de línea&lt;/b&gt;</translation>
     </message>
@@ -3766,12 +3815,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+71"/>
+        <location line="+72"/>
         <source>Default</source>
         <translation>Ninguna</translation>
     </message>
     <message>
-        <location line="-71"/>
+        <location line="-72"/>
         <source>Aligned</source>
         <translation>Alineada</translation>
     </message>
@@ -3874,6 +3923,11 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+1"/>
         <source>Show in margin and text</source>
         <translation>En el margen y en el texto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Highlight the current line number</source>
+        <translation>Resaltar el número de la línea actual</translation>
     </message>
     <message>
         <location line="+1"/>

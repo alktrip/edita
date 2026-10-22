@@ -19,12 +19,14 @@
 #include "ui/DocTabBar.h"
 
 #include "ui/Appearance.h"
+#include "ui/FileIcons.h"
 #include "ui/Icons.h"
 
 #include <QApplication>
 #include <QContextMenuEvent>
 #include <QEvent>
 #include <QIcon>
+#include <QFileInfo>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPixmap>
@@ -36,6 +38,7 @@ namespace {
 
 const QString kIdKey = QStringLiteral("id");
 const QString kStateKey = QStringLiteral("state");
+const QString kNameKey = QStringLiteral("name");
 
 // Indicador del estado de la pestaña: un punto si hay cambios sin guardar, un
 // candado si es de solo lectura y un hueco del mismo tamaño si está guardada (para
@@ -60,6 +63,17 @@ QIcon stateIcon(DocTabBar::TabState state)
         icon.addPixmap(pixmap);
     }
     return icon;
+}
+
+// Con iconos por tipo de archivo (de serie), el del tipo con el estado encima
+QIcon fileTabIcon(const QString& fileName, DocTabBar::TabState state)
+{
+    if (!fileicons::enabled())
+        return stateIcon(state);
+    const auto fileState = state == DocTabBar::TabState::Dirty      ? fileicons::State::Dirty
+                         : state == DocTabBar::TabState::ReadOnly ? fileicons::State::ReadOnly
+                                                                    : fileicons::State::Saved;
+    return fileicons::forFile(fileName, fileState);
 }
 
 DocTabBar::TabState stateOf(const Buffer& buffer)
@@ -106,9 +120,10 @@ void DocTabBar::applyBuffer(int index, const Buffer& buffer)
 {
     const TabState state = stateOf(buffer);
     setTabText(index, buffer.displayName());
-    setTabIcon(index, stateIcon(state));
+    const QString name = buffer.isUntitled() ? QString() : QFileInfo(buffer.filePath()).fileName();
+    setTabIcon(index, fileTabIcon(name, state));
     setTabToolTip(index, buffer.isUntitled() ? buffer.displayName() : buffer.filePath());
-    setTabData(index, QVariantMap{{kIdKey, QVariant::fromValue(buffer.id())}, {kStateKey, static_cast<int>(state)}});
+    setTabData(index, QVariantMap{{kIdKey, QVariant::fromValue(buffer.id())}, {kStateKey, static_cast<int>(state)}, {kNameKey, name}});
 }
 
 int DocTabBar::indexOf(BufferId id) const
@@ -171,13 +186,22 @@ QIcon DocTabBar::iconForState(TabState state)
     return stateIcon(state);
 }
 
+QIcon DocTabBar::iconFor(const QString& fileName, TabState state)
+{
+    return fileTabIcon(fileName, state);
+}
+
+void DocTabBar::refreshIcons()
+{
+    for (int i = 0; i < count(); ++i)
+        setTabIcon(i, fileTabIcon(tabData(i).toMap().value(kNameKey).toString(), stateAt(i)));
+}
+
 void DocTabBar::changeEvent(QEvent* event)
 {
     // Claro u oscuro: los indicadores con los colores nuevos
-    if (event->type() == QEvent::PaletteChange) {
-        for (int i = 0; i < count(); ++i)
-            setTabIcon(i, stateIcon(stateAt(i)));
-    }
+    if (event->type() == QEvent::PaletteChange)
+        refreshIcons();
     QTabBar::changeEvent(event);
 }
 

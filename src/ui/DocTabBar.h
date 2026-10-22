@@ -52,6 +52,10 @@ public:
     TabState stateAt(int index) const;
     // El indicador de un estado (punto, candado o hueco), con los colores del modo actual
     static QIcon iconForState(TabState state);
+    // El icono del tipo de archivo con el estado (o el de estado, si están desactivados)
+    static QIcon iconFor(const QString& fileName, TabState state);
+    // Al cambiar la preferencia de los iconos o el tema
+    void refreshIcons();
 
 signals:
     // Doble clic en la zona vacía de la barra (N++: nuevo documento)

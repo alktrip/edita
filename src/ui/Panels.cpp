@@ -19,6 +19,7 @@
 #include "ui/Panels.h"
 
 #include "ui/Appearance.h"
+#include "ui/FileIcons.h"
 #include "ui/FunctionParser.h"
 #include "ui/Icons.h"
 
@@ -115,7 +116,7 @@ void DocumentListPanel::setDocuments(const std::vector<Document>& documents, Buf
         item->setText(0, d.name);
         item->setText(1, d.path.isEmpty() ? QString() : QFileInfo(d.path).absolutePath());
         item->setToolTip(0, d.path.isEmpty() ? d.name : d.path);
-        item->setIcon(0, DocTabBar::iconForState(d.state));
+        item->setIcon(0, DocTabBar::iconFor(d.path.isEmpty() ? QString() : QFileInfo(d.path).fileName(), d.state));
         item->setData(0, kIdRole, QVariant::fromValue(d.id));
         item->setData(0, kViewRole, d.view);
         if (d.id == current && d.view == currentView)
@@ -481,6 +482,20 @@ FileBrowserPanel::FileBrowserPanel(QWidget* parent)
     layout->addWidget(_tree, 1);
 }
 
+void FileBrowserPanel::refreshIcons()
+{
+    std::function<void(QTreeWidgetItem*)> walk = [&](QTreeWidgetItem* item) {
+        if (!item->data(0, kIsDirRole).toBool()) {
+            const QString path = item->data(0, kPathRole).toString();
+            item->setIcon(0, fileicons::enabled() ? fileicons::forFile(path) : icons::icon(QStringLiteral("new")));
+        }
+        for (int i = 0; i < item->childCount(); ++i)
+            walk(item->child(i));
+    };
+    for (int i = 0; i < _tree->topLevelItemCount(); ++i)
+        walk(_tree->topLevelItem(i));
+}
+
 QTreeWidgetItem* FileBrowserPanel::makeItem(const QString& path, bool isDir)
 {
     auto* item = new QTreeWidgetItem;
@@ -488,7 +503,8 @@ QTreeWidgetItem* FileBrowserPanel::makeItem(const QString& path, bool isDir)
     item->setToolTip(0, path);
     item->setData(0, kPathRole, path);
     item->setData(0, kIsDirRole, isDir);
-    item->setIcon(0, icons::icon(isDir ? QStringLiteral("open") : QStringLiteral("new")));
+    item->setIcon(0, isDir ? icons::icon(QStringLiteral("open"))
+                           : fileicons::enabled() ? fileicons::forFile(path) : icons::icon(QStringLiteral("new")));
     if (isDir)
         item->setChildIndicatorPolicy(QTreeWidgetItem::ShowIndicator);
     return item;

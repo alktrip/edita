@@ -62,7 +62,9 @@ class DocumentMapPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
 class FunctionParsers;
+class ColorPreview;
 class GitChanges;
+class NotificationBar;
 class ScrollBarMarks;
 }
 class QPagedPaintDevice;
@@ -316,6 +318,8 @@ public:
     // Para las pruebas
     GitChanges* gitChangesOfCurrentView() const;
     ScrollBarMarks* scrollBarMarksOfCurrentView() const;
+    ColorPreview* colorPreviewOfCurrentView() const;
+    NotificationBar* notificationBar() const { return _notifications; }
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -466,6 +470,8 @@ private:
     // Cambios de Git en el margen y marcas en la barra de desplazamiento, de cada vista
     QPointer<GitChanges> _git[2];
     QPointer<ScrollBarMarks> _scrollMarks[2];
+    QPointer<ColorPreview> _colorPreview[2];
+    NotificationBar* _notifications = nullptr;
     GitChanges* gitChanges(const EditorPane* pane) const;
     void updateGitDocument(EditorPane* pane);
     void goToGitChange(bool forward);

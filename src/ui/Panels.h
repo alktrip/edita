@@ -162,6 +162,8 @@ public:
     // Selecciona el archivo (desplegando sus carpetas) si está en alguna raíz
     bool locate(const QString& filePath);
     QTreeWidget* tree() const { return _tree; }
+    // Al cambiar la preferencia de los iconos por tipo de archivo
+    void refreshIcons();
 
 signals:
     void openFile(const QString& path);

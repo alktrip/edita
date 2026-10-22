@@ -122,8 +122,11 @@ add_library(edita_ui STATIC
     ui/AutoCompletion.cpp
     ui/AutoCompletion.h
     ui/ColumnEditorDialog.cpp
+    ui/ColorPreview.cpp
     ui/CommandPalette.cpp
+    ui/FileIcons.cpp
     ui/GitChanges.cpp
+    ui/NotificationBar.cpp
     ui/ScrollBarMarks.cpp
     ui/ColumnEditorDialog.h
     ui/DocStatusBar.cpp

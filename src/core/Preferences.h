@@ -126,6 +126,14 @@ struct Preferences
     // <GUIConfig name="EditaScrollBarMarks">yes</GUIConfig>
     bool gitMargin = true;
     bool scrollBarMarks = true;
+    // Mejoras visuales (no existen en N++): el número de la línea actual resaltado, la
+    // guía de sangría del bloque actual, la vista previa de colores y los iconos por tipo
+    // de archivo (EditaCurrentLineNumber, EditaActiveIndentGuide, EditaColorPreview,
+    // EditaFileTypeIcons)
+    bool currentLineNumber = true;
+    bool activeIndentGuide = true;
+    bool colorPreview = true;
+    bool fileTypeIcons = true;
     // <GUIConfig name="multiInst" setting="0" …/>
     MultiInst multiInstSetting = MultiInst::Mono;
     // Modo oscuro de N++: <GUIConfig name="DarkMode" enable="no" enableWindowsMode="yes"

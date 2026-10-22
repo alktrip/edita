@@ -29,8 +29,11 @@
 #include "ui/DocTabBar.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
+#include "ui/FileIcons.h"
 #include "ui/FunctionParser.h"
+#include "ui/ColorPreview.h"
 #include "ui/GitChanges.h"
+#include "ui/NotificationBar.h"
 #include "ui/ScrollBarMarks.h"
 #include "ui/Icons.h"
 #include "ui/Indentation.h"
@@ -98,6 +101,7 @@
 #include <QToolBar>
 #include <QTimer>
 #include <QUrl>
+#include <QVBoxLayout>
 
 #include <algorithm>
 #include <cstring>
@@ -326,7 +330,15 @@ MainWindow::MainWindow(QWidget* parent)
     connectPane(_mainPane);
     connectPane(_subPane);
 
-    setCentralWidget(_splitter);
+    // Encima del editor, la barra de avisos (sin ventanas modales)
+    auto* central = new QWidget(this);
+    auto* centralLayout = new QVBoxLayout(central);
+    centralLayout->setContentsMargins(0, 0, 0, 0);
+    centralLayout->setSpacing(0);
+    _notifications = new NotificationBar(central);
+    centralLayout->addWidget(_notifications);
+    centralLayout->addWidget(_splitter, 1);
+    setCentralWidget(central);
     setStatusBar(_statusBar);
     setAcceptDrops(true);
 
@@ -403,6 +415,15 @@ MainWindow::MainWindow(QWidget* parent)
                     updateGitDocument(pane);
             }
         }
+        // Otro lenguaje: la vista previa de colores sí o no
+        if (mask & BufferChange::Language) {
+            const Buffer* buf = _documents.buffer(id);
+            for (int i = 0; i < 2 && buf; ++i) {
+                EditorPane* pane = i ? _subPane : _mainPane;
+                if (pane->currentBuffer() == id && _colorPreview[i])
+                    _colorPreview[i]->setLanguage(buf->language());
+            }
+        }
     });
 
     // Modo "snapshot": copias periódicas de los cambios sin guardar
@@ -427,6 +448,7 @@ void MainWindow::connectPane(EditorPane* pane)
     const int index = pane == _subPane ? 1 : 0;
     _git[index] = new GitChanges(pane->editor());
     _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
+    _colorPreview[index] = new ColorPreview(pane->editor());
     pane->setStyler([this](EditorView& view, const Buffer& buffer) { _syntax.apply(view, buffer.language(), buffer.userLanguage()); });
     connect(&_syntax, &SyntaxManager::stylesChanged, pane, &EditorPane::restyle);
     // Después de restyle: los colores de las marcas según el tema ya aplicado
@@ -436,8 +458,10 @@ void MainWindow::connectPane(EditorPane* pane)
         if (_scrollMarks[index])
             _scrollMarks[index]->scheduleUpdate();
     });
-    connect(pane, &EditorPane::currentBufferChanged, this, [this, pane] {
+    connect(pane, &EditorPane::currentBufferChanged, this, [this, pane, index] {
         updateGitDocument(pane);
+        if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && _colorPreview[index])
+            _colorPreview[index]->setLanguage(buf->language());
         if (pane == _activePane)
             refreshCurrentDocument();
         if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && autoCompletion(pane))
@@ -559,8 +583,9 @@ void MainWindow::connectPane(EditorPane* pane)
 
 void MainWindow::showWarnings(const QString& title, const QStringList& warnings)
 {
+    // Avisos que no piden nada: en la barra, sin interrumpir
     if (!warnings.isEmpty())
-        _prompter->warn(this, title, warnings.join(QLatin1Char('\n')));
+        _notifications->show(NotificationBar::Kind::Warning, title, warnings.join(QLatin1Char('\n')));
 }
 
 MainWindow::~MainWindow()
@@ -2235,7 +2260,18 @@ void MainWindow::applyPreferences()
         pane->tabBar()->setDoubleClickCloses(p.tabDoubleClickCloses);
         pane->editor()->applyPreferences(p);
     }
+    // Iconos por tipo de archivo: las pestañas, los paneles y la paleta
+    if (fileicons::enabled() != p.fileTypeIcons) {
+        fileicons::setEnabled(p.fileTypeIcons);
+        for (EditorPane* pane : {_mainPane, _subPane})
+            pane->tabBar()->refreshIcons();
+        if (_folderPanel)
+            _folderPanel->refreshIcons();
+        updatePanels();
+    }
     for (int i = 0; i < 2; ++i) {
+        if (_colorPreview[i])
+            _colorPreview[i]->setEnabled(p.colorPreview);
         if (_git[i])
             _git[i]->setEnabled(p.gitMargin);
         if (_scrollMarks[i])
@@ -3056,7 +3092,7 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
         // Mismos rangos que N++; se agotan como en N++ (FALSE y 0)
         int& next = message == NPPM_ALLOCATECMDID ? _nextDynamicCommand
                   : message == NPPM_ALLOCATEMARKER ? _nextMarker : _nextIndicator;
-        const int limit = message == NPPM_ALLOCATECMDID ? 25000 : message == NPPM_ALLOCATEMARKER ? 16 : 21;
+        const int limit = message == NPPM_ALLOCATECMDID ? 25000 : message == NPPM_ALLOCATEMARKER ? 15 : 21; // marcadores 1–14 (MARKER_PLUGINS_LIMIT)
         auto* out = reinterpret_cast<int*>(lParam);
         const int requested = static_cast<int>(wParam);
         if (!out || requested <= 0 || next + requested > limit) {
@@ -3849,6 +3885,11 @@ ScrollBarMarks* MainWindow::scrollBarMarksOfCurrentView() const
     return _scrollMarks[_activePane == _subPane ? 1 : 0];
 }
 
+ColorPreview* MainWindow::colorPreviewOfCurrentView() const
+{
+    return _colorPreview[_activePane == _subPane ? 1 : 0];
+}
+
 void MainWindow::updateGitDocument(EditorPane* pane)
 {
     GitChanges* git = gitChanges(pane);
@@ -4052,7 +4093,8 @@ void MainWindow::startPaletteFileScan()
     std::vector<CommandPalette::Item> items;
     auto stateIcon = [](const Buffer& buf) {
         using State = DocTabBar::TabState;
-        return DocTabBar::iconForState(buf.isReadOnly() ? State::ReadOnly : buf.isDirty() ? State::Dirty : State::Saved);
+        return DocTabBar::iconFor(buf.isUntitled() ? QString() : QFileInfo(buf.filePath()).fileName(),
+                                  buf.isReadOnly() ? State::ReadOnly : buf.isDirty() ? State::Dirty : State::Saved);
     };
     auto fileItem = [this](const QString& path, const QString& folder, int order) {
         // La carpeta personal como «~», para que las rutas largas quepan
@@ -4064,6 +4106,7 @@ void MainWindow::startPaletteFileScan()
         item.text = QFileInfo(path).fileName();
         item.detail = detail;
         item.order = order;
+        item.icon = fileicons::enabled() ? fileicons::forFile(path) : QIcon();
         item.run = [this, path] {
             openFile(path);
             editor()->setFocus();
@@ -4146,6 +4189,7 @@ void MainWindow::startPaletteFileScan()
                     CommandPalette::Item item;
                     item.text = QFileInfo(path).fileName();
                     item.detail = QDir::toNativeSeparators(detail);
+                    item.icon = fileicons::enabled() ? fileicons::forFile(path) : QIcon();
                     item.order = 100000 + static_cast<int>(self->_paletteFiles.size());
                     QPointer<MainWindow> window = self;
                     item.run = [window, path] {
