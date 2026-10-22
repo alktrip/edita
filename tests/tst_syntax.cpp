@@ -5,6 +5,7 @@
 // Fase 3: langs.xml, stylers.xml, temas, detección de lenguaje y aplicación de
 // lexers y estilos a Scintilla, con los archivos reales de Notepad++.
 
+#include "core/ConfigXml.h"
 #include "core/LangType.h"
 #include "core/Paths.h"
 #include "syntax/LanguageDetection.h"
@@ -382,6 +383,42 @@ private slots:
         QVERIFY(again.activeThemePath().endsWith(QStringLiteral("Deep Black.xml")));
         QVERIFY(again.setTheme(QString()));
         QCOMPARE(again.activeStylePath(), again.stylersPath());
+    }
+
+    void themeSavedWithAnOldPathIsFoundByName()
+    {
+        // El AppImage monta sus datos en una carpeta distinta en cada arranque
+        // (/tmp/.mount_…): la ruta guardada ya no existe, pero el tema sí
+        QTemporaryDir config;
+        {
+            SyntaxManager manager(config.path());
+            manager.initialize();
+            ConfigXml xml;
+            QVERIFY(xml.load(manager.configPath()));
+            xml.setGuiConfig(QStringLiteral("stylerTheme"), QStringLiteral("path"),
+                             QStringLiteral("/tmp/.mount_EditaXYZ/usr/share/edita/themes/Edita Light.xml"));
+            QVERIFY(xml.save());
+        }
+        SyntaxManager manager(config.path());
+        const QStringList warnings = manager.initialize();
+        QVERIFY2(warnings.filter(QStringLiteral("no longer exists")).isEmpty(), qPrintable(warnings.join('\n')));
+        QVERIFY(QFileInfo::exists(manager.activeThemePath()));
+        QCOMPARE(QFileInfo(manager.activeThemePath()).fileName(), QStringLiteral("Edita Light.xml"));
+        // Y se guarda la ruta buena
+        SyntaxManager again(config.path());
+        QVERIFY(again.initialize().filter(QStringLiteral("no longer exists")).isEmpty());
+        QCOMPARE(again.activeThemePath(), manager.activeThemePath());
+
+        // Un tema que de verdad ya no está: aviso y el predeterminado
+        {
+            ConfigXml xml;
+            QVERIFY(xml.load(manager.configPath()));
+            xml.setGuiConfig(QStringLiteral("stylerTheme"), QStringLiteral("path"), QStringLiteral("/nada/Inexistente.xml"));
+            QVERIFY(xml.save());
+        }
+        SyntaxManager missing(config.path());
+        QCOMPARE(missing.initialize().filter(QStringLiteral("no longer exists")).size(), 1);
+        QCOMPARE(missing.activeThemePath(), QString());
     }
 
 private:

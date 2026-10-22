@@ -105,8 +105,19 @@ QStringList SyntaxManager::initialize()
         warnings << tr("config.xml is damaged; using the default values");
     _themePath = _config.guiConfig(kThemeConfig, QStringLiteral("path"));
     if (!_themePath.isEmpty() && !QFileInfo::exists(_themePath)) {
-        warnings << tr("The theme %1 no longer exists; using the default one").arg(_themePath);
-        _themePath.clear();
+        // La ruta guardada puede haber cambiado sin que el tema desaparezca: la de los
+        // temas de la aplicación cambia en cada arranque del AppImage (/tmp/.mount_…) o
+        // al instalar Edita en otro prefijo. Se busca un tema con ese nombre de archivo
+        const QString fileName = QFileInfo(_themePath).fileName();
+        QString found;
+        for (const Theme& theme : themes()) {
+            if (!theme.path.isEmpty() && QFileInfo(theme.path).fileName() == fileName)
+                found = theme.path; // el último: el de ~/.config/edita/themes, si hay los dos
+        }
+        if (found.isEmpty())
+            warnings << tr("The theme %1 no longer exists; using the default one").arg(_themePath);
+        _themePath = found;
+        _config.setGuiConfig(kThemeConfig, QStringLiteral("path"), found);
     }
     warnings << loadAll();
     return warnings;

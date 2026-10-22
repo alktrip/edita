@@ -58,3 +58,9 @@ Solución:
 Comprobado: XML Tools compilado con el SDK del AppImage pide `Qt_6.8` y carga con las bibliotecas del AppImage. El compilado antes con el Qt del sistema da `version 'Qt_6.12' not found`. Pruebas: `tst_recipes` `builderUsesTheQtOfEdita` (un SDK con cabeceras de Qt: la receta se compila sin `find_package(Qt6)` y el plugin carga) y `pluginsAdminBuildsAndCaches` (un paquete compilado con otro Qt se vuelve a compilar).
 
 Fuera del AppImage, las recetas se siguen compilando con el Qt del sistema, que es el mismo con el que se ejecuta Edita.
+
+## Corrección: aviso del tema en cada arranque del AppImage
+
+Problema: al abrir el AppImage aparecía «El tema /tmp/.mount_…/usr/share/edita/themes/Edita Light.xml ya no existe; se usa el predeterminado». `config.xml` guarda el tema activo con su ruta completa (`<GUIConfig name="stylerTheme" path="…">`, como N++). Los temas de la aplicación están dentro del AppImage, que se monta en una carpeta distinta en cada arranque, así que la ruta guardada ya no existía la siguiente vez.
+
+Solución: si la ruta guardada no existe, `SyntaxManager::initialize` busca un tema con el mismo nombre de archivo en las carpetas de temas, con preferencia por la copia del usuario en `~/.config/edita/themes`. Solo avisa si no hay ninguno. Pasa lo mismo si Edita se instala en otro prefijo. Prueba: `tst_syntax` `themeSavedWithAnOldPathIsFoundByName`.
