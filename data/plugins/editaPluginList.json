@@ -15,6 +15,17 @@
 			"homepage": "https://github.com/bruderstein/PythonScript"
 		},
 		{
+			"folder-name": "MarkdownViewerPlusPlus",
+			"display-name": "MarkdownViewer++",
+			"version": "0.8.2",
+			"npp-compatible-versions": "[0.0.1,]",
+			"id": "",
+			"repository": "",
+			"description": "Muestra el Markdown (CommonMark con las extensiones de GitHub) en un panel acoplable mientras se escribe, con desplazamiento sincronizado. Exporta a HTML o PDF, imprime y copia el HTML; las extensiones que se muestran se configuran. Port nativo del plugin de Notepad++ (escrito en C#); se incluye con Edita.",
+			"author": "nea (Savas Ziplies); port a Edita: Edita contributors",
+			"homepage": "https://nea.github.io/MarkdownViewerPlusPlus/"
+		},
+		{
 			"folder-name": "EditaDemo",
 			"display-name": "Demo",
 			"version": "1.0",

@@ -25,6 +25,13 @@ Incluye código de terceros en third_party/, cada uno con su propia licencia:
   pugixml 1.16 (copia de Notepad++) — Copyright Arseny Kapoulkine — MIT
       third_party/pugixml/LICENSE.md
 
+  md4c 0.5.2 — Copyright Martin Mitáš y colaboradores — MIT
+      third_party/md4c/LICENSE.md (para el plugin MarkdownViewer++)
+
+plugins/MarkdownViewerPlusPlus/: port nativo de MarkdownViewer++ 0.8.2
+(https://github.com/nea/MarkdownViewerPlusPlus) — Copyright (c) 2017 Savas
+Ziplies — MIT. El original está en C#; el port reproduce su comportamiento.
+
 Datos de Notepad++ incluidos en data/ (langs.model.xml, stylers.model.xml,
 los temas de installer/themes/ y los archivos de autocompletado de
 installer/APIs/), con su licencia GPL. Algunos temas indican su

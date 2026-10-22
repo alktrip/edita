@@ -619,6 +619,13 @@ bool PluginsAdminDialog::loadNppCatalog()
     }
     _nppPlugins.clear();
     for (PluginInfo info : npp.plugins) {
+        // Los que Edita ya ofrece (un port en su lista o una receta) no son incompatibles
+        const bool offered = _context.catalog.find(info.folderName)
+            || std::any_of(_context.recipes.begin(), _context.recipes.end(), [&info](const PluginRecipe& recipe) {
+                   return recipe.info.folderName.compare(info.folderName, Qt::CaseInsensitive) == 0;
+               });
+        if (offered)
+            continue;
         info.problem = tr("Notepad++ plugin for Windows (DLL); it cannot be loaded on Linux. If it is open source, "
                           "it can be ported with the Edita SDK (see docs/plugins.md).");
         info.repository.clear(); // no se instala

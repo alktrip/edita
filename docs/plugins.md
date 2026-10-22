@@ -132,6 +132,7 @@ Edita destruye los paneles antes de descargar los plugins.
 ## Ejemplos
 
 - [`plugins/PythonScript`](../plugins/PythonScript): Python con la API del PythonScript de N++ (ver [fase13.md](fase13.md)). Usa paneles acoplables, `NPPM_CREATESCINTILLAHANDLE`, `NPPM_GETMENUHANDLE` y `NPPM_MSGTOPLUGIN`.
+- [`plugins/MarkdownViewerPlusPlus`](../plugins/MarkdownViewerPlusPlus): port nativo de MarkdownViewer++ (ver [fase26.md](fase26.md)). Un panel acoplable que sigue al documento con `SCN_UPDATEUI`, `SCN_MODIFIED` y `NPPN_BUFFERACTIVATED`, sus opciones en un `.ini` de `NPPM_GETPLUGINSCONFIGDIR` y órdenes para otros plugins por `NPPM_MSGTOPLUGIN`.
 
 [`plugins/EditaDemo/EditaDemo.c`](../plugins/EditaDemo/EditaDemo.c) es un plugin completo en C:
 

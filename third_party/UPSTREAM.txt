@@ -1,3 +1,4 @@
 notepad-plus-plus 6ea1128fae166ec429f9cf1fba2fc7cf61b981cd
 scintilla 566
 lexilla 553
+md4c release-0.5.2 (https://github.com/mity/md4c, sha256 del tar.gz 55d0111d48fb11883aaee91465e642b8b640775a4d6993c2d0e7a8092758ef21)

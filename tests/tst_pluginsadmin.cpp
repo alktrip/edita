@@ -315,6 +315,33 @@ private slots:
         QCOMPARE(second.list(PluginsAdminDialog::Available)->topLevelItemCount(), 1);
     }
 
+    void notepadPlusPlusPluginsThatEditaOffersAreNotIncompatible()
+    {
+        // MarkdownViewer++ está en la lista de Edita (un port) y XML Tools tiene receta: en la
+        // lista de N++ no salen como incompatibles; Compare sí
+        writeCatalog(repo() + "/list.json",
+                     {entry("MarkdownViewerPlusPlus", "MarkdownViewer++", "0.8.2", QString(), QString())});
+        writeCatalog(repo() + "/npp.json",
+                     {entry("ComparePlugin", "Compare", "2.0.2", "https://example.org/Compare.zip", QString(64, 'a')),
+                      entry("MarkdownViewerPlusPlus", "MarkdownViewer++", "0.8.2", "https://example.org/MV.zip", QString(64, 'b')),
+                      entry("XMLTools", "XML Tools", "3.1", "https://example.org/XMLTools.zip", QString(64, 'c'))});
+        qputenv("EDITA_NPP_PLUGIN_LIST", repo().toUtf8() + "/npp.json");
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        FakePrompter prompter;
+        PluginsAdminContext context = adminContext(w);
+        PluginRecipe recipe;
+        recipe.info.folderName = QStringLiteral("XMLTools");
+        context.recipes.push_back(recipe);
+        PluginsAdminDialog dialog(context, prompter);
+        QVERIFY(dialog.loadNppCatalog());
+        QStringList incompatible;
+        for (const PluginInfo& info : dialog.lists().incompatible)
+            incompatible << info.folderName;
+        QCOMPARE(incompatible, QStringList{QStringLiteral("ComparePlugin")});
+        qunsetenv("EDITA_NPP_PLUGIN_LIST");
+    }
+
     void incompatibleAndNotepadPlusPlusList()
     {
         writeCatalog(repo() + "/list.json", {});

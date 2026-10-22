@@ -299,6 +299,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 23 — Temas de Edita | «Edita Light» y «Edita Dark», generados de `stylers.model.xml`, como temas de serie | ✅ [fase23.md](fase23.md) |
 | 24 — AppImage portable | Generado en Ubuntu 22.04 (glibc 2.35) con Qt 6.8 oficial, con `unshare` + `chroot` y sin Docker | ✅ [fase24.md](fase24.md) |
 | 25 — XML Tools completo | Las 29 órdenes del original: errores (anotaciones y navegación), cierre de etiquetas, tipo XML automático, XXE, archivos enormes, todos los archivos, tokenizar, opciones y depuración | ✅ [fase25.md](fase25.md) |
+| 26 — MarkdownViewer++ | Port nativo del plugin de N++ (C#/.NET): panel con la vista previa, sincronización, exportar a HTML y PDF, imprimir, portapapeles, opciones en su `.ini`; md4c en `third_party` | ✅ [fase26.md](fase26.md) |
 
 ---
 

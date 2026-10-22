@@ -64,3 +64,16 @@ add_library(pugixml STATIC ${CMAKE_CURRENT_SOURCE_DIR}/pugixml/pugixml.cpp)
 target_include_directories(pugixml SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/pugixml)
 target_compile_options(pugixml PRIVATE -w)
 set_target_properties(pugixml PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+# --- md4c 0.5.2 (Markdown CommonMark con las extensiones de GitHub, MIT) -------
+# El analizador que usa Qt (QTextDocument::setMarkdown) y su salida HTML: para el
+# plugin MarkdownViewer++. Copiado de https://github.com/mity/md4c (release-0.5.2).
+add_library(md4c STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/md4c/md4c.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/md4c/md4c-html.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/md4c/entity.c)
+target_include_directories(md4c SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/md4c)
+target_compile_options(md4c PRIVATE -w)
+# Símbolos ocultos: Qt Gui trae su propia copia de md4c (otra versión, con otros valores
+# de las opciones) y, con los símbolos visibles, md_html del plugin llamaba a su md_parse
+set_target_properties(md4c PROPERTIES POSITION_INDEPENDENT_CODE ON C_VISIBILITY_PRESET hidden)

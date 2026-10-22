@@ -19,3 +19,4 @@ edita_add_plugin(EditaDemo EditaDemo/EditaDemo.c)
 set_target_properties(EditaDemo PROPERTIES C_STANDARD 11)
 
 add_subdirectory(PythonScript)
+add_subdirectory(MarkdownViewerPlusPlus)
