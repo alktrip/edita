@@ -63,10 +63,11 @@ GitChanges::GitChanges(EditorView* view)
 
 GitChanges::~GitChanges()
 {
-    if (_process) {
-        _process->disconnect(this);
-        _process->kill();
-        _process->waitForFinished(1000);
+    // Las consultas que sigan en marcha (la actual y las canceladas), terminadas antes de borrarlas
+    for (QProcess* process : findChildren<QProcess*>()) {
+        process->disconnect();
+        process->kill();
+        process->waitForFinished(1000);
     }
 }
 
@@ -155,9 +156,12 @@ void GitChanges::reload()
 void GitChanges::fetch()
 {
     if (_process) {
-        _process->disconnect(this);
-        _process->kill();
-        _process->deleteLater();
+        // La consulta anterior ya no sirve: se termina y se borra cuando acabe (borrarla
+        // mientras git sigue en marcha da «Destroyed while process is still running»)
+        QProcess* previous = _process;
+        previous->disconnect(this);
+        connect(previous, &QProcess::finished, previous, &QObject::deleteLater);
+        previous->kill();
     }
     const QFileInfo info(_path);
     if (!info.exists()) {
