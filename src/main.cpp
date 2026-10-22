@@ -38,6 +38,7 @@ int main(int argc, char* argv[])
     QApplication::setApplicationVersion(QString::fromUtf8(edita::kAppVersion));
     QApplication::setWindowIcon(edita::MainWindow::applicationIcon());
     QGuiApplication::setDesktopFileName(QString::fromUtf8(edita::kAppId)); // Wayland: une la ventana con su .desktop
+    edita::paths::useOwnQtSettings(); // el diálogo de archivos de Qt, sin compartir QtProject.conf
     // El idioma antes de crear cualquier texto: el de config.xml o el del sistema
     edita::Preferences prefs;
     {

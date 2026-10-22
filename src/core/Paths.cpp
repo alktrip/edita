@@ -23,6 +23,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QSettings>
 #include <QStandardPaths>
 
 namespace edita::paths {
@@ -44,6 +45,12 @@ QString configDir()
 bool ensureConfigDir()
 {
     return QDir().mkpath(configDir());
+}
+
+void useOwnQtSettings()
+{
+    QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, configDir());
+    QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, configDir());
 }
 
 QStringList dataDirs()

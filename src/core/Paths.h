@@ -34,6 +34,13 @@ QString configDir();
 // Crea configDir() si no existe. Devuelve false si no se pudo.
 bool ensureConfigDir();
 
+// Los QSettings sin ruta propia (el diálogo de archivos de Qt guarda en «QtProject»
+// sus accesos directos, el historial y la última carpeta) van a configDir() y no a
+// ~/.config/QtProject.conf, que comparten todas las aplicaciones de Qt. Las de Qt 5
+// leen ese archivo como Latin-1 y lo guardan con escapes que Qt 6 lee de otra forma:
+// cada vez que se alternan, las rutas con acentos («Música») se estropean un poco más.
+void useOwnQtSettings();
+
 // Directorios donde buscar los datos de solo lectura (langs.model.xml,
 // stylers.model.xml, themes/), por orden de prioridad:
 // $EDITA_DATA_DIR, junto al ejecutable (../share/<app>), $XDG_DATA_DIRS/<app>

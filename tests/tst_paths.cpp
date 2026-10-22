@@ -6,6 +6,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QSettings>
 #include <QTemporaryDir>
 #include <QTest>
 
@@ -32,6 +33,25 @@ private slots:
         QVERIFY(!QDir(paths::configDir()).exists());
         QVERIFY(paths::ensureConfigDir());
         QVERIFY(QDir(paths::configDir()).exists());
+    }
+
+    void qtSettingsAreNotShared()
+    {
+        // El diálogo de archivos de Qt (QSettings "QtProject") guarda en la carpeta de Edita:
+        // ~/.config/QtProject.conf lo comparten las aplicaciones de Qt 5, que estropean los acentos
+        QCOMPARE(QSettings(QSettings::UserScope, QStringLiteral("QtProject")).fileName(), _tmp.filePath("config/QtProject.conf"));
+        paths::useOwnQtSettings();
+        const QString own = _tmp.filePath("config/edita/QtProject.conf");
+        QCOMPARE(QSettings(QSettings::UserScope, QStringLiteral("QtProject")).fileName(), own);
+        const QString music = QStringLiteral("file:///home/x/M\u00fasica");
+        {
+            QSettings settings(QSettings::UserScope, QStringLiteral("QtProject"));
+            settings.setValue(QStringLiteral("FileDialog/shortcuts"), QStringList{music});
+        }
+        QVERIFY(QFile::exists(own));
+        QVERIFY(!QFile::exists(_tmp.filePath("config/QtProject.conf")));
+        QCOMPARE(QSettings(QSettings::UserScope, QStringLiteral("QtProject")).value(QStringLiteral("FileDialog/shortcuts")).toStringList(),
+                 QStringList{music});
     }
 
     void dataFilesAreSearchedInOrder()

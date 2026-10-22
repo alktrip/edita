@@ -49,3 +49,9 @@ Objetivo: que Edita no parezca un programa antiguo, sin cambiar su organización
 Además, se revisaron capturas de la ventana, el menú Archivo, Buscar y Preferencias, en claro y en oscuro.
 
 Tests: `tst_appearance` tiene 12 casos (uno con tres variantes) (contando `initTestCase` y `cleanupTestCase`; uno se salta sin pantalla). Pasan las 25 suites y el build no da ningún warning.
+
+## Corrección: carpetas con acentos en el diálogo de archivos de Qt
+
+Problema: en el diálogo de archivos de Qt (el que se usa sin el portal del escritorio o con la preferencia de usar el diálogo de Qt), el acceso directo a «Música» aparecía como «MÃ�Âºsica», en gris, y no abría nada. El diálogo guarda los accesos directos, el historial y la última carpeta en `~/.config/QtProject.conf`, que comparten todas las aplicaciones de Qt. Las de Qt 5 leen ese archivo como Latin-1 y guardan la «ú» con escapes (`\xc3\xba`), que Qt 6 lee como dos caracteres («Ãº»). Cada vez que una aplicación de Qt 5 y una de Qt 6 lo guardan por turnos, la ruta se estropea un poco más. Se comprobó que Qt 6.8 y 6.12 guardan bien y que Qt 5.15 añade una capa.
+
+Solución: `paths::useOwnQtSettings()`, al arrancar, lleva los `QSettings` sin ruta propia (los del diálogo, «QtProject») a la carpeta de Edita: `~/.config/edita/QtProject.conf`. Solo Edita escribe ahí, así que las rutas con acentos no se estropean. Edita no usa `QSettings` para nada más, y los plugins usan rutas propias. La primera vez, el diálogo empieza con los accesos directos de serie. Prueba: `tst_paths` `qtSettingsAreNotShared`.
