@@ -30,6 +30,8 @@
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
 #include "ui/FunctionParser.h"
+#include "ui/GitChanges.h"
+#include "ui/ScrollBarMarks.h"
 #include "ui/Icons.h"
 #include "ui/Indentation.h"
 #include "ui/MacroSteps.h"
@@ -391,9 +393,16 @@ MainWindow::MainWindow(QWidget* parent)
         syncWatchedFiles();
         QTimer::singleShot(0, this, [this] { updatePanels(); });
     });
-    connect(&_documents, &DocumentManager::bufferChanged, this, [this](BufferId, int mask) {
+    connect(&_documents, &DocumentManager::bufferChanged, this, [this](BufferId id, int mask) {
         if (mask & (BufferChange::Dirty | BufferChange::Filename | BufferChange::ReadOnly | BufferChange::Language))
             updatePanels();
+        // Guardado con otro nombre o con otra codificación: otra versión de Git
+        if (mask & (BufferChange::Filename | BufferChange::Unicode)) {
+            for (EditorPane* pane : {_mainPane, _subPane}) {
+                if (pane->currentBuffer() == id)
+                    updateGitDocument(pane);
+            }
+        }
     });
 
     // Modo "snapshot": copias periódicas de los cambios sin guardar
@@ -414,9 +423,21 @@ MainWindow::MainWindow(QWidget* parent)
 
 void MainWindow::connectPane(EditorPane* pane)
 {
+    // Git en el margen y marcas en la barra de desplazamiento (no existen en N++)
+    const int index = pane == _subPane ? 1 : 0;
+    _git[index] = new GitChanges(pane->editor());
+    _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
     pane->setStyler([this](EditorView& view, const Buffer& buffer) { _syntax.apply(view, buffer.language(), buffer.userLanguage()); });
     connect(&_syntax, &SyntaxManager::stylesChanged, pane, &EditorPane::restyle);
+    // Después de restyle: los colores de las marcas según el tema ya aplicado
+    connect(&_syntax, &SyntaxManager::stylesChanged, _git[index], [this, index] {
+        if (_git[index])
+            _git[index]->applyColors();
+        if (_scrollMarks[index])
+            _scrollMarks[index]->scheduleUpdate();
+    });
     connect(pane, &EditorPane::currentBufferChanged, this, [this, pane] {
+        updateGitDocument(pane);
         if (pane == _activePane)
             refreshCurrentDocument();
         if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && autoCompletion(pane))
@@ -1786,6 +1807,10 @@ void MainWindow::createSearchMenu()
         clearChangeHistory(*editor());
         refreshCurrentDocument(); // deshacer ya no está disponible
     });
+    // Cambios respecto al último commit de Git (no existe en N++)
+    changes->addSeparator();
+    addIn(changes, tr("Go to Next &Git Change"), "actionNextGitChange", QKeySequence(), [this] { goToGitChange(true); });
+    addIn(changes, tr("Go to Previous G&it Change"), "actionPreviousGitChange", QKeySequence(), [this] { goToGitChange(false); });
 }
 
 void MainWindow::showTabContextMenu(BufferId id, const QPoint& globalPos)
@@ -2209,6 +2234,12 @@ void MainWindow::applyPreferences()
         pane->tabBar()->setTabsClosable(p.tabCloseButton);
         pane->tabBar()->setDoubleClickCloses(p.tabDoubleClickCloses);
         pane->editor()->applyPreferences(p);
+    }
+    for (int i = 0; i < 2; ++i) {
+        if (_git[i])
+            _git[i]->setEnabled(p.gitMargin);
+        if (_scrollMarks[i])
+            _scrollMarks[i]->setEnabled(p.scrollBarMarks);
     }
 
     // Lo que depende de los colores del tema lo aplica SyntaxStyler
@@ -3685,8 +3716,15 @@ void MainWindow::changeEvent(QEvent* event)
     if (event->type() == QEvent::PaletteChange)
         icons::refresh(this);
     // WM_ACTIVATEAPP → NPPM_INTERNAL_CHECKDOCSTATUS
-    if (event->type() == QEvent::ActivationChange && isActiveWindow())
+    if (event->type() == QEvent::ActivationChange && isActiveWindow()) {
         scheduleFileCheck();
+        // Al volver a la ventana puede haber un commit nuevo (hecho en una terminal)
+        GitChanges::clearCache();
+        for (const QPointer<GitChanges>& git : _git) {
+            if (git)
+                git->reload();
+        }
+    }
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent* event)
@@ -3792,6 +3830,69 @@ void MainWindow::goToLine(int line, int column)
     const sptr_t pos = view->sci(SCI_FINDCOLUMN, docLine, std::max(column, 1) - 1);
     view->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos));
     view->sci(SCI_SCROLLCARET);
+}
+
+// --- Git ------------------------------------------------------------------------------
+
+GitChanges* MainWindow::gitChanges(const EditorPane* pane) const
+{
+    return _git[pane == _subPane ? 1 : 0];
+}
+
+GitChanges* MainWindow::gitChangesOfCurrentView() const
+{
+    return gitChanges(_activePane);
+}
+
+ScrollBarMarks* MainWindow::scrollBarMarksOfCurrentView() const
+{
+    return _scrollMarks[_activePane == _subPane ? 1 : 0];
+}
+
+void MainWindow::updateGitDocument(EditorPane* pane)
+{
+    GitChanges* git = gitChanges(pane);
+    if (!git)
+        return;
+    git->applyColors(); // el estilo del documento recién activado
+    const Buffer* buf = _documents.buffer(pane->currentBuffer());
+    if (!buf || buf->isUntitled())
+        git->setDocument(QString(), TextEncoding::utf8());
+    else
+        git->setDocument(absolutePath(buf->filePath()), buf->encoding());
+}
+
+// El siguiente (o anterior) cambio respecto a Git desde el cursor, dando la vuelta
+void MainWindow::goToGitChange(bool forward)
+{
+    GitChanges* git = gitChanges(_activePane);
+    if (!git || git->changes().empty())
+        return;
+    EditorView* view = editor();
+    const int line = static_cast<int>(view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(view->sci(SCI_GETCURRENTPOS))));
+    const std::vector<LineChange>& changes = git->changes();
+    const LineChange* target = nullptr;
+    if (forward) {
+        for (const LineChange& c : changes) {
+            if (c.line > line) {
+                target = &c;
+                break;
+            }
+        }
+        if (!target)
+            target = &changes.front();
+    } else {
+        for (auto it = changes.rbegin(); it != changes.rend(); ++it) {
+            const int end = it->kind == LineChangeKind::Deleted ? it->line : it->line + it->count - 1;
+            if (end < line && it->line < line) {
+                target = &*it;
+                break;
+            }
+        }
+        if (!target)
+            target = &changes.back();
+    }
+    goToLine(std::min(target->line, static_cast<int>(view->sci(SCI_GETLINECOUNT)) - 1) + 1);
 }
 
 // --- Paleta de órdenes e «Ir a archivo» ------------------------------------------------

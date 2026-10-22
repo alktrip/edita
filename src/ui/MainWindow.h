@@ -62,6 +62,8 @@ class DocumentMapPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
 class FunctionParsers;
+class GitChanges;
+class ScrollBarMarks;
 }
 class QPagedPaintDevice;
 class QTimer;
@@ -311,6 +313,9 @@ public:
     // Paleta de órdenes (">"), «Ir a archivo» ("") e «Ir a símbolo» ("@"); no existen en N++
     void showCommandPalette(const QString& prefix);
     CommandPalette* commandPalette() const { return _palette; }
+    // Para las pruebas
+    GitChanges* gitChangesOfCurrentView() const;
+    ScrollBarMarks* scrollBarMarksOfCurrentView() const;
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -458,6 +463,12 @@ private:
     QToolBar* _toolBar = nullptr;
     std::unique_ptr<FunctionParsers> _functionParsers;
     CommandPalette* _palette = nullptr;
+    // Cambios de Git en el margen y marcas en la barra de desplazamiento, de cada vista
+    QPointer<GitChanges> _git[2];
+    QPointer<ScrollBarMarks> _scrollMarks[2];
+    GitChanges* gitChanges(const EditorPane* pane) const;
+    void updateGitDocument(EditorPane* pane);
+    void goToGitChange(bool forward);
     QThread* _paletteScan = nullptr;
     std::shared_ptr<std::atomic_bool> _paletteScanCancel;
     QSet<QString> _paletteFiles; // las rutas que ya están en «Ir a archivo»

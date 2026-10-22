@@ -13,9 +13,20 @@
     </message>
 </context>
 <context>
+    <name>edita::GitChanges</name>
+    <message numerus="yes">
+        <location filename="../src/ui/GitChanges.cpp" line="+311"/>
+        <source>Added since the last commit: %n line(s)</source>
+        <translation>
+            <numerusform>Added since the last commit: %n line</numerusform>
+            <numerusform>Added since the last commit: %n lines</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+4303"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+4409"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>

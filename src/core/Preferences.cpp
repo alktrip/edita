@@ -315,6 +315,8 @@ Preferences loadPreferences(const ConfigXml& config)
         p.toolbarIcons = ToolbarIcons::Standard;
     r.boolText("EditaSystemMonospaceFont", p.systemMonospaceFont);
     r.boolText("EditaQtFileDialog", p.qtFileDialog);
+    r.boolText("EditaGitMargin", p.gitMargin);
+    r.boolText("EditaScrollBarMarks", p.scrollBarMarks);
     return p;
 }
 
@@ -437,6 +439,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("ToolBar", QString::fromLatin1(kToolbarIcons[static_cast<int>(p.toolbarIcons)]));
     w.text("EditaSystemMonospaceFont", yesNo(p.systemMonospaceFont));
     w.text("EditaQtFileDialog", yesNo(p.qtFileDialog));
+    w.text("EditaGitMargin", yesNo(p.gitMargin));
+    w.text("EditaScrollBarMarks", yesNo(p.scrollBarMarks));
 }
 
 QList<int> parseEdgeColumns(const QString& text)

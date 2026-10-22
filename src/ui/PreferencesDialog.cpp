@@ -308,6 +308,11 @@ void PreferencesDialog::buildMargins()
     _changeHistory = addCombo(form, tr("Change history:"), "changeHistory",
                               {{tr("Disabled"), 0}, {tr("Show in margin"), 1}, {tr("Show as indicators in text"), 2},
                                {tr("Show in margin and text"), 3}});
+    _gitMargin = addCheck(form, tr("Changes since the last Git commit"), "gitMargin");
+    _gitMargin->setToolTip(tr("Green: added lines, blue: modified lines, red: deleted lines. Hover a mark to see the "
+                              "original lines."));
+    _scrollBarMarks = addCheck(form, tr("Marks in the scroll bar (Git, bookmarks, Mark All, smart highlighting, caret)"),
+                               "scrollBarMarks");
 }
 
 void PreferencesDialog::buildNewDocument()
@@ -568,6 +573,8 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _edgeColumns->setText(edgeColumnsToText(p.edgeColumns));
     _edgeBackground->setChecked(p.edgeBackground);
     _bookmarkMargin->setChecked(p.bookmarkMargin);
+    _gitMargin->setChecked(p.gitMargin);
+    _scrollBarMarks->setChecked(p.scrollBarMarks);
     setComboValue(_changeHistory, p.changeHistory);
 
     setComboValue(_newEol, p.newDocEol);
@@ -699,6 +706,8 @@ Preferences PreferencesDialog::preferences() const
     p.edgeColumns = parseEdgeColumns(_edgeColumns->text());
     p.edgeBackground = _edgeBackground->isChecked();
     p.bookmarkMargin = _bookmarkMargin->isChecked();
+    p.gitMargin = _gitMargin->isChecked();
+    p.scrollBarMarks = _scrollBarMarks->isChecked();
     p.changeHistory = comboValue(_changeHistory);
 
     p.newDocEol = comboValue(_newEol);

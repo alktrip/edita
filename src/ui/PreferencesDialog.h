@@ -113,6 +113,8 @@ private:
     QLineEdit* _edgeColumns = nullptr;
     QCheckBox* _edgeBackground = nullptr;
     QCheckBox* _bookmarkMargin = nullptr;
+    QCheckBox* _gitMargin = nullptr;
+    QCheckBox* _scrollBarMarks = nullptr;
     QComboBox* _changeHistory = nullptr;
     // Documento nuevo y directorio
     QComboBox* _newEol = nullptr;

@@ -121,6 +121,11 @@ struct Preferences
     // Diálogos de archivos de Qt en lugar de los del escritorio (que siguen el idioma
     // del escritorio, no el de Edita): <GUIConfig name="EditaQtFileDialog">yes</GUIConfig>
     bool qtFileDialog = false;
+    // Cambios respecto al último commit de Git en un margen y marcas en la barra de
+    // desplazamiento (no existen en N++): <GUIConfig name="EditaGitMargin">yes</GUIConfig>,
+    // <GUIConfig name="EditaScrollBarMarks">yes</GUIConfig>
+    bool gitMargin = true;
+    bool scrollBarMarks = true;
     // <GUIConfig name="multiInst" setting="0" …/>
     MultiInst multiInstSetting = MultiInst::Mono;
     // Modo oscuro de N++: <GUIConfig name="DarkMode" enable="no" enableWindowsMode="yes"
