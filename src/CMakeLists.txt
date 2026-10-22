@@ -32,6 +32,8 @@ add_library(edita_core STATIC
     core/LineOperations.h
     core/Locale.cpp
     core/Locale.h
+    core/FileScan.cpp
+    core/FuzzyMatch.cpp
     core/Macro.cpp
     core/Macro.h
     core/Paths.cpp
@@ -119,6 +121,7 @@ add_library(edita_ui STATIC
     ui/AutoCompletion.cpp
     ui/AutoCompletion.h
     ui/ColumnEditorDialog.cpp
+    ui/CommandPalette.cpp
     ui/ColumnEditorDialog.h
     ui/DocStatusBar.cpp
     ui/DocStatusBar.h

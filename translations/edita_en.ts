@@ -2,9 +2,20 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en">
 <context>
+    <name>edita::CommandPalette</name>
+    <message numerus="yes">
+        <location filename="../src/ui/CommandPalette.cpp" line="+340"/>
+        <source>%n result(s)</source>
+        <translation>
+            <numerusform>%n result</numerusform>
+            <numerusform>%n results</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+4028"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+4303"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -104,7 +115,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+140"/>
+        <location line="+147"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>%n plugin will be removed.</numerusform>
@@ -128,7 +139,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+75"/>
+        <location line="+82"/>
         <source>Notepad++ list %1: %n plugin(s) (incompatible)</source>
         <translation>
             <numerusform>Notepad++ list %1: %n plugin (incompatible)</numerusform>

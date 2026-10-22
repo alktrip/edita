@@ -556,7 +556,7 @@
 <context>
     <name>PluginInstaller</name>
     <message>
-        <location filename="../src/core/PluginInstaller.cpp" line="+83"/>
+        <location filename="../src/core/PluginInstaller.cpp" line="+91"/>
         <source>Not a valid .zip file: %1</source>
         <translation>No es un archivo .zip válido: %1</translation>
     </message>
@@ -735,7 +735,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/core/PluginRecipe.cpp" line="+43"/>
+        <location filename="../src/core/PluginRecipe.cpp" line="+44"/>
         <source>Could not copy %1</source>
         <translation>No se pudo copiar %1</translation>
     </message>
@@ -750,7 +750,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>%1: receta no válida (faltan folder-name o source.url) %2</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+119"/>
         <source>%1 (development library, pkg-config)</source>
         <translation>%1 (biblioteca de desarrollo, pkg-config)</translation>
     </message>
@@ -956,6 +956,62 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+2"/>
         <source>&amp;Bin</source>
         <translation>&amp;Bin</translation>
+    </message>
+</context>
+<context>
+    <name>edita::CommandPalette</name>
+    <message>
+        <location filename="../src/ui/CommandPalette.cpp" line="+250"/>
+        <source>Go to line %1, column %2</source>
+        <translation>Ir a la línea %1, columna %2</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Go to line %1</source>
+        <translation>Ir a la línea %1</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Type a line number</source>
+        <translation>Escribe un número de línea</translation>
+    </message>
+    <message>
+        <location line="+78"/>
+        <source>Files: type a name · &gt; commands · @ symbols · : line</source>
+        <translation>Archivos: escribe un nombre · &gt; órdenes · @ símbolos · : línea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Commands · Enter runs the selected one</source>
+        <translation>Órdenes · Intro ejecuta la seleccionada</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Symbols of the current document</source>
+        <translation>Símbolos del documento actual</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Go to line (:line or :line:column)</source>
+        <translation>Ir a una línea (:línea o :línea:columna)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>searching…</source>
+        <translation>buscando…</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n result(s)</source>
+        <translation>
+            <numerusform>%n resultado</numerusform>
+            <numerusform>%n resultados</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Go to file (&gt; commands, @ symbols, : line)</source>
+        <translation>Ir a archivo (&gt; órdenes, @ símbolos, : línea)</translation>
     </message>
 </context>
 <context>
@@ -1292,13 +1348,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+351"/>
-        <location line="+2203"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+353"/>
+        <location line="+2211"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2203"/>
+        <location line="-2211"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1308,7 +1364,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+241"/>
+        <location line="+242"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1603,7 +1659,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+23"/>
         <source>&amp;Word wrap</source>
         <translation>&amp;Ajuste de línea</translation>
     </message>
@@ -1764,7 +1820,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+401"/>
+        <location line="+402"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -1810,12 +1866,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+726"/>
+        <location line="+729"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-702"/>
+        <location line="-705"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -1937,7 +1993,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Línea (1 - %1):</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+9"/>
         <source>Next Search Result</source>
         <translation>Resultado siguiente</translation>
     </message>
@@ -1987,12 +2043,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-979"/>
+        <location line="-986"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-613"/>
+        <location line="-614"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2072,13 +2128,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+524"/>
-        <location line="+597"/>
+        <location line="+525"/>
+        <location line="+600"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-541"/>
+        <location line="-544"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2203,7 +2259,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Editor de colu&amp;mnas…</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+17"/>
+        <source>Command &amp;Palette…</source>
+        <translation>&amp;Paleta de órdenes…</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Document &amp;Map</source>
         <translation>Mapa del doc&amp;umento</translation>
     </message>
@@ -2263,12 +2324,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+184"/>
+        <location line="+185"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
     <message>
-        <location line="+320"/>
+        <location line="+297"/>
+        <source>Go to &amp;File…</source>
+        <translation>Ir a &amp;archivo…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Go to S&amp;ymbol…</source>
+        <translation>Ir a &amp;símbolo…</translation>
+    </message>
+    <message>
+        <location line="+25"/>
         <source>Using &amp;1st Style</source>
         <translation>Estilo &amp;1</translation>
     </message>
@@ -2825,7 +2896,12 @@ Continue?</source>
         <translation>Codificación</translation>
     </message>
     <message>
-        <location line="+76"/>
+        <location line="+211"/>
+        <source>open</source>
+        <translation>abierto</translation>
+    </message>
+    <message>
+        <location line="+130"/>
         <source>Replace All</source>
         <translation>Reemplazar todo</translation>
     </message>
@@ -3238,7 +3314,7 @@ Continue?</source>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+140"/>
+        <location line="+147"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>Se va a quitar %n plugin.</numerusform>
@@ -3262,7 +3338,7 @@ Continue?</source>
         </translation>
     </message>
     <message>
-        <location line="-184"/>
+        <location line="-191"/>
         <source>Install plugins</source>
         <translation>Instalar plugins</translation>
     </message>
@@ -3282,7 +3358,7 @@ Continue?</source>
         <translation>se distribuye con Edita (no hay paquete que descargar)</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+22"/>
         <source>Package already built: %1
 </source>
         <translation>Paquete ya compilado: %1
@@ -3319,7 +3395,7 @@ Continue?</source>
         <translation>no se pudo compilar: %1</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+11"/>
         <source>cannot read the built package</source>
         <translation>no se puede leer el paquete compilado</translation>
     </message>
@@ -3376,7 +3452,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>No se pudo leer la lista: %1</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+12"/>
         <source>Notepad++ plugin for Windows (DLL); it cannot be loaded on Linux. If it is open source, it can be ported with the Edita SDK (see docs/plugins.md).</source>
         <translation>plugin de Notepad++ para Windows (DLL); no se puede cargar en Linux. Si es de código abierto, se puede portar con el SDK de Edita (ver docs/plugins.md).</translation>
     </message>
@@ -4358,7 +4434,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Configurando con CMake</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+17"/>
         <source>Building</source>
         <translation>Compilando</translation>
     </message>
@@ -4737,12 +4813,12 @@ Do you want to save your changes before switching themes?</source>
         <translation>config.xml está dañado; se usan los valores por defecto</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+13"/>
         <source>The theme %1 no longer exists; using the default one</source>
         <translation>El tema %1 ya no existe; se usa el predeterminado</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>Cannot read %1 (%2); using langs.model.xml</source>
         <translation>No se puede leer %1 (%2); se usa langs.model.xml</translation>
     </message>
@@ -5338,7 +5414,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="+53"/>
+        <location filename="../src/main.cpp" line="+54"/>
         <source>Text editor inspired by Notepad++</source>
         <translation>Editor de texto inspirado en Notepad++</translation>
     </message>

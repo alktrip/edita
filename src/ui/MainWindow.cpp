@@ -47,6 +47,7 @@
 #include "ui/UserLanguageDialog.h"
 #include "ui/XmlTagMatcher.h"
 #include "search/FileSearch.h"
+#include "core/FileScan.h"
 
 #include <ILexer.h>
 #include <Lexilla.h>
@@ -87,6 +88,7 @@
 #include <QRadioButton>
 #include <QRegularExpression>
 #include <QSet>
+#include <QThread>
 #include <QScopedValueRollback>
 #include <QSpinBox>
 #include <QSplitter>
@@ -552,6 +554,7 @@ MainWindow::~MainWindow()
         _fileJob->cancel();
         _fileJob->wait();
     }
+    stopPaletteFileScan();
     // Las vistas sueltan sus documentos antes de que se destruya el DocumentManager
     _searchView->send(SCI_RELEASEDOCUMENT, 0, _searchViewDefaultDoc);
     _searchView.reset();
@@ -842,6 +845,9 @@ void MainWindow::createMenus()
 
     // Ver
     QMenu* view = menuBar()->addMenu(tr("&View"));
+    addAction(view, tr("Command &Palette…"), "actionCommandPalette", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_A),
+              [this] { showCommandPalette(QStringLiteral(">")); });
+    view->addSeparator();
     // IDM_VIEW_DOC_MAP, IDM_VIEW_DOCLIST, IDM_VIEW_FUNC_LIST, IDM_VIEW_FILEBROWSER
     const std::pair<const char*, QString> panelEntries[] = {
         {"documentMap", tr("Document &Map")}, {"documentList", tr("Document &List")},
@@ -1684,6 +1690,9 @@ void MainWindow::createSearchMenu()
         if (ok)
             goToLine(line);
     });
+    add(tr("Go to &File…"), "actionGoToFile", QKeySequence(Qt::CTRL | Qt::Key_E), [this] { showCommandPalette(QString()); });
+    add(tr("Go to S&ymbol…"), "actionGoToSymbol", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O),
+        [this] { showCommandPalette(QStringLiteral("@")); });
     search->addSeparator();
     add(tr("Next Search Result"), "actionNextResult", QKeySequence(Qt::Key_F4),
         [this] { _results->activateAdjacentResult(true); });
@@ -3783,6 +3792,278 @@ void MainWindow::goToLine(int line, int column)
     const sptr_t pos = view->sci(SCI_FINDCOLUMN, docLine, std::max(column, 1) - 1);
     view->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos));
     view->sci(SCI_SCROLLCARET);
+}
+
+// --- Paleta de órdenes e «Ir a archivo» ------------------------------------------------
+
+void MainWindow::showCommandPalette(const QString& prefix)
+{
+    if (!_palette) {
+        _palette = new CommandPalette(this);
+        // El historial de órdenes, en config.xml (<GUIConfig name="EditaCommandPalette" history="…">)
+        _palette->setHistory(_syntax.config().guiConfig(QStringLiteral("EditaCommandPalette"), QStringLiteral("history"))
+                                 .split(QLatin1Char('\x1f'), Qt::SkipEmptyParts));
+        connect(_palette, &CommandPalette::historyChanged, this, [this](const QStringList& ids) {
+            _syntax.config().setGuiConfig(QStringLiteral("EditaCommandPalette"), QStringLiteral("history"),
+                                          ids.join(QLatin1Char('\x1f')));
+            _syntax.config().save();
+        });
+        connect(_palette, &CommandPalette::itemsRequested, this, [this](CommandPalette::Mode mode) { fillPalette(mode); });
+        connect(_palette, &CommandPalette::goToLineRequested, this, [this](int line, int column) {
+            goToLine(line, column);
+            editor()->setFocus();
+        });
+    }
+    _palette->open(prefix);
+}
+
+void MainWindow::fillPalette(CommandPalette::Mode mode)
+{
+    switch (mode) {
+    case CommandPalette::Mode::Commands:
+        _palette->setItems(mode, paletteCommands());
+        break;
+    case CommandPalette::Mode::Symbols:
+        _palette->setItems(mode, paletteSymbols());
+        break;
+    case CommandPalette::Mode::Files:
+        startPaletteFileScan();
+        break;
+    case CommandPalette::Mode::Line:
+        break;
+    }
+}
+
+// Todo lo de los menús (también los plugins, las macros, los lenguajes y los temas) que
+// se puede ejecutar ahora, con su menú como detalle («Editar › Convertir»)
+std::vector<CommandPalette::Item> MainWindow::paletteCommands() const
+{
+    std::vector<CommandPalette::Item> items;
+    QSet<const QAction*> seen;
+    const QSet<const QAction*> recent(_recentEntries.begin(), _recentEntries.end());
+    std::function<void(const QMenu*, const QString&)> walk = [&](const QMenu* menu, const QString& path) {
+        for (QAction* action : menu->actions()) {
+            if (action->isSeparator() || !action->isVisible() || seen.contains(action) || recent.contains(action))
+                continue;
+            seen.insert(action);
+            const QString text = plainMenuText(action->text());
+            if (text.isEmpty())
+                continue;
+            if (action->menu()) {
+                walk(action->menu(), path + QStringLiteral(" › ") + text);
+                continue;
+            }
+            if (!action->isEnabled() || action->objectName() == QLatin1String("actionCommandPalette"))
+                continue;
+            CommandPalette::Item item;
+            item.text = text;
+            item.detail = path;
+            item.shortcut = action->shortcut().toString(QKeySequence::NativeText);
+            item.icon = action->icon();
+            item.checked = action->isCheckable() && action->isChecked();
+            item.id = action->objectName().startsWith(QLatin1String("action")) ? action->objectName() : path + QLatin1Char('/') + text;
+            item.order = static_cast<int>(items.size());
+            QPointer<QAction> target(action);
+            item.run = [target] {
+                if (target)
+                    target->trigger();
+            };
+            items.push_back(std::move(item));
+        }
+    };
+    for (QAction* top : menuBar()->actions()) {
+        if (top->menu())
+            walk(top->menu(), plainMenuText(top->text()));
+    }
+    return items;
+}
+
+// Las funciones y clases del documento (los analizadores de la Lista de funciones)
+std::vector<CommandPalette::Item> MainWindow::paletteSymbols() const
+{
+    std::vector<CommandPalette::Item> items;
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    if (!buf || !_functionParsers)
+        return items;
+    ScintillaEditBase scanner;
+    scanner.send(SCI_SETDOCPOINTER, 0, editor()->sci(SCI_GETDOCPOINTER));
+    std::vector<FunctionInfo> found;
+    const bool parsed = _functionParsers->parse(scanner, buf->language(), buf->userLanguage(), found);
+    scanner.send(SCI_SETDOCPOINTER, 0, 0);
+    if (!parsed)
+        return items;
+    QSet<QString> classes;
+    for (const FunctionInfo& fi : found) {
+        const QString className = QString::fromStdString(fi.className);
+        if (!className.isEmpty() && !classes.contains(className) && fi.classPos >= 0) {
+            classes.insert(className);
+            CommandPalette::Item cls;
+            cls.text = className;
+            cls.icon = icons::icon(QStringLiteral("function-list"));
+            cls.order = static_cast<int>(fi.classPos);
+            const sptr_t pos = fi.classPos;
+            QPointer<EditorView> view(editor());
+            cls.run = [this, view, pos] {
+                if (!view)
+                    return;
+                view->sci(SCI_ENSUREVISIBLEENFORCEPOLICY, static_cast<uptr_t>(view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pos))));
+                view->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos));
+                view->setFocus();
+            };
+            items.push_back(std::move(cls));
+        }
+        if (fi.name.empty() || fi.pos < 0)
+            continue;
+        CommandPalette::Item item;
+        item.text = QString::fromStdString(fi.name);
+        item.detail = className;
+        item.order = static_cast<int>(fi.pos);
+        const sptr_t pos = fi.pos;
+        QPointer<EditorView> view(editor());
+        item.run = [view, pos] {
+            if (!view)
+                return;
+            view->sci(SCI_ENSUREVISIBLEENFORCEPOLICY, static_cast<uptr_t>(view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pos))));
+            view->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos));
+            view->setFocus();
+        };
+        items.push_back(std::move(item));
+    }
+    return items;
+}
+
+void MainWindow::stopPaletteFileScan()
+{
+    if (!_paletteScan)
+        return;
+    _paletteScanCancel->store(true);
+    _paletteScan->wait();
+    delete _paletteScan;
+    _paletteScan = nullptr;
+}
+
+// «Ir a archivo»: los abiertos, los recientes y los de las carpetas de trabajo (el
+// Explorador de carpetas o, sin él, la carpeta del documento), que se recorren en otro hilo
+void MainWindow::startPaletteFileScan()
+{
+    stopPaletteFileScan();
+    _paletteFiles.clear();
+    std::vector<CommandPalette::Item> items;
+    auto stateIcon = [](const Buffer& buf) {
+        using State = DocTabBar::TabState;
+        return DocTabBar::iconForState(buf.isReadOnly() ? State::ReadOnly : buf.isDirty() ? State::Dirty : State::Saved);
+    };
+    auto fileItem = [this](const QString& path, const QString& folder, int order) {
+        // La carpeta personal como «~», para que las rutas largas quepan
+        QString detail = folder;
+        const QString home = QDir::toNativeSeparators(QDir::homePath());
+        if (detail == home || detail.startsWith(home + QDir::separator()))
+            detail = QLatin1Char('~') + detail.mid(home.size());
+        CommandPalette::Item item;
+        item.text = QFileInfo(path).fileName();
+        item.detail = detail;
+        item.order = order;
+        item.run = [this, path] {
+            openFile(path);
+            editor()->setFocus();
+        };
+        return item;
+    };
+    // Abiertos: el actual al final, para que Enter cambie al anterior como Ctrl+Tab
+    std::vector<BufferId> open = allBuffers();
+    const BufferId current = currentBuffer();
+    std::stable_partition(open.begin(), open.end(), [current](BufferId id) { return id != current; });
+    for (BufferId id : open) {
+        const Buffer* buf = _documents.buffer(id);
+        if (!buf)
+            continue;
+        if (buf->isUntitled()) {
+            CommandPalette::Item item;
+            item.text = buf->displayName();
+            item.detail = tr("open");
+            item.order = static_cast<int>(items.size());
+            item.icon = stateIcon(*buf);
+            item.run = [this, id] {
+                if (EditorPane* pane = paneContaining(id)) {
+                    pane->activateBuffer(id);
+                    setActivePane(pane);
+                    editor()->setFocus();
+                }
+            };
+            items.push_back(std::move(item));
+            continue;
+        }
+        const QString path = absolutePath(buf->filePath());
+        _paletteFiles.insert(path);
+        CommandPalette::Item item = fileItem(path, QDir::toNativeSeparators(QFileInfo(path).absolutePath()), static_cast<int>(items.size()));
+        item.icon = stateIcon(*buf);
+        items.push_back(std::move(item));
+    }
+    for (const QString& recentPath : _recentFiles) {
+        const QString path = absolutePath(recentPath);
+        if (_paletteFiles.contains(path) || !QFileInfo::exists(path))
+            continue;
+        _paletteFiles.insert(path);
+        items.push_back(fileItem(path, QDir::toNativeSeparators(QFileInfo(path).absolutePath()), 1000 + static_cast<int>(items.size())));
+    }
+    _palette->setItems(CommandPalette::Mode::Files, std::move(items));
+
+    QStringList roots = _folderPanel ? _folderPanel->roots() : QStringList();
+    if (roots.isEmpty()) {
+        const Buffer* buf = _documents.buffer(current);
+        const QString dir = buf && !buf->isUntitled() ? QFileInfo(buf->filePath()).absolutePath() : QString();
+        // Sin carpeta de trabajo, la del documento (no la carpeta personal ni la raíz enteras)
+        if (!dir.isEmpty() && dir != QDir::homePath() && dir != QDir::rootPath())
+            roots << dir;
+    }
+    if (roots.isEmpty())
+        return;
+    _palette->setBusy(CommandPalette::Mode::Files, true);
+    _paletteScanCancel = std::make_shared<std::atomic_bool>(false);
+    auto cancel = _paletteScanCancel;
+    QPointer<MainWindow> self(this);
+    _paletteScan = QThread::create([self, roots, cancel] {
+        scanFiles(roots, *cancel, [self, cancel](const QStringList& chunk) {
+            QMetaObject::invokeMethod(self, [self, cancel, chunk] {
+                if (!self || cancel->load() || !self->_palette)
+                    return;
+                std::vector<CommandPalette::Item> found;
+                for (const QString& path : chunk) {
+                    if (self->_paletteFiles.contains(path))
+                        continue;
+                    self->_paletteFiles.insert(path);
+                    // El detalle: la carpeta, relativa a la carpeta de trabajo
+                    QString detail = QFileInfo(path).absolutePath();
+                    for (const QString& root : self->_folderPanel ? self->_folderPanel->roots() : QStringList()) {
+                        if (detail == root || detail.startsWith(root + QLatin1Char('/'))) {
+                            detail = QFileInfo(root).fileName() + detail.mid(root.size());
+                            break;
+                        }
+                    }
+                    if (const QString home = QDir::homePath(); detail == home || detail.startsWith(home + QLatin1Char('/')))
+                        detail = QLatin1Char('~') + detail.mid(home.size());
+                    CommandPalette::Item item;
+                    item.text = QFileInfo(path).fileName();
+                    item.detail = QDir::toNativeSeparators(detail);
+                    item.order = 100000 + static_cast<int>(self->_paletteFiles.size());
+                    QPointer<MainWindow> window = self;
+                    item.run = [window, path] {
+                        if (window) {
+                            window->openFile(path);
+                            window->editor()->setFocus();
+                        }
+                    };
+                    found.push_back(std::move(item));
+                }
+                self->_palette->addItems(CommandPalette::Mode::Files, std::move(found));
+            }, Qt::QueuedConnection);
+        });
+        QMetaObject::invokeMethod(self, [self, cancel] {
+            if (self && !cancel->load() && self->_palette)
+                self->_palette->setBusy(CommandPalette::Mode::Files, false);
+        }, Qt::QueuedConnection);
+    });
+    _paletteScan->start();
 }
 
 // --- Buscar ------------------------------------------------------------------------

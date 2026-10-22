@@ -28,6 +28,7 @@
 #include "doc/DocumentManager.h"
 #include "search/SearchEngine.h"
 #include "syntax/SyntaxManager.h"
+#include "ui/CommandPalette.h"
 #include "ui/EditCommands.h"
 #include "ui/FindReplaceDialog.h"
 #include "ui/PluginsAdminDialog.h"
@@ -38,7 +39,9 @@
 #include <QIcon>
 #include <QMainWindow>
 #include <QPointer>
+#include <QSet>
 
+#include <atomic>
 #include <functional>
 #include <map>
 #include <memory>
@@ -48,6 +51,7 @@ class QDockWidget;
 class QFileSystemWatcher;
 class QMenu;
 class QSplitter;
+class QThread;
 class QToolBar;
 class QDockWidget;
 
@@ -304,6 +308,9 @@ public:
     void convertEol(EolType eol);
     // Línea y columna empezando en 1 (opciones -n y -c de la línea de comandos)
     void goToLine(int line, int column = 1);
+    // Paleta de órdenes (">"), «Ir a archivo» ("") e «Ir a símbolo» ("@"); no existen en N++
+    void showCommandPalette(const QString& prefix);
+    CommandPalette* commandPalette() const { return _palette; }
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -450,6 +457,15 @@ private:
     QMenu* _pluginsMenu = nullptr;
     QToolBar* _toolBar = nullptr;
     std::unique_ptr<FunctionParsers> _functionParsers;
+    CommandPalette* _palette = nullptr;
+    QThread* _paletteScan = nullptr;
+    std::shared_ptr<std::atomic_bool> _paletteScanCancel;
+    QSet<QString> _paletteFiles; // las rutas que ya están en «Ir a archivo»
+    void fillPalette(CommandPalette::Mode mode);
+    std::vector<CommandPalette::Item> paletteCommands() const;
+    std::vector<CommandPalette::Item> paletteSymbols() const;
+    void startPaletteFileScan();
+    void stopPaletteFileScan();
     DocumentListPanel* _docListPanel = nullptr;
     DocumentMapPanel* _docMapPanel = nullptr;
     FunctionListPanel* _functionListPanel = nullptr;

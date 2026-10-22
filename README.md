@@ -32,10 +32,11 @@ Después del MVP:
 - Fase 24: **AppImage portable**, generado en Ubuntu 22.04 con el Qt 6.8 oficial (`packaging/appimage/build-portable.sh`, sin Docker): funciona en Ubuntu 22.04+, Debian 12+, Fedora 36+…
 - Fase 25: **XML Tools completo**: navegación entre errores (con anotaciones), cierre automático de etiquetas, tipo XML automático, XXE, archivos enormes, aplicar a todos los archivos, tokenizar, opciones y ventana de depuración.
 - Fase 26: plugin **MarkdownViewer++** (port nativo del de N++, que está en C#): vista previa de Markdown en un panel, desplazamiento sincronizado, exportar a HTML y PDF, imprimir y copiar; se incluye con Edita.
+- Fase 27: **paleta de órdenes** (Ctrl+Mayús+A), **Ir a archivo** (Ctrl+E) e **Ir a símbolo** (Ctrl+Mayús+O), con búsqueda difusa; no existen en N++.
 
 Plan en [docs/fase1-analisis.md](docs/fase1-analisis.md);
 registro de cada fase: [0](docs/fase0.md), [1](docs/fase1.md), [2](docs/fase2.md),
-[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md), [26](docs/fase26.md).
+[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md), [26](docs/fase26.md), [27](docs/fase27.md).
 
 Uso: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst]`
 
