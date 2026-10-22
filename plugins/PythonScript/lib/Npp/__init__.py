@@ -215,7 +215,10 @@ class _Worker:
     def __init__(self, name):
         self.name = name
         self.queue = _queue.Queue()
-        self.busy = False
+        self.busy = False      # hay trabajo en curso o pendiente
+        self.running = False   # un trabajo se está ejecutando (se puede interrumpir)
+        self.cancelled = False # Stop Script llegó antes de que empezara el trabajo ya sacado de la cola
+        self.lock = _threading.Lock()
         self.thread = None
 
     def submit(self, job):
@@ -228,18 +231,59 @@ class _Worker:
         if self.thread is not None and self.thread.is_alive():
             self.queue.put(None)
 
-    def _loop(self):
-        while True:
-            job = self.queue.get()
-            if job is None:
-                return
-            self.busy = True
+    def interrupt(self):
+        """Stop Script: quita lo pendiente y devuelve el hilo que hay que interrumpir
+        (KeyboardInterrupt) si un trabajo se está ejecutando; si no, None"""
+        with self.lock:
+            drained = 0
+            while True:
+                try:
+                    self.queue.get_nowait()
+                    drained += 1
+                except _queue.Empty:
+                    break
+            if self.running and self.thread is not None and self.thread.is_alive():
+                return self.thread.ident
+            if self.busy and drained == 0:
+                # Sacado de la cola pero aún sin empezar: no se ejecuta
+                self.cancelled = True
+            if self.busy:
+                self.busy = False
+                _sys.stderr.write("KeyboardInterrupt\n")
+            return None
+
+    def _step(self):
+        job = self.queue.get()
+        if job is None:
+            return False
+        with self.lock:
+            if self.cancelled:
+                self.cancelled = False
+                job = None
+            else:
+                self.busy = True
+                self.running = True
+        if job is not None:
             try:
                 job()
             except BaseException:
                 _traceback.print_exc()
-            finally:
-                self.busy = self.queue.qsize() > 0
+        with self.lock:
+            self.running = False
+            self.busy = self.queue.qsize() > 0
+        return True
+
+    def _loop(self):
+        while True:
+            try:
+                if not self._step():
+                    return
+            except BaseException:
+                # Un KeyboardInterrupt de Stop Script que llega justo fuera del trabajo
+                # (al terminar): el hilo sigue vivo y deja de estar ocupado
+                with self.lock:
+                    self.running = False
+                    self.busy = self.queue.qsize() > 0
 
 
 # Los callbacks asíncronos se ejecutan en su propio hilo, en el orden en que llegaron
@@ -332,7 +376,11 @@ def _script_running():
 
 def _script_thread_id():
     t = _script_worker.thread
-    return t.ident if t is not None and t.is_alive() and _script_worker.busy else None
+    return t.ident if t is not None and t.is_alive() and _script_worker.running else None
+
+
+def _stop_script():
+    return _script_worker.interrupt()
 
 
 def _submit_file(path):

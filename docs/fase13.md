@@ -100,3 +100,9 @@ Los 24 tests de callbacks (síncronos y asíncronos) pasan, como los de reemplaz
 Además se comprobó en una captura la consola acoplada, con la salida y un error en rojo.
 
 Tests: `tst_pythonscript` 12 (contando `initTestCase` y `cleanupTestCase`). `tst_plugins` se adaptó para que admita más de un plugin en el build. Pasan las 21 suites y el build no da ningún warning.
+
+## Corrección: «Stop Script» justo al lanzar un script
+
+Problema: la prueba `scriptsRunInTheirOwnThread` fallaba de vez en cuando con la carga de todas las suites en paralelo. Si «Stop Script» llegaba cuando el script estaba en cola pero aún no había empezado, el `KeyboardInterrupt` caía en el hilo de los scripts fuera del trabajo, mientras esperaba en la cola. El hilo moría, el plugin quedaba marcado como «ejecutando» para siempre (y no dejaba lanzar otro script) y el script seguía en la cola.
+
+Solución (en `lib/Npp/__init__.py`): `stopScript` llama a `_stop_script`, que quita de la cola lo pendiente. Solo devuelve el hilo para el `KeyboardInterrupt` si un script se está ejecutando de verdad (`running`, no solo `busy`). Si el script ya salió de la cola pero aún no empieza, lo marca para no ejecutarlo. Un `KeyboardInterrupt` que llegue justo al terminar el trabajo ya no mata el hilo. En los tres casos se escribe `KeyboardInterrupt` en la consola. La prueba pulsa «Stop Script» 30 veces justo al lanzar un bucle sin fin y después comprueba que el hilo sigue ejecutando scripts. Con el código anterior falla 3 de 3 veces; con el nuevo pasa siempre.

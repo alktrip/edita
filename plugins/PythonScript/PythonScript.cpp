@@ -1295,7 +1295,8 @@ void stopScript()
     if (!g.pythonReady)
         return;
     Gil gil;
-    PyRef fn(PyObject_GetAttrString(g.npp, "_script_thread_id"));
+    // Lo pendiente se cancela; si un script se está ejecutando, devuelve su hilo
+    PyRef fn(PyObject_GetAttrString(g.npp, "_stop_script"));
     PyRef ident(fn ? PyObject_CallNoArgs(fn.p) : nullptr);
     if (ident && ident.p != Py_None)
         PyThreadState_SetAsyncExc(PyLong_AsUnsignedLong(ident.p), PyExc_KeyboardInterrupt);

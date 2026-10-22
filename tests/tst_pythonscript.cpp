@@ -353,6 +353,23 @@ private slots:
         stop->trigger();
         QTRY_VERIFY2(x.consoleText().contains(QStringLiteral("KeyboardInterrupt")), qPrintable(x.consoleText()));
         QTRY_COMPARE(x.eval("__import__('Npp')._script_running()"), QStringLiteral("False"));
+
+        // Stop Script justo al lanzar el script (antes de que empiece o al empezar): el
+        // script no se queda ejecutando y el hilo de los scripts sigue vivo
+        for (int i = 0; i < 30; ++i) {
+            x.w().handlePluginMessage(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("PythonScript.so"),
+                                      reinterpret_cast<intptr_t>(&loopInfo));
+            if (i % 3 == 1)
+                QTest::qWait(1);
+            stop->trigger();
+            QTRY_COMPARE(x.eval("__import__('Npp')._script_running()"), QStringLiteral("False"));
+        }
+        x.editor()->sends(SCI_SETTEXT, 0, "");
+        PythonScript_Exec after{1, "editor.setText('sigue vivo')", nullptr, 0, 0};
+        EditaCommunicationInfo afterInfo{PYSCR_EXECSTATEMENT, "tst.so", &after};
+        x.w().handlePluginMessage(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("PythonScript.so"),
+                                  reinterpret_cast<intptr_t>(&afterInfo));
+        QTRY_COMPARE(x.text(), "sigue vivo"s);
     }
 
     void enumsMatchNotepadPlusPlus()
