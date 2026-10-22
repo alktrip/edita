@@ -303,6 +303,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 27 — Paleta de órdenes | Órdenes (`>`), archivos (abiertos, recientes y carpetas de trabajo en otro hilo), símbolos (`@`) y líneas (`:`), con búsqueda difusa sin acentos; no existe en N++ | ✅ [fase27.md](fase27.md) |
 | 28 — Git y marcas en la barra | Diferencias con HEAD (Myers) en un margen, con aviso de las líneas originales y navegación; marcas de Git, marcadores, búsquedas y cursor en la barra de desplazamiento; no existe en N++ | ✅ [fase28.md](fase28.md) |
 | 29 — Mejoras visuales | Iconos por tipo de archivo, vista previa de colores, número de línea y guía del bloque actuales, seis temas modernos, barra de avisos; no existen en N++ | ✅ [fase29.md](fase29.md) |
+| 30 — Página de inicio | Mientras el único documento es uno nuevo y vacío: empezar, recientes, apariencia y atajos; escribir pasa al documento; no existe en N++ | ✅ [fase30.md](fase30.md) |
 
 ---
 

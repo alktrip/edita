@@ -51,6 +51,7 @@ class QDockWidget;
 class QFileSystemWatcher;
 class QMenu;
 class QSplitter;
+class QStackedWidget;
 class QThread;
 class QToolBar;
 class QDockWidget;
@@ -65,6 +66,7 @@ class FunctionParsers;
 class ColorPreview;
 class GitChanges;
 class NotificationBar;
+class WelcomePage;
 class ScrollBarMarks;
 }
 class QPagedPaintDevice;
@@ -320,6 +322,12 @@ public:
     ScrollBarMarks* scrollBarMarksOfCurrentView() const;
     ColorPreview* colorPreviewOfCurrentView() const;
     NotificationBar* notificationBar() const { return _notifications; }
+    // Página de inicio (no existe en N++): se ve mientras el único documento es uno nuevo
+    // y vacío, o al pedirla en Ayuda
+    WelcomePage* welcomePage() const { return _welcome; }
+    bool isWelcomeVisible() const;
+    void showWelcomePage();
+    const QStringList& recentFolders() const { return _recentFolders; }
 
 protected:
     void closeEvent(QCloseEvent* event) override;
@@ -472,6 +480,17 @@ private:
     QPointer<ScrollBarMarks> _scrollMarks[2];
     QPointer<ColorPreview> _colorPreview[2];
     NotificationBar* _notifications = nullptr;
+    QStackedWidget* _centerStack = nullptr;
+    WelcomePage* _welcome = nullptr;
+    BufferId _welcomeDismissed = kInvalidBuffer; // el documento nuevo en el que ya se empezó
+    bool _welcomeForced = false;                 // pedida en Ayuda
+    bool _welcomeUpdatePending = false;
+    QStringList _recentFolders;                  // carpetas abiertas como espacio de trabajo
+    void createWelcomePage();
+    void scheduleWelcomeUpdate();
+    void updateWelcome();
+    void fillWelcomePage();
+    void hideWelcome(bool focusEditor);
     GitChanges* gitChanges(const EditorPane* pane) const;
     void updateGitDocument(EditorPane* pane);
     void goToGitChange(bool forward);

@@ -255,6 +255,7 @@ void PreferencesDialog::buildGeneral()
     _qtFileDialog = addCheck(form, tr("Use Edita's file dialogs (in the language of Edita, not of the desktop)"),
                              "qtFileDialog");
     _statusBar = addCheck(form, tr("Show status bar"), "statusBarShow");
+    _showWelcome = addCheck(form, tr("Show the welcome page when there are no documents"), "showWelcome");
     form->addRow(new QLabel(tr("<b>Tab bar</b>")));
     _tabBarHide = addCheck(form, tr("Hide"), "tabBarHide");
     _tabCloseButton = addCheck(form, tr("Show close button on each tab"), "tabCloseButton");
@@ -546,6 +547,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _base = p;
     _statusBar->setChecked(p.statusBarShow);
     _tabBarHide->setChecked(p.tabBarHide);
+    _showWelcome->setChecked(p.showWelcome);
     _tabCloseButton->setChecked(p.tabCloseButton);
     _fileTypeIcons->setChecked(p.fileTypeIcons);
     _tabDoubleClick->setChecked(p.tabDoubleClickCloses);
@@ -679,6 +681,7 @@ Preferences PreferencesDialog::preferences() const
     Preferences p = _base;
     p.statusBarShow = _statusBar->isChecked();
     p.tabBarHide = _tabBarHide->isChecked();
+    p.showWelcome = _showWelcome->isChecked();
     p.tabCloseButton = _tabCloseButton->isChecked();
     p.fileTypeIcons = _fileTypeIcons->isChecked();
     p.tabDoubleClickCloses = _tabDoubleClick->isChecked();

@@ -883,7 +883,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::ColorPreview</name>
     <message>
-        <location filename="../src/ui/ColorPreview.cpp" line="+285"/>
+        <location filename="../src/ui/ColorPreview.cpp" line="+302"/>
         <source>Choose a color</source>
         <translation>Elige un color</translation>
     </message>
@@ -1361,7 +1361,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::GitChanges</name>
     <message numerus="yes">
-        <location filename="../src/ui/GitChanges.cpp" line="+311"/>
+        <location filename="../src/ui/GitChanges.cpp" line="+315"/>
         <source>Added since the last commit: %n line(s)</source>
         <translation>
             <numerusform>Añadida desde el último commit: %n línea</numerusform>
@@ -1382,23 +1382,23 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+367"/>
-        <location line="+2264"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+372"/>
+        <location line="+2283"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2264"/>
+        <location line="-2283"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+80"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+258"/>
+        <location line="+259"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1834,7 +1834,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>A&amp;yuda</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -1854,7 +1854,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+402"/>
+        <location line="+412"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2077,12 +2077,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-986"/>
+        <location line="-998"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-654"/>
+        <location line="-663"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2162,13 +2162,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+565"/>
-        <location line="+600"/>
+        <location line="+574"/>
+        <location line="+602"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-544"/>
+        <location line="-546"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2328,7 +2328,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Asignación de a&amp;tajos…</translation>
     </message>
     <message>
-        <location line="+107"/>
+        <location line="+7"/>
+        <source>&amp;Welcome Page</source>
+        <translation>Página de &amp;inicio</translation>
+    </message>
+    <message>
+        <location line="+102"/>
         <source>Macro</source>
         <translation>Macro</translation>
     </message>
@@ -2358,7 +2363,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+185"/>
+        <location line="+195"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2538,12 +2543,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+247"/>
         <location line="+20"/>
-        <location line="+1393"/>
+        <location line="+1397"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1656"/>
+        <location line="-1660"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2667,7 +2672,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+162"/>
+        <location line="+163"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -2831,7 +2836,7 @@ Restart now?</source>
 ¿Reiniciar ahora?</translation>
     </message>
     <message>
-        <location line="+81"/>
+        <location line="+84"/>
         <source>&amp;Recent Files</source>
         <translation>Archivos &amp;recientes</translation>
     </message>
@@ -2940,7 +2945,7 @@ Continue?</source>
         <translation>Codificación</translation>
     </message>
     <message>
-        <location line="+286"/>
+        <location line="+443"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
@@ -3573,18 +3578,18 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Mostrar la barra de estado</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+2"/>
         <source>&lt;b&gt;Tab bar&lt;/b&gt;</source>
         <translation>&lt;b&gt;Barra de pestañas&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="-4"/>
-        <location line="+5"/>
+        <location line="-5"/>
+        <location line="+6"/>
         <source>Hide</source>
         <translation>Ocultar</translation>
     </message>
     <message>
-        <location line="-11"/>
+        <location line="-12"/>
         <source>Appearance:</source>
         <translation>Apariencia:</translation>
     </message>
@@ -3639,7 +3644,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Iconos grandes</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+4"/>
+        <source>Show the welcome page when there are no documents</source>
+        <translation>Mostrar la página de inicio cuando no hay documentos</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Show close button on each tab</source>
         <translation>Botón de cerrar en cada pestaña</translation>
     </message>
@@ -5501,6 +5511,119 @@ Do you want to save your changes before switching themes?</source>
         <location line="+21"/>
         <source>A language named &quot;%1&quot; already exists.</source>
         <translation>Ya existe un lenguaje llamado «%1».</translation>
+    </message>
+</context>
+<context>
+    <name>edita::WelcomePage</name>
+    <message>
+        <location filename="../src/ui/WelcomePage.cpp" line="+141"/>
+        <source>A native text and code editor for Linux, inspired by Notepad++</source>
+        <translation>Editor nativo de texto y código para Linux, inspirado en Notepad++</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>New file</source>
+        <translation>Nuevo archivo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Start writing right away</source>
+        <translation>Empieza a escribir ya</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open file…</source>
+        <translation>Abrir archivo…</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Text, code, any encoding</source>
+        <translation>Texto, código, cualquier codificación</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open folder…</source>
+        <translation>Abrir carpeta…</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>As a workspace, with Go to File</source>
+        <translation>Como espacio de trabajo, con Ir a archivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Command palette</source>
+        <translation>Paleta de órdenes</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Every command, searchable</source>
+        <translation>Todas las órdenes, con buscador</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Recent files</source>
+        <translation>Archivos recientes</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Recent folders</source>
+        <translation>Carpetas recientes</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Appearance</source>
+        <translation>Apariencia</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Light</source>
+        <translation>Claro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Dark</source>
+        <translation>Oscuro</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>System</source>
+        <translation>Sistema</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Theme:</source>
+        <translation>Tema:</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Useful shortcuts</source>
+        <translation>Atajos útiles</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Show this page when there are no documents</source>
+        <translation>Mostrar esta página cuando no hay documentos</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Start typing to write in a new document · Esc to close</source>
+        <translation>Escribe para empezar un documento nuevo · Esc para cerrar</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Version %1</source>
+        <translation>Versión %1</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>No recent folders</source>
+        <translation>No hay carpetas recientes</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No recent files yet</source>
+        <translation>Todavía no hay archivos recientes</translation>
     </message>
 </context>
 <context>

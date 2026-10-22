@@ -34,6 +34,7 @@
 #include "ui/ColorPreview.h"
 #include "ui/GitChanges.h"
 #include "ui/NotificationBar.h"
+#include "ui/WelcomePage.h"
 #include "ui/ScrollBarMarks.h"
 #include "ui/Icons.h"
 #include "ui/Indentation.h"
@@ -96,6 +97,7 @@
 #include <QThread>
 #include <QScopedValueRollback>
 #include <QSpinBox>
+#include <QStackedWidget>
 #include <QSplitter>
 #include <QStyleHints>
 #include <QToolBar>
@@ -337,7 +339,10 @@ MainWindow::MainWindow(QWidget* parent)
     centralLayout->setSpacing(0);
     _notifications = new NotificationBar(central);
     centralLayout->addWidget(_notifications);
-    centralLayout->addWidget(_splitter, 1);
+    // El editor o, mientras no hay documentos, la página de inicio
+    _centerStack = new QStackedWidget(central);
+    _centerStack->addWidget(_splitter);
+    centralLayout->addWidget(_centerStack, 1);
     setCentralWidget(central);
     setStatusBar(_statusBar);
     setAcceptDrops(true);
@@ -394,6 +399,7 @@ MainWindow::MainWindow(QWidget* parent)
     _fileWatcher = new QFileSystemWatcher(this);
     connect(_fileWatcher, &QFileSystemWatcher::fileChanged, this, [this] { scheduleFileCheck(); });
     connect(&_documents, &DocumentManager::bufferAdded, this, [this](BufferId id) {
+        scheduleWelcomeUpdate();
         syncWatchedFiles();
         // Un archivo abierto deja de estar en "recientes" (como N++)
         if (const Buffer* buf = _documents.buffer(id); buf && !buf->isUntitled()) {
@@ -402,12 +408,15 @@ MainWindow::MainWindow(QWidget* parent)
         }
     });
     connect(&_documents, &DocumentManager::bufferClosed, this, [this] {
+        scheduleWelcomeUpdate();
         syncWatchedFiles();
         QTimer::singleShot(0, this, [this] { updatePanels(); });
     });
     connect(&_documents, &DocumentManager::bufferChanged, this, [this](BufferId id, int mask) {
         if (mask & (BufferChange::Dirty | BufferChange::Filename | BufferChange::ReadOnly | BufferChange::Language))
             updatePanels();
+        if (mask & (BufferChange::Dirty | BufferChange::Filename))
+            scheduleWelcomeUpdate();
         // Guardado con otro nombre o con otra codificación: otra versión de Git
         if (mask & (BufferChange::Filename | BufferChange::Unicode)) {
             for (EditorPane* pane : {_mainPane, _subPane}) {
@@ -437,6 +446,7 @@ MainWindow::MainWindow(QWidget* parent)
     newDocument();
     updatePaneVisibility();
     editor()->setFocus();
+    createWelcomePage();
 
     if (!syntaxWarnings.isEmpty())
         QTimer::singleShot(0, this, [this, syntaxWarnings] { showWarnings(tr("Settings"), syntaxWarnings); });
@@ -459,6 +469,7 @@ void MainWindow::connectPane(EditorPane* pane)
             _scrollMarks[index]->scheduleUpdate();
     });
     connect(pane, &EditorPane::currentBufferChanged, this, [this, pane, index] {
+        scheduleWelcomeUpdate();
         updateGitDocument(pane);
         if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && _colorPreview[index])
             _colorPreview[index]->setLanguage(buf->language());
@@ -1004,6 +1015,8 @@ void MainWindow::createMenus()
 
     // Ayuda
     QMenu* help = menuBar()->addMenu(tr("&Help"));
+    addAction(help, tr("&Welcome Page"), "actionWelcomePage", QKeySequence(), [this] { showWelcomePage(); });
+    help->addSeparator();
     QAction* about = help->addAction(tr("&About %1").arg(QString::fromUtf8(kAppName)), this, [this] {
         QMessageBox box(this);
         box.setObjectName(QStringLiteral("aboutBox"));
@@ -1325,6 +1338,16 @@ bool MainWindow::addFolderToWorkspace(const QString& folder)
 {
     const bool added = _folderPanel->addRoot(folder);
     panelDock(QStringLiteral("folderAsWorkspace"))->show();
+    // Carpetas recientes (para la página de inicio), en config.xml
+    const QString clean = absolutePath(folder);
+    _recentFolders.removeAll(clean);
+    _recentFolders.prepend(clean);
+    while (_recentFolders.size() > 10)
+        _recentFolders.removeLast();
+    _syntax.config().setGuiConfig(QStringLiteral("EditaRecentFolders"), QStringLiteral("paths"), _recentFolders.join(QLatin1Char('\x1f')));
+    _syntax.config().save();
+    if (isWelcomeVisible())
+        fillWelcomePage();
     return added;
 }
 
@@ -2260,6 +2283,7 @@ void MainWindow::applyPreferences()
         pane->tabBar()->setDoubleClickCloses(p.tabDoubleClickCloses);
         pane->editor()->applyPreferences(p);
     }
+    scheduleWelcomeUpdate();
     // Iconos por tipo de archivo: las pestañas, los paneles y la paleta
     if (fileicons::enabled() != p.fileTypeIcons) {
         fileicons::setEnabled(p.fileTypeIcons);
@@ -3328,6 +3352,9 @@ QString MainWindow::recentFileLabel(const QString& path) const
 
 void MainWindow::rebuildRecentFilesMenu()
 {
+    // La página de inicio también los muestra
+    if (isWelcomeVisible())
+        fillWelcomePage();
     if (!_fileMenu)
         return;
     for (QAction* action : _recentEntries) {
@@ -3866,6 +3893,163 @@ void MainWindow::goToLine(int line, int column)
     const sptr_t pos = view->sci(SCI_FINDCOLUMN, docLine, std::max(column, 1) - 1);
     view->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos));
     view->sci(SCI_SCROLLCARET);
+}
+
+// --- Página de inicio -----------------------------------------------------------------
+
+void MainWindow::createWelcomePage()
+{
+    _recentFolders = _syntax.config().guiConfig(QStringLiteral("EditaRecentFolders"), QStringLiteral("paths"))
+                         .split(QLatin1Char('\x1f'), Qt::SkipEmptyParts);
+    _welcome = new WelcomePage(_centerStack);
+    _centerStack->addWidget(_welcome);
+    _welcome->setVersion(QString::fromUtf8(kAppVersion));
+    auto trigger = [this](const char* name) {
+        if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
+            action->trigger();
+    };
+    connect(_welcome, &WelcomePage::newFileRequested, this, [this] { hideWelcome(true); });
+    connect(_welcome, &WelcomePage::openFileRequested, this, [trigger] { trigger("actionOpen"); });
+    connect(_welcome, &WelcomePage::openFolderRequested, this, [trigger] { trigger("actionOpenFolderAsWorkspace"); });
+    connect(_welcome, &WelcomePage::commandPaletteRequested, this, [this] {
+        hideWelcome(true);
+        showCommandPalette(QStringLiteral(">"));
+    });
+    connect(_welcome, &WelcomePage::recentFileRequested, this, [this](const QString& path) {
+        if (openFile(path) == kInvalidBuffer)
+            fillWelcomePage(); // ya no existe: fuera de la lista
+    });
+    connect(_welcome, &WelcomePage::recentFolderRequested, this, [this](const QString& path) {
+        if (QFileInfo(path).isDir()) {
+            addFolderToWorkspace(path);
+        } else {
+            _recentFolders.removeAll(path);
+            fillWelcomePage();
+        }
+    });
+    connect(_welcome, &WelcomePage::themeRequested, this, [this](int index) {
+        const std::vector<SyntaxManager::Theme> themes = _syntax.themes();
+        if (index >= 0 && index < static_cast<int>(themes.size()))
+            setTheme(themes[static_cast<size_t>(index)].path);
+    });
+    connect(_welcome, &WelcomePage::modeRequested, this, [this](WelcomePage::Mode mode) {
+        Preferences p = _prefs;
+        p.darkModeFollowSystem = mode == WelcomePage::Mode::System;
+        p.darkModeEnabled = mode == WelcomePage::Mode::Dark;
+        setPreferences(p);
+        fillWelcomePage(); // el tema de ese modo
+    });
+    connect(_welcome, &WelcomePage::showOnStartupChanged, this, [this](bool show) {
+        Preferences p = _prefs;
+        p.showWelcome = show;
+        _welcomeForced = isWelcomeVisible(); // sigue a la vista hasta que se cierre
+        setPreferences(p);
+    });
+    connect(_welcome, &WelcomePage::typingStarted, this, [this](const QString& text) {
+        hideWelcome(true);
+        if (!text.isEmpty())
+            editor()->sends(SCI_REPLACESEL, 0, text.toUtf8().constData());
+    });
+    connect(_welcome, &WelcomePage::dismissRequested, this, [this] { hideWelcome(true); });
+    updateWelcome();
+}
+
+bool MainWindow::isWelcomeVisible() const
+{
+    return _centerStack && _welcome && _centerStack->currentWidget() == _welcome;
+}
+
+void MainWindow::showWelcomePage()
+{
+    _welcomeForced = true;
+    updateWelcome();
+}
+
+void MainWindow::hideWelcome(bool focusEditor)
+{
+    _welcomeForced = false;
+    _welcomeDismissed = currentBuffer();
+    updateWelcome();
+    if (focusEditor)
+        editor()->setFocus();
+}
+
+void MainWindow::scheduleWelcomeUpdate()
+{
+    if (_welcomeUpdatePending || !_welcome)
+        return;
+    _welcomeUpdatePending = true;
+    QTimer::singleShot(0, this, [this] {
+        _welcomeUpdatePending = false;
+        updateWelcome();
+    });
+}
+
+// Solo un documento, nuevo, sin cambios y vacío, en la vista principal (como al arrancar
+// o al cerrar todo): la página de inicio en lugar del editor
+void MainWindow::updateWelcome()
+{
+    if (!_welcome)
+        return;
+    bool show = _welcomeForced;
+    if (!show && _prefs.showWelcome) {
+        const std::vector<BufferId> buffers = allBuffers();
+        const Buffer* buf = buffers.size() == 1 ? _documents.buffer(buffers.front()) : nullptr;
+        show = buf && buf->isUntitled() && !buf->isDirty() && _documents.text(buf->id()).empty() && _subPane->count() == 0
+            && buf->id() != _welcomeDismissed;
+    }
+    if (show == isWelcomeVisible())
+        return;
+    if (show) {
+        fillWelcomePage();
+        _centerStack->setCurrentWidget(_welcome);
+        _welcome->setFocus();
+    } else {
+        _centerStack->setCurrentWidget(_splitter);
+    }
+}
+
+void MainWindow::fillWelcomePage()
+{
+    QStringList files;
+    for (const QString& path : _recentFiles) {
+        if (QFileInfo::exists(path))
+            files << path;
+    }
+    _welcome->setRecentFiles(files);
+    QStringList folders;
+    for (const QString& path : _recentFolders) {
+        if (QFileInfo(path).isDir())
+            folders << path;
+    }
+    _welcome->setRecentFolders(folders);
+    QStringList names;
+    int current = 0;
+    const QString active = _syntax.activeThemePath();
+    for (const SyntaxManager::Theme& theme : _syntax.themes()) {
+        if (theme.path == active)
+            current = static_cast<int>(names.size());
+        names << theme.name;
+    }
+    _welcome->setThemes(names, current);
+    _welcome->setMode(_prefs.darkModeFollowSystem ? WelcomePage::Mode::System
+                      : _prefs.darkModeEnabled    ? WelcomePage::Mode::Dark
+                                                  : WelcomePage::Mode::Light);
+    _welcome->setShowOnStartup(_prefs.showWelcome);
+    auto keys = [this](const char* name) {
+        const QAction* action = findChild<QAction*>(QString::fromLatin1(name));
+        return action ? action->shortcut() : QKeySequence();
+    };
+    auto text = [this](const char* name) {
+        const QAction* action = findChild<QAction*>(QString::fromLatin1(name));
+        return action ? plainMenuText(action->text()) : QString();
+    };
+    _welcome->setActionShortcuts(keys("actionNew"), keys("actionOpen"), keys("actionOpenFolderAsWorkspace"), keys("actionCommandPalette"));
+    std::vector<WelcomePage::Shortcut> shortcuts;
+    for (const char* name : {"actionGoToFile", "actionGoToSymbol", "actionFind", "actionFindInFiles", "actionReplace",
+                             "actionColumnEditor", "actionToggleComment", "actionDuplicateLine"})
+        shortcuts.push_back({text(name), keys(name)});
+    _welcome->setShortcuts(shortcuts);
 }
 
 // --- Git ------------------------------------------------------------------------------
