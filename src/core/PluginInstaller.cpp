@@ -33,12 +33,14 @@ namespace edita::plugin_installer {
 
 namespace {
 
+#ifdef EDITA_HAVE_LIBZIP
 // ZIP_LENGTH_TO_END es de libzip 1.10; antes, -1 ya significaba «hasta el final»
 // (Ubuntu 22.04 trae la 1.7)
 #ifdef ZIP_LENGTH_TO_END
 constexpr zip_int64_t kZipLengthToEnd = ZIP_LENGTH_TO_END;
 #else
 constexpr zip_int64_t kZipLengthToEnd = -1;
+#endif
 #endif
 
 void setError(QString* error, const QString& text)
@@ -47,6 +49,7 @@ void setError(QString* error, const QString& text)
         *error = text;
 }
 
+#ifdef EDITA_HAVE_LIBZIP
 // Una entrada del .zip no puede salir de la carpeta de destino
 bool isSafeEntry(const QString& name)
 {
@@ -58,6 +61,7 @@ bool isSafeEntry(const QString& name)
     }
     return true;
 }
+#endif
 
 } // namespace
 
