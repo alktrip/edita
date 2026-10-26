@@ -49,6 +49,8 @@ public:
     void setActionShortcuts(const QKeySequence& newFile, const QKeySequence& open, const QKeySequence& openFolder,
                             const QKeySequence& palette);
     void setShowOnStartup(bool show);
+    // Al cambiar entre claro y oscuro: con hoja de estilo, la página no recibe PaletteChange
+    void refreshStyle();
 
     // Para las pruebas
     QStringList recentFileTexts() const;

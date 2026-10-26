@@ -8,6 +8,7 @@
 #include "ui/CommandPalette.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
+#include "ui/Appearance.h"
 #include "ui/MainWindow.h"
 #include "ui/WelcomePage.h"
 
@@ -125,6 +126,53 @@ private slots:
         QVERIFY(other->welcomePage()->clickCard(QStringLiteral("welcomePalette")));
         QVERIFY(other->commandPalette() && !other->commandPalette()->isHidden());
         QCOMPARE(other->commandPalette()->input()->text(), QStringLiteral(">"));
+    }
+
+    void clickingARecentFileWithTheMouse()
+    {
+        // Abrir un archivo lo quita de recientes y la página se vuelve a llenar: la fila en
+        // la que se hizo clic no se puede borrar mientras atiende el clic (se cerraba Edita)
+        const QString file = _tmp.filePath("files/clic.txt");
+        writeFile(file);
+        {
+            auto first = window();
+            QVERIFY(first->openFile(file) != kInvalidBuffer);
+            first->findChild<QAction*>(QStringLiteral("actionClose"))->trigger();
+            first->close();
+        }
+        auto w = window();
+        w->show();
+        QVERIFY(QTest::qWaitForWindowExposed(w.get()));
+        QTRY_VERIFY(w->isWelcomeVisible());
+        QFrame* row = nullptr;
+        for (QFrame* frame : w->welcomePage()->findChildren<QFrame*>()) {
+            if (frame->property("path").toString() == file)
+                row = frame;
+        }
+        QVERIFY(row);
+        QTest::mouseClick(row, Qt::LeftButton);
+        QTRY_VERIFY(!w->isWelcomeVisible());
+        QCOMPARE(w->documents().buffer(w->currentBuffer())->filePath(), file);
+        QCoreApplication::processEvents(); // lo que quedó por borrar
+    }
+
+    void switchingToDarkRestylesThePage()
+    {
+        // La hoja de estilo de la página no recibe PaletteChange al cambiar de modo: se
+        // vuelve a pintar con los colores del modo nuevo
+        auto w = window();
+        Preferences p = w->preferences();
+        p.darkModeFollowSystem = false;
+        p.darkModeEnabled = false;
+        w->setPreferences(p);
+        QTRY_VERIFY(w->isWelcomeVisible());
+        WelcomePage* page = w->welcomePage();
+        const QString light = page->styleSheet();
+        page->findChild<QToolButton*>(QStringLiteral("welcomeModeDark"))->click();
+        QVERIFY(page->styleSheet() != light);
+        QVERIFY(page->styleSheet().contains(appearance::accent(true).name()));
+        page->findChild<QToolButton*>(QStringLiteral("welcomeModeLight"))->click();
+        QCOMPARE(page->styleSheet(), light);
     }
 
     void appearanceFromThePage()

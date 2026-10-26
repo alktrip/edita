@@ -1422,6 +1422,9 @@ void MainWindow::applyAppearance()
     if (!applied || dark != appearance::isDarkApplied()) {
         appearance::apply(dark);
         applied = true;
+        // La página de inicio tiene hoja de estilo propia: no recibe el cambio de paleta
+        if (_welcome)
+            _welcome->refreshStyle();
     }
     const QString theme = themePathFor(dark ? _prefs.darkThemeName : _prefs.lightThemeName, dark);
     if (theme != _syntax.activeThemePath())

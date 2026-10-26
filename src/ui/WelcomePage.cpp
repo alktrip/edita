@@ -87,6 +87,16 @@ QLabel* sectionTitle(const QString& text, QWidget* parent)
     return label;
 }
 
+// Quita un widget de la página sin borrarlo en el momento: puede ser la fila en la que
+// se acaba de hacer clic, que aún está atendiendo el evento (borrarla ahí cerraba Edita)
+void discard(QWidget* widget)
+{
+    if (!widget)
+        return;
+    widget->hide();
+    widget->deleteLater();
+}
+
 QString home(const QString& path)
 {
     const QString h = QDir::homePath();
@@ -299,7 +309,7 @@ void WelcomePage::setVersion(const QString& version)
 void WelcomePage::fillRecent(QVBoxLayout* layout, const QStringList& paths, bool folders)
 {
     while (QLayoutItem* item = layout->takeAt(0)) {
-        delete item->widget();
+        discard(item->widget());
         delete item;
     }
     if (paths.isEmpty()) {
@@ -372,11 +382,11 @@ void WelcomePage::setShortcuts(const std::vector<Shortcut>& shortcuts)
     while (QLayoutItem* item = _shortcuts->takeAt(0)) {
         if (QLayout* row = item->layout()) {
             while (QLayoutItem* child = row->takeAt(0)) {
-                delete child->widget();
+                discard(child->widget());
                 delete child;
             }
         }
-        delete item->widget();
+        discard(item->widget());
         delete item;
     }
     _shortcutLabels.clear();
@@ -531,8 +541,14 @@ void WelcomePage::keyPressEvent(QKeyEvent* event)
 void WelcomePage::changeEvent(QEvent* event)
 {
     QWidget::changeEvent(event);
-    if (event->type() == QEvent::PaletteChange)
+    if (event->type() == QEvent::PaletteChange || event->type() == QEvent::ApplicationPaletteChange)
         applyStyle();
+}
+
+void WelcomePage::refreshStyle()
+{
+    _styleKey.clear();
+    applyStyle();
 }
 
 void WelcomePage::showEvent(QShowEvent* event)

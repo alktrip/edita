@@ -29,3 +29,8 @@ Objetivo: una página de inicio moderna en lugar del «new 1» vacío con el que
 | Claro / Oscuro / Sistema cambian las preferencias; el tema se aplica al modo actual; sin «Mostrar al iniciar» no aparece | ✅ `appearanceFromThePage` |
 
 Se revisaron capturas en claro y en oscuro. Pasan las 35 suites y el build no da ningún warning.
+
+## Correcciones
+
+- **Edita se cerraba al hacer clic en un archivo reciente.** Abrir un archivo lo quita de la lista de recientes (como en N++), y la página se volvía a llenar: se borraba la fila en la que se acababa de hacer clic mientras aún atendía el clic. Ahora las filas que desaparecen se borran después (`deleteLater`). Prueba: `clickingARecentFileWithTheMouse`, con un clic de ratón real; antes de la corrección daba SIGSEGV.
+- **Al pasar de claro a oscuro, la página se veía mal**: fondo y tarjetas claras con texto claro. Con hoja de estilo propia, la página no recibe el `PaletteChange` del cambio de modo. Ahora `applyAppearance` le pide que se vuelva a pintar (`refreshStyle`), cambie el modo desde donde cambie (la página, Preferencias o el sistema). Prueba: `switchingToDarkRestylesThePage`, que falla sin la corrección.
