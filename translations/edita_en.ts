@@ -45,7 +45,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+4984"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+5030"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -185,6 +185,25 @@
         <translation>
             <numerusform>Notepad++ list %1: %n plugin (incompatible)</numerusform>
             <numerusform>Notepad++ list %1: %n plugins (incompatible)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>edita::RegexTesterPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/RegexTester.cpp" line="+352"/>
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n match</numerusform>
+            <numerusform>%n matches</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n group(s)</source>
+        <translation>
+            <numerusform>%n group</numerusform>
+            <numerusform>%n groups</numerusform>
         </translation>
     </message>
 </context>

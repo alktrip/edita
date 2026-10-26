@@ -54,6 +54,15 @@ std::string SearchTarget::lastRegexError()
     return g_exceptionMessage;
 }
 
+std::vector<std::pair<SciPos, SciPos>> SearchTarget::lastMatchGroups()
+{
+    std::vector<std::pair<SciPos, SciPos>> groups;
+    groups.reserve(g_lastMatchGroups.size());
+    for (const auto& [start, end] : g_lastMatchGroups)
+        groups.emplace_back(static_cast<SciPos>(start), static_cast<SciPos>(end));
+    return groups;
+}
+
 // --- ViewSearchTarget ----------------------------------------------------------------
 
 SciPos ViewSearchTarget::length() const

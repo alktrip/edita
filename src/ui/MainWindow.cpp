@@ -35,6 +35,7 @@
 #include "ui/GitChanges.h"
 #include "ui/NotificationBar.h"
 #include "ui/QuickPicker.h"
+#include "ui/RegexTester.h"
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
@@ -1313,6 +1314,7 @@ void MainWindow::createPanels()
     _docMapPanel = new DocumentMapPanel;
     _functionListPanel = new FunctionListPanel(*_functionParsers);
     _folderPanel = new FileBrowserPanel;
+    _regexTester = new RegexTesterPanel;
     // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
     // mapa y las funciones a la derecha
     const std::tuple<QWidget*, const char*, QString, Qt::DockWidgetArea> panels[] = {
@@ -1320,6 +1322,7 @@ void MainWindow::createPanels()
         {_docListPanel, "documentList", tr("Document List"), Qt::LeftDockWidgetArea},
         {_functionListPanel, "functionList", tr("Function List"), Qt::RightDockWidgetArea},
         {_folderPanel, "folderAsWorkspace", tr("Folder as Workspace"), Qt::LeftDockWidgetArea},
+        {_regexTester, "regexTester", tr("Regex Tester"), Qt::BottomDockWidgetArea}, // no existe en N++
     };
     // <GUIConfig name="multiInst" … documentList="yes" documentMap="no" fuctionList="no" folderAsWorkspace="no">
     // (los nombres de N++, con su "fuctionList")
@@ -1375,6 +1378,48 @@ void MainWindow::createPanels()
             _folderPanel->locate(buf->filePath());
     });
     connect(&_syntax, &SyntaxManager::stylesChanged, _docMapPanel, &DocumentMapPanel::restyle);
+
+    // Probador de regex: el texto de prueba sale de la selección o del documento
+    _regexTester->applyStyles(_syntax);
+    connect(&_syntax, &SyntaxManager::stylesChanged, _regexTester, [this] { _regexTester->applyStyles(_syntax); });
+    connect(_regexTester, &RegexTesterPanel::sampleFromEditorRequested, this, [this] { fillRegexSample(); });
+    connect(_regexTester, &RegexTesterPanel::useInFindRequested, this, [this](const SearchOptions& o) {
+        _findBarUsedLast = false;
+        FindReplaceDialog* dialog = findDialog();
+        dialog->setOptions(o);
+        dialog->showTab(o.replacement.empty() ? FindReplaceDialog::Tab::Find : FindReplaceDialog::Tab::Replace,
+                        QString::fromStdString(o.pattern));
+    });
+}
+
+void MainWindow::fillRegexSample()
+{
+    EditorView* v = editor();
+    constexpr sptr_t kMaxSample = 1024 * 1024;
+    sptr_t start = v->sci(SCI_GETSELECTIONSTART);
+    sptr_t end = v->sci(SCI_GETSELECTIONEND);
+    if (start == end) {
+        start = 0;
+        end = v->sci(SCI_GETLENGTH);
+    }
+    if (end - start > kMaxSample) // hasta el final de la línea en la que se pasa del límite
+        end = v->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(start + kMaxSample))));
+    const auto* text = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(start), end - start));
+    _regexTester->setSample(text ? QString::fromUtf8(text, static_cast<qsizetype>(end - start)) : QString());
+}
+
+void MainWindow::showRegexTester()
+{
+    QDockWidget* dock = panelDock(QStringLiteral("regexTester"));
+    const bool wasEmpty = _regexTester->sample().isEmpty();
+    dock->show();
+    dock->raise();
+    // La primera vez, con lo seleccionado (o el documento) y la expresión del diálogo Buscar
+    if (wasEmpty)
+        fillRegexSample();
+    if (_regexTester->patternField()->text().isEmpty() && _findDialog && _findDialog->options().mode == SearchMode::Regex)
+        _regexTester->setPattern(QString::fromStdString(_findDialog->options().pattern));
+    _regexTester->patternField()->setFocus();
 }
 
 QDockWidget* MainWindow::panelDock(const QString& name) const
@@ -1855,6 +1900,7 @@ void MainWindow::createSearchMenu()
         [this] { _results->activateAdjacentResult(true); });
     add(tr("Previous Search Result"), "actionPreviousResult", QKeySequence(Qt::SHIFT | Qt::Key_F4),
         [this] { _results->activateAdjacentResult(false); });
+    add(tr("Rege&x Tester"), "actionRegexTester", QKeySequence(), [this] { showRegexTester(); });
     QAction* panel = _results->toggleViewAction();
     panel->setText(tr("Search &Results Window"));
     panel->setShortcut(QKeySequence(Qt::Key_F7));

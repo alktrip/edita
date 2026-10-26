@@ -133,6 +133,7 @@ add_library(edita_ui STATIC
     ui/Breadcrumbs.cpp
     ui/QuickPicker.cpp
     ui/RainbowBrackets.cpp
+    ui/RegexTester.cpp
     ui/ScrollBarMarks.cpp
     ui/ColumnEditorDialog.h
     ui/DocStatusBar.cpp

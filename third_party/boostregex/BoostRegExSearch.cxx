@@ -223,6 +223,7 @@ private:
 		typedef match_results<CharacterIterator> MatchResults;
 
 		MatchResults _match;
+		void storeGroups(const MatchResults& match); // Edita
 	private:
 		Regex _regex;
 		std::string _lastRegexString;
@@ -272,6 +273,7 @@ RegexSearchBase *CreateRegexSearch(CharClassify* /* charClassTable */)
 }
 
 thread_local std::string g_exceptionMessage; // Edita: thread_local (busqueda en archivos en otro hilo)
+thread_local std::vector<std::pair<std::ptrdiff_t, std::ptrdiff_t>> g_lastMatchGroups; // Edita: grupos de la ultima coincidencia (probador de regex)
 
 /**
  * Find text in document, supporting both forward and backward
@@ -393,6 +395,8 @@ BoostRegexSearch::Match BoostRegexSearch::EncodingDependent<CharT, CharacterIter
 		}
 	} while (found && !match_is_valid);
 	if (found)
+		storeGroups(_match); // Edita
+	if (found)
 		return Match(search._document, _match[0].first.pos(), _match[0].second.pos());
 	else
 		return Match();
@@ -425,9 +429,24 @@ BoostRegexSearch::Match BoostRegexSearch::EncodingDependent<CharT, CharacterIter
 		search._startPosition = search.nextCharacter(position);
 	}
 	if (bestPosition >= 0)
+		storeGroups(bestMatch); // Edita
+	if (bestPosition >= 0)
 		return Match(search._document, bestPosition, bestEnd);
 	else
 		return Match();
+}
+
+// Edita: las posiciones de cada grupo (el 0 es la coincidencia entera); -1 si no participó
+template <class CharT, class CharacterIterator>
+void BoostRegexSearch::EncodingDependent<CharT, CharacterIterator>::storeGroups(const MatchResults& match)
+{
+	g_lastMatchGroups.clear();
+	for (std::size_t i = 0; i < match.size(); ++i) {
+		if (match[i].matched)
+			g_lastMatchGroups.emplace_back(match[i].first.pos(), match[i].second.pos());
+		else
+			g_lastMatchGroups.emplace_back(-1, -1);
+	}
 }
 
 template <class CharT, class CharacterIterator>

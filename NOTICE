@@ -17,6 +17,8 @@ Incluye código de terceros en third_party/, cada uno con su propia licencia:
   LexObjC — Copyright Neil Hodgson, modificado por Notepad++
   boostregex (integración de Boost.Regex en Scintilla, Notepad++)
       e incluye Boost.Regex — Boost Software License 1.0
+      Edita guarda además las posiciones de los grupos de la última coincidencia
+      (g_lastMatchGroups, para el probador de expresiones regulares)
       third_party/boostregex/boost/
 
   uchardet (copia de Notepad++, PowerEditor/src/uchardet; Mozilla universalchardet)

@@ -22,6 +22,8 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 class ScintillaEditBase;
 
@@ -64,6 +66,9 @@ public:
 
     // Mensaje de la última regex inválida (g_exceptionMessage de BoostRegexSearch)
     static std::string lastRegexError();
+    // Inicio y fin de cada grupo de la última coincidencia de una regex (el 0 es toda la
+    // coincidencia; -1, -1 si el grupo no participó). Vale justo después de find()
+    static std::vector<std::pair<SciPos, SciPos>> lastMatchGroups();
 };
 
 // Una vista de Scintilla (el documento que muestre en ese momento)

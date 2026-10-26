@@ -10,7 +10,13 @@
 #define SCFIND_REGEXP_SKIPCRLFASONE			   0x08000000
 
 #ifdef SCI_OWNREGEX
+#include <cstddef>
+#include <string>
+#include <utility>
+#include <vector>
 extern thread_local std::string g_exceptionMessage; // Edita: thread_local (busqueda en archivos en otro hilo)
+// Edita: inicio y fin de cada grupo de la ultima coincidencia (el 0 es toda); -1 si no participo
+extern thread_local std::vector<std::pair<std::ptrdiff_t, std::ptrdiff_t>> g_lastMatchGroups;
 #endif
 
 #endif

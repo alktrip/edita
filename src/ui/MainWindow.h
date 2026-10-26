@@ -60,6 +60,7 @@ namespace edita {
 struct InstanceRequest;
 class DocumentListPanel;
 class DocumentMapPanel;
+class RegexTesterPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
 class FunctionParsers;
@@ -236,6 +237,7 @@ public:
     // Explorador de carpetas), como los de N++
     DocumentListPanel* documentListPanel() const { return _docListPanel; }
     DocumentMapPanel* documentMapPanel() const { return _docMapPanel; }
+    RegexTesterPanel* regexTesterPanel() const { return _regexTester; }
     FunctionListPanel* functionListPanel() const { return _functionListPanel; }
     FileBrowserPanel* folderPanel() const { return _folderPanel; }
     QDockWidget* panelDock(const QString& name) const;
@@ -351,6 +353,8 @@ private:
     void createToolBar();
     void createPanels();
     void updatePanels();
+    void showRegexTester();
+    void fillRegexSample();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
     void applyShortcuts();
     void applyScintillaKeys(int sciCommand, const std::vector<KeyCombo>& before, const std::vector<KeyCombo>& after);
@@ -541,6 +545,7 @@ private:
     DocumentMapPanel* _docMapPanel = nullptr;
     FunctionListPanel* _functionListPanel = nullptr;
     FileBrowserPanel* _folderPanel = nullptr;
+    RegexTesterPanel* _regexTester = nullptr;
     std::vector<QPointer<QDockWidget>> _panelDocks; // al cerrar se destruyen antes que la ventana
     ShortcutsConfig _shortcutConfig;
     // Paneles de los plugins (NPPM_DMMREGASDCKDLG): se destruyen antes de descargar los plugins

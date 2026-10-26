@@ -1535,13 +1535,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+378"/>
-        <location line="+2371"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+379"/>
+        <location line="+2416"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2371"/>
+        <location line="-2416"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -2007,7 +2007,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+438"/>
+        <location line="+482"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2053,12 +2053,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+743"/>
+        <location line="+744"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-719"/>
+        <location line="-720"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2190,7 +2190,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Resultado anterior</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>Search &amp;Results Window</source>
         <translation>&amp;Panel de resultados</translation>
     </message>
@@ -2230,7 +2230,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1035"/>
+        <location line="-1080"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
@@ -2316,12 +2316,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+620"/>
-        <location line="+603"/>
+        <location line="+605"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-547"/>
+        <location line="-549"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2496,7 +2496,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+23"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -2516,7 +2516,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+221"/>
+        <location line="+1"/>
+        <source>Regex Tester</source>
+        <translation>Probador de regex</translation>
+    </message>
+    <message>
+        <location line="+263"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2531,7 +2536,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir a &amp;símbolo…</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+7"/>
+        <source>Rege&amp;x Tester</source>
+        <translation>Probador de rege&amp;x</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Using &amp;1st Style</source>
         <translation>Estilo &amp;1</translation>
     </message>
@@ -4790,6 +4800,301 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+8"/>
         <source>cannot read %1</source>
         <translation>no se puede leer %1</translation>
+    </message>
+</context>
+<context>
+    <name>edita::RegexTesterPanel</name>
+    <message>
+        <location filename="../src/ui/RegexTester.cpp" line="+66"/>
+        <source>(empty)</source>
+        <translation>(vacío)</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Regular expression</source>
+        <translation>Expresión regular</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Match case</source>
+        <translation>Distinguir mayúsculas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>. matches newline</source>
+        <translation>. incluye el salto de línea</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>From Editor</source>
+        <translation>Del editor</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Use the selection (or the whole document) as the test text</source>
+        <translation>Usar la selección (o todo el documento) como texto de prueba</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Use in Find…</source>
+        <translation>Usar en Buscar…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Open the Find dialog with this expression</source>
+        <translation>Abrir el diálogo Buscar con esta expresión</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Replace with ($1, $&amp;, \U$1\E…) to preview the result</source>
+        <translation>Reemplazar por ($1, $&amp;, \U$1\E…) para ver el resultado</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>Match</source>
+        <translation>Coincidencia</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Text</source>
+        <translation>Texto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Position</source>
+        <translation>Posición</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Type a replacement to preview the result</source>
+        <translation>Escribe un reemplazo para ver el resultado</translation>
+    </message>
+    <message>
+        <location line="+151"/>
+        <source>Type a regular expression</source>
+        <translation>Escribe una expresión regular</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>Invalid regular expression: %1</source>
+        <translation>Expresión regular no válida: %1</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>No matches</source>
+        <translation>Sin coincidencias</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>%n match(es)</source>
+        <translation>
+            <numerusform>%n coincidencia</numerusform>
+            <numerusform>%n coincidencias</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n group(s)</source>
+        <translation>
+            <numerusform>%n grupo</numerusform>
+            <numerusform>%n grupos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>first %1 listed</source>
+        <translation>se muestran las primeras %1</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Ln %1, Col %2</source>
+        <translation>Lín %1, Col %2</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Match %1</source>
+        <translation>Coincidencia %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Group %1</source>
+        <translation>Grupo %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Group %1 (%2)</source>
+        <translation>Grupo %1 (%2)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>(not matched)</source>
+        <translation>(no participó)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>The test text is too large to preview</source>
+        <translation>El texto de prueba es demasiado grande para la vista previa</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Any character</source>
+        <translation>Cualquier carácter</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Digit</source>
+        <translation>Dígito</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Word character (letter, digit or _)</source>
+        <translation>Carácter de palabra (letra, dígito o _)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Whitespace</source>
+        <translation>Espacio en blanco</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Word boundary</source>
+        <translation>Límite de palabra</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Start of line</source>
+        <translation>Inicio de línea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>End of line</source>
+        <translation>Fin de línea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Any of these characters, e.g. [a-z0-9]</source>
+        <translation>Cualquiera de estos caracteres, p. ej. [a-z0-9]</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Any character except these</source>
+        <translation>Cualquier carácter menos estos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Either the left or the right side</source>
+        <translation>Lo de la izquierda o lo de la derecha</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Zero or more times</source>
+        <translation>Cero o más veces</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>One or more times</source>
+        <translation>Una o más veces</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Optional (zero or one time)</source>
+        <translation>Opcional (cero o una vez)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Between 2 and 4 times</source>
+        <translation>Entre 2 y 4 veces</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>As few times as possible (lazy)</source>
+        <translation>Las menos veces posibles (perezoso)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Capturing group</source>
+        <translation>Grupo de captura</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <location line="+10"/>
+        <source>Named group</source>
+        <translation>Grupo con nombre</translation>
+    </message>
+    <message>
+        <location line="-9"/>
+        <source>Group without capturing</source>
+        <translation>Grupo sin captura</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The text of group 1 again</source>
+        <translation>Otra vez el texto del grupo 1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Followed by (lookahead)</source>
+        <translation>Seguido de (lookahead)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Not followed by</source>
+        <translation>No seguido de</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Preceded by (lookbehind)</source>
+        <translation>Precedido de (lookbehind)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Not preceded by</source>
+        <translation>No precedido de</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Group 1</source>
+        <translation>Grupo 1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The whole match</source>
+        <translation>Toda la coincidencia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Uppercase until \E</source>
+        <translation>Mayúsculas hasta \E</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lowercase until \E</source>
+        <translation>Minúsculas hasta \E</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>New line</source>
+        <translation>Salto de línea</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Quick reference</source>
+        <translation>Referencia rápida</translation>
+    </message>
+    <message>
+        <location line="+23"/>
+        <source>Expression</source>
+        <translation>Expresión</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>\D \W \S	The opposite of \d \w \s</source>
+        <translation>\D \W \S	Lo contrario de \d \w \s</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Replacement</source>
+        <translation>Reemplazo</translation>
     </message>
 </context>
 <context>
