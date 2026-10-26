@@ -305,6 +305,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 29 — Mejoras visuales | Iconos por tipo de archivo, vista previa de colores, número de línea y guía del bloque actuales, seis temas modernos, barra de avisos; no existen en N++ | ✅ [fase29.md](fase29.md) |
 | 30 — Página de inicio | Mientras el único documento es uno nuevo y vacío: empezar, recientes, apariencia y atajos; escribir pasa al documento; no existe en N++ | ✅ [fase30.md](fase30.md) |
 | 31 — Barra de estado y paréntesis | Campos que se pulsan con listas con buscador, sangría por documento, paréntesis por colores, fuentes de kdeglobals cuando Qt no las entiende | ✅ [fase31.md](fase31.md) |
+| 32 — Ruta de navegación y encabezado fijo | Barra con carpetas, archivo y símbolos (Lista de funciones y plegado); encabezados de los bloques que contienen a la primera línea visible, dibujados con los estilos del editor | ✅ [fase32.md](fase32.md) |
 
 ---
 

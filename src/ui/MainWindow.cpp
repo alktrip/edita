@@ -36,6 +36,8 @@
 #include "ui/NotificationBar.h"
 #include "ui/QuickPicker.h"
 #include "ui/RainbowBrackets.h"
+#include "ui/Breadcrumbs.h"
+#include "ui/StickyScroll.h"
 #include "ui/WelcomePage.h"
 #include "ui/ScrollBarMarks.h"
 #include "ui/Icons.h"
@@ -462,6 +464,34 @@ void MainWindow::connectPane(EditorPane* pane)
     _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
     _colorPreview[index] = new ColorPreview(pane->editor());
     _rainbow[index] = new RainbowBrackets(pane->editor());
+    // Ruta de navegación entre las pestañas y el editor, y encabezado fijo en el editor
+    _breadcrumbs[index] = new Breadcrumbs(pane);
+    if (auto* paneLayout = qobject_cast<QVBoxLayout*>(pane->layout()))
+        paneLayout->insertWidget(1, _breadcrumbs[index]);
+    _sticky[index] = new StickyScroll(pane->editor());
+    connect(_breadcrumbs[index], &Breadcrumbs::openFileRequested, this, [this](const QString& path) {
+        openFile(path);
+        editor()->setFocus();
+    });
+    connect(_breadcrumbs[index], &Breadcrumbs::goToLineRequested, this, [this, pane](int line) {
+        setActivePane(pane);
+        goToLine(line + 1);
+        pane->editor()->setFocus();
+    });
+    _symbolTimer[index] = new QTimer(this);
+    _symbolTimer[index]->setSingleShot(true);
+    _symbolTimer[index]->setInterval(500);
+    connect(_symbolTimer[index], &QTimer::timeout, this, [this, index] { updateBreadcrumbs(index, true); });
+    connect(pane->editor(), &ScintillaEditBase::modified, _symbolTimer[index],
+            [this, index](Scintilla::ModificationFlags type) {
+                if (static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))
+                    _symbolTimer[index]->start();
+            });
+    connect(pane->editor(), &ScintillaEditBase::updateUi, _breadcrumbs[index], [this, index, pane](Scintilla::Update updated) {
+        if ((static_cast<int>(updated) & SC_UPDATE_SELECTION) && _breadcrumbs[index])
+            _breadcrumbs[index]->setCaretLine(static_cast<int>(
+                pane->editor()->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pane->editor()->sci(SCI_GETCURRENTPOS)))));
+    });
     pane->setStyler([this](EditorView& view, const Buffer& buffer) { _syntax.apply(view, buffer.language(), buffer.userLanguage()); });
     connect(&_syntax, &SyntaxManager::stylesChanged, pane, &EditorPane::restyle);
     // Después de restyle: los colores de las marcas según el tema ya aplicado
@@ -477,6 +507,7 @@ void MainWindow::connectPane(EditorPane* pane)
         scheduleWelcomeUpdate();
         updateGitDocument(pane);
         updateLanguageDecorations(index);
+        updateBreadcrumbs(index, true);
         if (pane == _activePane)
             refreshCurrentDocument();
         if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && autoCompletion(pane))
@@ -1353,6 +1384,8 @@ bool MainWindow::addFolderToWorkspace(const QString& folder)
     _syntax.config().save();
     if (isWelcomeVisible())
         fillWelcomePage();
+    for (int i = 0; i < 2; ++i)
+        updateBreadcrumbs(i, false);
     return added;
 }
 
@@ -2306,6 +2339,10 @@ void MainWindow::applyPreferences()
             _colorPreview[i]->setEnabled(p.colorPreview);
         if (_rainbow[i])
             _rainbow[i]->setEnabled(p.rainbowBrackets);
+        if (_breadcrumbs[i])
+            _breadcrumbs[i]->setVisible(p.breadcrumbs);
+        if (_sticky[i])
+            _sticky[i]->setEnabled(p.stickyScroll);
         if (_git[i])
             _git[i]->setEnabled(p.gitMargin);
         if (_scrollMarks[i])
@@ -4202,6 +4239,95 @@ ColorPreview* MainWindow::colorPreviewOfCurrentView() const
 RainbowBrackets* MainWindow::rainbowBracketsOfCurrentView() const
 {
     return _rainbow[_activePane == _subPane ? 1 : 0];
+}
+
+Breadcrumbs* MainWindow::breadcrumbsOfCurrentView() const
+{
+    return _breadcrumbs[_activePane == _subPane ? 1 : 0];
+}
+
+StickyScroll* MainWindow::stickyScrollOfCurrentView() const
+{
+    return _sticky[_activePane == _subPane ? 1 : 0];
+}
+
+// La ruta de navegación: el archivo y, si `symbols`, los símbolos del documento con el
+// bloque que ocupa cada uno (el plegado: del encabezado a su último hijo)
+void MainWindow::updateBreadcrumbs(int index, bool symbols)
+{
+    EditorPane* pane = index ? _subPane : _mainPane;
+    Breadcrumbs* crumbs = _breadcrumbs[index];
+    const Buffer* buf = _documents.buffer(pane->currentBuffer());
+    if (!crumbs || !buf)
+        return;
+    crumbs->setFile(buf->isUntitled() ? QString() : absolutePath(buf->filePath()), buf->displayName(),
+                    _folderPanel ? _folderPanel->roots() : QStringList());
+    if (!symbols || !_prefs.breadcrumbs)
+        return;
+    EditorView* view = pane->editor();
+    constexpr sptr_t kMaxFoldScan = 2 * 1024 * 1024;
+    const bool folds = view->sci(SCI_GETLENGTH) <= kMaxFoldScan;
+    if (folds)
+        view->sci(SCI_COLOURISE, 0, -1); // el plegado de todo el documento
+    const sptr_t lineCount = view->sci(SCI_GETLINECOUNT);
+    auto blockEnd = [&](sptr_t line) {
+        if (!folds)
+            return static_cast<int>(line);
+        // El encabezado puede estar en la línea siguiente (la llave en su propia línea)
+        for (sptr_t h = line; h < std::min(line + 3, lineCount); ++h) {
+            if (view->sci(SCI_GETFOLDLEVEL, static_cast<uptr_t>(h)) & SC_FOLDLEVELHEADERFLAG)
+                return static_cast<int>(view->sci(SCI_GETLASTCHILD, static_cast<uptr_t>(h), -1));
+        }
+        return static_cast<int>(line);
+    };
+    std::vector<Breadcrumbs::Symbol> list;
+    if (_functionParsers) {
+        ScintillaEditBase scanner;
+        scanner.send(SCI_SETDOCPOINTER, 0, view->sci(SCI_GETDOCPOINTER));
+        std::vector<FunctionInfo> found;
+        const bool parsed = _functionParsers->parse(scanner, buf->language(), buf->userLanguage(), found);
+        scanner.send(SCI_SETDOCPOINTER, 0, 0);
+        if (parsed) {
+            QSet<QString> classes;
+            for (const FunctionInfo& fi : found) {
+                const QString className = QString::fromStdString(fi.className);
+                if (!className.isEmpty() && fi.classPos >= 0 && !classes.contains(className)) {
+                    classes.insert(className);
+                    const sptr_t line = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(fi.classPos));
+                    list.push_back({className, true, static_cast<int>(line), blockEnd(line)});
+                }
+                if (fi.name.empty() || fi.pos < 0)
+                    continue;
+                const sptr_t line = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(fi.pos));
+                list.push_back({QString::fromStdString(fi.name), false, static_cast<int>(line), blockEnd(line)});
+            }
+        }
+    }
+    bool fallback = false;
+    if (list.empty() && folds) {
+        // Sin analizador: los bloques plegables de los primeros niveles (encabezados de
+        // Markdown, etiquetas de XML…), con el texto de su primera línea
+        fallback = true;
+        for (sptr_t line = 0; line < lineCount && list.size() < 2000; ++line) {
+            const sptr_t level = view->sci(SCI_GETFOLDLEVEL, static_cast<uptr_t>(line));
+            if (!(level & SC_FOLDLEVELHEADERFLAG) || (level & SC_FOLDLEVELNUMBERMASK) - SC_FOLDLEVELBASE >= 4)
+                continue;
+            const sptr_t start = view->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+            const sptr_t end = std::min(view->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line)), start + 200);
+            QString text;
+            if (end > start) {
+                const auto* chars = reinterpret_cast<const char*>(view->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(start), end - start));
+                text = QString::fromUtf8(chars, static_cast<qsizetype>(end - start)).simplified();
+            }
+            if (text.size() > 60)
+                text = text.left(60) + QStringLiteral("…");
+            if (!text.isEmpty())
+                list.push_back({text, false, static_cast<int>(line), blockEnd(line)});
+        }
+    }
+    std::stable_sort(list.begin(), list.end(), [](const auto& a, const auto& b) { return a.line < b.line; });
+    crumbs->setSymbols(std::move(list), fallback);
+    crumbs->setCaretLine(static_cast<int>(view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(view->sci(SCI_GETCURRENTPOS)))));
 }
 
 void MainWindow::updateLanguageDecorations(int index)

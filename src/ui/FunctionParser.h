@@ -60,8 +60,10 @@ public:
     const std::string& id() const { return _id; }
     const std::string& displayName() const { return _displayName; }
 
+    // classPos: dónde está el nombre de la clase que contiene a estas funciones (N++ lo
+    // deja en -1; Edita lo da para ir a la clase desde la Lista de funciones y la ruta)
     void funcParse(ScintillaEditBase& view, std::vector<FunctionInfo>& found, sptr_t begin, sptr_t end,
-                   const std::string& classStructName = {}, const Zones* commentZones = nullptr);
+                   const std::string& classStructName = {}, const Zones* commentZones = nullptr, sptr_t classPos = -1);
 
 protected:
     std::string parseSubLevel(ScintillaEditBase& view, sptr_t begin, sptr_t end, std::vector<std::string> exprs,

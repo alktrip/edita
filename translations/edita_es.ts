@@ -881,9 +881,32 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::Breadcrumbs</name>
+    <message>
+        <location filename="../src/ui/Breadcrumbs.cpp" line="+179"/>
+        <source>folder</source>
+        <translation>carpeta</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>line %1</source>
+        <translation>línea %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>No symbols in this document</source>
+        <translation>No hay símbolos en este documento</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Go to a symbol</source>
+        <translation>Ir a un símbolo</translation>
+    </message>
+</context>
+<context>
     <name>edita::ColorPreview</name>
     <message>
-        <location filename="../src/ui/ColorPreview.cpp" line="+302"/>
+        <location filename="../src/ui/ColorPreview.cpp" line="+308"/>
         <source>Choose a color</source>
         <translation>Elige un color</translation>
     </message>
@@ -1412,13 +1435,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+375"/>
-        <location line="+2290"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+377"/>
+        <location line="+2325"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2290"/>
+        <location line="-2325"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1428,7 +1451,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+261"/>
+        <location line="+290"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1884,7 +1907,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+415"/>
+        <location line="+417"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2107,12 +2130,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1002"/>
+        <location line="-1004"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-665"/>
+        <location line="-694"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2192,7 +2215,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+576"/>
+        <location line="+605"/>
         <location line="+603"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -2393,7 +2416,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+198"/>
+        <location line="+200"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2573,12 +2596,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+247"/>
         <location line="+20"/>
-        <location line="+1399"/>
+        <location line="+1403"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1662"/>
+        <location line="-1666"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2702,7 +2725,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+165"/>
+        <location line="+169"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -3030,7 +3053,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+457"/>
+        <location line="+546"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
@@ -3897,6 +3920,16 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+1"/>
         <source>Color brackets by nesting level</source>
         <translation>Paréntesis por colores según el nivel</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Breadcrumbs above the editor (folder › file › class › function)</source>
+        <translation>Ruta de navegación encima del editor (carpeta › archivo › clase › función)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sticky scroll (keep the first line of the current block at the top)</source>
+        <translation>Encabezado fijo (la primera línea del bloque actual se queda arriba)</translation>
     </message>
     <message>
         <location line="+1"/>

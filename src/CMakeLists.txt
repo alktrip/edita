@@ -129,6 +129,7 @@ add_library(edita_ui STATIC
     ui/FileIcons.cpp
     ui/GitChanges.cpp
     ui/NotificationBar.cpp
+    ui/Breadcrumbs.cpp
     ui/QuickPicker.cpp
     ui/RainbowBrackets.cpp
     ui/ScrollBarMarks.cpp
@@ -175,6 +176,7 @@ add_library(edita_ui STATIC
     ui/SingleInstance.h
     ui/SmartHighlighter.cpp
     ui/SmartHighlighter.h
+    ui/StickyScroll.cpp
     ui/StyleConfiguratorDialog.cpp
     ui/WelcomePage.cpp
     ui/StyleConfiguratorDialog.h

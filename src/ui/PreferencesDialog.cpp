@@ -291,6 +291,8 @@ void PreferencesDialog::buildEditing()
     _colorPreview = addCheck(form, tr("Color preview (#rrggbb, rgb(), hsl() in CSS, HTML, JavaScript, Python…)"), "colorPreview");
     _colorPreview->setToolTip(tr("Ctrl+click a color to change it with the color picker."));
     _rainbowBrackets = addCheck(form, tr("Color brackets by nesting level"), "rainbowBrackets");
+    _breadcrumbs = addCheck(form, tr("Breadcrumbs above the editor (folder › file › class › function)"), "breadcrumbs");
+    _stickyScroll = addCheck(form, tr("Sticky scroll (keep the first line of the current block at the top)"), "stickyScroll");
     form->addRow(new QLabel(tr("<b>Line wrap</b>")));
     _wrap = addCheck(form, tr("Wrap long lines"), "wrap");
     _wrapIndent = addCombo(form, tr("Wrap indent:"), "wrapIndent",
@@ -575,6 +577,8 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _activeIndentGuide->setChecked(p.activeIndentGuide);
     _colorPreview->setChecked(p.colorPreview);
     _rainbowBrackets->setChecked(p.rainbowBrackets);
+    _breadcrumbs->setChecked(p.breadcrumbs);
+    _stickyScroll->setChecked(p.stickyScroll);
     _wrap->setChecked(p.wrap);
     setComboValue(_wrapIndent, static_cast<int>(p.wrapIndent));
     _wrapSymbol->setChecked(p.wrapSymbolShow);
@@ -714,6 +718,8 @@ Preferences PreferencesDialog::preferences() const
     p.activeIndentGuide = _activeIndentGuide->isChecked();
     p.colorPreview = _colorPreview->isChecked();
     p.rainbowBrackets = _rainbowBrackets->isChecked();
+    p.breadcrumbs = _breadcrumbs->isChecked();
+    p.stickyScroll = _stickyScroll->isChecked();
     p.wrap = _wrap->isChecked();
     p.wrapIndent = static_cast<WrapIndent>(comboValue(_wrapIndent));
     p.wrapSymbolShow = _wrapSymbol->isChecked();

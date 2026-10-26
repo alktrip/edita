@@ -68,6 +68,8 @@ class GitChanges;
 class NotificationBar;
 class QuickPicker;
 class RainbowBrackets;
+class Breadcrumbs;
+class StickyScroll;
 class WelcomePage;
 class ScrollBarMarks;
 }
@@ -325,6 +327,8 @@ public:
     ScrollBarMarks* scrollBarMarksOfCurrentView() const;
     ColorPreview* colorPreviewOfCurrentView() const;
     RainbowBrackets* rainbowBracketsOfCurrentView() const;
+    Breadcrumbs* breadcrumbsOfCurrentView() const;
+    StickyScroll* stickyScrollOfCurrentView() const;
     NotificationBar* notificationBar() const { return _notifications; }
     // Página de inicio (no existe en N++): se ve mientras el único documento es uno nuevo
     // y vacío, o al pedirla en Ayuda
@@ -499,6 +503,10 @@ private:
     QPointer<ScrollBarMarks> _scrollMarks[2];
     QPointer<ColorPreview> _colorPreview[2];
     QPointer<RainbowBrackets> _rainbow[2];
+    QPointer<Breadcrumbs> _breadcrumbs[2];
+    QPointer<StickyScroll> _sticky[2];
+    QTimer* _symbolTimer[2] = {};
+    void updateBreadcrumbs(int index, bool symbols);
     // Lenguaje del documento de la vista: vista previa de colores y paréntesis por colores
     void updateLanguageDecorations(int index);
     NotificationBar* _notifications = nullptr;

@@ -322,6 +322,8 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaColorPreview", p.colorPreview);
     r.boolText("EditaFileTypeIcons", p.fileTypeIcons);
     r.boolText("EditaRainbowBrackets", p.rainbowBrackets);
+    r.boolText("EditaBreadcrumbs", p.breadcrumbs);
+    r.boolText("EditaStickyScroll", p.stickyScroll);
     r.boolText("EditaWelcomePage", p.showWelcome);
     return p;
 }
@@ -452,6 +454,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaColorPreview", yesNo(p.colorPreview));
     w.text("EditaFileTypeIcons", yesNo(p.fileTypeIcons));
     w.text("EditaRainbowBrackets", yesNo(p.rainbowBrackets));
+    w.text("EditaBreadcrumbs", yesNo(p.breadcrumbs));
+    w.text("EditaStickyScroll", yesNo(p.stickyScroll));
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }
 

@@ -120,6 +120,8 @@ private:
     QCheckBox* _fileTypeIcons = nullptr;
     QCheckBox* _showWelcome = nullptr;
     QCheckBox* _rainbowBrackets = nullptr;
+    QCheckBox* _breadcrumbs = nullptr;
+    QCheckBox* _stickyScroll = nullptr;
     QCheckBox* _scrollBarMarks = nullptr;
     QComboBox* _changeHistory = nullptr;
     // Documento nuevo y directorio

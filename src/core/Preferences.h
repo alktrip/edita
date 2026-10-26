@@ -136,6 +136,9 @@ struct Preferences
     bool fileTypeIcons = true;
     // Paréntesis por colores según el nivel (EditaRainbowBrackets)
     bool rainbowBrackets = true;
+    // Ruta de navegación y encabezado fijo (EditaBreadcrumbs, EditaStickyScroll)
+    bool breadcrumbs = true;
+    bool stickyScroll = true;
     // Página de inicio mientras el único documento es uno nuevo y vacío (EditaWelcomePage)
     bool showWelcome = true;
     // <GUIConfig name="multiInst" setting="0" …/>

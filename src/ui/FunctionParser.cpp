@@ -75,7 +75,7 @@ FunctionParser::FunctionParser(std::string id, std::string displayName, std::str
 }
 
 void FunctionParser::funcParse(ScintillaEditBase& view, std::vector<FunctionInfo>& found, sptr_t begin, sptr_t end,
-                               const std::string& classStructName, const Zones* commentZones)
+                               const std::string& classStructName, const Zones* commentZones, sptr_t classPos)
 {
     if (begin >= end || _functionExpr.empty())
         return;
@@ -101,7 +101,7 @@ void FunctionParser::funcParse(ScintillaEditBase& view, std::vector<FunctionInfo
             }
             if (!classStructName.empty()) {
                 fi.className = classStructName;
-                fi.classPos = -1;
+                fi.classPos = classPos;
             } else if (!_classNameExprs.empty()) {
                 fi.className = parseSubLevel(view, targetStart, targetEnd, _classNameExprs, foundPos);
                 fi.classPos = foundPos;
@@ -260,7 +260,7 @@ void FunctionZoneParser::classParse(ScintillaEditBase& view, std::vector<Functio
         if (targetStart + length == end)
             break;
         if (!isInZones(targetStart, commentZones))
-            funcParse(view, found, targetStart, targetEnd, className, &commentZones);
+            funcParse(view, found, targetStart, targetEnd, className, &commentZones, foundPos);
         begin = targetStart + length;
         targetStart = searchInTarget(view, _rangeExpr, begin, end);
     }
