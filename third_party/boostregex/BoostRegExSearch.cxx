@@ -436,7 +436,7 @@ BoostRegexSearch::Match BoostRegexSearch::EncodingDependent<CharT, CharacterIter
 		return Match();
 }
 
-// Edita: las posiciones de cada grupo (el 0 es la coincidencia entera); -1 si no participó
+// Edita: las posiciones de cada grupo (el 0 es la coincidencia entera); -1 si no participo
 template <class CharT, class CharacterIterator>
 void BoostRegexSearch::EncodingDependent<CharT, CharacterIterator>::storeGroups(const MatchResults& match)
 {

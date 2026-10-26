@@ -1,0 +1,15 @@
+diff --git a/third_party/pugixml/pugiconfig.hpp b/third_party/pugixml/pugiconfig.hpp
+index 3c7c5f2..3e4503c 100644
+--- a/third_party/pugixml/pugiconfig.hpp
++++ b/third_party/pugixml/pugiconfig.hpp
+@@ -16,7 +16,10 @@
+ // #define PUGIXML_WCHAR_MODE
+ 
+ // Uncomment this to enable from_chars/to_chars for number conversion
++// Edita: no en macOS (la libc++ de Apple no los tiene para decimales antes de macOS 13.3)
++#ifndef __APPLE__
+ #define PUGIXML_CHARCONV_FLOAT
++#endif
+ 
+ // Uncomment this to enable compact mode
+ // #define PUGIXML_COMPACT

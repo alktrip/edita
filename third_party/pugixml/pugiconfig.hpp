@@ -16,7 +16,10 @@
 // #define PUGIXML_WCHAR_MODE
 
 // Uncomment this to enable from_chars/to_chars for number conversion
+// Edita: no en macOS (la libc++ de Apple no los tiene para decimales antes de macOS 13.3)
+#ifndef __APPLE__
 #define PUGIXML_CHARCONV_FLOAT
+#endif
 
 // Uncomment this to enable compact mode
 // #define PUGIXML_COMPACT

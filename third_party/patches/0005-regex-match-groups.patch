@@ -1,0 +1,76 @@
+diff --git a/third_party/boostregex/BoostRegExSearch.cxx b/third_party/boostregex/BoostRegExSearch.cxx
+index d50a430..40dc35e 100644
+--- a/third_party/boostregex/BoostRegExSearch.cxx
++++ b/third_party/boostregex/BoostRegExSearch.cxx
+@@ -223,6 +223,7 @@ private:
+ 		typedef match_results<CharacterIterator> MatchResults;
+ 
+ 		MatchResults _match;
++		void storeGroups(const MatchResults& match); // Edita
+ 	private:
+ 		Regex _regex;
+ 		std::string _lastRegexString;
+@@ -272,6 +273,7 @@ RegexSearchBase *CreateRegexSearch(CharClassify* /* charClassTable */)
+ }
+ 
+ thread_local std::string g_exceptionMessage; // Edita: thread_local (busqueda en archivos en otro hilo)
++thread_local std::vector<std::pair<std::ptrdiff_t, std::ptrdiff_t>> g_lastMatchGroups; // Edita: grupos de la ultima coincidencia (probador de regex)
+ 
+ /**
+  * Find text in document, supporting both forward and backward
+@@ -392,6 +394,8 @@ BoostRegexSearch::Match BoostRegexSearch::EncodingDependent<CharT, CharacterIter
+ 				next_search_from_position = search.nextCharacter(position);
+ 		}
+ 	} while (found && !match_is_valid);
++	if (found)
++		storeGroups(_match); // Edita
+ 	if (found)
+ 		return Match(search._document, _match[0].first.pos(), _match[0].second.pos());
+ 	else
+@@ -424,12 +428,27 @@ BoostRegexSearch::Match BoostRegexSearch::EncodingDependent<CharT, CharacterIter
+ 		}
+ 		search._startPosition = search.nextCharacter(position);
+ 	}
++	if (bestPosition >= 0)
++		storeGroups(bestMatch); // Edita
+ 	if (bestPosition >= 0)
+ 		return Match(search._document, bestPosition, bestEnd);
+ 	else
+ 		return Match();
+ }
+ 
++// Edita: las posiciones de cada grupo (el 0 es la coincidencia entera); -1 si no participo
++template <class CharT, class CharacterIterator>
++void BoostRegexSearch::EncodingDependent<CharT, CharacterIterator>::storeGroups(const MatchResults& match)
++{
++	g_lastMatchGroups.clear();
++	for (std::size_t i = 0; i < match.size(); ++i) {
++		if (match[i].matched)
++			g_lastMatchGroups.emplace_back(match[i].first.pos(), match[i].second.pos());
++		else
++			g_lastMatchGroups.emplace_back(-1, -1);
++	}
++}
++
+ template <class CharT, class CharacterIterator>
+ void BoostRegexSearch::EncodingDependent<CharT, CharacterIterator>::compileRegex(const char *regex, const int compileFlags)
+ {
+diff --git a/third_party/scintilla/include/BoostRegexSearch.h b/third_party/scintilla/include/BoostRegexSearch.h
+index 94a05b2..99ba48e 100644
+--- a/third_party/scintilla/include/BoostRegexSearch.h
++++ b/third_party/scintilla/include/BoostRegexSearch.h
+@@ -10,7 +10,13 @@
+ #define SCFIND_REGEXP_SKIPCRLFASONE			   0x08000000
+ 
+ #ifdef SCI_OWNREGEX
++#include <cstddef>
++#include <string>
++#include <utility>
++#include <vector>
+ extern thread_local std::string g_exceptionMessage; // Edita: thread_local (busqueda en archivos en otro hilo)
++// Edita: inicio y fin de cada grupo de la ultima coincidencia (el 0 es toda); -1 si no participo
++extern thread_local std::vector<std::pair<std::ptrdiff_t, std::ptrdiff_t>> g_lastMatchGroups;
+ #endif
+ 
+ #endif
+\ No newline at end of file

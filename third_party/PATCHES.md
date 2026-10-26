@@ -12,6 +12,8 @@ portabilidad a Linux/GCC y **sin cambios de comportamiento**:
 | `0003-regex-error-thread-local.patch` | `scintilla/include/BoostRegexSearch.h`, `boostregex/BoostRegExSearch.cxx` | `g_exceptionMessage` (mensaje de la última regex inválida) era una variable global que se vacía en cada búsqueda. Edita busca en archivos en otro hilo mientras se puede buscar en el editor: pasa a `thread_local`. Ese es el único cambio de comportamiento: cada hilo ve su propio mensaje. |
 
 | `0004-scintilla-h-c-compatible.patch` | `scintilla/include/Scintilla.h` | N++ añadió al final una estructura de C++ (`SearchResultMarkings`, con `std::vector`) para su panel de resultados, lo que impide incluir la cabecera desde C. Se rodea de `#ifdef __cplusplus` para que los plugins en C (como el de ejemplo) puedan usar `Scintilla.h`. Para C++ no cambia nada. |
+| `0005-regex-match-groups.patch` | `scintilla/include/BoostRegexSearch.h`, `boostregex/BoostRegExSearch.cxx` | Edita guarda dónde cae cada grupo de la última coincidencia (`g_lastMatchGroups`, por hilo) para el probador de expresiones regulares (fase 34). No cambia cómo se busca. |
+| `0006-pugixml-charconv-macos.patch` | `pugixml/pugiconfig.hpp` | `PUGIXML_CHARCONV_FLOAT` (que activa N++) no se activa en macOS: la libc++ de Apple no tiene `from_chars`/`to_chars` para decimales antes de macOS 13.3, y Edita pide macOS 12. pugixml usa entonces `strtod`/`snprintf`; Edita no lee ni escribe decimales con pugixml. |
 
 Además, sin tocar el fuente, en `third_party/CMakeLists.txt`:
 

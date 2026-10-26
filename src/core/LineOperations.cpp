@@ -22,6 +22,8 @@
 
 #include <algorithm>
 #include <charconv>
+#include <locale>
+#include <sstream>
 #include <numeric>
 #include <optional>
 #include <random>
@@ -51,9 +53,20 @@ std::optional<double> toDouble(const std::string& text)
         return std::nullopt;
     double value = 0;
     const char* first = text.data() + start;
+#if defined(__cpp_lib_to_chars)
     const auto [ptr, ec] = std::from_chars(first, text.data() + text.size(), value);
     if (ptr == first || ec != std::errc())
         return std::nullopt;
+#else
+    // La libc++ de Apple no tiene from_chars para decimales: un flujo con el locale «C»
+    // (también lee el número del principio y se para en lo que no lo es)
+    if (*first == '+')
+        return std::nullopt; // como from_chars
+    std::istringstream in(std::string(first, text.data() + text.size()));
+    in.imbue(std::locale::classic());
+    if (!(in >> value))
+        return std::nullopt;
+#endif
     return value;
 }
 
