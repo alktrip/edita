@@ -111,6 +111,15 @@ private slots:
             QCoreApplication::sendEvent(&v, &e);
             return e.isAccepted();
         };
+#ifdef Q_OS_MACOS
+        // Qt llama Meta a la tecla Control y Control a ⌘
+        QVERIFY(overridden(Qt::Key_F, Qt::MetaModifier));   // Control+F: de la shell
+        QVERIFY(overridden(Qt::Key_C, Qt::MetaModifier));   // Control+C: interrumpir
+        QVERIFY(overridden(Qt::Key_F3, Qt::NoModifier));
+        QVERIFY(!overridden(Qt::Key_F, Qt::ControlModifier)); // ⌘F: Buscar
+        QVERIFY(!overridden(Qt::Key_QuoteLeft, Qt::ControlModifier));
+        QVERIFY(overridden(Qt::Key_C, Qt::ControlModifier));  // ⌘C: copiar
+#else
         QVERIFY(overridden(Qt::Key_F, Qt::ControlModifier));   // Ctrl+F: de la shell, no Buscar
         QVERIFY(overridden(Qt::Key_W, Qt::ControlModifier));
         QVERIFY(overridden(Qt::Key_F3, Qt::NoModifier));
@@ -118,6 +127,7 @@ private slots:
         QVERIFY(!overridden(Qt::Key_QuoteLeft, Qt::ControlModifier));             // mostrar/ocultar
         QVERIFY(!overridden(Qt::Key_Ntilde, Qt::ControlModifier));
         QVERIFY(overridden(Qt::Key_C, Qt::ControlModifier | Qt::ShiftModifier));  // copiar
+#endif
     }
 
     void realShell()
@@ -144,14 +154,20 @@ private slots:
         // Ctrl+C interrumpe
         v.sendText("sleep 30; echo nunca\n");
         QTest::qWait(200);
+#ifdef Q_OS_MACOS
+        QTest::keyClick(&v, Qt::Key_C, Qt::MetaModifier); // la tecla Control
+#else
         QTest::keyClick(&v, Qt::Key_C, Qt::ControlModifier);
+#endif
         v.sendText("echo despues\n");
         QTRY_VERIFY(v.text().contains("\ndespues"));
         QVERIFY(!v.text().contains("\nnunca"));
         // Pegar: bash pide «bracketed paste» y lo pegado espera a Intro (no se ejecuta solo)
         v.paste("echo pegado1\necho pegado2\n");
         QTRY_VERIFY(v.text().contains("echo pegado2"));
+#ifndef Q_OS_MACOS // el /bin/sh de macOS es bash 3.2, sin «bracketed paste»
         QVERIFY(!v.text().contains("\npegado1"));
+#endif
         v.sendText("\n");
         QTRY_VERIFY2(v.text().contains("\npegado2"), qPrintable(v.text()));
         // Al salir avisa con el código

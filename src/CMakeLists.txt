@@ -211,7 +211,7 @@ add_library(edita_ui STATIC
     ui/XmlTagMatcher.h)
 target_link_libraries(edita_ui
     PUBLIC  edita_doc edita_syntax edita_search edita_lsp lexilla vterm Qt6::Widgets Qt6::PrintSupport Qt6::Network Qt6::Svg
-    PRIVATE pugixml edita_warnings util)
+    PRIVATE pugixml edita_warnings $<$<PLATFORM_ID:Linux>:util>)
 target_include_directories(edita_ui PUBLIC ${PROJECT_SOURCE_DIR}/plugin-sdk)
 set_target_properties(edita_ui PROPERTIES AUTOMOC ON)
 # Logo e ícono (resources/), dentro del binario
@@ -232,6 +232,18 @@ qt_add_resources(edita_ui edita_resources
 add_executable(${EDITA_APP_ID} main.cpp)
 target_link_libraries(${EDITA_APP_ID} PRIVATE edita_ui edita_warnings)
 set_target_properties(${EDITA_APP_ID} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+# macOS: un paquete Edita.app (packaging/macos/build-dmg.sh le añade datos, plugins y Qt)
+if(APPLE)
+    set_target_properties(${EDITA_APP_ID} PROPERTIES
+        MACOSX_BUNDLE ON
+        OUTPUT_NAME ${PROJECT_NAME}
+        MACOSX_BUNDLE_INFO_PLIST ${PROJECT_SOURCE_DIR}/packaging/macos/Info.plist.in
+        MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+        MACOSX_BUNDLE_GUI_IDENTIFIER io.github.edita
+        MACOSX_BUNDLE_ICON_FILE edita.icns
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION})
+endif()
 
 # Traducciones: el código está en inglés y translations/edita_<idioma>.ts trae cada
 # idioma; edita_en.ts solo tiene las formas de plural del inglés (%n).
@@ -251,7 +263,7 @@ qt_add_resources(edita_ui edita_translations
     BASE ${CMAKE_CURRENT_BINARY_DIR}
     FILES ${EDITA_QM_FILES})
 
-install(TARGETS ${EDITA_APP_ID} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS ${EDITA_APP_ID} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} BUNDLE DESTINATION .)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ DESTINATION ${CMAKE_INSTALL_DATADIR}/${EDITA_APP_ID})
 # Menú del escritorio: <id>.desktop y el ícono <id>.png en el tema hicolor
 configure_file(${PROJECT_SOURCE_DIR}/resources/edita.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/${EDITA_APP_ID}.desktop @ONLY)

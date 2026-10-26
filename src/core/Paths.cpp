@@ -39,6 +39,11 @@ QString appId()
 
 QString configDir()
 {
+    // $XDG_CONFIG_HOME manda también fuera de Linux (en macOS Qt usaría ~/Library/Preferences;
+    // las pruebas lo usan para no tocar la configuración real)
+    const QString xdg = qEnvironmentVariable("XDG_CONFIG_HOME");
+    if (!xdg.isEmpty())
+        return QDir(xdg).filePath(appId());
     return QDir(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)).filePath(appId());
 }
 
@@ -62,6 +67,7 @@ QStringList dataDirs()
     if (QCoreApplication::instance()) {
         const QDir appDir(QCoreApplication::applicationDirPath());
         dirs << appDir.filePath(QStringLiteral("../share/") + appId());
+        dirs << appDir.filePath(QStringLiteral("../Resources/") + appId()); // paquete .app de macOS
     }
     for (const QString& base : QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation))
         dirs << QDir(base).filePath(appId());

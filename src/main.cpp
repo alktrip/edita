@@ -29,6 +29,35 @@
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QFileInfo>
+#include <QFileOpenEvent>
+
+#include <functional>
+
+namespace {
+
+// macOS: Finder y el Dock no pasan los archivos por la línea de órdenes sino con
+// QFileOpenEvent (también antes de que exista la ventana: se guardan hasta entonces)
+class FileOpenFilter : public QObject
+{
+public:
+    QStringList pending;
+    std::function<void(const QString&)> open;
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override
+    {
+        if (event->type() != QEvent::FileOpen)
+            return QObject::eventFilter(watched, event);
+        const QString file = static_cast<QFileOpenEvent*>(event)->file();
+        if (open)
+            open(file);
+        else
+            pending << file;
+        return true;
+    }
+};
+
+} // namespace
 
 int main(int argc, char* argv[])
 {
@@ -36,6 +65,8 @@ int main(int argc, char* argv[])
     // avisos, y con la fuente del escritorio aunque Qt no la entienda
     edita::desktopfonts::installWarningFilter();
     QApplication app(argc, argv);
+    FileOpenFilter fileOpen;
+    app.installEventFilter(&fileOpen);
     edita::desktopfonts::apply();
     edita::initGlobalLocale(); // antes de cualquier regex: ver core/Locale.h
     QApplication::setApplicationName(QString::fromUtf8(edita::kAppId));
@@ -102,7 +133,13 @@ int main(int argc, char* argv[])
     // Como N++: primero la sesión anterior y después los archivos de la línea de comandos
     window.setSessionEnabled(!parser.isSet(noSessionOption) && firstInstance);
     window.restoreLastSession();
+    request.files << fileOpen.pending;
     window.openFromOtherInstance(request, /*raise*/ false);
+    fileOpen.open = [&window](const QString& file) {
+        edita::InstanceRequest r;
+        r.files << file;
+        window.openFromOtherInstance(r, /*raise*/ true);
+    };
     window.notifyPluginsReady(); // NPPN_READY: todo listo
 
     edita::InstanceServer server;

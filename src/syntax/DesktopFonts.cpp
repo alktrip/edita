@@ -17,7 +17,6 @@ namespace {
 
 QtMessageHandler g_previous = nullptr;
 std::optional<QFont> g_fixed;  // la de kdeglobals, si Qt no pudo leerla
-bool g_checked = false;
 
 void filter(QtMsgType type, const QMessageLogContext& context, const QString& message)
 {
@@ -100,7 +99,6 @@ std::optional<QFont> parseFontDescription(const QString& description)
 
 void apply()
 {
-    g_checked = true;
     const QStringList files = kdeglobalsFiles();
     const QString general = kdeglobalsValue(QStringLiteral("font"), files);
     if (!general.isEmpty() && !qtUnderstands(general)) {

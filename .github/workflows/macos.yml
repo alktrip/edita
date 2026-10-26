@@ -1,0 +1,61 @@
+# Edita para macOS: un .dmg universal (Apple Silicon e Intel), firmado ad hoc.
+# Se lanza al subir a main, con etiquetas v* (y entonces se publica en Releases) o a mano.
+name: macOS
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write # para publicar el .dmg en la release de una etiqueta
+
+jobs:
+  dmg:
+    runs-on: macos-14
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      # Qt 6.8 (la misma versión que el AppImage); los binarios de Qt para macOS son universales
+      - name: Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          host: mac
+          target: desktop
+          arch: clang_64
+          modules: qt5compat
+          cache: true
+
+      - name: Herramientas
+        run: brew install ninja
+
+      - name: Compilar, probar y empaquetar
+        env:
+          EDITA_TESTS: '1'
+          EDITA_DIST: ${{ github.workspace }}/dist
+        run: packaging/macos/build-dmg.sh "$GITHUB_WORKSPACE/build-macos"
+
+      - name: Subir el .dmg
+        uses: actions/upload-artifact@v4
+        with:
+          name: Edita-macos
+          path: dist/*.dmg
+          if-no-files-found: error
+
+      - name: Resultados de las pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-macos
+          path: build-macos/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+
+      - name: Publicar en la release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.dmg

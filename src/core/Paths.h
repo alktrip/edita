@@ -27,7 +27,8 @@ namespace edita {
 // (%APPDATA%\Notepad++) y _nppPath (carpeta del ejecutable con los *.model.xml).
 namespace paths {
 
-// Directorio de configuración del usuario: $XDG_CONFIG_HOME/<app> (~/.config/edita).
+// Directorio de configuración del usuario: $XDG_CONFIG_HOME/<app> (~/.config/edita; en macOS,
+// sin XDG_CONFIG_HOME, ~/Library/Preferences/edita).
 // Ahí irán langs.xml, stylers.xml, config.xml y session.xml.
 QString configDir();
 
@@ -43,7 +44,7 @@ void useOwnQtSettings();
 
 // Directorios donde buscar los datos de solo lectura (langs.model.xml,
 // stylers.model.xml, themes/), por orden de prioridad:
-// $EDITA_DATA_DIR, junto al ejecutable (../share/<app>), $XDG_DATA_DIRS/<app>
+// $EDITA_DATA_DIR, junto al ejecutable (../share/<app>; en macOS ../Resources/<app>), $XDG_DATA_DIRS/<app>
 // (/usr/share/edita) y, en builds sin instalar, editor/data del árbol de fuentes.
 QStringList dataDirs();
 

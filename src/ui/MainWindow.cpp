@@ -3272,6 +3272,7 @@ QStringList MainWindow::pluginDirectories() const
     dirs << app.filePath(QStringLiteral("plugins"));
     for (const char* lib : {kInstallLibDir, "lib", "lib64"})
         dirs << app.filePath(QStringLiteral("../%1/%2/plugins").arg(QLatin1String(lib), QString::fromUtf8(kAppId)));
+    dirs << app.filePath(QStringLiteral("../PlugIns/%1/plugins").arg(QString::fromUtf8(kAppId))); // paquete .app de macOS
     dirs.removeDuplicates();
     return dirs;
 }
@@ -5038,7 +5039,7 @@ std::vector<CommandPalette::Item> MainWindow::paletteSymbols() const
             cls.order = static_cast<int>(fi.classPos);
             const sptr_t pos = fi.classPos;
             QPointer<EditorView> view(editor());
-            cls.run = [this, view, pos] {
+            cls.run = [view, pos] {
                 if (!view)
                     return;
                 view->sci(SCI_ENSUREVISIBLEENFORCEPOLICY, static_cast<uptr_t>(view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pos))));

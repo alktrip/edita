@@ -43,10 +43,11 @@ Después del MVP:
 - Fase 35: **terminal integrada** (libvterm: colores, ratón, historial y pestañas, con la fuente y los colores del editor; Ctrl+` o Ctrl+Ñ).
 - Fase 36: **servidores de lenguaje (LSP)**: diagnósticos subrayados y panel Problemas, autocompletado del servidor e información al pasar el ratón (clangd, pyright, rust-analyzer, gopls… los que estén instalados).
 - Fase 37: LSP, parte 2: **ir a la definición** (F12), **referencias** (Mayús+F12), **renombrar**, **dar formato** (Alt+Mayús+F) y **ayuda de parámetros**.
+- Fase 38: **versión para macOS**: un `.dmg` universal (Apple Silicon e Intel) que compila GitHub Actions (`.github/workflows/macos.yml`), con el código adaptado (terminal, paquete `.app`, abrir desde Finder).
 
 Plan en [docs/fase1-analisis.md](docs/fase1-analisis.md);
 registro de cada fase: [0](docs/fase0.md), [1](docs/fase1.md), [2](docs/fase2.md),
-[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md), [26](docs/fase26.md), [27](docs/fase27.md), [28](docs/fase28.md), [29](docs/fase29.md), [30](docs/fase30.md), [31](docs/fase31.md), [32](docs/fase32.md), [33](docs/fase33.md), [34](docs/fase34.md), [35](docs/fase35.md), [36](docs/fase36.md), [37](docs/fase37.md).
+[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md), [26](docs/fase26.md), [27](docs/fase27.md), [28](docs/fase28.md), [29](docs/fase29.md), [30](docs/fase30.md), [31](docs/fase31.md), [32](docs/fase32.md), [33](docs/fase33.md), [34](docs/fase34.md), [35](docs/fase35.md), [36](docs/fase36.md), [37](docs/fase37.md), [38](docs/fase38.md).
 
 Uso: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst]`
 
@@ -79,6 +80,10 @@ Opciones de CMake:
 
 `editor/packaging/appimage/build-portable.sh` genera `dist/Edita-<versión>-x86_64.AppImage`, con Qt, los plugins y Python incluidos. Lo genera en Ubuntu 22.04, así que funciona en Ubuntu 22.04+, Debian 12+, Fedora 36+ y posteriores. `build-appimage.sh` lo genera con el sistema propio, y entonces solo funciona en sistemas con una glibc igual o más nueva. Ver [docs/empaquetado.md](docs/empaquetado.md).
 
+## macOS
+
+`.github/workflows/macos.yml` compila en GitHub Actions (macOS 14, Qt 6.8.3 universal), pasa las pruebas y genera `Edita-<versión>-macos-universal.dmg` como artefacto de la ejecución. Con una etiqueta `v*`, además lo publica en Releases. En un Mac se puede generar igual con `packaging/macos/build-dmg.sh` (Qt 6, CMake y Ninja). La app va firmada ad hoc y sin notarizar: la primera vez hay que abrirla con clic derecho › Abrir (o en Ajustes › Privacidad y seguridad › «Abrir igualmente»). Por ahora no incluye el plugin Python Script.
+
 ## Estructura
 
 ```
@@ -96,7 +101,7 @@ tools/         import-third-party.sh: regenera third_party/ desde referencia/npp
 plugin-sdk/    edita_plugin.h: API para escribir plugins (se instala en include/edita); compat/ y cmake/: capa Win32 y funciones de CMake para compilar plugins de N++ (en share/edita/plugin-sdk)
 plugins/       plugin de ejemplo en C (EditaDemo) y Python Script
 docs/          análisis, registro de cada fase, guía de plugins y empaquetado
-packaging/     appimage/: scripts para generar el AppImage (el portable, en Ubuntu 22.04)
+packaging/     appimage/: scripts para generar el AppImage (el portable, en Ubuntu 22.04); macos/: el .app y el .dmg
 ```
 
 `third_party/` se regenera con `tools/import-third-party.sh`. Los parches

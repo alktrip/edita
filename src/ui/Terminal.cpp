@@ -24,16 +24,70 @@
 #include <cstring>
 
 #include <fcntl.h>
-#include <pty.h>
 #include <sys/ioctl.h>
+#ifdef __APPLE__
+#include <libproc.h>
+#include <util.h> // forkpty
+#else
+#include <pty.h>
+#endif
 #include <sys/wait.h>
 #include <unistd.h>
+
+#ifdef __APPLE__
+extern char** environ;
+#endif
 
 namespace edita {
 
 namespace {
 
 constexpr uint32_t kContinuation = 0xFFFFFFFF; // la segunda celda de un carácter ancho
+
+// En macOS, Qt llama «Control» a ⌘ y «Meta» a la tecla Control: para la shell cuenta la
+// tecla Control, y ⌘ queda para la ventana (⌘C copia, ⌘V pega)
+#ifdef Q_OS_MACOS
+constexpr Qt::KeyboardModifier kControlKey = Qt::MetaModifier;
+#else
+constexpr Qt::KeyboardModifier kControlKey = Qt::ControlModifier;
+#endif
+
+bool isCopyShortcut(Qt::KeyboardModifiers mods, int key)
+{
+#ifdef Q_OS_MACOS
+    return key == Qt::Key_C && (mods & Qt::ControlModifier) && !(mods & Qt::MetaModifier);
+#else
+    return key == Qt::Key_C && (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier);
+#endif
+}
+
+bool isPasteShortcut(Qt::KeyboardModifiers mods, int key)
+{
+#ifdef Q_OS_MACOS
+    return key == Qt::Key_V && (mods & Qt::ControlModifier) && !(mods & Qt::MetaModifier);
+#else
+    return (key == Qt::Key_V && (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier))
+        || (key == Qt::Key_Insert && (mods & Qt::ShiftModifier) && !(mods & Qt::ControlModifier));
+#endif
+}
+
+QKeySequence copyKeys()
+{
+#ifdef Q_OS_MACOS
+    return QKeySequence(Qt::CTRL | Qt::Key_C);
+#else
+    return QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C);
+#endif
+}
+
+QKeySequence pasteKeys()
+{
+#ifdef Q_OS_MACOS
+    return QKeySequence(Qt::CTRL | Qt::Key_V);
+#else
+    return QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V);
+#endif
+}
 
 QColor rgb(const VTermColor& c)
 {
@@ -132,7 +186,12 @@ bool TerminalSession::start(const QString& program, const QStringList& arguments
             signal(s, SIG_DFL);
         if (!dir.isEmpty() && chdir(dir.constData()) != 0 && chdir("/") != 0)
             _exit(126);
+#ifdef __APPLE__
+        environ = envp.data(); // macOS no tiene execvpe
+        execvp(argv[0], argv.data());
+#else
         execvpe(argv[0], argv.data(), envp.data());
+#endif
         execve(fallback[0], fallback, envp.data());
         _exit(127);
     }
@@ -153,7 +212,14 @@ QString TerminalSession::currentDirectory() const
 {
     if (!isRunning())
         return {};
+#ifdef __APPLE__
+    struct proc_vnodepathinfo info = {};
+    if (proc_pidinfo(static_cast<int>(_pid), PROC_PIDVNODEPATHINFO, 0, &info, static_cast<int>(sizeof(info))) <= 0)
+        return {};
+    return QString::fromUtf8(info.pvi_cdir.vip_path);
+#else
     return QFileInfo(QStringLiteral("/proc/%1/cwd").arg(_pid)).symLinkTarget();
+#endif
 }
 
 void TerminalSession::readAvailable()
@@ -867,7 +933,7 @@ VTermModifier TerminalView::modifiers(Qt::KeyboardModifiers mods) const
         mod |= VTERM_MOD_SHIFT;
     if (mods & Qt::AltModifier)
         mod |= VTERM_MOD_ALT;
-    if (mods & Qt::ControlModifier)
+    if (mods & kControlKey)
         mod |= VTERM_MOD_CTRL;
     return static_cast<VTermModifier>(mod);
 }
@@ -879,12 +945,17 @@ bool TerminalView::event(QEvent* event)
     if (event->type() == QEvent::ShortcutOverride) {
         auto* key = static_cast<QKeyEvent*>(event);
         const Qt::KeyboardModifiers mods = key->modifiers();
+        const int k = key->key();
+#ifdef Q_OS_MACOS
+        // Los atajos con ⌘ son de la ventana (salvo copiar y pegar); Control, de la shell
+        const bool forWindow = (mods & Qt::ControlModifier) && !isCopyShortcut(mods, k) && !isPasteShortcut(mods, k);
+#else
         const bool ctrl = mods & Qt::ControlModifier;
         const bool ctrlShift = ctrl && (mods & Qt::ShiftModifier);
-        const int k = key->key();
         const bool forWindow = (ctrlShift && k != Qt::Key_C && k != Qt::Key_V)
             || (ctrl && (k == Qt::Key_QuoteLeft || k == Qt::Key_Ntilde || k == Qt::Key_Tab || k == Qt::Key_Backtab
                          || k == Qt::Key_PageUp || k == Qt::Key_PageDown));
+#endif
         if (!forWindow) {
             event->accept();
             return true;
@@ -896,17 +967,23 @@ bool TerminalView::event(QEvent* event)
 void TerminalView::keyPressEvent(QKeyEvent* event)
 {
     const Qt::KeyboardModifiers mods = event->modifiers();
-    const bool ctrl = mods & Qt::ControlModifier;
+    const bool ctrl = mods & kControlKey;
     const bool shift = mods & Qt::ShiftModifier;
     const int key = event->key();
-    if (ctrl && shift && key == Qt::Key_C) {
+    if (isCopyShortcut(mods, key)) {
         copy();
         return;
     }
-    if ((ctrl && shift && key == Qt::Key_V) || (shift && !ctrl && key == Qt::Key_Insert)) {
+    if (isPasteShortcut(mods, key)) {
         paste(QApplication::clipboard()->text());
         return;
     }
+#ifdef Q_OS_MACOS
+    if (mods & Qt::ControlModifier) { // ⌘ + otra tecla: no es texto para la shell
+        QAbstractScrollArea::keyPressEvent(event);
+        return;
+    }
+#endif
     // Mayús+RePág/AvPág recorre el historial
     if (shift && !ctrl && (key == Qt::Key_PageUp || key == Qt::Key_PageDown) && !_altScreen) {
         QScrollBar* bar = verticalScrollBar();
@@ -1150,9 +1227,9 @@ void TerminalView::contextMenuEvent(QContextMenuEvent* event)
     if (mouseReporting() && !(event->modifiers() & Qt::ShiftModifier))
         return;
     QMenu menu(this);
-    QAction* copyAction = menu.addAction(tr("Copy"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this, &TerminalView::copy);
+    QAction* copyAction = menu.addAction(tr("Copy"), copyKeys(), this, &TerminalView::copy);
     copyAction->setEnabled(_hasSelection);
-    menu.addAction(tr("Paste"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_V), this,
+    menu.addAction(tr("Paste"), pasteKeys(), this,
                    [this] { paste(QApplication::clipboard()->text()); });
     menu.addAction(tr("Select All"), this, &TerminalView::selectAll);
     menu.addSeparator();
