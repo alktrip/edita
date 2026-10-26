@@ -24,6 +24,24 @@ Edita se compila también para macOS, como un `.dmg` universal (Apple Silicon e 
 | Compila con Clang sin warnings y pasan las pruebas | ✅ (en Linux, Clang 23) |
 | Con GCC no cambia nada: 41 suites | ✅ |
 | El flujo de trabajo, el `Info.plist` y el script son válidos (YAML, XML, `bash -n`) | ✅ |
-| `.dmg` generado en GitHub Actions | ⏳ cuando el repositorio esté en GitHub (no se puede comprobar aquí) |
+| `.dmg` generado en GitHub Actions | ✅ `Edita-0.0.1-macos-universal.dmg` (37 MB), en https://github.com/alktrip/edita/actions |
+| Pruebas en macOS 14 (Qt 6.8.3, Apple Clang 15) | ✅ 35 de 37 suites en la sexta ejecución; las dos que faltaban se corrigieron después (ver abajo) |
+
+## Lo que salió en las primeras ejecuciones en macOS
+
+Se necesitaron seis ejecuciones. Cada una avanzó un poco más y dejó algo que desde Linux no se veía:
+
+| Problema | Arreglo |
+|---|---|
+| La libc++ de Apple no tiene `from_chars`/`to_chars` para decimales antes de macOS 13.3 | pugixml sin `PUGIXML_CHARCONV_FLOAT` en macOS (parche 0006); el orden numérico de líneas lee con un flujo en el locale «C» si falta `__cpp_lib_to_chars` |
+| Sin libzip (el binario es universal), dos cosas de libzip quedaban fuera de su `#ifdef` | Dentro del `#ifdef`; se comprobó compilando sin libzip |
+| En macOS `iconv` es una biblioteca aparte | `find_package(Iconv)` |
+| Las pruebas no compilaban con Qt 6.8 (las macros `QTRY_*` convierten un tiempo de 64 bits a `int`) ni con GCC 12 (falso positivo de `-Wrestrict`) | Con Qt < 6.12 las pruebas se compilan sin las advertencias de conversión, y con GCC 12 sin `-Wrestrict`. Ahora también se compilan y pasan con Qt 6.8 y GCC 12 en el chroot de Ubuntu del AppImage |
+| `codesign` rechazaba los restos del build en los plugins (`.lupdate`) | Del plugin solo se copian el `.so`, `lib/` y `scripts/` |
+| **CP874**: la `iconv` de macOS da caracteres a 0xDB–0xDE y 0xFC–0xFF, que Windows no define, y algunos repiten otros (0xDB «้» = 0xE9): un texto tailandés se habría guardado con otros bytes | Esos bytes se tratan como no definidos, como en Windows. Se compararon byte a byte todas las codificaciones de un byte entre Linux y macOS: solo cambia además MAC-CYRILLIC 0xFF («¤»/«€»), que no pierde nada al guardar |
+| La libc++ de macOS no da nombre a la locale del entorno, y se tomaba por un fallo (la regex funcionaba igual) | Se devuelve un nombre |
+| Sin pantalla, la fuente fija de Qt en macOS («Monospace») no existe y salía una proporcional (el espacio virtual del editor de columnas salía el doble de ancho) | En macOS, Menlo, Monaco o Courier New si la de Qt no es monoespaciada |
+| `XDG_RUNTIME_DIR` no lo usa Qt en macOS | La instancia única lo respeta si está definido (como la configuración con `XDG_CONFIG_HOME`) |
+| Pruebas que suponían Linux: QSettings nativos de Qt, `/var` = `/private/var`, rutas largas que se partían, bash 3.2 sigue la lista tras Ctrl+C | Se omite en macOS, se aceptan las dos rutas, terminal más ancha, `sleep 30` sin nada detrás |
 
 Limitaciones: la app no está notarizada, así que la primera vez hay que abrirla con clic derecho › Abrir (o en Ajustes › Privacidad y seguridad › «Abrir igualmente»). Por ahora no incluye Python Script. El instalador de paquetes `.zip` del administrador de plugins necesita libzip, que el runner no tiene.

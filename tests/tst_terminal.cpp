@@ -162,8 +162,9 @@ private slots:
         // El tamaño de la vista es el de la terminal
         v.sendText("stty size\n");
         QTRY_VERIFY2(v.text().contains(QStringLiteral("%1 %2").arg(v.rows()).arg(v.columns())), qPrintable(v.text()));
-        // Ctrl+C interrumpe
-        v.sendText("sleep 30; echo nunca\n");
+        // Ctrl+C interrumpe: «despues» sale antes de los 30 s del sleep. (Sin «; echo …»
+        // detrás: tras un Ctrl+C, dash y bash 5 abandonan la lista y el bash 3.2 de macOS no)
+        v.sendText("sleep 30\n");
         QTest::qWait(200);
 #ifdef Q_OS_MACOS
         QTest::keyClick(&v, Qt::Key_C, Qt::MetaModifier); // la tecla Control
@@ -171,8 +172,7 @@ private slots:
         QTest::keyClick(&v, Qt::Key_C, Qt::ControlModifier);
 #endif
         v.sendText("echo despues\n");
-        QTRY_VERIFY2(printed(v.text(), "despues"), qPrintable(v.text()));
-        QVERIFY(!printed(v.text(), "nunca"));
+        QTRY_VERIFY2(printed(v.text(), "despues"), qPrintable(v.text())); // (QTRY espera 5 s)
         // Pegar: con «bracketed paste» (bash 5) lo pegado espera a Intro; dash y el bash 3.2
         // de macOS no lo piden y se ejecuta al momento. En los dos casos, con Intro, sale
         v.paste("echo pegado1\necho pegado2\n");

@@ -164,7 +164,11 @@ private slots:
         first.setProcessEnvironment(env);
         first.start(QStringLiteral(EDITA_BINARY), {QStringLiteral("--nosession"), file("a.txt")});
         QVERIFY(first.waitForStarted());
-        QTRY_VERIFY_WITH_TIMEOUT(InstanceServer::isRunning(socket), 15000);
+        QTRY_VERIFY2_WITH_TIMEOUT(InstanceServer::isRunning(socket),
+                                  qPrintable(QStringLiteral("socket %1; estado %2; salida: %3")
+                                                 .arg(socket).arg(first.state())
+                                                 .arg(QString::fromLocal8Bit(first.readAllStandardError() + first.readAllStandardOutput()))),
+                                  15000);
 
         // La segunda le pasa b.txt a la primera y termina enseguida, sin error
         QProcess second;
