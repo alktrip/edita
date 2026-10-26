@@ -325,6 +325,7 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaBreadcrumbs", p.breadcrumbs);
     r.boolText("EditaStickyScroll", p.stickyScroll);
     r.boolText("EditaInlineFind", p.inlineFind);
+    p.terminalShell = r.text("EditaTerminalShell");
     r.boolText("EditaWelcomePage", p.showWelcome);
     return p;
 }
@@ -458,6 +459,7 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaBreadcrumbs", yesNo(p.breadcrumbs));
     w.text("EditaStickyScroll", yesNo(p.stickyScroll));
     w.text("EditaInlineFind", yesNo(p.inlineFind));
+    w.text("EditaTerminalShell", p.terminalShell);
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }
 

@@ -141,6 +141,7 @@ struct Preferences
     bool stickyScroll = true;
     // Ctrl+F y Ctrl+H abren la barra de buscar en línea, no el diálogo (EditaInlineFind)
     bool inlineFind = true;
+    QString terminalShell; // vacío = $SHELL
     // Página de inicio mientras el único documento es uno nuevo y vacío (EditaWelcomePage)
     bool showWelcome = true;
     // <GUIConfig name="multiInst" setting="0" …/>

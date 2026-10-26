@@ -704,6 +704,7 @@ void FileBrowserPanel::showMenu(const QPoint& pos)
     });
     if (isDir)
         menu.addAction(tr("Find in Files…"), this, [this, path] { emit findInFolder(path); });
+    menu.addAction(tr("Open in Terminal"), this, [this, path, isDir] { emit openTerminal(isDir ? path : QFileInfo(path).absolutePath()); });
     if (!item->parent()) {
         menu.addSeparator();
         menu.addAction(tr("Remove"), this, [this, path] { removeRoot(path); });

@@ -21,6 +21,7 @@
 
 #include "core/Encoding.h"
 #include "ui/Icons.h"
+#include "ui/TerminalPanel.h"
 #include "ui/Translations.h"
 
 #include <QCheckBox>
@@ -519,6 +520,12 @@ void PreferencesDialog::buildMisc()
     _fallbackCodepage->setObjectName(QStringLiteral("fallbackCodepage"));
     fillCodepages(_fallbackCodepage);
     form->addRow(tr("Default 8-bit character set:"), _fallbackCodepage);
+    form->addRow(new QLabel(tr("<b>Terminal</b>")));
+    _terminalShell = new QLineEdit;
+    _terminalShell->setObjectName(QStringLiteral("terminalShell"));
+    _terminalShell->setPlaceholderText(TerminalPanel::resolveShell(QString()));
+    _terminalShell->setToolTip(tr("Program and arguments, e.g. \"zsh -l\". Empty: the login shell ($SHELL)"));
+    form->addRow(tr("Shell:"), _terminalShell);
 }
 
 void PreferencesDialog::updateEnabledState()
@@ -682,6 +689,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _goToEnd->setChecked(p.goesToEnd());
     _detectEncoding->setChecked(p.detectEncoding);
     setComboValue(_fallbackCodepage, p.fallbackCodepage);
+    _terminalShell->setText(p.terminalShell);
     updateEnabledState();
 }
 
@@ -744,6 +752,7 @@ Preferences PreferencesDialog::preferences() const
     p.newDocLanguage = _newLanguage->count() > 0 ? comboValue(_newLanguage) : p.newDocLanguage;
     p.openSaveDir = static_cast<OpenSaveDir>(comboValue(_openSaveDir));
     p.defaultDirPath = _defaultDir->text().trimmed();
+    p.terminalShell = _terminalShell->text().trimmed();
 
     p.recentFilesMax = _recentMax->value();
     p.recentFilesInSubMenu = _recentSubMenu->isChecked();

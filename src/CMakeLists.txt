@@ -134,6 +134,8 @@ add_library(edita_ui STATIC
     ui/QuickPicker.cpp
     ui/RainbowBrackets.cpp
     ui/RegexTester.cpp
+    ui/Terminal.cpp
+    ui/TerminalPanel.cpp
     ui/ScrollBarMarks.cpp
     ui/ColumnEditorDialog.h
     ui/DocStatusBar.cpp
@@ -193,8 +195,8 @@ add_library(edita_ui STATIC
     ui/XmlTagMatcher.cpp
     ui/XmlTagMatcher.h)
 target_link_libraries(edita_ui
-    PUBLIC  edita_doc edita_syntax edita_search lexilla Qt6::Widgets Qt6::PrintSupport Qt6::Network Qt6::Svg
-    PRIVATE pugixml edita_warnings)
+    PUBLIC  edita_doc edita_syntax edita_search lexilla vterm Qt6::Widgets Qt6::PrintSupport Qt6::Network Qt6::Svg
+    PRIVATE pugixml edita_warnings util)
 target_include_directories(edita_ui PUBLIC ${PROJECT_SOURCE_DIR}/plugin-sdk)
 set_target_properties(edita_ui PROPERTIES AUTOMOC ON)
 # Logo e ícono (resources/), dentro del binario

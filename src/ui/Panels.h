@@ -168,6 +168,7 @@ public:
 signals:
     void openFile(const QString& path);
     void findInFolder(const QString& folder);
+    void openTerminal(const QString& folder);
     void addFolderRequested();
     void locateRequested();
 

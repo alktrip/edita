@@ -77,3 +77,21 @@ target_compile_options(md4c PRIVATE -w)
 # Símbolos ocultos: Qt Gui trae su propia copia de md4c (otra versión, con otros valores
 # de las opciones) y, con los símbolos visibles, md_html del plugin llamaba a su md_parse
 set_target_properties(md4c PROPERTIES POSITION_INDEPENDENT_CODE ON C_VISIBILITY_PRESET hidden)
+
+# --- libvterm 0.3.3 (emulador VT220/xterm, MIT) ---------------------------------
+# La emulación de la terminal integrada (ui/TerminalPanel); el dibujo lo hace Edita.
+# Copiado de https://launchpad.net/libvterm (v0.3.3), con las tablas ya generadas.
+add_library(vterm STATIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/encoding.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/keyboard.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/mouse.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/parser.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/pen.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/screen.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/state.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/unicode.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/src/vterm.c)
+target_include_directories(vterm SYSTEM PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libvterm/include)
+target_compile_options(vterm PRIVATE -w -std=c99)
+target_compile_definitions(vterm PRIVATE _XOPEN_SOURCE=600 _DEFAULT_SOURCE)
+set_target_properties(vterm PROPERTIES POSITION_INDEPENDENT_CODE ON C_VISIBILITY_PRESET hidden)

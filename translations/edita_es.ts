@@ -1219,6 +1219,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Buscar en archivos…</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Open in Terminal</source>
+        <translation>Abrir en la terminal</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Remove</source>
         <translation>Quitar</translation>
@@ -1496,7 +1501,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FunctionListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="-361"/>
+        <location filename="../src/ui/Panels.cpp" line="-362"/>
         <source>Search</source>
         <translation>Buscar</translation>
     </message>
@@ -1535,13 +1540,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+379"/>
-        <location line="+2416"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+380"/>
+        <location line="+2519"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2416"/>
+        <location line="-2519"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1846,7 +1851,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+31"/>
         <source>&amp;Word wrap</source>
         <translation>&amp;Ajuste de línea</translation>
     </message>
@@ -2007,7 +2012,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+482"/>
+        <location line="+576"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2053,12 +2058,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+744"/>
+        <location line="+745"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-720"/>
+        <location line="-721"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2230,7 +2235,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1080"/>
+        <location line="-1182"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
@@ -2316,12 +2321,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+620"/>
-        <location line="+605"/>
+        <location line="+615"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-549"/>
+        <location line="-559"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2471,7 +2476,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+99"/>
+        <location line="+16"/>
+        <source>&amp;Terminal</source>
+        <translation>&amp;Terminal</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>New Te&amp;rminal</source>
+        <translation>Nueva te&amp;rminal</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Run Selection in Terminal</source>
+        <translation>Ejecutar la selección en la terminal</translation>
+    </message>
+    <message>
+        <location line="+86"/>
         <source>&amp;Style Configurator…</source>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
@@ -2496,7 +2516,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+24"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -2521,7 +2541,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Probador de regex</translation>
     </message>
     <message>
-        <location line="+263"/>
+        <location line="+1"/>
+        <source>Terminal</source>
+        <translation>Terminal</translation>
+    </message>
+    <message>
+        <location line="+355"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2693,25 +2718,25 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+168"/>
+        <location line="+169"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-167"/>
+        <location line="-168"/>
         <source>Save As…</source>
         <translation>Guardar como…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+247"/>
+        <location line="+248"/>
         <location line="+20"/>
         <location line="+1403"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1666"/>
+        <location line="-1667"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2731,7 +2756,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Abrir la carpeta contenedora</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+2"/>
+        <source>Open Containing Folder in Terminal</source>
+        <translation>Abrir la carpeta contenedora en la terminal</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Read-Only</source>
         <translation>Solo lectura</translation>
     </message>
@@ -3751,7 +3781,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+130"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+131"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
@@ -4700,6 +4730,21 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <source>Default 8-bit character set:</source>
         <translation>Juego de caracteres de 8 bits por defecto:</translation>
     </message>
+    <message>
+        <location line="+1"/>
+        <source>&lt;b&gt;Terminal&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Terminal&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Program and arguments, e.g. &quot;zsh -l&quot;. Empty: the login shell ($SHELL)</source>
+        <translation>Programa y argumentos, p. ej. «zsh -l». Vacío: la shell del usuario ($SHELL)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Shell:</source>
+        <translation>Shell:</translation>
+    </message>
 </context>
 <context>
     <name>edita::RecipeBuilder</name>
@@ -4870,7 +4915,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Escribe un reemplazo para ver el resultado</translation>
     </message>
     <message>
-        <location line="+151"/>
+        <location line="+150"/>
         <source>Type a regular expression</source>
         <translation>Escribe una expresión regular</translation>
     </message>
@@ -5489,6 +5534,42 @@ Do you want to save your changes before switching themes?</source>
         <location line="+35"/>
         <source>Cannot create %1</source>
         <translation>No se puede crear %1</translation>
+    </message>
+</context>
+<context>
+    <name>edita::TerminalPanel</name>
+    <message>
+        <location filename="../src/ui/TerminalPanel.cpp" line="+39"/>
+        <source>New Terminal</source>
+        <translation>Nueva terminal</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Could not start %1</source>
+        <translation>No se pudo iniciar %1</translation>
+    </message>
+</context>
+<context>
+    <name>edita::TerminalView</name>
+    <message>
+        <location filename="../src/ui/Terminal.cpp" line="+1153"/>
+        <source>Copy</source>
+        <translation>Copiar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paste</source>
+        <translation>Pegar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Select All</source>
+        <translation>Seleccionar todo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Clear</source>
+        <translation>Limpiar</translation>
     </message>
 </context>
 <context>

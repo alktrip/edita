@@ -36,6 +36,7 @@
 #include "ui/NotificationBar.h"
 #include "ui/QuickPicker.h"
 #include "ui/RegexTester.h"
+#include "ui/TerminalPanel.h"
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
@@ -975,6 +976,14 @@ void MainWindow::createMenus()
             toggle->setChecked(dock->isVisibleTo(this));
         });
     }
+    // Terminal integrada (no existe en N++): Ctrl+` o, en los teclados en español, Ctrl+Ñ
+    QAction* terminal = addAction(view, tr("&Terminal"), "actionTerminal", QKeySequence(Qt::CTRL | Qt::Key_QuoteLeft),
+                                  [this] { toggleTerminal(); });
+    terminal->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_QuoteLeft), QKeySequence(Qt::CTRL | Qt::Key_Ntilde)});
+    addAction(view, tr("New Te&rminal"), "actionNewTerminal", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_QuoteLeft),
+              [this] { openTerminal(terminalDirectory()); });
+    addAction(view, tr("Run Selection in Terminal"), "actionRunSelectionInTerminal", QKeySequence(),
+              [this] { runSelectionInTerminal(); });
     view->addSeparator();
     _wrapAction = addAction(view, tr("&Word wrap"), "actionWrap", QKeySequence(),
                             [this](bool checked) { toggleViewOption(&Preferences::wrap, checked); });
@@ -1315,6 +1324,7 @@ void MainWindow::createPanels()
     _functionListPanel = new FunctionListPanel(*_functionParsers);
     _folderPanel = new FileBrowserPanel;
     _regexTester = new RegexTesterPanel;
+    _terminal = new TerminalPanel;
     // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
     // mapa y las funciones a la derecha
     const std::tuple<QWidget*, const char*, QString, Qt::DockWidgetArea> panels[] = {
@@ -1323,6 +1333,7 @@ void MainWindow::createPanels()
         {_functionListPanel, "functionList", tr("Function List"), Qt::RightDockWidgetArea},
         {_folderPanel, "folderAsWorkspace", tr("Folder as Workspace"), Qt::LeftDockWidgetArea},
         {_regexTester, "regexTester", tr("Regex Tester"), Qt::BottomDockWidgetArea}, // no existe en N++
+        {_terminal, "terminal", tr("Terminal"), Qt::BottomDockWidgetArea},           // no existe en N++
     };
     // <GUIConfig name="multiInst" … documentList="yes" documentMap="no" fuctionList="no" folderAsWorkspace="no">
     // (los nombres de N++, con su "fuctionList")
@@ -1379,6 +1390,22 @@ void MainWindow::createPanels()
     });
     connect(&_syntax, &SyntaxManager::stylesChanged, _docMapPanel, &DocumentMapPanel::restyle);
 
+    // Terminal: al mostrarla sin ninguna (p. ej. al arrancar con el panel abierto), una nueva
+    connect(panelDock(QStringLiteral("terminal")), &QDockWidget::visibilityChanged, this, [this](bool visible) {
+        if (visible && _terminal->count() == 0)
+            QTimer::singleShot(0, this, [this] {
+                if (_terminal->count() == 0 && panelDock(QStringLiteral("terminal"))->isVisibleTo(this))
+                    openTerminal();
+            });
+    });
+    connect(_terminal, &TerminalPanel::newTerminalRequested, this, [this] { openTerminal(terminalDirectory()); });
+    connect(_terminal, &TerminalPanel::lastTerminalClosed, this, [this] {
+        panelDock(QStringLiteral("terminal"))->hide();
+        editor()->setFocus();
+    });
+    connect(&_syntax, &SyntaxManager::stylesChanged, this, [this] { QTimer::singleShot(0, this, [this] { applyTerminalStyle(); }); });
+    connect(_folderPanel, &FileBrowserPanel::openTerminal, this, [this](const QString& dir) { openTerminal(dir); });
+
     // Probador de regex: el texto de prueba sale de la selección o del documento
     _regexTester->applyStyles(_syntax);
     connect(&_syntax, &SyntaxManager::stylesChanged, _regexTester, [this] { _regexTester->applyStyles(_syntax); });
@@ -1390,6 +1417,82 @@ void MainWindow::createPanels()
         dialog->showTab(o.replacement.empty() ? FindReplaceDialog::Tab::Find : FindReplaceDialog::Tab::Replace,
                         QString::fromStdString(o.pattern));
     });
+}
+
+QString MainWindow::terminalDirectory() const
+{
+    // La carpeta del documento; sin ella, la primera de trabajo; si no, la personal
+    if (const Buffer* buf = _documents.buffer(currentBuffer()); buf && !buf->isUntitled())
+        return QFileInfo(buf->filePath()).absolutePath();
+    const QStringList roots = _folderPanel->roots();
+    return roots.isEmpty() ? QDir::homePath() : roots.first();
+}
+
+void MainWindow::applyTerminalStyle()
+{
+    // La fuente y los colores del texto normal del editor (el tema activo)
+    EditorView* v = editor();
+    if (!v || !_terminal)
+        return;
+    QByteArray family(static_cast<qsizetype>(v->sci(SCI_STYLEGETFONT, STYLE_DEFAULT)) + 1, '\0');
+    v->sci(SCI_STYLEGETFONT, STYLE_DEFAULT, reinterpret_cast<sptr_t>(family.data()));
+    QFont font(QString::fromUtf8(family.constData()));
+    font.setPointSizeF(std::max(6.0, static_cast<double>(v->sci(SCI_STYLEGETSIZEFRACTIONAL, STYLE_DEFAULT)) / SC_FONT_SIZE_MULTIPLIER));
+    _terminal->setTerminalFont(font);
+    auto color = [](sptr_t c) {
+        return QColor(static_cast<int>(c & 0xFF), static_cast<int>((c >> 8) & 0xFF), static_cast<int>((c >> 16) & 0xFF));
+    };
+    _terminal->setColors(color(v->sci(SCI_STYLEGETFORE, STYLE_DEFAULT)), color(v->sci(SCI_STYLEGETBACK, STYLE_DEFAULT)));
+}
+
+void MainWindow::openTerminal(const QString& directory)
+{
+    QDockWidget* dock = panelDock(QStringLiteral("terminal"));
+    if (!directory.isEmpty() || _terminal->count() == 0) {
+        _terminal->setShell(_prefs.terminalShell);
+        applyTerminalStyle();
+        _terminal->newTerminal(directory.isEmpty() ? terminalDirectory() : directory);
+    }
+    dock->show();
+    dock->raise();
+    if (TerminalView* view = _terminal->currentTerminal())
+        view->setFocus();
+}
+
+void MainWindow::toggleTerminal()
+{
+    // Como en VS Code: abre, pasa el foco a la terminal o, si ya lo tiene, la oculta
+    QDockWidget* dock = panelDock(QStringLiteral("terminal"));
+    TerminalView* view = _terminal->currentTerminal();
+    if (dock->isVisibleTo(this) && view && view->hasFocus()) {
+        dock->hide();
+        editor()->setFocus();
+    } else {
+        openTerminal();
+    }
+}
+
+void MainWindow::runSelectionInTerminal()
+{
+    // La selección (o la línea del cursor), como si se tecleara, con Intro al final
+    EditorView* v = editor();
+    sptr_t start = v->sci(SCI_GETSELECTIONSTART);
+    sptr_t end = v->sci(SCI_GETSELECTIONEND);
+    if (start == end) {
+        const sptr_t line = v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(start));
+        start = v->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+        end = v->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line));
+    }
+    const auto* range = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(start), end - start));
+    QString text = range ? QString::fromUtf8(range, static_cast<qsizetype>(end - start)) : QString();
+    if (text.trimmed().isEmpty())
+        return;
+    if (!text.endsWith(QLatin1Char('\n')))
+        text += QLatin1Char('\n');
+    openTerminal();
+    if (TerminalView* view = _terminal->currentTerminal())
+        view->sendText(text);
+    v->setFocus();
 }
 
 void MainWindow::fillRegexSample()
@@ -2024,7 +2127,8 @@ void MainWindow::showTabContextMenu(BufferId id, const QPoint& globalPos)
     QAction* copyDir = menu.addAction(tr("Copy Current Dir. Path"), this, [dir] { QApplication::clipboard()->setText(dir); });
     QAction* openDir = menu.addAction(tr("Open Containing Folder"), this,
                                       [dir] { QDesktopServices::openUrl(QUrl::fromLocalFile(dir)); });
-    for (QAction* a : {copyPath, copyDir, openDir})
+    QAction* openTerminalHere = menu.addAction(tr("Open Containing Folder in Terminal"), this, [this, dir] { openTerminal(dir); });
+    for (QAction* a : {copyPath, copyDir, openDir, openTerminalHere})
         a->setEnabled(!buf->isUntitled());
     menu.addSeparator();
     QAction* readOnly = menu.addAction(tr("Read-Only"));

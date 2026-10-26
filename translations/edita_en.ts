@@ -45,7 +45,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+5030"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+5134"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -191,7 +191,7 @@
 <context>
     <name>edita::RegexTesterPanel</name>
     <message numerus="yes">
-        <location filename="../src/ui/RegexTester.cpp" line="+352"/>
+        <location filename="../src/ui/RegexTester.cpp" line="+351"/>
         <source>%n match(es)</source>
         <translation>
             <numerusform>%n match</numerusform>

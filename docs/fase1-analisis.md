@@ -308,6 +308,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 32 — Ruta de navegación y encabezado fijo | Barra con carpetas, archivo y símbolos (Lista de funciones y plegado); encabezados de los bloques que contienen a la primera línea visible, dibujados con los estilos del editor | ✅ [fase32.md](fase32.md) |
 | 33 — Mapa del documento mejorado y buscar en línea | Margen de cambios de Git y marcadores en el mapa, búsquedas con relleno, zona visible con veladura; barra flotante de búsqueda con el mismo motor que el diálogo | ✅ [fase33.md](fase33.md) |
 | 34 — Probador de expresiones regulares | Panel con texto de prueba, coincidencias y grupos (posiciones guardadas por la regex Boost), vista previa del reemplazo y referencia rápida | ✅ [fase34.md](fase34.md) |
+| 35 — Terminal integrada | libvterm (MIT) para la emulación, forkpty para la shell, vista propia con historial, selección, ratón y tema del editor; panel con pestañas | ✅ [fase35.md](fase35.md) |
 
 ---
 

@@ -29,6 +29,8 @@ Incluye código de terceros en third_party/, cada uno con su propia licencia:
 
   md4c 0.5.2 — Copyright Martin Mitáš y colaboradores — MIT
       third_party/md4c/LICENSE.md (para el plugin MarkdownViewer++)
+  libvterm 0.3.3 — Copyright 2008 Paul Evans — MIT
+      third_party/libvterm/LICENSE (la emulación de la terminal integrada)
 
 plugins/MarkdownViewerPlusPlus/: port nativo de MarkdownViewer++ 0.8.2
 (https://github.com/nea/MarkdownViewerPlusPlus) — Copyright (c) 2017 Savas
