@@ -29,6 +29,16 @@ class TestTerminal : public QObject
     QTemporaryDir _tmp;
 
     static QString canonical(const QString& path) { return QFileInfo(path).canonicalFilePath(); }
+    // Una línea con lo que imprimió una orden: sola o tras el prompt («$ », «# »), sin ser
+    // la orden misma («echo …»)
+    static bool printed(const QString& text, const QString& word)
+    {
+        for (const QString& line : text.split(QLatin1Char('\n'))) {
+            if (!line.contains(QLatin1String("echo")) && line.section(QLatin1Char(' '), -1) == word)
+                return true;
+        }
+        return false;
+    }
 
 private slots:
     void initTestCase()
@@ -160,16 +170,14 @@ private slots:
         QTest::keyClick(&v, Qt::Key_C, Qt::ControlModifier);
 #endif
         v.sendText("echo despues\n");
-        QTRY_VERIFY(v.text().contains("\ndespues"));
-        QVERIFY(!v.text().contains("\nnunca"));
-        // Pegar: bash pide «bracketed paste» y lo pegado espera a Intro (no se ejecuta solo)
+        QTRY_VERIFY2(printed(v.text(), "despues"), qPrintable(v.text()));
+        QVERIFY(!printed(v.text(), "nunca"));
+        // Pegar: con «bracketed paste» (bash 5) lo pegado espera a Intro; dash y el bash 3.2
+        // de macOS no lo piden y se ejecuta al momento. En los dos casos, con Intro, sale
         v.paste("echo pegado1\necho pegado2\n");
         QTRY_VERIFY(v.text().contains("echo pegado2"));
-#ifndef Q_OS_MACOS // el /bin/sh de macOS es bash 3.2, sin «bracketed paste»
-        QVERIFY(!v.text().contains("\npegado1"));
-#endif
         v.sendText("\n");
-        QTRY_VERIFY2(v.text().contains("\npegado2"), qPrintable(v.text()));
+        QTRY_VERIFY2(printed(v.text(), "pegado2"), qPrintable(v.text()));
         // Al salir avisa con el código
         QSignalSpy finished(&v, &TerminalView::finished);
         v.sendText("exit 3\n");
@@ -209,7 +217,7 @@ private slots:
         // Ejecutar la selección (sin selección, la línea del cursor)
         w.editor()->sci(SCI_GOTOPOS, 0);
         w.findChild<QAction*>("actionRunSelectionInTerminal")->trigger();
-        QTRY_VERIFY2(view->text().contains("\ndesde_edita_2"), qPrintable(view->text()));
+        QTRY_VERIFY2(printed(view->text(), "desde_edita_2"), qPrintable(view->text()));
         // Otra terminal, en otra pestaña
         w.findChild<QAction*>("actionNewTerminal")->trigger();
         QCOMPARE(panel->count(), 2);

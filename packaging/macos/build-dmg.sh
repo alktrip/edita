@@ -27,7 +27,7 @@ cmake -S "$SRC" -B "$BUILD" -G Ninja \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
     -DEDITA_BUILD_TESTS=$TESTS \
     -DEDITA_PYTHONSCRIPT=OFF
-cmake --build "$BUILD"
+cmake --build "$BUILD" -- -k 0 # todos los errores de una vez
 if [ "$TESTS" = ON ]; then
     log "Pruebas"
     (cd "$BUILD" && QT_QPA_PLATFORM=offscreen ctest --output-on-failure -LE perf) || {

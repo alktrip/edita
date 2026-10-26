@@ -665,7 +665,11 @@ private slots:
         Window w;
         auto* mime = new QMimeData;
         mime->setUrls({QUrl::fromLocalFile(fixture("eol/lf.txt")), QUrl::fromLocalFile(fixture("eol/cr.txt"))});
-        QDragEnterEvent enter(QPointF(10, 10), Qt::CopyAction, mime, Qt::LeftButton, Qt::NoModifier);
+        // Qt 6.8 solo tiene el constructor con QPoint; Qt 6.12 lo marca obsoleto (el de QPointF)
+        QT_WARNING_PUSH
+        QT_WARNING_DISABLE_DEPRECATED
+        QDragEnterEvent enter(QPoint(10, 10), Qt::CopyAction, mime, Qt::LeftButton, Qt::NoModifier);
+        QT_WARNING_POP
         QApplication::sendEvent(&w.window, &enter);
         QVERIFY(enter.isAccepted());
         QDropEvent drop(QPointF(10, 10), Qt::CopyAction, mime, Qt::LeftButton, Qt::NoModifier);

@@ -3,11 +3,24 @@
 function(edita_add_test name)
     cmake_parse_arguments(ARG "" "" "LIBS;LABELS" ${ARGN})
     add_executable(${name} ${name}.cpp)
-    target_link_libraries(${name} PRIVATE ${ARG_LIBS} edita_warnings Qt6::Test)
+    # Antes de Qt 6.12 (el AppImage y macOS usan 6.8), las macros QTRY_* de Qt convierten
+    # un tiempo de 64 bits a int dentro de cada prueba: las mismas advertencias, sin las de
+    # conversión (solo en las pruebas)
+    if(Qt6Core_VERSION VERSION_LESS 6.12)
+        target_link_libraries(${name} PRIVATE ${ARG_LIBS} Qt6::Test)
+        target_compile_options(${name} PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor
+            -Woverloaded-virtual $<$<BOOL:${EDITA_WERROR}>:-Werror>)
+    else()
+        target_link_libraries(${name} PRIVATE ${ARG_LIBS} edita_warnings Qt6::Test)
+    endif()
     target_compile_definitions(${name} PRIVATE
         EDITA_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
         EDITA_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
     set_target_properties(${name} PROPERTIES AUTOMOC ON)
+    # GCC 12: falso positivo de -Wrestrict dentro de std::string (corregido en GCC 13)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 13)
+        target_compile_options(${name} PRIVATE -Wno-restrict)
+    endif()
     add_test(NAME ${name} COMMAND ${name})
     # EDITA_LSP=0: sin servidores de lenguaje (los que haya instalados); tst_lsp los activa
     set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;EDITA_LSP=0")
