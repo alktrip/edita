@@ -34,6 +34,8 @@
 #include "ui/ColorPreview.h"
 #include "ui/GitChanges.h"
 #include "ui/NotificationBar.h"
+#include "ui/QuickPicker.h"
+#include "ui/RainbowBrackets.h"
 #include "ui/WelcomePage.h"
 #include "ui/ScrollBarMarks.h"
 #include "ui/Icons.h"
@@ -345,6 +347,7 @@ MainWindow::MainWindow(QWidget* parent)
     centralLayout->addWidget(_centerStack, 1);
     setCentralWidget(central);
     setStatusBar(_statusBar);
+    connect(_statusBar, &DocStatusBar::fieldClicked, this, [this](DocStatusBar::Field field) { showStatusPicker(static_cast<int>(field)); });
     setAcceptDrops(true);
 
     // Panel de resultados (Finder) abajo, oculto hasta la primera búsqueda
@@ -407,7 +410,8 @@ MainWindow::MainWindow(QWidget* parent)
             notifyPlugins(NPPN_FILEOPENED, id);
         }
     });
-    connect(&_documents, &DocumentManager::bufferClosed, this, [this] {
+    connect(&_documents, &DocumentManager::bufferClosed, this, [this](BufferId id) {
+        _indentOverrides.erase(id);
         scheduleWelcomeUpdate();
         syncWatchedFiles();
         QTimer::singleShot(0, this, [this] { updatePanels(); });
@@ -424,13 +428,11 @@ MainWindow::MainWindow(QWidget* parent)
                     updateGitDocument(pane);
             }
         }
-        // Otro lenguaje: la vista previa de colores sí o no
+        // Otro lenguaje: la vista previa de colores y qué paréntesis cuentan
         if (mask & BufferChange::Language) {
-            const Buffer* buf = _documents.buffer(id);
-            for (int i = 0; i < 2 && buf; ++i) {
-                EditorPane* pane = i ? _subPane : _mainPane;
-                if (pane->currentBuffer() == id && _colorPreview[i])
-                    _colorPreview[i]->setLanguage(buf->language());
+            for (int i = 0; i < 2; ++i) {
+                if ((i ? _subPane : _mainPane)->currentBuffer() == id)
+                    updateLanguageDecorations(i);
             }
         }
     });
@@ -459,9 +461,11 @@ void MainWindow::connectPane(EditorPane* pane)
     _git[index] = new GitChanges(pane->editor());
     _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
     _colorPreview[index] = new ColorPreview(pane->editor());
+    _rainbow[index] = new RainbowBrackets(pane->editor());
     pane->setStyler([this](EditorView& view, const Buffer& buffer) { _syntax.apply(view, buffer.language(), buffer.userLanguage()); });
     connect(&_syntax, &SyntaxManager::stylesChanged, pane, &EditorPane::restyle);
     // Después de restyle: los colores de las marcas según el tema ya aplicado
+    connect(&_syntax, &SyntaxManager::stylesChanged, pane, [this, pane] { applyIndentOverride(pane); });
     connect(&_syntax, &SyntaxManager::stylesChanged, _git[index], [this, index] {
         if (_git[index])
             _git[index]->applyColors();
@@ -469,10 +473,10 @@ void MainWindow::connectPane(EditorPane* pane)
             _scrollMarks[index]->scheduleUpdate();
     });
     connect(pane, &EditorPane::currentBufferChanged, this, [this, pane, index] {
+        applyIndentOverride(pane);
         scheduleWelcomeUpdate();
         updateGitDocument(pane);
-        if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && _colorPreview[index])
-            _colorPreview[index]->setLanguage(buf->language());
+        updateLanguageDecorations(index);
         if (pane == _activePane)
             refreshCurrentDocument();
         if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && autoCompletion(pane))
@@ -998,9 +1002,10 @@ void MainWindow::createMenus()
     // Codificación
     QMenu* encoding = createEncodingMenu();
     menuBar()->addMenu(encoding);
-    _statusBar->setEncodingMenu(encoding);
+    _encodingMenu = encoding;
 
-    menuBar()->addMenu(createLanguageMenu());
+    _languageMenu = createLanguageMenu();
+    menuBar()->addMenu(_languageMenu);
 
     // Configuración
     QMenu* settings = menuBar()->addMenu(tr("Se&ttings"));
@@ -1459,7 +1464,7 @@ QMenu* MainWindow::createEolMenu()
         connect(action, &QAction::triggered, this, [this, eol] { convertEol(eol); });
         _eolActions[static_cast<int>(eol)] = action;
     }
-    _statusBar->setEolMenu(menu);
+    _eolMenu = menu;
     return menu;
 }
 
@@ -2299,6 +2304,8 @@ void MainWindow::applyPreferences()
     for (int i = 0; i < 2; ++i) {
         if (_colorPreview[i])
             _colorPreview[i]->setEnabled(p.colorPreview);
+        if (_rainbow[i])
+            _rainbow[i]->setEnabled(p.rainbowBrackets);
         if (_git[i])
             _git[i]->setEnabled(p.gitMargin);
         if (_scrollMarks[i])
@@ -3898,6 +3905,121 @@ void MainWindow::goToLine(int line, int column)
     view->sci(SCI_SCROLLCARET);
 }
 
+// --- Barra de estado interactiva -------------------------------------------------------
+
+void MainWindow::applyIndentOverride(EditorPane* pane)
+{
+    const auto it = _indentOverrides.find(pane->currentBuffer());
+    if (it == _indentOverrides.end())
+        return;
+    EditorView* view = pane->editor();
+    view->sci(SCI_SETUSETABS, it->second.useTabs ? 1 : 0);
+    view->sci(SCI_SETTABWIDTH, static_cast<uptr_t>(it->second.width));
+    view->sci(SCI_SETINDENT, static_cast<uptr_t>(it->second.width));
+}
+
+// La sangría de este documento (desde la barra de estado): se mantiene mientras esté abierto
+void MainWindow::setDocumentIndentation(bool useTabs, int width)
+{
+    _indentOverrides[currentBuffer()] = {useTabs, width};
+    applyIndentOverride(_activePane);
+    _statusBar->updateCaret(editor());
+}
+
+// Una lista con buscador encima del campo pulsado
+void MainWindow::showStatusPicker(int which)
+{
+    using Field = DocStatusBar::Field;
+    const auto field = static_cast<Field>(which);
+    if (field == Field::Position) {
+        showCommandPalette(QStringLiteral(":"));
+        return;
+    }
+    if (field == Field::InsertMode) {
+        editor()->sci(SCI_EDITTOGGLEOVERTYPE);
+        _statusBar->updateCaret(editor());
+        editor()->setFocus();
+        return;
+    }
+    // Las órdenes de un menú (con sus submenús como detalle), tal cual: elegir una es
+    // lo mismo que elegirla en el menú
+    auto fromMenu = [](QMenu* menu) {
+        std::vector<QuickPicker::Item> items;
+        std::function<void(QMenu*, const QString&)> walk = [&](QMenu* m, const QString& group) {
+            emit m->aboutToShow(); // los que se rellenan o marcan al abrirse
+            for (QAction* action : m->actions()) {
+                if (action->isSeparator() || !action->isVisible())
+                    continue;
+                const QString text = plainMenuText(action->text());
+                if (action->menu()) {
+                    walk(action->menu(), group.isEmpty() ? text : group + QStringLiteral(" › ") + text);
+                    continue;
+                }
+                if (!action->isEnabled() || text.isEmpty())
+                    continue;
+                QPointer<QAction> target(action);
+                items.push_back({text, group, action->isCheckable() && action->isChecked(), [target] {
+                                     if (target)
+                                         target->trigger();
+                                 }});
+            }
+        };
+        if (menu)
+            walk(menu, QString());
+        return items;
+    };
+    auto actionItem = [this](const char* name, const QString& group) -> std::optional<QuickPicker::Item> {
+        QAction* action = findChild<QAction*>(QString::fromLatin1(name));
+        if (!action)
+            return std::nullopt;
+        QPointer<QAction> target(action);
+        return QuickPicker::Item{plainMenuText(action->text()), group, false, [target] {
+                                     if (target)
+                                         target->trigger();
+                                 }};
+    };
+    std::vector<QuickPicker::Item> items;
+    QString placeholder;
+    switch (field) {
+    case Field::Language:
+        items = fromMenu(_languageMenu);
+        placeholder = tr("Select a language");
+        break;
+    case Field::Encoding:
+        items = fromMenu(_encodingMenu);
+        placeholder = tr("Select an encoding or convert to it");
+        break;
+    case Field::Eol:
+        items = fromMenu(_eolMenu);
+        placeholder = tr("Convert the end of line");
+        break;
+    case Field::Indentation: {
+        placeholder = tr("Indentation of this document");
+        const bool tabs = editor()->sci(SCI_GETUSETABS) != 0;
+        const sptr_t indent = editor()->sci(SCI_GETINDENT);
+        const int width = static_cast<int>(indent > 0 ? indent : editor()->sci(SCI_GETTABWIDTH));
+        items.push_back({tr("Indent using spaces"), QString(), !tabs, [this, width] { setDocumentIndentation(false, width); }});
+        items.push_back({tr("Indent using tabs"), QString(), tabs, [this, width] { setDocumentIndentation(true, width); }});
+        for (int w : {2, 3, 4, 8})
+            items.push_back({tr("Width: %1").arg(w), tr("Indentation"), w == width, [this, tabs, w] { setDocumentIndentation(tabs, w); }});
+        for (const char* name : {"actionTabToSpace", "actionSpaceToTabLeading", "actionSpaceToTabAll"}) {
+            if (auto item = actionItem(name, tr("Convert")))
+                items.push_back(*item);
+        }
+        if (auto item = actionItem("actionPreferences", tr("Preferences"))) {
+            item->text = tr("Indentation settings…");
+            items.push_back(*item);
+        }
+        break;
+    }
+    default:
+        return;
+    }
+    if (!_picker)
+        _picker = new QuickPicker(this);
+    _picker->popup(_statusBar->field(field), placeholder, std::move(items));
+}
+
 // --- Página de inicio -----------------------------------------------------------------
 
 void MainWindow::createWelcomePage()
@@ -4075,6 +4197,37 @@ ScrollBarMarks* MainWindow::scrollBarMarksOfCurrentView() const
 ColorPreview* MainWindow::colorPreviewOfCurrentView() const
 {
     return _colorPreview[_activePane == _subPane ? 1 : 0];
+}
+
+RainbowBrackets* MainWindow::rainbowBracketsOfCurrentView() const
+{
+    return _rainbow[_activePane == _subPane ? 1 : 0];
+}
+
+void MainWindow::updateLanguageDecorations(int index)
+{
+    const Buffer* buf = _documents.buffer((index ? _subPane : _mainPane)->currentBuffer());
+    if (!buf)
+        return;
+    if (_colorPreview[index])
+        _colorPreview[index]->setLanguage(buf->language());
+    if (_rainbow[index]) {
+        // Los paréntesis de comentarios, cadenas, caracteres y expresiones regulares no
+        // cuentan: los estilos del lexer con esos nombres (stylers.xml)
+        std::bitset<256> ignored;
+        if (const LexerStyles* lexer = _syntax.styles().lexer(languageInfo(buf->language()).name)) {
+            static const char* const kWords[] = {"COMMENT", "STRING", "CHAR", "REGEX", "VERBATIM", "TRIPLE", "LITERAL",
+                                                 "HEREDOC", "BACKTICK", "DOCUMENT"};
+            for (const Style& style : lexer->styles) {
+                const QString name = QString::fromStdString(style.name).toUpper();
+                for (const char* word : kWords) {
+                    if (style.id >= 0 && style.id < 256 && name.contains(QLatin1String(word)))
+                        ignored.set(static_cast<size_t>(style.id));
+                }
+            }
+        }
+        _rainbow[index]->setIgnoredStyles(ignored);
+    }
 }
 
 void MainWindow::updateGitDocument(EditorPane* pane)

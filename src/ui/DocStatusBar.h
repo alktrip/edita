@@ -33,16 +33,23 @@ class EditorView;
 // (Notepad_plus::updateStatusBar / setUniModeText / setDisplayFormat):
 //   tipo de documento | longitud y líneas | Lín, Col, Pos (y selección) |
 //   fin de línea | codificación | INS/SOB
-// Los campos de fin de línea y codificación abren su menú al pulsarlos.
+// Además (no está en N++): la sangría del documento («Espacios: 4»), y los campos se
+// pueden pulsar para cambiarlos (MainWindow abre una lista con buscador sobre el campo):
+// lenguaje, posición (ir a una línea), sangría, fin de línea, codificación e INS/SOB.
 class DocStatusBar : public QStatusBar
 {
     Q_OBJECT
 
 public:
+    enum class Field { Language, Position, Indentation, Eol, Encoding, InsertMode };
+
     explicit DocStatusBar(QWidget* parent = nullptr);
 
-    void setEolMenu(QMenu* menu);
-    void setEncodingMenu(QMenu* menu);
+    // El control de un campo (para abrir la lista encima)
+    QWidget* field(Field field) const;
+    // La sangría del documento: con tabulaciones o espacios, y el ancho
+    void updateIndentation(bool useTabs, int width);
+    QString indentationText() const;
 
     // Refresca los campos del documento (nombre del tipo, EOL, codificación)
     void updateDocument(const Buffer* buffer);
@@ -60,13 +67,17 @@ public:
     QString encodingText() const;
     QString insertModeText() const;
 
+signals:
+    void fieldClicked(edita::DocStatusBar::Field field);
+
 private:
-    QLabel* _language;
+    QToolButton* _language;
     QLabel* _length;
-    QLabel* _position;
+    QToolButton* _position;
+    QToolButton* _indentation;
     QToolButton* _eol;
     QToolButton* _encoding;
-    QLabel* _insertMode;
+    QToolButton* _insertMode;
 };
 
 } // namespace edita

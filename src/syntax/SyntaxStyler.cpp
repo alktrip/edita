@@ -18,6 +18,7 @@
 
 #include "syntax/SyntaxStyler.h"
 
+#include "syntax/DesktopFonts.h"
 #include "syntax/LanguageRegistry.h"
 #include "syntax/StyleSheet.h"
 #include "syntax/UserLanguages.h"
@@ -249,10 +250,10 @@ std::string SyntaxStyler::resolveFontName(std::string_view requested, bool repla
     const bool windowsFont = kWindowsFonts.contains(family, Qt::CaseInsensitive);
     // "Monospace" (los temas de Edita): la monoespaciada del sistema, con su nombre real
     if (family.compare(QLatin1String("Monospace"), Qt::CaseInsensitive) == 0)
-        return QFontDatabase::systemFont(QFontDatabase::FixedFont).family().toStdString();
+        return desktopfonts::fixedFont().family().toStdString();
     if (QFontDatabase::hasFamily(family) && !(replaceWindowsFonts && windowsFont))
         return std::string(requested);
-    return QFontDatabase::systemFont(QFontDatabase::FixedFont).family().toStdString();
+    return desktopfonts::fixedFont().family().toStdString();
 }
 
 // --- Estilos ----------------------------------------------------------------------

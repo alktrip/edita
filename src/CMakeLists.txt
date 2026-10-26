@@ -82,6 +82,8 @@ set_target_properties(edita_core PROPERTIES AUTOMOC ON)
 
 # Sintaxis: langs.xml, stylers.xml/temas y su aplicación a Scintilla
 add_library(edita_syntax STATIC
+    syntax/DesktopFonts.cpp
+    syntax/DesktopFonts.h
     syntax/LanguageDetection.cpp
     syntax/LanguageDetection.h
     syntax/LanguageRegistry.cpp
@@ -127,6 +129,8 @@ add_library(edita_ui STATIC
     ui/FileIcons.cpp
     ui/GitChanges.cpp
     ui/NotificationBar.cpp
+    ui/QuickPicker.cpp
+    ui/RainbowBrackets.cpp
     ui/ScrollBarMarks.cpp
     ui/ColumnEditorDialog.h
     ui/DocStatusBar.cpp

@@ -1030,7 +1030,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocStatusBar</name>
     <message>
-        <location filename="../src/ui/DocStatusBar.cpp" line="+69"/>
+        <location filename="../src/ui/DocStatusBar.cpp" line="+81"/>
+        <source>Language (click to change it)</source>
+        <translation>Lenguaje (clic para cambiarlo)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Click to go to a line</source>
+        <translation>Clic para ir a una línea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Indentation (click to change it)</source>
+        <translation>Sangría (clic para cambiarla)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>End of line (click to convert)</source>
         <translation>Fin de línea (pulse para convertir)</translation>
     </message>
@@ -1040,7 +1055,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Codificación (pulse para cambiarla)</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+1"/>
+        <source>Insert or overwrite (click to switch)</source>
+        <translation>Insertar o sobrescribir (clic para cambiar)</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Tabs: %1</source>
+        <translation>Tabulaciones: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Spaces: %1</source>
+        <translation>Espacios: %1</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>User Defined language - %1</source>
         <translation>Lenguaje definido por el usuario - %1</translation>
     </message>
@@ -1179,7 +1209,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FindReplaceDialog</name>
     <message>
-        <location filename="../src/ui/FindReplaceDialog.cpp" line="+85"/>
+        <location filename="../src/ui/FindReplaceDialog.cpp" line="+87"/>
         <source>Rep&amp;lace with:</source>
         <translation>Reem&amp;plazar con:</translation>
     </message>
@@ -1382,23 +1412,23 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+372"/>
-        <location line="+2283"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+375"/>
+        <location line="+2290"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2283"/>
+        <location line="-2290"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+79"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+259"/>
+        <location line="+261"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1819,7 +1849,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Pestaña &amp;anterior</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
         <source>Se&amp;ttings</source>
         <translation>Con&amp;figuración</translation>
     </message>
@@ -1854,7 +1884,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+412"/>
+        <location line="+415"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2077,12 +2107,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-998"/>
+        <location line="-1002"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-663"/>
+        <location line="-665"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2162,13 +2192,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+574"/>
-        <location line="+602"/>
+        <location line="+576"/>
+        <location line="+603"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-546"/>
+        <location line="-547"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2318,7 +2348,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+98"/>
+        <location line="+99"/>
         <source>&amp;Style Configurator…</source>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
@@ -2363,7 +2393,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+195"/>
+        <location line="+198"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2543,12 +2573,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+247"/>
         <location line="+20"/>
-        <location line="+1397"/>
+        <location line="+1399"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1660"/>
+        <location line="-1662"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2672,7 +2702,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+163"/>
+        <location line="+165"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -2945,7 +2975,62 @@ Continue?</source>
         <translation>Codificación</translation>
     </message>
     <message>
-        <location line="+443"/>
+        <location line="+108"/>
+        <source>Select a language</source>
+        <translation>Elige un lenguaje</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Select an encoding or convert to it</source>
+        <translation>Elige una codificación o convierte a ella</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Convert the end of line</source>
+        <translation>Convertir el fin de línea</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Indentation of this document</source>
+        <translation>Sangría de este documento</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Indent using spaces</source>
+        <translation>Sangrar con espacios</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Indent using tabs</source>
+        <translation>Sangrar con tabulaciones</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Width: %1</source>
+        <translation>Ancho: %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Indentation</source>
+        <translation>Sangría</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Convert</source>
+        <translation>Convertir</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Preferences</source>
+        <translation>Preferencias</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Indentation settings…</source>
+        <translation>Configurar la sangría…</translation>
+    </message>
+    <message>
+        <location line="+457"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
@@ -3245,7 +3330,7 @@ Continue?</source>
 <context>
     <name>edita::PluginsAdminDialog</name>
     <message>
-        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+69"/>
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+70"/>
         <location line="+264"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
@@ -3807,6 +3892,11 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+1"/>
         <source>Ctrl+click a color to change it with the color picker.</source>
         <translation>Ctrl+clic en un color para cambiarlo con el selector de color.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Color brackets by nesting level</source>
+        <translation>Paréntesis por colores según el nivel</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5516,12 +5606,12 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>edita::WelcomePage</name>
     <message>
-        <location filename="../src/ui/WelcomePage.cpp" line="+141"/>
+        <location filename="../src/ui/WelcomePage.cpp" line="+151"/>
         <source>A native text and code editor for Linux, inspired by Notepad++</source>
         <translation>Editor nativo de texto y código para Linux, inspirado en Notepad++</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+29"/>
         <source>New file</source>
         <translation>Nuevo archivo</translation>
     </message>
@@ -5601,22 +5691,22 @@ Do you want to save your changes before switching themes?</source>
         <translation>Atajos útiles</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="-125"/>
         <source>Show this page when there are no documents</source>
         <translation>Mostrar esta página cuando no hay documentos</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+142"/>
         <source>Start typing to write in a new document · Esc to close</source>
         <translation>Escribe para empezar un documento nuevo · Esc para cerrar</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="-1"/>
         <source>Version %1</source>
         <translation>Versión %1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+11"/>
         <source>No recent folders</source>
         <translation>No hay carpetas recientes</translation>
     </message>
@@ -5637,7 +5727,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="+54"/>
+        <location filename="../src/main.cpp" line="+59"/>
         <source>Text editor inspired by Notepad++</source>
         <translation>Editor de texto inspirado en Notepad++</translation>
     </message>

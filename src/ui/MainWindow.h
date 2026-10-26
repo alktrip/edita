@@ -66,6 +66,8 @@ class FunctionParsers;
 class ColorPreview;
 class GitChanges;
 class NotificationBar;
+class QuickPicker;
+class RainbowBrackets;
 class WelcomePage;
 class ScrollBarMarks;
 }
@@ -110,6 +112,7 @@ public:
     QSplitter* splitter() const { return _splitter; }
     EditorView* editor() const;
     DocStatusBar* docStatusBar() const { return _statusBar; }
+    QuickPicker* statusPicker() const { return _picker; } // para las pruebas
     BufferId currentBuffer() const;
 
     // --- Archivo -------------------------------------------------------------
@@ -321,6 +324,7 @@ public:
     GitChanges* gitChangesOfCurrentView() const;
     ScrollBarMarks* scrollBarMarksOfCurrentView() const;
     ColorPreview* colorPreviewOfCurrentView() const;
+    RainbowBrackets* rainbowBracketsOfCurrentView() const;
     NotificationBar* notificationBar() const { return _notifications; }
     // Página de inicio (no existe en N++): se ve mientras el único documento es uno nuevo
     // y vacío, o al pedirla en Ayuda
@@ -458,6 +462,21 @@ private:
     QActionGroup* _eolGroup = nullptr;
     std::map<int, QAction*> _eolActions;          // EolType → acción
     QActionGroup* _languageGroup = nullptr;
+    // La barra de estado interactiva: las listas con buscador y la sangría elegida ahí
+    // para cada documento (se mantiene al cambiar de documento y de tema)
+    QMenu* _languageMenu = nullptr;
+    QMenu* _encodingMenu = nullptr;
+    QMenu* _eolMenu = nullptr;
+    QuickPicker* _picker = nullptr;
+    struct IndentOverride
+    {
+        bool useTabs = false;
+        int width = 4;
+    };
+    std::map<BufferId, IndentOverride> _indentOverrides;
+    void showStatusPicker(int field);
+    void applyIndentOverride(EditorPane* pane);
+    void setDocumentIndentation(bool useTabs, int width);
     std::map<int, QAction*> _languageActions;     // LangType → acción
     QMenu* _userLanguageMenu = nullptr;
     QAction* _readOnlyAction = nullptr;
@@ -479,6 +498,9 @@ private:
     QPointer<GitChanges> _git[2];
     QPointer<ScrollBarMarks> _scrollMarks[2];
     QPointer<ColorPreview> _colorPreview[2];
+    QPointer<RainbowBrackets> _rainbow[2];
+    // Lenguaje del documento de la vista: vista previa de colores y paréntesis por colores
+    void updateLanguageDecorations(int index);
     NotificationBar* _notifications = nullptr;
     QStackedWidget* _centerStack = nullptr;
     WelcomePage* _welcome = nullptr;

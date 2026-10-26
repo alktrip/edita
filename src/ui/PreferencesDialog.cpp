@@ -290,6 +290,7 @@ void PreferencesDialog::buildEditing()
     _activeIndentGuide = addCheck(form, tr("Highlight the indent guide of the current block"), "activeIndentGuide");
     _colorPreview = addCheck(form, tr("Color preview (#rrggbb, rgb(), hsl() in CSS, HTML, JavaScript, Python…)"), "colorPreview");
     _colorPreview->setToolTip(tr("Ctrl+click a color to change it with the color picker."));
+    _rainbowBrackets = addCheck(form, tr("Color brackets by nesting level"), "rainbowBrackets");
     form->addRow(new QLabel(tr("<b>Line wrap</b>")));
     _wrap = addCheck(form, tr("Wrap long lines"), "wrap");
     _wrapIndent = addCombo(form, tr("Wrap indent:"), "wrapIndent",
@@ -573,6 +574,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _indentGuides->setChecked(p.indentGuideLine);
     _activeIndentGuide->setChecked(p.activeIndentGuide);
     _colorPreview->setChecked(p.colorPreview);
+    _rainbowBrackets->setChecked(p.rainbowBrackets);
     _wrap->setChecked(p.wrap);
     setComboValue(_wrapIndent, static_cast<int>(p.wrapIndent));
     _wrapSymbol->setChecked(p.wrapSymbolShow);
@@ -711,6 +713,7 @@ Preferences PreferencesDialog::preferences() const
     p.indentGuideLine = _indentGuides->isChecked();
     p.activeIndentGuide = _activeIndentGuide->isChecked();
     p.colorPreview = _colorPreview->isChecked();
+    p.rainbowBrackets = _rainbowBrackets->isChecked();
     p.wrap = _wrap->isChecked();
     p.wrapIndent = static_cast<WrapIndent>(comboValue(_wrapIndent));
     p.wrapSymbolShow = _wrapSymbol->isChecked();

@@ -155,6 +155,14 @@ WelcomePage::WelcomePage(QWidget* parent)
     _version->setObjectName(QStringLiteral("welcomeDim"));
     titles->addWidget(_version);
     header->addLayout(titles, 1);
+    // «Mostrar esta página», arriba a la derecha: siempre a la vista, sin desplazarse
+    _showOnStartup = new QCheckBox(tr("Show this page when there are no documents"), _content);
+    _showOnStartup->setObjectName(QStringLiteral("welcomeShowOnStartup"));
+    connect(_showOnStartup, &QCheckBox::toggled, this, [this](bool checked) {
+        if (!_updating)
+            emit showOnStartupChanged(checked);
+    });
+    header->addWidget(_showOnStartup, 0, Qt::AlignTop);
     main->addLayout(header);
 
     // Para empezar: cuatro tarjetas
@@ -282,20 +290,6 @@ WelcomePage::WelcomePage(QWidget* parent)
     columns->addLayout(right, 2);
     main->addLayout(columns);
 
-    // Pie: mostrar al iniciar
-    auto* footer = new QHBoxLayout;
-    _showOnStartup = new QCheckBox(tr("Show this page when there are no documents"), _content);
-    _showOnStartup->setObjectName(QStringLiteral("welcomeShowOnStartup"));
-    connect(_showOnStartup, &QCheckBox::toggled, this, [this](bool checked) {
-        if (!_updating)
-            emit showOnStartupChanged(checked);
-    });
-    footer->addWidget(_showOnStartup);
-    footer->addStretch(1);
-    auto* hint = new QLabel(tr("Start typing to write in a new document · Esc to close"), _content);
-    hint->setObjectName(QStringLiteral("welcomeDim"));
-    footer->addWidget(hint);
-    main->addLayout(footer);
     main->addStretch(1);
 
     applyStyle();
@@ -303,7 +297,8 @@ WelcomePage::WelcomePage(QWidget* parent)
 
 void WelcomePage::setVersion(const QString& version)
 {
-    _version->setText(tr("Version %1").arg(version));
+    _version->setText(tr("Version %1").arg(version) + QStringLiteral("  ·  ")
+                      + tr("Start typing to write in a new document · Esc to close"));
 }
 
 void WelcomePage::fillRecent(QVBoxLayout* layout, const QStringList& paths, bool folders)

@@ -22,6 +22,7 @@
 #include "ui/EditorView.h"
 
 #include <QCoreApplication>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLocale>
 #include <QToolButton>
@@ -38,12 +39,15 @@ QString grouped(sptr_t value)
     return QLocale().toString(static_cast<qlonglong>(value));
 }
 
-QToolButton* makeMenuButton(QWidget* parent)
+// Un campo que se puede pulsar: plano, como una etiqueta, resaltado al pasar el ratón
+QToolButton* makeFieldButton(QWidget* parent, const char* name)
 {
     auto* button = new QToolButton(parent);
+    button->setObjectName(QString::fromLatin1(name));
     button->setAutoRaise(true);
-    button->setPopupMode(QToolButton::InstantPopup);
     button->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    button->setCursor(Qt::PointingHandCursor);
+    button->setFocusPolicy(Qt::NoFocus);
     return button;
 }
 
@@ -51,33 +55,65 @@ QToolButton* makeMenuButton(QWidget* parent)
 
 DocStatusBar::DocStatusBar(QWidget* parent)
     : QStatusBar(parent)
-    , _language(new QLabel(this))
+    , _language(makeFieldButton(this, "statusLanguage"))
     , _length(new QLabel(this))
-    , _position(new QLabel(this))
-    , _eol(makeMenuButton(this))
-    , _encoding(makeMenuButton(this))
-    , _insertMode(new QLabel(this))
+    , _position(makeFieldButton(this, "statusPosition"))
+    , _indentation(makeFieldButton(this, "statusIndentation"))
+    , _eol(makeFieldButton(this, "statusEol"))
+    , _encoding(makeFieldButton(this, "statusEncoding"))
+    , _insertMode(makeFieldButton(this, "statusInsertMode"))
 {
     setSizeGripEnabled(true);
-    addWidget(_language, 1);
+    // El lenguaje, a la izquierda como en N++ (el botón no se estira: el resto, vacío)
+    auto* left = new QWidget(this);
+    auto* leftLayout = new QHBoxLayout(left);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
+    leftLayout->addWidget(_language);
+    leftLayout->addStretch(1);
+    addWidget(left, 1);
     addPermanentWidget(_length);
     addPermanentWidget(_position);
+    addPermanentWidget(_indentation);
     addPermanentWidget(_eol);
     addPermanentWidget(_encoding);
     addPermanentWidget(_insertMode);
-    _insertMode->setMinimumWidth(_insertMode->fontMetrics().horizontalAdvance(QStringLiteral("SOB ")));
+    _insertMode->setMinimumWidth(_insertMode->fontMetrics().horizontalAdvance(QStringLiteral("SOB ")) + 12);
+    _language->setToolTip(tr("Language (click to change it)"));
+    _position->setToolTip(tr("Click to go to a line"));
+    _indentation->setToolTip(tr("Indentation (click to change it)"));
     _eol->setToolTip(tr("End of line (click to convert)"));
     _encoding->setToolTip(tr("Encoding (click to change it)"));
+    _insertMode->setToolTip(tr("Insert or overwrite (click to switch)"));
+    const std::pair<QToolButton*, Field> fields[] = {{_language, Field::Language}, {_position, Field::Position},
+                                                     {_indentation, Field::Indentation}, {_eol, Field::Eol},
+                                                     {_encoding, Field::Encoding}, {_insertMode, Field::InsertMode}};
+    for (const auto& [button, which] : fields) {
+        const Field f = which;
+        connect(button, &QToolButton::clicked, this, [this, f] { emit fieldClicked(f); });
+    }
 }
 
-void DocStatusBar::setEolMenu(QMenu* menu)
+QWidget* DocStatusBar::field(Field which) const
 {
-    _eol->setMenu(menu);
+    switch (which) {
+    case Field::Language: return _language;
+    case Field::Position: return _position;
+    case Field::Indentation: return _indentation;
+    case Field::Eol: return _eol;
+    case Field::Encoding: return _encoding;
+    case Field::InsertMode: return _insertMode;
+    }
+    return nullptr;
 }
 
-void DocStatusBar::setEncodingMenu(QMenu* menu)
+void DocStatusBar::updateIndentation(bool useTabs, int width)
 {
-    _encoding->setMenu(menu);
+    _indentation->setText(useTabs ? tr("Tabs: %1").arg(width) : tr("Spaces: %1").arg(width));
+}
+
+QString DocStatusBar::indentationText() const
+{
+    return _indentation->text();
 }
 
 void DocStatusBar::updateDocument(const Buffer* buffer)
@@ -128,6 +164,8 @@ void DocStatusBar::updateCaret(const EditorView* editor)
     _position->setText(text);
 
     _insertMode->setText(editor->sci(SCI_GETOVERTYPE) ? tr("OVR") : tr("INS"));
+    const sptr_t indent = editor->sci(SCI_GETINDENT);
+    updateIndentation(editor->sci(SCI_GETUSETABS) != 0, static_cast<int>(indent > 0 ? indent : editor->sci(SCI_GETTABWIDTH)));
 }
 
 void DocStatusBar::setFieldText(int field, const QString& text)

@@ -18,6 +18,7 @@
 
 #include "ui/EditorView.h"
 
+#include "syntax/DesktopFonts.h"
 #include "syntax/SyntaxStyler.h"
 #include "ui/EditCommands.h"
 
@@ -62,7 +63,7 @@ void EditorView::applyBaseConfiguration()
     sci(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW | SC_AUTOMATICFOLD_CLICK | SC_AUTOMATICFOLD_CHANGE);
 
     // Fuente monoespaciada del sistema hasta que la Fase 3 aplique stylers.xml
-    const QFont mono = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    const QFont mono = desktopfonts::fixedFont();
     const QByteArray family = mono.family().toUtf8();
     sends(SCI_STYLESETFONT, STYLE_DEFAULT, family.constData());
     sci(SCI_STYLESETSIZE, STYLE_DEFAULT, mono.pointSize() > 0 ? mono.pointSize() : 10);

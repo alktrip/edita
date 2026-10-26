@@ -74,7 +74,9 @@ void ScrollBarMarks::setEnabled(bool enabled)
 
 void ScrollBarMarks::scheduleUpdate()
 {
-    if (_enabled)
+    // Como mucho una vez cada 120 ms, sin volver a empezar la espera con cada aviso: los
+    // indicadores de otros (paréntesis, colores) avisan a menudo y la espera no acababa
+    if (_enabled && !_timer.isActive())
         _timer.start();
 }
 

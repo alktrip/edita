@@ -163,10 +163,16 @@ ColorPreview::ColorPreview(EditorView* view)
     _timer.setInterval(40);
     connect(&_timer, &QTimer::timeout, this, &ColorPreview::updateNow);
     connect(view, &ScintillaEditBase::updateUi, this, [this](Scintilla::Update updated) {
-        if (static_cast<int>(updated) & (SC_UPDATE_CONTENT | SC_UPDATE_V_SCROLL | SC_UPDATE_H_SCROLL))
+        if (static_cast<int>(updated) & (SC_UPDATE_V_SCROLL | SC_UPDATE_H_SCROLL))
             schedule();
     });
-    connect(view, &ScintillaEditBase::modified, this, [this] { schedule(); });
+    connect(view, &ScintillaEditBase::modified, this, [this](Scintilla::ModificationFlags type, Scintilla::Position, Scintilla::Position, Scintilla::Position, const QByteArray&,
+                                                       Scintilla::Position, Scintilla::FoldLevel, Scintilla::FoldLevel) {
+        // Solo el texto: sus propios indicadores también avisan, y volver a calcular por
+        // eso era un bucle sin fin (que además no dejaba en paz a los plugins)
+        if (static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))
+            schedule();
+    });
     // Ctrl+clic sobre un color: el selector
     connect(view, &ScintillaEditBase::notify, this, [this](Scintilla::NotificationData* n) {
         if (static_cast<int>(n->nmhdr.code) != SCN_INDICATORRELEASE || !_enabled || !_supported)

@@ -19,6 +19,7 @@
 #include "ui/PluginsAdminDialog.h"
 
 #include "core/PluginInstaller.h"
+#include "syntax/DesktopFonts.h"
 #include "ui/Prompter.h"
 
 #include <QDialogButtonBox>
@@ -460,7 +461,7 @@ bool PluginsAdminDialog::buildFromRecipe(const PluginRecipe& recipe, QByteArray&
     auto* log = new QPlainTextEdit(&progress);
     log->setObjectName(QStringLiteral("buildLog"));
     log->setReadOnly(true);
-    log->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    log->setFont(desktopfonts::fixedFont());
     layout->addWidget(log, 1);
     auto* bar = new QProgressBar(&progress);
     bar->setRange(0, 0);

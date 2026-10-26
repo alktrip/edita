@@ -18,6 +18,8 @@
 
 #include "ui/FindReplaceDialog.h"
 
+#include "syntax/DesktopFonts.h"
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QFontDatabase>
@@ -372,7 +374,7 @@ void FindReplaceDialog::setFindInFilesOptions(bool recursive, bool hidden, bool 
 
 void FindReplaceDialog::setMonospacedFont(bool on)
 {
-    const QFont font = on ? QFontDatabase::systemFont(QFontDatabase::FixedFont) : QApplication::font(_find);
+    const QFont font = on ? desktopfonts::fixedFont() : QApplication::font(_find);
     for (QComboBox* combo : {_find, _replace})
         combo->setFont(font);
 }

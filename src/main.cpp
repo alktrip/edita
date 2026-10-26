@@ -21,6 +21,7 @@
 #include "core/Locale.h"
 #include "core/Paths.h"
 #include "core/Preferences.h"
+#include "syntax/DesktopFonts.h"
 #include "ui/MainWindow.h"
 #include "ui/SingleInstance.h"
 #include "ui/Translations.h"
@@ -31,7 +32,11 @@
 
 int main(int argc, char* argv[])
 {
+    // Las fuentes de KDE guardadas por un Qt más nuevo (el AppImage trae Qt 6.8): sin
+    // avisos, y con la fuente del escritorio aunque Qt no la entienda
+    edita::desktopfonts::installWarningFilter();
     QApplication app(argc, argv);
+    edita::desktopfonts::apply();
     edita::initGlobalLocale(); // antes de cualquier regex: ver core/Locale.h
     QApplication::setApplicationName(QString::fromUtf8(edita::kAppId));
     QApplication::setApplicationDisplayName(QString::fromUtf8(edita::kAppName));
