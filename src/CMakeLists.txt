@@ -55,8 +55,10 @@ add_library(edita_core STATIC
 target_include_directories(edita_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}/generated)
+# iconv: en glibc va dentro de libc; en macOS es libiconv
+find_package(Iconv REQUIRED)
 target_link_libraries(edita_core
-    PUBLIC  Qt6::Core
+    PUBLIC  Qt6::Core Iconv::Iconv
     PRIVATE uchardet_npp pugixml edita_warnings)
 # Builds de desarrollo: los datos se buscan también en el árbol de fuentes
 target_compile_definitions(edita_core PRIVATE EDITA_SOURCE_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
