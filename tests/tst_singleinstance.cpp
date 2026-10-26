@@ -76,7 +76,11 @@ private slots:
         const QString a = InstanceServer::socketName(QStringLiteral("/home/x/.config/edita"));
         QCOMPARE(a, InstanceServer::socketName(QStringLiteral("/home/x/.config/edita")));
         QVERIFY(a != InstanceServer::socketName(QStringLiteral("/tmp/otra/edita")));
-        QVERIFY(a.startsWith(_tmp.path()));
+        QVERIFY(a.startsWith(_tmp.path()) || a.startsWith(QStringLiteral("/tmp/")));
+        // Una carpeta demasiado larga para un socket Unix (104 bytes en macOS): a /tmp
+        qputenv("XDG_RUNTIME_DIR", QByteArray(120, 'x').prepend("/tmp/"));
+        QVERIFY(InstanceServer::socketName(QStringLiteral("/home/x/.config/edita")).startsWith(QStringLiteral("/tmp/edita-")));
+        qputenv("XDG_RUNTIME_DIR", _tmp.path().toUtf8());
     }
 
     void serverReceivesRequests()

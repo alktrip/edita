@@ -79,7 +79,11 @@ QString InstanceServer::socketName(const QString& configDir)
     if (dir.isEmpty())
         dir = QDir::tempPath();
     const QByteArray hash = QCryptographicHash::hash(QDir(configDir).absolutePath().toUtf8(), QCryptographicHash::Sha1).toHex().left(12);
-    return QDir(dir).filePath(QStringLiteral("%1-%2.sock").arg(QString::fromUtf8(kAppId), QString::fromLatin1(hash)));
+    const QString file = QStringLiteral("%1-%2.sock").arg(QString::fromUtf8(kAppId), QString::fromLatin1(hash));
+    // La ruta de un socket Unix tiene un límite (104 bytes en macOS, 108 en Linux): si no
+    // cabe, a /tmp (el nombre lleva el hash de la configuración: no se mezclan)
+    const QString path = QDir(dir).filePath(file);
+    return path.toLocal8Bit().size() < 100 ? path : QStringLiteral("/tmp/") + file;
 }
 
 bool InstanceServer::listen(const QString& name)
