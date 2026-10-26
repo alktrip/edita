@@ -171,7 +171,15 @@ bool isMultiByteCodepage(int codepage)
     return codepage == 932 || codepage == 936 || codepage == 949 || codepage == 950 || codepage == 51949;
 }
 
-std::unique_ptr<SingleByteTable> buildSingleByteTable(const char* iconvName)
+// Bytes que Windows no define pero alguna iconv sí: la de macOS (libiconv) da a 0xDB-0xDE y
+// 0xFC-0xFF de CP874 caracteres de IBM874, y como algunos repiten otros (0xDB «้» = 0xE9),
+// guardar un texto tailandés pondría bytes que Windows no conoce
+bool undefinedInWindows(int codepage, unsigned byte)
+{
+    return codepage == 874 && ((byte >= 0xDB && byte <= 0xDE) || byte >= 0xFC);
+}
+
+std::unique_ptr<SingleByteTable> buildSingleByteTable(int codepage, const char* iconvName)
 {
     detail::IconvHandle cd("UTF-32LE", iconvName);
     if (!cd.isOpen())
@@ -185,7 +193,7 @@ std::unique_ptr<SingleByteTable> buildSingleByteTable(const char* iconvName)
         const int err = cd.convert(in, inLeft, out, 8);
         cd.flush(out);
         char32_t cp = 0;
-        if (err == 0 && out.size() == 4) {
+        if (err == 0 && out.size() == 4 && !undefinedInWindows(codepage, b)) {
             for (std::size_t k = 4; k-- > 0;)
                 cp = (cp << 8) | static_cast<std::uint8_t>(out[k]);
         } else {
@@ -206,7 +214,7 @@ const SingleByteTable* singleByteTable(int codepage)
     auto it = cache.find(codepage);
     if (it == cache.end()) {
         const char* name = iconvNameForCodepage(codepage);
-        it = cache.emplace(codepage, name ? buildSingleByteTable(name) : nullptr).first;
+        it = cache.emplace(codepage, name ? buildSingleByteTable(codepage, name) : nullptr).first;
     }
     return it->second.get();
 }

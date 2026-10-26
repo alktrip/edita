@@ -72,7 +72,10 @@ InstanceServer::~InstanceServer() = default;
 
 QString InstanceServer::socketName(const QString& configDir)
 {
-    QString dir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    // $XDG_RUNTIME_DIR manda también fuera de Linux (macOS no lo usa; las pruebas sí)
+    QString dir = qEnvironmentVariable("XDG_RUNTIME_DIR");
+    if (dir.isEmpty())
+        dir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
     if (dir.isEmpty())
         dir = QDir::tempPath();
     const QByteArray hash = QCryptographicHash::hash(QDir(configDir).absolutePath().toUtf8(), QCryptographicHash::Sha1).toHex().left(12);

@@ -5,6 +5,7 @@
 // Fase 3: langs.xml, stylers.xml, temas, detección de lenguaje y aplicación de
 // lexers y estilos a Scintilla, con los archivos reales de Notepad++.
 
+#include "syntax/DesktopFonts.h"
 #include "core/ConfigXml.h"
 #include "core/LangType.h"
 #include "core/Paths.h"
@@ -205,12 +206,12 @@ private slots:
     {
         const std::string requested = "Fuente Que No Existe 12345";
         const std::string resolved = SyntaxStyler::resolveFontName(requested);
-        QCOMPARE(resolved, QFontDatabase::systemFont(QFontDatabase::FixedFont).family().toStdString());
+        QCOMPARE(resolved, desktopfonts::fixedFont().family().toStdString());
         const QString installed = QFontDatabase::families().value(0);
         if (!installed.isEmpty())
             QCOMPARE(SyntaxStyler::resolveFontName(installed.toStdString()), installed.toStdString());
         // Las de Windows de los temas de N++, a la del sistema si se pide (aunque estén)
-        const std::string system = QFontDatabase::systemFont(QFontDatabase::FixedFont).family().toStdString();
+        const std::string system = desktopfonts::fixedFont().family().toStdString();
         for (const char* windows : {"Courier New", "Consolas", "Lucida Console"})
             QCOMPARE(SyntaxStyler::resolveFontName(windows, true), system);
         if (QFontDatabase::hasFamily(QStringLiteral("Courier New")))

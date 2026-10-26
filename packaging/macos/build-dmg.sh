@@ -49,8 +49,14 @@ EXTRA=()
 for dir in "$BUILD"/plugins/*/; do
     name=$(basename "$dir")
     [ -f "$dir/$name.so" ] || continue
-    rm -rf "$CONTENTS/PlugIns/edita/plugins/$name"
-    cp -R "$dir" "$CONTENTS/PlugIns/edita/plugins/$name"
+    # Solo el .so y sus datos (lib/, scripts/): nada del build (CMakeFiles, .lupdate…), que
+    # además rompería la firma; las traducciones ya van dentro del .so
+    dest=$CONTENTS/PlugIns/edita/plugins/$name
+    rm -rf "$dest" && mkdir -p "$dest"
+    cp "$dir/$name.so" "$dest/"
+    for data in lib scripts; do
+        [ -d "$dir/$data" ] && cp -R "$dir/$data" "$dest/"
+    done
     EXTRA+=("-executable=$CONTENTS/PlugIns/edita/plugins/$name/$name.so")
 done
 

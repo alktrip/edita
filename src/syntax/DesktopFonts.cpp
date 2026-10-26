@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFontDatabase>
+#include <QFontInfo>
 #include <QGuiApplication>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -114,7 +115,20 @@ QFont fixedFont()
 {
     if (g_fixed)
         return *g_fixed;
-    return QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    QFont font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+#ifdef Q_OS_MACOS
+    // Si la que da Qt no es monoespaciada (sin pantalla da «Monospace», que en macOS no
+    // existe), una que lo sea: las columnas y el espacio virtual dependen de ello. (En Linux,
+    // «monospace» es un alias de fontconfig que QFontInfo no ve como fija: no se toca)
+    if (!QFontInfo(font).fixedPitch()) {
+        for (const char* family : {"Menlo", "Monaco", "DejaVu Sans Mono", "Liberation Mono", "Courier New"}) {
+            QFont candidate(QString::fromLatin1(family), font.pointSize());
+            if (QFontInfo(candidate).fixedPitch() && QFontInfo(candidate).family() == candidate.family())
+                return candidate;
+        }
+    }
+#endif
+    return font;
 }
 
 } // namespace edita::desktopfonts

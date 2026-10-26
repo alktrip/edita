@@ -37,6 +37,9 @@ private slots:
 
     void qtSettingsAreNotShared()
     {
+#ifdef Q_OS_MACOS
+        QSKIP("En macOS, los QSettings nativos de Qt siempre van a ~/Library/Preferences (setPath no los mueve)");
+#endif
         // El diálogo de archivos de Qt (QSettings "QtProject") guarda en la carpeta de Edita:
         // ~/.config/QtProject.conf lo comparten las aplicaciones de Qt 5, que estropean los acentos
         QCOMPARE(QSettings(QSettings::UserScope, QStringLiteral("QtProject")).fileName(), _tmp.filePath("config/QtProject.conf"));

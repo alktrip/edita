@@ -5,6 +5,7 @@
 // Fase 17: interfaz moderna. Modo claro u oscuro (DarkMode de N++, siguiendo al
 // sistema), barra de herramientas, iconos, pestañas y fuente del editor.
 
+#include "syntax/DesktopFonts.h"
 #include "FakePrompter.h"
 #include "core/ConfigXml.h"
 #include "core/Preferences.h"
@@ -337,7 +338,7 @@ private slots:
     void editorUsesTheSystemMonospaceFont()
     {
         // Los temas de N++ piden Courier New (stylers.xml) o Consolas (DarkModeDefault.xml)
-        const std::string system = QFontDatabase::systemFont(QFontDatabase::FixedFont).family().toStdString();
+        const std::string system = desktopfonts::fixedFont().family().toStdString();
         const Preferences light = withMode(false);
         auto w = window(&light);
         char font[256] = {};

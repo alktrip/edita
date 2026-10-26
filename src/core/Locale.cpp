@@ -53,7 +53,9 @@ std::string initGlobalLocale()
     for (const char* candidate : {"", "C.UTF-8", "en_US.UTF-8"}) {
         if (auto loc = tryLocale(candidate)) {
             std::locale::global(std::locale(std::locale::classic(), *loc, std::locale::ctype));
-            return loc->name();
+            // La libc++ de macOS no da nombre a la locale del entorno ("")
+            const std::string name = loc->name();
+            return name.empty() || name == "*" ? (*candidate ? std::string(candidate) : std::string("environment")) : name;
         }
     }
     return {};

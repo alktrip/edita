@@ -146,7 +146,7 @@ private slots:
         QVERIFY(QDir().mkpath(dir));
         qputenv("APPDIR", "/tmp/.mount_edita");
         TerminalView v;
-        v.resize(700, 300);
+        v.resize(1400, 300); // ancha: que las rutas largas (las de macOS) no se partan
         v.show();
         QVERIFY(QTest::qWaitForWindowExposed(&v));
         QVERIFY(v.start("/bin/sh", {}, dir));
@@ -157,7 +157,8 @@ private slots:
         // Lo que se escribe llega a la shell y su salida a la pantalla
         v.sendText("echo hola$((40+2)) [$APPDIR] [$TERM]; pwd\n");
         QTRY_VERIFY2(v.text().contains("hola42 [] [xterm-256color]"), qPrintable(v.text()));
-        QTRY_VERIFY(v.text().contains(QDir(dir).absolutePath()));
+        // (en macOS, /var es /private/var: vale cualquiera de las dos rutas)
+        QTRY_VERIFY2(v.text().contains(QDir(dir).absolutePath()) || v.text().contains(canonical(dir)), qPrintable(v.text()));
         // El tamaño de la vista es el de la terminal
         v.sendText("stty size\n");
         QTRY_VERIFY2(v.text().contains(QStringLiteral("%1 %2").arg(v.rows()).arg(v.columns())), qPrintable(v.text()));
