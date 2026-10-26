@@ -119,6 +119,19 @@ target_link_libraries(edita_search
 target_compile_definitions(edita_search PRIVATE SCI_OWNREGEX)
 set_target_properties(edita_search PROPERTIES AUTOMOC ON)
 
+# Cliente del Language Server Protocol (sin widgets: testeable por separado)
+add_library(edita_lsp STATIC
+    lsp/JsonRpc.cpp
+    lsp/JsonRpc.h
+    lsp/LspClient.cpp
+    lsp/LspClient.h
+    lsp/LspServers.cpp
+    lsp/LspServers.h)
+target_link_libraries(edita_lsp
+    PUBLIC  edita_core
+    PRIVATE edita_warnings)
+set_target_properties(edita_lsp PROPERTIES AUTOMOC ON)
+
 # Biblioteca con todo menos main(): la enlazan la aplicación y los tests
 add_library(edita_ui STATIC
     ui/AutoCompletion.cpp
@@ -134,6 +147,8 @@ add_library(edita_ui STATIC
     ui/QuickPicker.cpp
     ui/RainbowBrackets.cpp
     ui/RegexTester.cpp
+    ui/LspManager.cpp
+    ui/ProblemsPanel.cpp
     ui/Terminal.cpp
     ui/TerminalPanel.cpp
     ui/ScrollBarMarks.cpp
@@ -195,7 +210,7 @@ add_library(edita_ui STATIC
     ui/XmlTagMatcher.cpp
     ui/XmlTagMatcher.h)
 target_link_libraries(edita_ui
-    PUBLIC  edita_doc edita_syntax edita_search lexilla vterm Qt6::Widgets Qt6::PrintSupport Qt6::Network Qt6::Svg
+    PUBLIC  edita_doc edita_syntax edita_search edita_lsp lexilla vterm Qt6::Widgets Qt6::PrintSupport Qt6::Network Qt6::Svg
     PRIVATE pugixml edita_warnings util)
 target_include_directories(edita_ui PUBLIC ${PROJECT_SOURCE_DIR}/plugin-sdk)
 set_target_properties(edita_ui PROPERTIES AUTOMOC ON)
@@ -225,7 +240,7 @@ set(EDITA_TS_FILES ${PROJECT_SOURCE_DIR}/translations/edita_es.ts)
 set(EDITA_TS_PLURALS ${PROJECT_SOURCE_DIR}/translations/edita_en.ts)
 qt_add_lupdate(TS_FILES ${EDITA_TS_FILES}
     PLURALS_TS_FILE ${EDITA_TS_PLURALS}
-    SOURCE_TARGETS edita_core edita_doc edita_syntax edita_search edita_ui ${EDITA_APP_ID}
+    SOURCE_TARGETS edita_core edita_doc edita_syntax edita_search edita_lsp edita_ui ${EDITA_APP_ID}
     LUPDATE_TARGET edita_lupdate
     OPTIONS -no-obsolete -locations relative)
 qt_add_lrelease(TS_FILES ${EDITA_TS_FILES} ${EDITA_TS_PLURALS}

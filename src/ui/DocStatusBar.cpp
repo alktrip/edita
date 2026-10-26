@@ -62,6 +62,7 @@ DocStatusBar::DocStatusBar(QWidget* parent)
     , _eol(makeFieldButton(this, "statusEol"))
     , _encoding(makeFieldButton(this, "statusEncoding"))
     , _insertMode(makeFieldButton(this, "statusInsertMode"))
+    , _problems(makeFieldButton(this, "statusProblems"))
 {
     setSizeGripEnabled(true);
     // El lenguaje, a la izquierda como en N++ (el botón no se estira: el resto, vacío)
@@ -69,7 +70,9 @@ DocStatusBar::DocStatusBar(QWidget* parent)
     auto* leftLayout = new QHBoxLayout(left);
     leftLayout->setContentsMargins(0, 0, 0, 0);
     leftLayout->addWidget(_language);
+    leftLayout->addWidget(_problems);
     leftLayout->addStretch(1);
+    _problems->hide();
     addWidget(left, 1);
     addPermanentWidget(_length);
     addPermanentWidget(_position);
@@ -86,7 +89,8 @@ DocStatusBar::DocStatusBar(QWidget* parent)
     _insertMode->setToolTip(tr("Insert or overwrite (click to switch)"));
     const std::pair<QToolButton*, Field> fields[] = {{_language, Field::Language}, {_position, Field::Position},
                                                      {_indentation, Field::Indentation}, {_eol, Field::Eol},
-                                                     {_encoding, Field::Encoding}, {_insertMode, Field::InsertMode}};
+                                                     {_encoding, Field::Encoding}, {_insertMode, Field::InsertMode},
+                                                     {_problems, Field::Problems}};
     for (const auto& [button, which] : fields) {
         const Field f = which;
         connect(button, &QToolButton::clicked, this, [this, f] { emit fieldClicked(f); });
@@ -102,8 +106,21 @@ QWidget* DocStatusBar::field(Field which) const
     case Field::Eol: return _eol;
     case Field::Encoding: return _encoding;
     case Field::InsertMode: return _insertMode;
+    case Field::Problems: return _problems;
     }
     return nullptr;
+}
+
+void DocStatusBar::setProblems(bool visible, int errors, int warnings, const QString& toolTip)
+{
+    _problems->setVisible(visible);
+    _problems->setText(QStringLiteral("⨯ %1   ⚠ %2").arg(errors).arg(warnings));
+    _problems->setToolTip(toolTip);
+}
+
+QString DocStatusBar::problemsText() const
+{
+    return _problems->isVisible() ? _problems->text() : QString();
 }
 
 void DocStatusBar::updateIndentation(bool useTabs, int width)

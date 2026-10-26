@@ -45,7 +45,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+5134"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+5254"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>

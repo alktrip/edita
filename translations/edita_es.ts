@@ -1053,7 +1053,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocStatusBar</name>
     <message>
-        <location filename="../src/ui/DocStatusBar.cpp" line="+81"/>
+        <location filename="../src/ui/DocStatusBar.cpp" line="+84"/>
         <source>Language (click to change it)</source>
         <translation>Lenguaje (clic para cambiarlo)</translation>
     </message>
@@ -1083,7 +1083,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Insertar o sobrescribir (clic para cambiar)</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+39"/>
         <source>Tabs: %1</source>
         <translation>Tabulaciones: %1</translation>
     </message>
@@ -1538,25 +1538,43 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::LspManager</name>
+    <message>
+        <location filename="../src/ui/LspManager.cpp" line="+237"/>
+        <source>%1 (starting)</source>
+        <translation>%1 (iniciando)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 (failed)</source>
+        <translation>%1 (falló)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>%1 (stopped)</source>
+        <translation>%1 (detenido)</translation>
+    </message>
+</context>
+<context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+380"/>
-        <location line="+2519"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+387"/>
+        <location line="+2627"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2519"/>
+        <location line="-2627"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+84"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+305"/>
+        <location line="+337"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1826,7 +1844,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Completar &amp;función</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+5"/>
         <source>&amp;Word Completion</source>
         <translation>Completar &amp;palabra</translation>
     </message>
@@ -1851,7 +1869,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location line="+31"/>
+        <location line="+32"/>
         <source>&amp;Word wrap</source>
         <translation>&amp;Ajuste de línea</translation>
     </message>
@@ -1987,7 +2005,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+27"/>
         <source>&amp;Help</source>
         <translation>A&amp;yuda</translation>
     </message>
@@ -2012,7 +2030,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+576"/>
+        <location line="+618"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2058,12 +2076,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+745"/>
+        <location line="+747"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-721"/>
+        <location line="-723"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2235,12 +2253,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1182"/>
+        <location line="-1245"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-709"/>
+        <location line="-751"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2320,13 +2338,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+620"/>
-        <location line="+615"/>
+        <location line="+662"/>
+        <location line="+638"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-559"/>
+        <location line="-582"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2446,7 +2464,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;AlEaToRiO</translation>
     </message>
     <message>
-        <location line="+54"/>
+        <location line="+57"/>
         <source>Colu&amp;mn Editor…</source>
         <translation>Editor de colu&amp;mnas…</translation>
     </message>
@@ -2476,6 +2494,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Explorador de carpetas</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>P&amp;roblems</source>
+        <translation>P&amp;roblemas</translation>
+    </message>
+    <message>
         <location line="+16"/>
         <source>&amp;Terminal</source>
         <translation>&amp;Terminal</translation>
@@ -2501,7 +2524,27 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Asignación de a&amp;tajos…</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+3"/>
+        <source>&amp;Language Server</source>
+        <translation>Servidor de &amp;lenguaje</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Restart Language Server</source>
+        <translation>&amp;Reiniciar el servidor de lenguaje</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Show Language Server &amp;Log</source>
+        <translation>Mostrar el &amp;registro del servidor de lenguaje</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This document has no language server</source>
+        <translation>Este documento no tiene servidor de lenguaje</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>&amp;Welcome Page</source>
         <translation>Página de &amp;inicio</translation>
     </message>
@@ -2516,7 +2559,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+25"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -2546,7 +2589,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Terminal</translation>
     </message>
     <message>
-        <location line="+355"/>
+        <location line="+1"/>
+        <source>Problems</source>
+        <translation>Problemas</translation>
+    </message>
+    <message>
+        <location line="+110"/>
+        <source>Problems (no language server for this document)</source>
+        <translation>Problemas (este documento no tiene servidor de lenguaje)</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Problems — language server: %1</source>
+        <translation>Problemas — servidor de lenguaje: %1</translation>
+    </message>
+    <message>
+        <location line="+285"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2718,25 +2776,25 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+169"/>
+        <location line="+171"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-168"/>
+        <location line="-170"/>
         <source>Save As…</source>
         <translation>Guardar como…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+248"/>
+        <location line="+250"/>
         <location line="+20"/>
-        <location line="+1403"/>
+        <location line="+1409"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1667"/>
+        <location line="-1675"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -2797,7 +2855,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 %2</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location line="+102"/>
         <location line="+11"/>
         <source>Save As</source>
         <translation>Guardar como</translation>
@@ -2865,7 +2923,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+169"/>
+        <location line="+175"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -3138,7 +3196,7 @@ Continue?</source>
         <translation>Codificación</translation>
     </message>
     <message>
-        <location line="+108"/>
+        <location line="+113"/>
         <source>Select a language</source>
         <translation>Elige un lenguaje</translation>
     </message>
@@ -3781,12 +3839,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+131"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+134"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+21"/>
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
@@ -4179,11 +4237,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
+        <location line="+261"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-261"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -4744,6 +4803,64 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+1"/>
         <source>Shell:</source>
         <translation>Shell:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Language Servers</source>
+        <translation>Servidores de lenguaje</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Use language servers (diagnostics, completion, information on hover…)</source>
+        <translation>Usar servidores de lenguaje (diagnósticos, autocompletado, información al pasar el ratón…)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Each language uses the first of its known servers that is installed. Write another command to use it instead, or «off» to disable that language.</source>
+        <translation>Cada lenguaje usa el primero de sus servidores conocidos que esté instalado. Escribe otra orden para usarla en su lugar, u «off» para desactivar ese lenguaje.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Languages</source>
+        <translation>Lenguajes</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Command</source>
+        <translation>Orden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Found</source>
+        <translation>Encontrado</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Empty: %1</source>
+        <translation>Vacío: %1</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Not installed</source>
+        <translation>No instalado</translation>
+    </message>
+</context>
+<context>
+    <name>edita::ProblemsPanel</name>
+    <message>
+        <location filename="../src/ui/ProblemsPanel.cpp" line="+36"/>
+        <source>Problem</source>
+        <translation>Problema</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Position</source>
+        <translation>Posición</translation>
+    </message>
+    <message>
+        <location line="+74"/>
+        <source>Ln %1, Col %2</source>
+        <translation>Lín %1, Col %2</translation>
     </message>
 </context>
 <context>
@@ -6238,6 +6355,39 @@ Do you want to save your changes before switching themes?</source>
         <location line="+0"/>
         <source>No recent files yet</source>
         <translation>Todavía no hay archivos recientes</translation>
+    </message>
+</context>
+<context>
+    <name>edita::lsp::LspClient</name>
+    <message>
+        <location filename="../src/lsp/LspClient.cpp" line="+84"/>
+        <source>Could not start %1: %2</source>
+        <translation>No se pudo iniciar %1: %2</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>The server exited (code %1)</source>
+        <translation>El servidor terminó (código %1)</translation>
+    </message>
+    <message>
+        <location line="+46"/>
+        <source>Starting %1 %2 in %3</source>
+        <translation>Iniciando %1 %2 en %3</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>initialize failed: %1</source>
+        <translation>initialize falló: %1</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Initialized: %1 %2, positions in %3</source>
+        <translation>Iniciado: %1 %2, posiciones en %3</translation>
+    </message>
+    <message>
+        <location line="+157"/>
+        <source>Error %1: %2</source>
+        <translation>Error %1: %2</translation>
     </message>
 </context>
 <context>

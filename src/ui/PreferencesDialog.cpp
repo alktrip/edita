@@ -22,6 +22,7 @@
 #include "core/Encoding.h"
 #include "ui/Icons.h"
 #include "ui/TerminalPanel.h"
+#include "lsp/LspServers.h"
 #include "ui/Translations.h"
 
 #include <QCheckBox>
@@ -34,6 +35,8 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QHeaderView>
+#include <QTableWidget>
 #include <QListWidget>
 #include <QPushButton>
 #include <QScreen>
@@ -143,6 +146,7 @@ PreferencesDialog::PreferencesDialog(const Preferences& prefs, std::vector<std::
     buildPrinting();
     buildBackup();
     buildMisc();
+    buildLanguageServers();
 
     connect(_categories, &QListWidget::currentRowChanged, _pages, &QStackedWidget::setCurrentIndex);
     _categories->setCurrentRow(0);
@@ -528,6 +532,62 @@ void PreferencesDialog::buildMisc()
     form->addRow(tr("Shell:"), _terminalShell);
 }
 
+// Servidores de lenguaje (no existe en N++): cuál usa cada lenguaje y si está instalado
+void PreferencesDialog::buildLanguageServers()
+{
+    QWidget* page = addPage(QStringLiteral("languageServers"), tr("Language Servers"));
+    auto* layout = new QVBoxLayout(page);
+    _lspEnabled = new QCheckBox(tr("Use language servers (diagnostics, completion, information on hover…)"));
+    _lspEnabled->setObjectName(QStringLiteral("lspEnabled"));
+    layout->addWidget(_lspEnabled);
+    auto* hint = new QLabel(tr("Each language uses the first of its known servers that is installed. Write another "
+                               "command to use it instead, or «off» to disable that language."));
+    hint->setWordWrap(true);
+    layout->addWidget(hint);
+    _lspServers = new QTableWidget(0, 3);
+    _lspServers->setObjectName(QStringLiteral("lspServers"));
+    _lspServers->setHorizontalHeaderLabels({tr("Languages"), tr("Command"), tr("Found")});
+    _lspServers->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    _lspServers->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    _lspServers->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    _lspServers->verticalHeader()->hide();
+    _lspServers->setSelectionMode(QAbstractItemView::NoSelection);
+    for (const lsp::ServerSpec& spec : lsp::knownServers()) {
+        const int row = _lspServers->rowCount();
+        _lspServers->insertRow(row);
+        auto* languages = new QTableWidgetItem(spec.languages);
+        languages->setFlags(Qt::ItemIsEnabled);
+        languages->setData(Qt::UserRole, spec.id);
+        _lspServers->setItem(row, 0, languages);
+        auto* command = new QTableWidgetItem;
+        command->setToolTip(tr("Empty: %1").arg(spec.candidates.join(QStringLiteral(" | "))));
+        _lspServers->setItem(row, 1, command);
+        auto* found = new QTableWidgetItem;
+        found->setFlags(Qt::ItemIsEnabled);
+        _lspServers->setItem(row, 2, found);
+    }
+    // Al cambiar una orden se vuelve a buscar
+    connect(_lspServers, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
+        if (item->column() != 1)
+            return;
+        const QString id = _lspServers->item(item->row(), 0)->data(Qt::UserRole).toString();
+        const lsp::ServerSpec* spec = nullptr;
+        for (const lsp::ServerSpec& s : lsp::knownServers())
+            spec = s.id == id ? &s : spec;
+        QTableWidgetItem* found = _lspServers->item(item->row(), 2);
+        if (!spec || !found)
+            return;
+        const auto server = lsp::resolveServer(*spec, {{id, item->text()}});
+        const QSignalBlocker blocker(_lspServers);
+        found->setText(server ? QStringLiteral("✓ ") + server->program
+                              : (item->text().trimmed().compare(QLatin1String("off"), Qt::CaseInsensitive) == 0 ? tr("Disabled")
+                                                                                                                : tr("Not installed")));
+        if (item->text().trimmed().isEmpty() && server)
+            item->setData(Qt::ToolTipRole, server->command);
+    });
+    layout->addWidget(_lspServers, 1);
+}
+
 void PreferencesDialog::updateEnabledState()
 {
     _frameWidth->setEnabled(comboValue(_currentLine) == static_cast<int>(CurrentLineMode::Frame));
@@ -690,6 +750,14 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _detectEncoding->setChecked(p.detectEncoding);
     setComboValue(_fallbackCodepage, p.fallbackCodepage);
     _terminalShell->setText(p.terminalShell);
+    _lspEnabled->setChecked(p.lspEnabled);
+    const QMap<QString, QString> overrides = lsp::parseOverrides(p.lspServers);
+    for (int row = 0; row < _lspServers->rowCount(); ++row) {
+        const QString id = _lspServers->item(row, 0)->data(Qt::UserRole).toString();
+        QTableWidgetItem* command = _lspServers->item(row, 1);
+        command->setText(QStringLiteral("x")); // fuerza itemChanged (y la búsqueda)
+        command->setText(overrides.value(id));
+    }
     updateEnabledState();
 }
 
@@ -753,6 +821,11 @@ Preferences PreferencesDialog::preferences() const
     p.openSaveDir = static_cast<OpenSaveDir>(comboValue(_openSaveDir));
     p.defaultDirPath = _defaultDir->text().trimmed();
     p.terminalShell = _terminalShell->text().trimmed();
+    p.lspEnabled = _lspEnabled->isChecked();
+    QMap<QString, QString> overrides;
+    for (int row = 0; row < _lspServers->rowCount(); ++row)
+        overrides.insert(_lspServers->item(row, 0)->data(Qt::UserRole).toString(), _lspServers->item(row, 1)->text().trimmed());
+    p.lspServers = lsp::formatOverrides(overrides);
 
     p.recentFilesMax = _recentMax->value();
     p.recentFilesInSubMenu = _recentSubMenu->isChecked();

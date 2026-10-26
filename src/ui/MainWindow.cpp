@@ -37,6 +37,8 @@
 #include "ui/QuickPicker.h"
 #include "ui/RegexTester.h"
 #include "ui/TerminalPanel.h"
+#include "ui/LspManager.h"
+#include "ui/ProblemsPanel.h"
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
@@ -326,6 +328,11 @@ MainWindow::MainWindow(QWidget* parent)
         return _syntax.detect(path, text);
     });
 
+    // Servidores de lenguaje (antes de las vistas: las vistas les avisan de los cambios)
+    _lsp = std::make_unique<LspManager>(_documents);
+    connect(_lsp.get(), &LspManager::diagnosticsChanged, this, [this] { updateDiagnostics(); });
+    connect(_lsp.get(), &LspManager::statusChanged, this, [this] { updateProblemsField(); });
+
     // Las dos vistas de N++ (_mainEditView/_subEditView) en un divisor; la
     // secundaria se oculta mientras no tenga documentos
     _mainPane = new EditorPane(_documents, _splitter);
@@ -400,6 +407,9 @@ MainWindow::MainWindow(QWidget* parent)
         // Guardar con QSaveFile sustituye el archivo: hay que volver a vigilarlo
         if (mask & (BufferChange::Filename | BufferChange::Timestamp | BufferChange::Status))
             syncWatchedFiles();
+        // Otro lenguaje u otro nombre: quizá otro servidor de lenguaje
+        if (mask & (BufferChange::Language | BufferChange::Filename))
+            attachToLsp(id);
     });
 
     // Cambios externos: N++ comprueba al activar la ventana o una pestaña; además
@@ -413,10 +423,12 @@ MainWindow::MainWindow(QWidget* parent)
         if (const Buffer* buf = _documents.buffer(id); buf && !buf->isUntitled()) {
             removeRecentFile(buf->filePath());
             notifyPlugins(NPPN_FILEOPENED, id);
+            QTimer::singleShot(0, this, [this, id] { attachToLsp(id); }); // ya con su lenguaje
         }
     });
     connect(&_documents, &DocumentManager::bufferClosed, this, [this](BufferId id) {
         _indentOverrides.erase(id);
+        _lsp->detach(id);
         scheduleWelcomeUpdate();
         syncWatchedFiles();
         QTimer::singleShot(0, this, [this] { updatePanels(); });
@@ -520,6 +532,8 @@ void MainWindow::connectPane(EditorPane* pane)
     });
     connect(pane, &EditorPane::currentBufferChanged, this, [this, pane, index] {
         applyIndentOverride(pane);
+        _lsp->paintDiagnostics(*pane->editor(), pane->currentBuffer());
+        updateProblemsField();
         scheduleWelcomeUpdate();
         updateGitDocument(pane);
         updateLanguageDecorations(index);
@@ -596,12 +610,41 @@ void MainWindow::connectPane(EditorPane* pane)
         AutoCompletion* ac = autoCompletion(pane);
         if (pane->editor()->sci(SCI_GETSELECTIONS) == 1)
             ac->insertMatchedChars(ch);
-        if (!_playingMacro)
+        // Con servidor de lenguaje, su lista; si no, la de N++
+        if (!_playingMacro && !_lsp->complete(*pane->editor(), pane->currentBuffer(), ch))
             ac->update(ch);
     });
+    // El texto que ve el servidor de lenguaje, al día; y lo que dice al dejar el ratón
+    connect(view, &ScintillaEditBase::modified, this, [this](Scintilla::ModificationFlags type) {
+        if (static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))
+            _lsp->scheduleSync();
+    });
+    view->send(SCI_SETMOUSEDWELLTIME, 500);
     connect(view, &ScintillaEditBase::notify, this, [this, pane](Scintilla::NotificationData* n) {
-        if (static_cast<int>(n->nmhdr.code) == SCN_CALLTIPCLICK)
+        switch (static_cast<int>(n->nmhdr.code)) {
+        case SCN_CALLTIPCLICK:
             autoCompletion(pane)->callTipClick(static_cast<int>(n->position));
+            break;
+        case SCN_AUTOCSELECTION:
+            if (n->text)
+                _lsp->completionSelected(*pane->editor(), QString::fromUtf8(n->text));
+            break;
+        case SCN_AUTOCCANCELLED:
+        case SCN_AUTOCCOMPLETED:
+            _lsp->completionClosed(*pane->editor());
+            break;
+        case SCN_DWELLSTART:
+            if (n->position >= 0) {
+                const QPoint global = pane->editor()->viewport()->mapToGlobal(QPoint(static_cast<int>(n->x), static_cast<int>(n->y)));
+                _lsp->hover(*pane->editor(), pane->currentBuffer(), n->position, global);
+            }
+            break;
+        case SCN_DWELLEND:
+            _lsp->hideHover();
+            break;
+        default:
+            break;
+        }
         // Todas las notificaciones de Scintilla llegan también a los plugins
         if (_plugins && !_plugins->plugins().empty()) {
             SCNotification copy = *reinterpret_cast<SCNotification*>(n);
@@ -665,6 +708,7 @@ MainWindow::~MainWindow()
         _fileJob->wait();
     }
     stopPaletteFileScan();
+    _lsp->shutdownAll(); // shutdown y exit a cada servidor
     // Las vistas sueltan sus documentos antes de que se destruya el DocumentManager
     _searchView->send(SCI_RELEASEDOCUMENT, 0, _searchViewDefaultDoc);
     _searchView.reset();
@@ -929,7 +973,10 @@ void MainWindow::createMenus()
     // Autocompletado (los atajos de N++)
     QMenu* complete = edit->addMenu(tr("&Auto-Completion"));
     addAction(complete, tr("&Function Completion"), "actionCompleteFunction", QKeySequence(Qt::CTRL | Qt::Key_Space),
-              [this] { autoCompletion(_activePane)->showApiComplete(); });
+              [this] {
+                  if (!_lsp->complete(*editor(), currentBuffer(), 0))
+                      autoCompletion(_activePane)->showApiComplete();
+              });
     addAction(complete, tr("&Word Completion"), "actionCompleteWord", QKeySequence(Qt::CTRL | Qt::Key_Return),
               [this] { autoCompletion(_activePane)->showWordComplete(true); });
     addAction(complete, tr("Function &Parameters Hint"), "actionFunctionHint", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Space),
@@ -962,6 +1009,7 @@ void MainWindow::createMenus()
     const std::pair<const char*, QString> panelEntries[] = {
         {"documentMap", tr("Document &Map")}, {"documentList", tr("Document &List")},
         {"functionList", tr("&Function List")}, {"folderAsWorkspace", tr("Folder as &Workspace")},
+        {"problems", tr("P&roblems")},
     };
     for (const auto& [name, text] : panelEntries) {
         QDockWidget* dock = panelDock(QString::fromLatin1(name));
@@ -1071,6 +1119,23 @@ void MainWindow::createMenus()
     addAction(settings, tr("&Style Configurator…"), "actionStyleConfigurator", QKeySequence(),
               [this] { showStyleConfigurator(); });
     addAction(settings, tr("Shortcut &Mapper…"), "actionShortcutMapper", QKeySequence(), [this] { showShortcutMapper(); });
+    // Servidores de lenguaje (no existen en N++)
+    settings->addSeparator();
+    QMenu* lspMenu = settings->addMenu(tr("&Language Server"));
+    addAction(lspMenu, tr("&Restart Language Server"), "actionLspRestart", QKeySequence(), [this] {
+        _lsp->restart(currentBuffer());
+        updateProblemsField();
+    });
+    addAction(lspMenu, tr("Show Language Server &Log"), "actionLspLog", QKeySequence(), [this] {
+        const QString log = _lsp->log(currentBuffer());
+        if (log.isEmpty()) {
+            statusBar()->showMessage(tr("This document has no language server"), 5000);
+            return;
+        }
+        newDocument();
+        editor()->sends(SCI_SETTEXT, 0, log.toUtf8().constData());
+        editor()->sci(SCI_SETSAVEPOINT);
+    });
 
     createMacroMenu();
     loadPlugins();
@@ -1325,6 +1390,7 @@ void MainWindow::createPanels()
     _folderPanel = new FileBrowserPanel;
     _regexTester = new RegexTesterPanel;
     _terminal = new TerminalPanel;
+    _problems = new ProblemsPanel;
     // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
     // mapa y las funciones a la derecha
     const std::tuple<QWidget*, const char*, QString, Qt::DockWidgetArea> panels[] = {
@@ -1334,6 +1400,7 @@ void MainWindow::createPanels()
         {_folderPanel, "folderAsWorkspace", tr("Folder as Workspace"), Qt::LeftDockWidgetArea},
         {_regexTester, "regexTester", tr("Regex Tester"), Qt::BottomDockWidgetArea}, // no existe en N++
         {_terminal, "terminal", tr("Terminal"), Qt::BottomDockWidgetArea},           // no existe en N++
+        {_problems, "problems", tr("Problems"), Qt::BottomDockWidgetArea},           // no existe en N++
     };
     // <GUIConfig name="multiInst" … documentList="yes" documentMap="no" fuctionList="no" folderAsWorkspace="no">
     // (los nombres de N++, con su "fuctionList")
@@ -1405,6 +1472,7 @@ void MainWindow::createPanels()
     });
     connect(&_syntax, &SyntaxManager::stylesChanged, this, [this] { QTimer::singleShot(0, this, [this] { applyTerminalStyle(); }); });
     connect(_folderPanel, &FileBrowserPanel::openTerminal, this, [this](const QString& dir) { openTerminal(dir); });
+    connect(_problems, &ProblemsPanel::activated, this, &MainWindow::goToLspPosition);
 
     // Probador de regex: el texto de prueba sale de la selección o del documento
     _regexTester->applyStyles(_syntax);
@@ -1417,6 +1485,45 @@ void MainWindow::createPanels()
         dialog->showTab(o.replacement.empty() ? FindReplaceDialog::Tab::Find : FindReplaceDialog::Tab::Replace,
                         QString::fromStdString(o.pattern));
     });
+}
+
+void MainWindow::attachToLsp(BufferId id)
+{
+    _lsp->setWorkspaceRoots(_folderPanel ? _folderPanel->roots() : QStringList());
+    _lsp->attach(id);
+    updateProblemsField();
+}
+
+void MainWindow::updateDiagnostics()
+{
+    for (EditorPane* pane : {_mainPane, _subPane}) {
+        if (pane->currentBuffer() != kInvalidBuffer)
+            _lsp->paintDiagnostics(*pane->editor(), pane->currentBuffer());
+    }
+    if (_problems)
+        _problems->setDiagnostics(_lsp->allDiagnostics());
+    updateProblemsField();
+}
+
+void MainWindow::updateProblemsField()
+{
+    const int errors = _lsp->count(1);
+    const int warnings = _lsp->count(2);
+    QString tip = _lsp->statusText(currentBuffer());
+    tip = tip.isEmpty() ? tr("Problems (no language server for this document)") : tr("Problems — language server: %1").arg(tip);
+    _statusBar->setProblems(_lsp->isEnabled() && (_lsp->hasClients() || errors + warnings > 0), errors, warnings, tip);
+}
+
+void MainWindow::goToLspPosition(const QString& path, int line, int character)
+{
+    if (openFile(path) == kInvalidBuffer)
+        return;
+    EditorView* v = editor();
+    const lsp::LspClient* client = _lsp->clientFor(currentBuffer());
+    const sptr_t pos = _lsp->scintillaPosition(*v, client ? client->positionEncoding() : lsp::PositionEncoding::Utf16, line, character);
+    v->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos));
+    v->sci(SCI_SCROLLCARET);
+    v->setFocus();
 }
 
 QString MainWindow::terminalDirectory() const
@@ -2280,8 +2387,10 @@ bool MainWindow::saveBuffer(BufferId id)
         return false;
     notifyPlugins(NPPN_FILEBEFORESAVE, id);
     const SaveResult result = _documents.saveBuffer(id, path);
-    if (result.ok())
+    if (result.ok()) {
         notifyPlugins(NPPN_FILESAVED, id);
+        _lsp->documentSaved(id);
+    }
     if (!result.ok()) {
         _prompter->warn(this, tr("Save"), result.errorString);
         return false;
@@ -2507,6 +2616,12 @@ void MainWindow::showPreferences()
 void MainWindow::applyPreferences()
 {
     const Preferences& p = _prefs;
+    // Servidores de lenguaje: con otras órdenes, cada documento vuelve a buscar el suyo
+    _lsp->setAutoComplete(p.autocStatus != 0, p.autocFromLen);
+    _lsp->setOverrides(lsp::parseOverrides(p.lspServers));
+    _lsp->setEnabled(p.lspEnabled);
+    for (std::size_t i = 0; i < _documents.count(); ++i)
+        attachToLsp(_documents.bufferAt(i)->id());
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeDialogs, p.qtFileDialog);
     applyAppearance();
     if (_toolBar) {
@@ -4165,6 +4280,11 @@ void MainWindow::showStatusPicker(int which)
 {
     using Field = DocStatusBar::Field;
     const auto field = static_cast<Field>(which);
+    if (field == Field::Problems) {
+        QDockWidget* dock = panelDock(QStringLiteral("problems"));
+        dock->setVisible(!dock->isVisibleTo(this));
+        return;
+    }
     if (field == Field::Position) {
         showCommandPalette(QStringLiteral(":"));
         return;

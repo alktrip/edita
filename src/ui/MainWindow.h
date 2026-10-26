@@ -62,6 +62,8 @@ class DocumentListPanel;
 class DocumentMapPanel;
 class RegexTesterPanel;
 class TerminalPanel;
+class LspManager;
+class ProblemsPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
 class FunctionParsers;
@@ -240,6 +242,8 @@ public:
     DocumentMapPanel* documentMapPanel() const { return _docMapPanel; }
     RegexTesterPanel* regexTesterPanel() const { return _regexTester; }
     TerminalPanel* terminalPanel() const { return _terminal; }
+    LspManager* lsp() const { return _lsp.get(); }
+    ProblemsPanel* problemsPanel() const { return _problems; }
     // Terminal integrada: la abre (con una terminal en `directory`, o en la del documento)
     void openTerminal(const QString& directory = {});
     void toggleTerminal();
@@ -362,6 +366,10 @@ private:
     void showRegexTester();
     void fillRegexSample();
     QString terminalDirectory() const;
+    void attachToLsp(BufferId id);
+    void updateDiagnostics();
+    void updateProblemsField();
+    void goToLspPosition(const QString& path, int line, int character);
     void applyTerminalStyle();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
     void applyShortcuts();
@@ -555,6 +563,8 @@ private:
     FileBrowserPanel* _folderPanel = nullptr;
     RegexTesterPanel* _regexTester = nullptr;
     TerminalPanel* _terminal = nullptr;
+    std::unique_ptr<LspManager> _lsp;
+    ProblemsPanel* _problems = nullptr;
     std::vector<QPointer<QDockWidget>> _panelDocks; // al cerrar se destruyen antes que la ventana
     ShortcutsConfig _shortcutConfig;
     // Paneles de los plugins (NPPM_DMMREGASDCKDLG): se destruyen antes de descargar los plugins

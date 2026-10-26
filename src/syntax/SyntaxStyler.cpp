@@ -910,6 +910,24 @@ void SyntaxStyler::applyGlobalStyles(ScintillaEditBase& view) const
         view.send(SCI_INDICSETALPHA, indic, 100);
         view.send(SCI_INDICSETUNDER, indic, 1);
     }
+    // Diagnósticos (LSP): ondulado rojo, naranja o azul, como en VS Code; las pistas, puntos
+    const bool darkBack = [&] {
+        const auto back = static_cast<int>(view.send(SCI_STYLEGETBACK, STYLE_DEFAULT));
+        return ((back & 0xFF) * 299 + ((back >> 8) & 0xFF) * 587 + ((back >> 16) & 0xFF) * 114) / 1000 < 128;
+    }();
+    const std::pair<int, int> kDiagnostics[] = {
+        {kIndicatorDiagError, darkBack ? rgb(0xF1, 0x4C, 0x4C) : rgb(0xE5, 0x14, 0x00)},
+        {kIndicatorDiagWarning, darkBack ? rgb(0xCC, 0xA7, 0x00) : rgb(0xBF, 0x88, 0x03)},
+        {kIndicatorDiagInfo, darkBack ? rgb(0x37, 0x94, 0xFF) : rgb(0x1A, 0x85, 0xFF)},
+        {kIndicatorDiagHint, darkBack ? rgb(0x80, 0x80, 0x80) : rgb(0x6C, 0x6C, 0x6C)},
+    };
+    for (const auto& [id, colour] : kDiagnostics) {
+        const auto indic = static_cast<uptr_t>(id);
+        view.send(SCI_INDICSETSTYLE, indic, id == kIndicatorDiagHint ? INDIC_DOTS : INDIC_SQUIGGLEPIXMAP);
+        view.send(SCI_INDICSETFORE, indic, colour);
+        view.send(SCI_INDICSETUNDER, indic, 0);
+        view.send(SCI_INDICSETSTROKEWIDTH, indic, 150);
+    }
 
     int foldMargin = kGrey;
     int foldMarginHi = kWhite;

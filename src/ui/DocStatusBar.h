@@ -41,7 +41,7 @@ class DocStatusBar : public QStatusBar
     Q_OBJECT
 
 public:
-    enum class Field { Language, Position, Indentation, Eol, Encoding, InsertMode };
+    enum class Field { Language, Position, Indentation, Eol, Encoding, InsertMode, Problems };
 
     explicit DocStatusBar(QWidget* parent = nullptr);
 
@@ -66,6 +66,9 @@ public:
     QString eolText() const;
     QString encodingText() const;
     QString insertModeText() const;
+    // Los problemas del servidor de lenguaje (oculto si no hay ninguno en marcha)
+    void setProblems(bool visible, int errors, int warnings, const QString& toolTip);
+    QString problemsText() const;
 
 signals:
     void fieldClicked(edita::DocStatusBar::Field field);
@@ -78,6 +81,7 @@ private:
     QToolButton* _eol;
     QToolButton* _encoding;
     QToolButton* _insertMode;
+    QToolButton* _problems;
 };
 
 } // namespace edita

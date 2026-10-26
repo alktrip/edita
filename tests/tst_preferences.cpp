@@ -81,6 +81,9 @@ struct Window
 Preferences nonDefault()
 {
     Preferences p;
+    p.terminalShell = QStringLiteral("zsh -l");
+    p.lspEnabled = false;
+    p.lspServers = QStringLiteral("clangd=clangd --log=error\npython=off");
     p.statusBarShow = false;
     p.tabBarHide = true;
     p.tabCloseButton = false;
@@ -296,7 +299,8 @@ private slots:
         const Preferences p = nonDefault();
         PreferencesDialog dialog(Preferences{}, {{0, "Normal text"}, {22, "Python"}});
         QCOMPARE(dialog.pageNames(), (QStringList{"general", "editing", "margins", "newDocument", "recentFiles",
-                                                  "indentation", "autoCompletion", "highlighting", "searching", "printing", "backup", "misc"}));
+                                                  "indentation", "autoCompletion", "highlighting", "searching", "printing", "backup", "misc",
+                                                  "languageServers"}));
         QVERIFY(dialog.preferences() == Preferences{});
         dialog.setPreferences(p);
         QVERIFY(dialog.preferences() == p);

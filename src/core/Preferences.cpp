@@ -326,6 +326,8 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaStickyScroll", p.stickyScroll);
     r.boolText("EditaInlineFind", p.inlineFind);
     p.terminalShell = r.text("EditaTerminalShell");
+    r.boolText("EditaLsp", p.lspEnabled);
+    p.lspServers = r.text("EditaLspServers");
     r.boolText("EditaWelcomePage", p.showWelcome);
     return p;
 }
@@ -460,6 +462,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaStickyScroll", yesNo(p.stickyScroll));
     w.text("EditaInlineFind", yesNo(p.inlineFind));
     w.text("EditaTerminalShell", p.terminalShell);
+    w.text("EditaLsp", yesNo(p.lspEnabled));
+    w.text("EditaLspServers", p.lspServers);
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }
 

@@ -44,6 +44,11 @@ inline constexpr int kIndicatorTagMatch = 27;    // "Tags match highlighting"
 inline constexpr int kIndicatorTagAttribute = 26; // "Tags attribute"
 // "Mark Style 1"…"Mark Style 5" (SCE_UNIVERSAL_FOUND_STYLE_EXT1…EXT5): estilos de token
 inline constexpr int kIndicatorTokenStyles[] = {25, 24, 23, 22, 21};
+// Diagnósticos del servidor de lenguaje (no existen en N++, que no usa los de 0 a 7)
+inline constexpr int kIndicatorDiagError = 1;
+inline constexpr int kIndicatorDiagWarning = 2;
+inline constexpr int kIndicatorDiagInfo = 3;
+inline constexpr int kIndicatorDiagHint = 4;
 
 // Márgenes en el orden de N++ (ScintillaEditView::_SC_MARGE_*)
 inline constexpr unsigned kMarginLineNumber = 0;

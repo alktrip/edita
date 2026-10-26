@@ -32,6 +32,7 @@ class QLineEdit;
 class QListWidget;
 class QSpinBox;
 class QStackedWidget;
+class QTableWidget;
 
 namespace edita {
 
@@ -71,6 +72,7 @@ private:
     void buildPrinting();
     void buildBackup();
     void buildMisc();
+    void buildLanguageServers();
     void updateEnabledState();
 
     QListWidget* _categories;
@@ -124,6 +126,8 @@ private:
     QCheckBox* _stickyScroll = nullptr;
     QCheckBox* _inlineFind = nullptr;
     QLineEdit* _terminalShell = nullptr;
+    QCheckBox* _lspEnabled = nullptr;
+    QTableWidget* _lspServers = nullptr;
     QCheckBox* _scrollBarMarks = nullptr;
     QComboBox* _changeHistory = nullptr;
     // Documento nuevo y directorio
