@@ -58,6 +58,9 @@ public:
 
     // "Guardar la macro actual": nombre y atajo (vacío = sin atajo). false = cancelado
     virtual bool askMacroName(QWidget* parent, QString& name, QKeySequence& shortcut) = 0;
+
+    // Un texto (p. ej. el nombre nuevo al renombrar). false = cancelado
+    virtual bool askText(QWidget* parent, const QString& title, const QString& label, QString& text) = 0;
 };
 
 // Implementación con QMessageBox y QFileDialog
@@ -73,6 +76,7 @@ public:
     UnmappableChoice askUnmappable(QWidget* parent, const QString& documentName, std::size_t count,
                                    const QString& encodingName) override;
     bool askMacroName(QWidget* parent, QString& name, QKeySequence& shortcut) override;
+    bool askText(QWidget* parent, const QString& title, const QString& label, QString& text) override;
 };
 
 } // namespace edita

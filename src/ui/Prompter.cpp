@@ -23,6 +23,7 @@
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QKeySequenceEdit>
+#include <QInputDialog>
 #include <QLineEdit>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -125,6 +126,15 @@ bool DialogPrompter::askMacroName(QWidget* parent, QString& name, QKeySequence& 
     name = nameEdit->text().trimmed();
     shortcut = keyEdit->keySequence();
     return true;
+}
+
+bool DialogPrompter::askText(QWidget* parent, const QString& title, const QString& label, QString& text)
+{
+    bool ok = false;
+    const QString answer = QInputDialog::getText(parent, title, label, QLineEdit::Normal, text, &ok);
+    if (ok)
+        text = answer;
+    return ok;
 }
 
 } // namespace edita

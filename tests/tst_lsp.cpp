@@ -15,6 +15,7 @@
 #include "ui/LspManager.h"
 #include "ui/MainWindow.h"
 #include "ui/ProblemsPanel.h"
+#include "ui/SearchResultsPanel.h"
 
 #include <QAction>
 #include <QDir>
@@ -157,7 +158,8 @@ private slots:
         QCOMPARE(client.positionEncoding(), lsp::PositionEncoding::Utf16);
         QCOMPARE(client.completionTriggers(), QStringList{"."});
         QVERIFY(client.hasCapability("hoverProvider"));
-        QVERIFY(!client.hasCapability("definitionProvider"));
+        QVERIFY(client.hasCapability("definitionProvider"));
+        QVERIFY(!client.hasCapability("codeActionProvider"));
         QCOMPARE(client.syncKind(), 1);
         QTRY_COMPARE(diagnostics.count(), 1);
         QCOMPARE(diagnostics.first().at(0).toString(), uri);
@@ -277,6 +279,92 @@ private slots:
         QCOMPARE(tree->topLevelItemCount(), 0);
     }
 
+    void navigationAndEdits()
+    {
+        const QString dir = _tmp.filePath("nav");
+        writeFile(dir + "/lib.py", "def helper(n):\n    return n\n");
+        writeFile(dir + "/main.py", "from lib import helper\nhelper(1)\nx=helper(2)\n");
+        MainWindow w;
+        auto prompter = std::make_unique<FakePrompter>();
+        FakePrompter* asks = prompter.get();
+        w.setPrompter(std::move(prompter));
+        Preferences p = w.preferences();
+        p.lspEnabled = true;
+        p.lspServers = "python=" + fakeServer();
+        w.setPreferences(p);
+        w.resize(900, 600);
+        w.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w));
+        QVERIFY(w.addFolderToWorkspace(dir));
+        const BufferId main = w.openFile(dir + "/main.py");
+        LspManager* lsp = w.lsp();
+        QTRY_VERIFY(lsp->supports(main, "definitionProvider"));
+        EditorView* v = w.editor();
+        auto text = [&](BufferId id) { return QString::fromStdString(w.documents().text(id)); };
+
+        // F12: a la definición, en otro archivo (que se abre)
+        v->sci(SCI_GOTOPOS, static_cast<uptr_t>(v->sci(SCI_POSITIONFROMLINE, 1) + 2));
+        w.findChild<QAction*>("actionGoToDefinition")->trigger();
+        QTRY_VERIFY(QFileInfo(w.documents().buffer(w.currentBuffer())->filePath()).fileName() == "lib.py");
+        const BufferId lib = w.currentBuffer();
+        QCOMPARE(w.editor()->sci(SCI_GETCURRENTPOS), sptr_t{4}); // «def |helper»
+
+        // Mayús+F12: las referencias en el panel de resultados, por archivo
+        w.findChild<QAction*>("actionFindReferences")->trigger();
+        ScintillaEditBase* results = w.resultsPanel()->view();
+        auto resultsText = [&] {
+            const sptr_t length = results->send(SCI_GETLENGTH);
+            QByteArray t(static_cast<qsizetype>(length) + 1, '\0');
+            results->send(SCI_GETTEXT, static_cast<uptr_t>(length + 1), reinterpret_cast<sptr_t>(t.data()));
+            return QString::fromUtf8(t.left(length));
+        };
+        QTRY_VERIFY2(resultsText().contains("References to helper"), qPrintable(resultsText()));
+        QVERIFY(resultsText().contains("(4 hits)") || resultsText().contains("4 hits"));
+        QVERIFY(resultsText().contains("x=helper(2)"));
+        QVERIFY(resultsText().contains("lib.py"));
+
+        // Renombrar: los dos archivos (sin cambiar de pestaña), deshacer de una vez por archivo
+        w.editor()->sci(SCI_GOTOPOS, 5);
+        asks->texts.enqueue("ayudante");
+        w.findChild<QAction*>("actionRenameSymbol")->trigger();
+        QTRY_VERIFY(text(main).contains("x=ayudante(2)"));
+        QCOMPARE(text(main), QStringLiteral("from lib import ayudante\nayudante(1)\nx=ayudante(2)\n"));
+        QCOMPARE(text(lib), QStringLiteral("def ayudante(n):\n    return n\n"));
+        QCOMPARE(w.currentBuffer(), lib);
+        QVERIFY(asks->asked.contains("Rename Symbol"));
+
+        // Dar formato (varios cambios, de atrás hacia delante)
+        w.openFile(dir + "/main.py");
+        w.editor()->sci(SCI_GOTOPOS, static_cast<uptr_t>(w.editor()->sci(SCI_POSITIONFROMLINE, 2)));
+        w.findChild<QAction*>("actionFormatDocument")->trigger();
+        QTRY_VERIFY(text(main).contains("x = ayudante(2)"));
+        w.editor()->sci(SCI_UNDO);
+        QVERIFY(text(main).contains("x=ayudante(2)"));
+
+        // Ayuda de parámetros al escribir «(» y «,»; con «)» se cierra
+        v = w.editor();
+        v->setFocus();
+        v->sci(SCI_GOTOPOS, static_cast<uptr_t>(v->sci(SCI_GETLENGTH)));
+        QTest::keyClicks(v, "ayudante(");
+        QTRY_VERIFY(v->sci(SCI_CALLTIPACTIVE) != 0);
+        QVERIFY2(lsp->lastSignatureText().startsWith("(1/2) ayudante(a, b)\nDoes things."), qPrintable(lsp->lastSignatureText()));
+        QCOMPARE(lsp->lastSignatureHighlight(), (std::pair<int, int>{15, 16})); // la «a»
+        QTest::keyClicks(v, "1,");
+        QTRY_COMPARE(lsp->lastSignatureHighlight(), (std::pair<int, int>{18, 19})); // la «b»
+        if (v->sci(SCI_AUTOCACTIVE))
+            v->sci(SCI_AUTOCCANCEL);
+        QTest::keyClicks(v, "2)");
+        QTRY_COMPARE(v->sci(SCI_CALLTIPACTIVE), sptr_t{0});
+
+        // Un WorkspaceEdit con «changes» (como los de workspace/applyEdit)
+        const QJsonObject edit{{"changes", QJsonObject{{lsp::uriFromPath(dir + "/lib.py"),
+            QJsonArray{QJsonObject{{"range", QJsonObject{{"start", QJsonObject{{"line", 1}, {"character", 11}}},
+                                                         {"end", QJsonObject{{"line", 1}, {"character", 12}}}}},
+                                   {"newText", "n * 2"}}}}}}};
+        QCOMPARE(w.applyWorkspaceEdit(edit, lsp::PositionEncoding::Utf16), 1);
+        QCOMPARE(text(lib), QStringLiteral("def ayudante(n):\n    return n * 2\n"));
+    }
+
     void clangd()
     {
         if (QStandardPaths::findExecutable("clangd").isEmpty())
@@ -301,6 +389,14 @@ private slots:
         // Información de «doble» al pasar el ratón
         lsp->hover(*w.editor(), w.currentBuffer(), w.editor()->sci(SCI_POSITIONFROMLINE, 2) + 12, QPoint(0, 0));
         QTRY_VERIFY_WITH_TIMEOUT(lsp->lastHoverText().contains("doble"), 15000);
+        // F12 sobre «doble»: a la línea 1
+        EditorView* v = w.editor();
+        v->sci(SCI_GOTOPOS, static_cast<uptr_t>(v->sci(SCI_POSITIONFROMLINE, 2) + 12));
+        w.findChild<QAction*>("actionGoToDefinition")->trigger();
+        QTRY_COMPARE_WITH_TIMEOUT(v->sci(SCI_GETCURRENTPOS), sptr_t{4}, 15000);
+        // Formato con clang-format (el de clangd)
+        w.findChild<QAction*>("actionFormatDocument")->trigger();
+        QTRY_VERIFY_WITH_TIMEOUT(QString::fromStdString(w.documents().text(w.currentBuffer())).contains("int main() { return doble(x); }"), 15000); // (estilo LLVM: funciones cortas en una línea)
     }
 };
 

@@ -14,6 +14,8 @@
 #include "lsp/LspClient.h"
 
 #include <QMap>
+
+#include <functional>
 #include <QObject>
 #include <QPointer>
 #include <QTimer>
@@ -45,6 +47,17 @@ public:
         QString source;
         QString code;
     };
+
+    struct Location
+    {
+        QString path;
+        int line = 0; // posiciones de LSP
+        int character = 0;
+        int endLine = 0;
+        int endCharacter = 0;
+    };
+    using LocationsCallback = std::function<void(const std::vector<Location>& locations, lsp::PositionEncoding encoding)>;
+    using EditCallback = std::function<void(const QJsonObject& edit, lsp::PositionEncoding encoding, const QString& error)>;
 
     explicit LspManager(DocumentManager& documents, QObject* parent = nullptr);
     ~LspManager() override;
@@ -105,6 +118,22 @@ public:
     // Aplica cambios de texto de LSP (TextEdit[]) en la vista, de una vez para deshacer
     void applyTextEdits(ScintillaEditBase& view, lsp::PositionEncoding encoding, const QJsonArray& edits);
 
+    // ¿El servidor del documento sabe hacer esto? («definitionProvider», «renameProvider»…)
+    bool supports(BufferId id, const QString& provider) const;
+    // textDocument/definition o textDocument/references en esa posición. false si no hay servidor
+    bool findLocations(ScintillaEditBase& view, BufferId id, sptr_t pos, const QString& method, LocationsCallback done);
+    static std::vector<Location> parseLocations(const QJsonValue& result);
+    bool rename(ScintillaEditBase& view, BufferId id, sptr_t pos, const QString& newName, EditCallback done);
+    // Da formato al documento (o a la selección) con los cambios del servidor
+    bool format(ScintillaEditBase& view, BufferId id);
+    // Ayuda de parámetros: tras «(» o «,» (o `ch` 0, a petición); con «)» se cierra
+    bool signatureHelp(ScintillaEditBase& view, BufferId id, int ch);
+    // Para las pruebas: el último texto de la ayuda y lo resaltado (en bytes)
+    QString lastSignatureText() const { return _lastSignatureText; }
+    std::pair<int, int> lastSignatureHighlight() const { return _lastSignatureHighlight; }
+    // La codificación de las posiciones de los diagnósticos o del servidor de un archivo
+    lsp::PositionEncoding encodingForPath(const QString& path) const;
+
     void restart(BufferId id);
     QString log(BufferId id) const;
     void shutdownAll();
@@ -112,6 +141,8 @@ public:
 signals:
     void diagnosticsChanged();
     void statusChanged();
+    // workspace/applyEdit del servidor: quien lo atienda contesta reply(aplicado)
+    void applyEditRequested(const QJsonObject& edit, edita::lsp::PositionEncoding encoding, const std::function<void(bool)>& reply);
 
 private:
     struct Document
@@ -153,6 +184,10 @@ private:
     int _autoCompleteFrom = 1;
     lsp::LspClient* _completionClient = nullptr;
     int _hoverToken = 0;
+    int _signatureToken = 0;
+    QPointer<ScintillaEditBase> _signatureView;
+    QString _lastSignatureText;
+    std::pair<int, int> _lastSignatureHighlight{0, 0};
     QString _lastHoverText;
 };
 

@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "lsp/LspServers.h"
+
 #include "core/Encoding.h"
 #include "core/Eol.h"
 #include "core/LineOperations.h"
@@ -48,6 +50,7 @@
 
 class QActionGroup;
 class QDockWidget;
+class QJsonObject;
 class QFileSystemWatcher;
 class QMenu;
 class QSplitter;
@@ -248,6 +251,13 @@ public:
     void openTerminal(const QString& directory = {});
     void toggleTerminal();
     void runSelectionInTerminal();
+    // Servidor de lenguaje: lo de F12, Mayús+F12, renombrar y dar formato
+    void goToDefinition();
+    void findReferences();
+    void renameSymbol();
+    void formatDocument();
+    // Aplica un WorkspaceEdit de LSP (abre los archivos que haga falta). Devuelve los documentos cambiados, o -1
+    int applyWorkspaceEdit(const QJsonObject& edit, lsp::PositionEncoding encoding);
     FunctionListPanel* functionListPanel() const { return _functionListPanel; }
     FileBrowserPanel* folderPanel() const { return _folderPanel; }
     QDockWidget* panelDock(const QString& name) const;
@@ -370,6 +380,7 @@ private:
     void updateDiagnostics();
     void updateProblemsField();
     void goToLspPosition(const QString& path, int line, int character);
+    void goToLocation(const QString& path, int line, int character, lsp::PositionEncoding encoding);
     void applyTerminalStyle();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
     void applyShortcuts();

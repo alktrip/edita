@@ -332,6 +332,10 @@ MainWindow::MainWindow(QWidget* parent)
     _lsp = std::make_unique<LspManager>(_documents);
     connect(_lsp.get(), &LspManager::diagnosticsChanged, this, [this] { updateDiagnostics(); });
     connect(_lsp.get(), &LspManager::statusChanged, this, [this] { updateProblemsField(); });
+    connect(_lsp.get(), &LspManager::applyEditRequested, this,
+            [this](const QJsonObject& edit, lsp::PositionEncoding encoding, const std::function<void(bool)>& reply) {
+                reply(applyWorkspaceEdit(edit, encoding) >= 0);
+            });
 
     // Las dos vistas de N++ (_mainEditView/_subEditView) en un divisor; la
     // secundaria se oculta mientras no tenga documentos
@@ -613,6 +617,8 @@ void MainWindow::connectPane(EditorPane* pane)
         // Con servidor de lenguaje, su lista; si no, la de N++
         if (!_playingMacro && !_lsp->complete(*pane->editor(), pane->currentBuffer(), ch))
             ac->update(ch);
+        if (!_playingMacro)
+            _lsp->signatureHelp(*pane->editor(), pane->currentBuffer(), ch);
     });
     // El texto que ve el servidor de lenguaje, al día; y lo que dice al dejar el ratón
     connect(view, &ScintillaEditBase::modified, this, [this](Scintilla::ModificationFlags type) {
@@ -980,9 +986,15 @@ void MainWindow::createMenus()
     addAction(complete, tr("&Word Completion"), "actionCompleteWord", QKeySequence(Qt::CTRL | Qt::Key_Return),
               [this] { autoCompletion(_activePane)->showWordComplete(true); });
     addAction(complete, tr("Function &Parameters Hint"), "actionFunctionHint", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Space),
-              [this] { autoCompletion(_activePane)->showFunctionComplete(); });
+              [this] {
+                  if (!_lsp->signatureHelp(*editor(), currentBuffer(), 0))
+                      autoCompletion(_activePane)->showFunctionComplete();
+              });
     addAction(complete, tr("P&ath Completion"), "actionCompletePath", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Space),
               [this] { autoCompletion(_activePane)->showPathCompletion(); });
+    // Con el servidor de lenguaje (no existen en N++)
+    addAction(edit, tr("Rena&me Symbol…"), "actionRenameSymbol", QKeySequence(), [this] { renameSymbol(); });
+    addAction(edit, tr("F&ormat Document"), "actionFormatDocument", QKeySequence(Qt::ALT | Qt::SHIFT | Qt::Key_F), [this] { formatDocument(); });
     edit->addSeparator();
     // IDM_EDIT_COLUMNMODE: Editor de columnas (Alt+C)
     addAction(edit, tr("Colu&mn Editor…"), "actionColumnEditor", QKeySequence(Qt::ALT | Qt::Key_C), [this] {
@@ -1516,14 +1528,194 @@ void MainWindow::updateProblemsField()
 
 void MainWindow::goToLspPosition(const QString& path, int line, int character)
 {
+    goToLocation(path, line, character, _lsp->encodingForPath(path));
+}
+
+void MainWindow::goToLocation(const QString& path, int line, int character, lsp::PositionEncoding encoding)
+{
     if (openFile(path) == kInvalidBuffer)
         return;
     EditorView* v = editor();
-    const lsp::LspClient* client = _lsp->clientFor(currentBuffer());
-    const sptr_t pos = _lsp->scintillaPosition(*v, client ? client->positionEncoding() : lsp::PositionEncoding::Utf16, line, character);
+    const sptr_t pos = _lsp->scintillaPosition(*v, encoding, line, character);
+    // La línea, a un tercio de la altura (como al saltar a un resultado)
+    const sptr_t visible = v->sci(SCI_VISIBLEFROMDOCLINE, static_cast<uptr_t>(line));
+    v->sci(SCI_SETFIRSTVISIBLELINE, static_cast<uptr_t>(std::max<sptr_t>(0, visible - v->sci(SCI_LINESONSCREEN) / 3)));
     v->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos));
-    v->sci(SCI_SCROLLCARET);
     v->setFocus();
+}
+
+void MainWindow::goToDefinition()
+{
+    EditorView* v = editor();
+    const bool asked = _lsp->findLocations(*v, currentBuffer(), v->sci(SCI_GETCURRENTPOS), QStringLiteral("textDocument/definition"),
+                                           [this](const std::vector<LspManager::Location>& locations, lsp::PositionEncoding encoding) {
+        if (locations.empty()) {
+            statusBar()->showMessage(tr("No definition found"), 5000);
+            return;
+        }
+        if (locations.size() == 1) {
+            goToLocation(locations.front().path, locations.front().line, locations.front().character, encoding);
+            return;
+        }
+        // Varias: una lista para elegir
+        std::vector<QuickPicker::Item> items;
+        for (const LspManager::Location& l : locations) {
+            items.push_back({QStringLiteral("%1:%2").arg(QFileInfo(l.path).fileName()).arg(l.line + 1), QDir::toNativeSeparators(l.path), false,
+                             [this, l, encoding] { goToLocation(l.path, l.line, l.character, encoding); }});
+        }
+        statusPicker()->popup(editor(), tr("Go to definition"), items);
+    });
+    if (!asked)
+        statusBar()->showMessage(tr("The language server of this document cannot find definitions"), 5000);
+}
+
+void MainWindow::findReferences()
+{
+    EditorView* v = editor();
+    const sptr_t caret = v->sci(SCI_GETCURRENTPOS);
+    const sptr_t wordStart = v->sci(SCI_WORDSTARTPOSITION, static_cast<uptr_t>(caret), 1);
+    const sptr_t wordEnd = v->sci(SCI_WORDENDPOSITION, static_cast<uptr_t>(caret), 1);
+    const auto* raw = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(wordStart), wordEnd - wordStart));
+    const QString word = raw ? QString::fromUtf8(raw, static_cast<qsizetype>(wordEnd - wordStart)) : QString();
+    const bool asked = _lsp->findLocations(*v, currentBuffer(), caret, QStringLiteral("textDocument/references"),
+                                           [this, word](const std::vector<LspManager::Location>& locations, lsp::PositionEncoding encoding) {
+        // En el panel de resultados de búsqueda, por archivo y línea (como «Buscar todo»)
+        std::map<QString, std::vector<LspManager::Location>> byFile;
+        for (const LspManager::Location& l : locations)
+            byFile[l.path].push_back(l);
+        SearchOptions options;
+        options.pattern = word.toStdString();
+        _results->beginSearch(tr("References to %1").arg(word));
+        int total = 0;
+        for (auto& [path, list] : byFile) {
+            std::sort(list.begin(), list.end(), [](const auto& a, const auto& b) { return std::tie(a.line, a.character) < std::tie(b.line, b.character); });
+            // El texto: el del documento abierto o el del archivo
+            const BufferId id = _documents.findByPath(path);
+            QByteArray text;
+            if (id != kInvalidBuffer) {
+                text = QByteArray::fromStdString(_documents.text(id));
+            } else {
+                QFile file(path);
+                if (file.open(QIODevice::ReadOnly))
+                    text = file.readAll();
+            }
+            std::vector<SciPos> lineStarts{0};
+            for (qsizetype i = 0; i < text.size(); ++i) {
+                if (text[i] == '\n')
+                    lineStarts.push_back(static_cast<SciPos>(i + 1));
+            }
+            auto lineText = [&](int line) {
+                if (line < 0 || line >= static_cast<int>(lineStarts.size()))
+                    return QByteArray();
+                const SciPos start = lineStarts[static_cast<std::size_t>(line)];
+                const SciPos end = line + 1 < static_cast<int>(lineStarts.size()) ? lineStarts[static_cast<std::size_t>(line) + 1] - 1 : text.size();
+                QByteArray t = text.mid(start, end - start);
+                if (t.endsWith('\r'))
+                    t.chop(1);
+                return t;
+            };
+            std::vector<LineHit> hits;
+            for (const LspManager::Location& l : list) {
+                const QByteArray t = lineText(l.line);
+                const int from = lsp::byteColumn(t, l.character, encoding);
+                const int to = l.endLine == l.line ? lsp::byteColumn(t, l.endCharacter, encoding) : static_cast<int>(t.size());
+                if (hits.empty() || hits.back().line != l.line) {
+                    LineHit hit;
+                    hit.line = l.line;
+                    hit.text = t.left(static_cast<qsizetype>(kResultLineMaxLength)).toStdString();
+                    hits.push_back(std::move(hit));
+                }
+                const SciPos lineStart = l.line < static_cast<int>(lineStarts.size()) ? lineStarts[static_cast<std::size_t>(l.line)] : 0;
+                hits.back().segments.emplace_back(from, std::max(from, to));
+                hits.back().ranges.emplace_back(lineStart + from, lineStart + std::max(from, to));
+            }
+            _results->addFile(QDir::toNativeSeparators(path), path, id, hits, static_cast<int>(list.size()));
+            total += static_cast<int>(list.size());
+        }
+        _results->endSearch(total, static_cast<int>(byFile.size()), options);
+        _results->show();
+        statusBar()->showMessage(tr("%n reference(s)", nullptr, total), 5000);
+    });
+    if (!asked)
+        statusBar()->showMessage(tr("The language server of this document cannot find references"), 5000);
+}
+
+void MainWindow::renameSymbol()
+{
+    EditorView* v = editor();
+    const BufferId id = currentBuffer();
+    if (!_lsp->supports(id, QStringLiteral("renameProvider"))) {
+        statusBar()->showMessage(tr("The language server of this document cannot rename"), 5000);
+        return;
+    }
+    const sptr_t caret = v->sci(SCI_GETCURRENTPOS);
+    const sptr_t wordStart = v->sci(SCI_WORDSTARTPOSITION, static_cast<uptr_t>(caret), 1);
+    const sptr_t wordEnd = v->sci(SCI_WORDENDPOSITION, static_cast<uptr_t>(caret), 1);
+    const auto* raw = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(wordStart), wordEnd - wordStart));
+    const QString old = raw ? QString::fromUtf8(raw, static_cast<qsizetype>(wordEnd - wordStart)) : QString();
+    QString name = old;
+    if (!_prompter->askText(this, tr("Rename Symbol"), tr("New name for %1:").arg(old), name) || name.trimmed().isEmpty() || name == old)
+        return;
+    _lsp->rename(*v, id, caret, name.trimmed(), [this](const QJsonObject& edit, lsp::PositionEncoding encoding, const QString& error) {
+        if (!error.isEmpty()) {
+            _prompter->warn(this, tr("Rename Symbol"), error);
+            return;
+        }
+        const int changed = applyWorkspaceEdit(edit, encoding);
+        if (changed >= 0)
+            statusBar()->showMessage(tr("Renamed in %n file(s)", nullptr, changed), 5000);
+    });
+}
+
+void MainWindow::formatDocument()
+{
+    if (!_lsp->format(*editor(), currentBuffer()))
+        statusBar()->showMessage(tr("The language server of this document cannot format it"), 5000);
+}
+
+int MainWindow::applyWorkspaceEdit(const QJsonObject& edit, lsp::PositionEncoding encoding)
+{
+    // «documentChanges» (TextDocumentEdit) si viene; si no, «changes» (uri → TextEdit[])
+    std::vector<std::pair<QString, QJsonArray>> files;
+    int unsupported = 0;
+    if (edit.contains(QStringLiteral("documentChanges"))) {
+        for (const QJsonValue& value : edit.value(QStringLiteral("documentChanges")).toArray()) {
+            const QJsonObject change = value.toObject();
+            if (change.contains(QStringLiteral("kind"))) { // crear, renombrar o borrar archivos
+                ++unsupported;
+                continue;
+            }
+            files.emplace_back(lsp::pathFromUri(change.value(QStringLiteral("textDocument")).toObject().value(QStringLiteral("uri")).toString()),
+                               change.value(QStringLiteral("edits")).toArray());
+        }
+    } else {
+        const QJsonObject changes = edit.value(QStringLiteral("changes")).toObject();
+        for (auto it = changes.begin(); it != changes.end(); ++it)
+            files.emplace_back(lsp::pathFromUri(it.key()), it.value().toArray());
+    }
+    if (unsupported > 0)
+        showWarnings(tr("Language Server"), {tr("%n file operation(s) not applied (create, rename or delete files)", nullptr, unsupported)});
+    // Los abiertos se cambian sin cambiar de pestaña; los demás se abren (quedan sin guardar)
+    const BufferId original = currentBuffer();
+    EditorPane* originalPane = _activePane;
+    int changed = 0;
+    for (const auto& [path, edits] : files) {
+        if (path.isEmpty() || edits.isEmpty())
+            continue;
+        BufferId id = _documents.findByPath(path);
+        if (id == kInvalidBuffer)
+            id = openFile(path);
+        const Buffer* buf = _documents.buffer(id);
+        if (!buf)
+            continue;
+        withSearchView(*buf, [&](ScintillaEditBase& view) { _lsp->applyTextEdits(view, encoding, edits); });
+        ++changed;
+    }
+    if (original != kInvalidBuffer && currentBuffer() != original) {
+        setActivePane(originalPane);
+        originalPane->activateBuffer(original);
+    }
+    return changed;
 }
 
 QString MainWindow::terminalDirectory() const
@@ -2105,6 +2297,9 @@ void MainWindow::createSearchMenu()
     add(tr("Go to &File…"), "actionGoToFile", QKeySequence(Qt::CTRL | Qt::Key_E), [this] { showCommandPalette(QString()); });
     add(tr("Go to S&ymbol…"), "actionGoToSymbol", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O),
         [this] { showCommandPalette(QStringLiteral("@")); });
+    // Con el servidor de lenguaje (no existen en N++)
+    add(tr("Go to &Definition"), "actionGoToDefinition", QKeySequence(Qt::Key_F12), [this] { goToDefinition(); });
+    add(tr("Find Re&ferences"), "actionFindReferences", QKeySequence(Qt::SHIFT | Qt::Key_F12), [this] { findReferences(); });
     search->addSeparator();
     add(tr("Next Search Result"), "actionNextResult", QKeySequence(Qt::Key_F4),
         [this] { _results->activateAdjacentResult(true); });

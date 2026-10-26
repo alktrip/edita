@@ -12,6 +12,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QImage>
+#include <QMetaMethod>
 #include <QPainter>
 #include <QScopeGuard>
 #include <QTextDocument>
@@ -139,6 +140,12 @@ lsp::LspClient* LspManager::clientFor(const lsp::ResolvedServer& server, const Q
     lsp::LspClient* raw = client.get();
     connect(raw, &lsp::LspClient::diagnosticsPublished, this, &LspManager::receiveDiagnostics);
     connect(raw, &lsp::LspClient::stateChanged, this, &LspManager::statusChanged);
+    connect(raw, &lsp::LspClient::applyEditRequested, this, [this, raw](const QJsonObject& edit, const std::function<void(bool)>& reply) {
+        if (isSignalConnected(QMetaMethod::fromSignal(&LspManager::applyEditRequested)))
+            emit applyEditRequested(edit, raw->positionEncoding(), reply);
+        else
+            reply(false);
+    });
     _clients.emplace(key, std::move(client));
     raw->start();
     return raw;
@@ -677,6 +684,197 @@ void LspManager::hideHover()
 {
     ++_hoverToken;
     QToolTip::hideText();
+}
+
+// --- Navegación y cambios --------------------------------------------------------------
+
+bool LspManager::supports(BufferId id, const QString& provider) const
+{
+    const lsp::LspClient* client = clientFor(id);
+    return client && client->state() == lsp::LspClient::State::Running && client->hasCapability(provider);
+}
+
+lsp::PositionEncoding LspManager::encodingForPath(const QString& path) const
+{
+    const QString clean = cleanPath(path);
+    if (_diagnosticEncodings.contains(clean))
+        return _diagnosticEncodings.value(clean);
+    for (const auto& [id, doc] : _documents) {
+        if (doc.path == clean && doc.client)
+            return doc.client->positionEncoding();
+    }
+    return lsp::PositionEncoding::Utf16;
+}
+
+std::vector<LspManager::Location> LspManager::parseLocations(const QJsonValue& result)
+{
+    // Location, Location[] o LocationLink[] (de este, el nombre: targetSelectionRange)
+    std::vector<Location> locations;
+    const QJsonArray array = result.isArray() ? result.toArray() : (result.isObject() ? QJsonArray{result} : QJsonArray());
+    for (const QJsonValue& value : array) {
+        const QJsonObject object = value.toObject();
+        const bool link = object.contains(QStringLiteral("targetUri"));
+        const QString uri = object.value(link ? QStringLiteral("targetUri") : QStringLiteral("uri")).toString();
+        QJsonObject range = object.value(link ? QStringLiteral("targetSelectionRange") : QStringLiteral("range")).toObject();
+        if (range.isEmpty())
+            range = object.value(QStringLiteral("targetRange")).toObject();
+        const QString path = lsp::pathFromUri(uri);
+        if (path.isEmpty())
+            continue;
+        const QJsonObject start = range.value(QStringLiteral("start")).toObject();
+        const QJsonObject end = range.value(QStringLiteral("end")).toObject();
+        locations.push_back({path, start.value(QStringLiteral("line")).toInt(), start.value(QStringLiteral("character")).toInt(),
+                             end.value(QStringLiteral("line")).toInt(), end.value(QStringLiteral("character")).toInt()});
+    }
+    return locations;
+}
+
+bool LspManager::findLocations(ScintillaEditBase& view, BufferId id, sptr_t pos, const QString& method, LocationsCallback done)
+{
+    const QString provider = method == QLatin1String("textDocument/references") ? QStringLiteral("referencesProvider")
+                                                                                 : QStringLiteral("definitionProvider");
+    if (!supports(id, provider))
+        return false;
+    lsp::LspClient* client = clientFor(id);
+    syncNow();
+    QJsonObject params{{"textDocument", QJsonObject{{"uri", _documents.at(id).uri}}},
+                       {"position", lspPosition(view, client->positionEncoding(), pos)}};
+    if (provider == QLatin1String("referencesProvider"))
+        params.insert(QStringLiteral("context"), QJsonObject{{"includeDeclaration", true}});
+    const lsp::PositionEncoding encoding = client->positionEncoding();
+    client->request(method, params, [done = std::move(done), encoding](const QJsonValue& result, const QJsonObject&) {
+        done(parseLocations(result), encoding);
+    });
+    return true;
+}
+
+bool LspManager::rename(ScintillaEditBase& view, BufferId id, sptr_t pos, const QString& newName, EditCallback done)
+{
+    if (!supports(id, QStringLiteral("renameProvider")))
+        return false;
+    lsp::LspClient* client = clientFor(id);
+    syncNow();
+    const QJsonObject params{{"textDocument", QJsonObject{{"uri", _documents.at(id).uri}}},
+                             {"position", lspPosition(view, client->positionEncoding(), pos)},
+                             {"newName", newName}};
+    const lsp::PositionEncoding encoding = client->positionEncoding();
+    client->request(QStringLiteral("textDocument/rename"), params,
+                    [done = std::move(done), encoding](const QJsonValue& result, const QJsonObject& error) {
+        done(result.toObject(), encoding, error.value(QStringLiteral("message")).toString());
+    });
+    return true;
+}
+
+bool LspManager::format(ScintillaEditBase& view, BufferId id)
+{
+    const sptr_t selStart = view.send(SCI_GETSELECTIONSTART);
+    const sptr_t selEnd = view.send(SCI_GETSELECTIONEND);
+    const bool range = selEnd > selStart && supports(id, QStringLiteral("documentRangeFormattingProvider"));
+    if (!range && !supports(id, QStringLiteral("documentFormattingProvider")))
+        return false;
+    lsp::LspClient* client = clientFor(id);
+    syncNow();
+    const lsp::PositionEncoding encoding = client->positionEncoding();
+    QJsonObject params{{"textDocument", QJsonObject{{"uri", _documents.at(id).uri}}},
+                       {"options", QJsonObject{{"tabSize", static_cast<int>(view.send(SCI_GETTABWIDTH))},
+                                               {"insertSpaces", view.send(SCI_GETUSETABS) == 0},
+                                               {"trimTrailingWhitespace", true}}}};
+    if (range)
+        params.insert(QStringLiteral("range"), QJsonObject{{"start", lspPosition(view, encoding, selStart)}, {"end", lspPosition(view, encoding, selEnd)}});
+    // La respuesta llega después: solo si la vista sigue con el mismo documento
+    QPointer<ScintillaEditBase> target(&view);
+    const sptr_t document = view.send(SCI_GETDOCPOINTER);
+    client->request(range ? QStringLiteral("textDocument/rangeFormatting") : QStringLiteral("textDocument/formatting"), params,
+                    [this, target, document, encoding](const QJsonValue& result, const QJsonObject&) {
+        if (!target || target->send(SCI_GETDOCPOINTER) != document || !result.isArray() || result.toArray().isEmpty())
+            return;
+        // El cursor, en la misma línea y columna (lo más parecido)
+        const sptr_t caret = target->send(SCI_GETCURRENTPOS);
+        const sptr_t line = target->send(SCI_LINEFROMPOSITION, static_cast<uptr_t>(caret));
+        const sptr_t column = target->send(SCI_GETCOLUMN, static_cast<uptr_t>(caret));
+        applyTextEdits(*target, encoding, result.toArray());
+        target->send(SCI_GOTOPOS, static_cast<uptr_t>(target->send(SCI_FINDCOLUMN, static_cast<uptr_t>(line), column)));
+    });
+    return true;
+}
+
+bool LspManager::signatureHelp(ScintillaEditBase& view, BufferId id, int ch)
+{
+    if (!supports(id, QStringLiteral("signatureHelpProvider")))
+        return false;
+    lsp::LspClient* client = clientFor(id);
+    const bool active = _signatureView == &view && view.send(SCI_CALLTIPACTIVE) != 0;
+    QJsonObject context{{"triggerKind", 1}, {"isRetrigger", active}};
+    if (ch != 0) {
+        const auto c = static_cast<char32_t>(ch);
+        const QString typed = QString::fromUcs4(&c, 1);
+        if (typed == QLatin1String(")") && active) {
+            view.send(SCI_CALLTIPCANCEL);
+            return true;
+        }
+        if (!client->signatureTriggers().contains(typed))
+            return false;
+        context = QJsonObject{{"triggerKind", 2}, {"triggerCharacter", typed}, {"isRetrigger", active}};
+    }
+    syncNow();
+    const int token = ++_signatureToken;
+    const sptr_t caret = view.send(SCI_GETCURRENTPOS);
+    const QJsonObject params{{"textDocument", QJsonObject{{"uri", _documents.at(id).uri}}},
+                             {"position", lspPosition(view, client->positionEncoding(), caret)},
+                             {"context", context}};
+    QPointer<ScintillaEditBase> target(&view);
+    client->request(QStringLiteral("textDocument/signatureHelp"), params, [this, target, token, caret](const QJsonValue& result, const QJsonObject&) {
+        if (token != _signatureToken || !target)
+            return;
+        const QJsonArray signatures = result.toObject().value(QStringLiteral("signatures")).toArray();
+        if (signatures.isEmpty()) {
+            if (_signatureView == target && target->send(SCI_CALLTIPACTIVE))
+                target->send(SCI_CALLTIPCANCEL);
+            return;
+        }
+        const QJsonObject help = result.toObject();
+        const int activeSignature = std::clamp(help.value(QStringLiteral("activeSignature")).toInt(0), 0, static_cast<int>(signatures.size()) - 1);
+        const QJsonObject signature = signatures.at(activeSignature).toObject();
+        const QString label = signature.value(QStringLiteral("label")).toString();
+        const int activeParameter = signature.value(QStringLiteral("activeParameter")).toInt(help.value(QStringLiteral("activeParameter")).toInt(0));
+        // «(1/2) » si hay varias sobrecargas
+        const QString prefix = signatures.size() > 1 ? QStringLiteral("(%1/%2) ").arg(activeSignature + 1).arg(signatures.size()) : QString();
+        QString text = prefix + label;
+        int highlightStart = 0;
+        int highlightEnd = 0;
+        const QJsonArray parameters = signature.value(QStringLiteral("parameters")).toArray();
+        if (activeParameter >= 0 && activeParameter < parameters.size()) {
+            const QJsonValue parameter = parameters.at(activeParameter).toObject().value(QStringLiteral("label"));
+            int from = -1;
+            int to = -1;
+            if (parameter.isArray()) { // [inicio, fin] en UTF-16 dentro de la etiqueta
+                from = parameter.toArray().at(0).toInt();
+                to = parameter.toArray().at(1).toInt();
+            } else {
+                const qsizetype open = label.indexOf(QLatin1Char('('));
+                from = static_cast<int>(label.indexOf(parameter.toString(), std::max<qsizetype>(0, open)));
+                to = from < 0 ? -1 : from + static_cast<int>(parameter.toString().size());
+            }
+            if (from >= 0 && to > from) {
+                highlightStart = static_cast<int>(text.left(prefix.size() + from).toUtf8().size());
+                highlightEnd = static_cast<int>(text.left(prefix.size() + to).toUtf8().size());
+            }
+        }
+        const QJsonValue documentation = signature.value(QStringLiteral("documentation"));
+        QString doc = documentation.isObject() ? documentation.toObject().value(QStringLiteral("value")).toString() : documentation.toString();
+        doc = doc.section(QStringLiteral("\n\n"), 0, 0).trimmed();
+        if (doc.size() > 300)
+            doc = doc.left(299) + QStringLiteral("…");
+        if (!doc.isEmpty())
+            text += QLatin1Char('\n') + doc;
+        const QByteArray utf8 = text.toUtf8();
+        target->send(SCI_CALLTIPSHOW, static_cast<uptr_t>(caret), reinterpret_cast<sptr_t>(utf8.constData()));
+        target->send(SCI_CALLTIPSETHLT, static_cast<uptr_t>(highlightStart), highlightEnd);
+        _signatureView = target;
+        _lastSignatureText = text;
+        _lastSignatureHighlight = {highlightStart, highlightEnd};
+    });
+    return true;
 }
 
 // --- Servidores -------------------------------------------------------------------------

@@ -310,6 +310,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 34 — Probador de expresiones regulares | Panel con texto de prueba, coincidencias y grupos (posiciones guardadas por la regex Boost), vista previa del reemplazo y referencia rápida | ✅ [fase34.md](fase34.md) |
 | 35 — Terminal integrada | libvterm (MIT) para la emulación, forkpty para la shell, vista propia con historial, selección, ratón y tema del editor; panel con pestañas | ✅ [fase35.md](fase35.md) |
 | 36 — Servidores de lenguaje (1) | Cliente LSP 3.17 (JSON-RPC, cola, UTF-8/UTF-16), 27 servidores conocidos, sincronización, diagnósticos, panel Problemas, autocompletado con fragmentos y hover | ✅ [fase36.md](fase36.md) |
+| 37 — Servidores de lenguaje (2) | Definición, referencias en el panel de resultados, renombrar (WorkspaceEdit), formato y ayuda de parámetros | ✅ [fase37.md](fase37.md) |
 
 ---
 

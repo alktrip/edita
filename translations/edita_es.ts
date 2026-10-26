@@ -647,7 +647,7 @@
 <context>
     <name>Prompter</name>
     <message>
-        <location filename="../src/ui/Prompter.cpp" line="+35"/>
+        <location filename="../src/ui/Prompter.cpp" line="+36"/>
         <location line="+76"/>
         <source>Save</source>
         <translation>Guardar</translation>
@@ -1540,7 +1540,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::LspManager</name>
     <message>
-        <location filename="../src/ui/LspManager.cpp" line="+237"/>
+        <location filename="../src/ui/LspManager.cpp" line="+244"/>
         <source>%1 (starting)</source>
         <translation>%1 (iniciando)</translation>
     </message>
@@ -1558,13 +1558,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+387"/>
-        <location line="+2627"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+391"/>
+        <location line="+2818"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2627"/>
+        <location line="-2818"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1574,7 +1574,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+337"/>
+        <location line="+339"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1854,12 +1854,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ayuda de pa&amp;rámetros</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+5"/>
         <source>P&amp;ath Completion</source>
         <translation>Completar &amp;ruta</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+14"/>
         <source>Read-&amp;Only</source>
         <translation>Solo &amp;lectura</translation>
     </message>
@@ -2030,7 +2030,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+618"/>
+        <location line="+798"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2076,12 +2076,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+747"/>
+        <location line="+750"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-723"/>
+        <location line="-726"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2203,7 +2203,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Línea (1 - %1):</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+12"/>
         <source>Next Search Result</source>
         <translation>Resultado siguiente</translation>
     </message>
@@ -2253,12 +2253,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1245"/>
+        <location line="-1434"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-751"/>
+        <location line="-757"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2338,13 +2338,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+662"/>
-        <location line="+638"/>
+        <location line="+668"/>
+        <location line="+644"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-582"/>
+        <location line="-588"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2464,7 +2464,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;AlEaToRiO</translation>
     </message>
     <message>
-        <location line="+57"/>
+        <location line="+59"/>
+        <source>Rena&amp;me Symbol…</source>
+        <translation>Renom&amp;brar símbolo…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>F&amp;ormat Document</source>
+        <translation>Dar f&amp;ormato al documento</translation>
+    </message>
+    <message>
+        <location line="+3"/>
         <source>Colu&amp;mn Editor…</source>
         <translation>Editor de colu&amp;mnas…</translation>
     </message>
@@ -2604,7 +2614,82 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Problemas — servidor de lenguaje: %1</translation>
     </message>
     <message>
-        <location line="+285"/>
+        <location line="+28"/>
+        <source>No definition found</source>
+        <translation>No se encontró la definición</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Go to definition</source>
+        <translation>Ir a la definición</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The language server of this document cannot find definitions</source>
+        <translation>El servidor de lenguaje de este documento no puede buscar definiciones</translation>
+    </message>
+    <message>
+        <location line="+19"/>
+        <source>References to %1</source>
+        <translation>Referencias a %1</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+49"/>
+        <source>%n reference(s)</source>
+        <translation>
+            <numerusform>%n referencia</numerusform>
+            <numerusform>%n referencias</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The language server of this document cannot find references</source>
+        <translation>El servidor de lenguaje de este documento no puede buscar referencias</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>The language server of this document cannot rename</source>
+        <translation>El servidor de lenguaje de este documento no puede renombrar</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <location line="+4"/>
+        <source>Rename Symbol</source>
+        <translation>Renombrar símbolo</translation>
+    </message>
+    <message>
+        <location line="-4"/>
+        <source>New name for %1:</source>
+        <translation>Nombre nuevo para %1:</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+9"/>
+        <source>Renamed in %n file(s)</source>
+        <translation>
+            <numerusform>Renombrado en %n archivo</numerusform>
+            <numerusform>Renombrado en %n archivos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The language server of this document cannot format it</source>
+        <translation>El servidor de lenguaje de este documento no puede darle formato</translation>
+    </message>
+    <message>
+        <location line="+24"/>
+        <source>Language Server</source>
+        <translation>Servidor de lenguaje</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>%n file operation(s) not applied (create, rename or delete files)</source>
+        <translation>
+            <numerusform>%n operación con archivos sin aplicar (crear, renombrar o borrar archivos)</numerusform>
+            <numerusform>%n operaciones con archivos sin aplicar (crear, renombrar o borrar archivos)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+293"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2619,7 +2704,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir a &amp;símbolo…</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+3"/>
+        <source>Go to &amp;Definition</source>
+        <translation>Ir a la &amp;definición</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Find Re&amp;ferences</source>
+        <translation>Buscar re&amp;ferencias</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Rege&amp;x Tester</source>
         <translation>Probador de rege&amp;x</translation>
     </message>

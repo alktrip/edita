@@ -24,6 +24,7 @@ public:
     QQueue<QString> saveNames;
     QQueue<UnmappableChoice> unmappableChoices;
     QQueue<std::pair<QString, QKeySequence>> macroNames; // nombre vacío = cancelar
+    QQueue<QString> texts;                                // vacío = cancelar
 
     QStringList asked;      // registro de preguntas, en orden
     QStringList warnings;
@@ -95,6 +96,17 @@ public:
         name = answer.first;
         shortcut = answer.second;
         return !name.isEmpty();
+    }
+
+    bool askText(QWidget*, const QString& title, const QString&, QString& text) override
+    {
+        asked << title;
+        if (texts.isEmpty()) {
+            QTest::qFail("askText sin respuesta programada", __FILE__, __LINE__);
+            return false;
+        }
+        text = texts.dequeue();
+        return !text.isEmpty();
     }
 };
 

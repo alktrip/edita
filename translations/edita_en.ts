@@ -45,7 +45,31 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+5254"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+1637"/>
+        <source>%n reference(s)</source>
+        <translation>
+            <numerusform>%n reference</numerusform>
+            <numerusform>%n references</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+29"/>
+        <source>Renamed in %n file(s)</source>
+        <translation>
+            <numerusform>Renamed in %n file</numerusform>
+            <numerusform>Renamed in %n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+31"/>
+        <source>%n file operation(s) not applied (create, rename or delete files)</source>
+        <translation>
+            <numerusform>%n file operation not applied (create, rename or delete files)</numerusform>
+            <numerusform>%n file operations not applied (create, rename or delete files)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3752"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
