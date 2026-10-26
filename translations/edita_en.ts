@@ -13,6 +13,25 @@
     </message>
 </context>
 <context>
+    <name>edita::FindBar</name>
+    <message numerus="yes">
+        <location filename="../src/ui/FindBar.cpp" line="+279"/>
+        <source>%n result(s)</source>
+        <translation>
+            <numerusform>%n result</numerusform>
+            <numerusform>%n results</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+59"/>
+        <source>%n replaced</source>
+        <translation>
+            <numerusform>%n replaced</numerusform>
+            <numerusform>%n replaced</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::GitChanges</name>
     <message numerus="yes">
         <location filename="../src/ui/GitChanges.cpp" line="+315"/>
@@ -26,7 +45,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+4921"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+4984"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>

@@ -306,6 +306,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 30 — Página de inicio | Mientras el único documento es uno nuevo y vacío: empezar, recientes, apariencia y atajos; escribir pasa al documento; no existe en N++ | ✅ [fase30.md](fase30.md) |
 | 31 — Barra de estado y paréntesis | Campos que se pulsan con listas con buscador, sangría por documento, paréntesis por colores, fuentes de kdeglobals cuando Qt no las entiende | ✅ [fase31.md](fase31.md) |
 | 32 — Ruta de navegación y encabezado fijo | Barra con carpetas, archivo y símbolos (Lista de funciones y plegado); encabezados de los bloques que contienen a la primera línea visible, dibujados con los estilos del editor | ✅ [fase32.md](fase32.md) |
+| 33 — Mapa del documento mejorado y buscar en línea | Margen de cambios de Git y marcadores en el mapa, búsquedas con relleno, zona visible con veladura; barra flotante de búsqueda con el mismo motor que el diálogo | ✅ [fase33.md](fase33.md) |
 
 ---
 

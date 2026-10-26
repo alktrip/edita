@@ -38,6 +38,7 @@
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
+#include "ui/FindBar.h"
 #include "ui/WelcomePage.h"
 #include "ui/ScrollBarMarks.h"
 #include "ui/Icons.h"
@@ -469,6 +470,19 @@ void MainWindow::connectPane(EditorPane* pane)
     if (auto* paneLayout = qobject_cast<QVBoxLayout*>(pane->layout()))
         paneLayout->insertWidget(1, _breadcrumbs[index]);
     _sticky[index] = new StickyScroll(pane->editor());
+    _findBar[index] = new FindBar(pane->editor(), pane);
+    connect(_findBar[index], &FindBar::searched, this, [this](const SearchOptions& options) {
+        _lastOptions = options;
+        _findBarUsedLast = true;
+    });
+    connect(_findBar[index], &FindBar::moreOptionsRequested, this, [this](bool replace, const QString& text) {
+        // El diálogo completo de N++, con el texto y las opciones de la barra
+        FindReplaceDialog* dialog = findDialog();
+        if (FindBar* bar = findBarOfCurrentView())
+            dialog->setOptions(bar->options());
+        dialog->showTab(replace ? FindReplaceDialog::Tab::Replace : FindReplaceDialog::Tab::Find, text);
+        _findBarUsedLast = false;
+    });
     connect(_breadcrumbs[index], &Breadcrumbs::openFileRequested, this, [this](const QString& path) {
         openFile(path);
         editor()->setFocus();
@@ -508,6 +522,8 @@ void MainWindow::connectPane(EditorPane* pane)
         updateGitDocument(pane);
         updateLanguageDecorations(index);
         updateBreadcrumbs(index, true);
+        if (_findBar[index])
+            _findBar[index]->refresh();
         if (pane == _activePane)
             refreshCurrentDocument();
         if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && autoCompletion(pane))
@@ -1418,6 +1434,27 @@ void MainWindow::updatePanels()
     if (shown("documentMap") && buf) {
         _docMapPanel->setEditor(editor(), [this, lang = buf->language(), udl = buf->userLanguage()](ScintillaEditBase& view) {
             _syntax.apply(view, lang, udl);
+            // Las marcas en el margen del mapa (cambios de Git y marcadores) y las búsquedas
+            // («Marcar todo», resaltado inteligente, buscar en línea) con un relleno que se ve
+            // aunque el mapa sea tan pequeño
+            auto bgr = [](const QColor& c) { return static_cast<sptr_t>(c.red() | (c.green() << 8) | (c.blue() << 16)); };
+            if (GitChanges* git = gitChanges(_activePane)) {
+                const std::pair<int, LineChangeKind> marks[] = {{GitChanges::kMarkerAdded, LineChangeKind::Added},
+                                                                {GitChanges::kMarkerModified, LineChangeKind::Modified},
+                                                                {GitChanges::kMarkerDeleted, LineChangeKind::Deleted}};
+                for (const auto& [marker, kind] : marks) {
+                    view.send(SCI_MARKERDEFINE, static_cast<uptr_t>(marker), SC_MARK_FULLRECT);
+                    view.send(SCI_MARKERSETBACK, static_cast<uptr_t>(marker), bgr(git->color(kind)));
+                }
+            }
+            view.send(SCI_MARKERDEFINE, kBookmarkMarker, SC_MARK_FULLRECT);
+            view.send(SCI_MARKERSETBACK, kBookmarkMarker, bgr(QColor(0x2E, 0x8B, 0xE6)));
+            for (const int indicator : {kIndicatorFound, kIndicatorSmart, kIndicatorIncremental}) {
+                view.send(SCI_INDICSETSTYLE, static_cast<uptr_t>(indicator), INDIC_FULLBOX);
+                view.send(SCI_INDICSETFORE, static_cast<uptr_t>(indicator), editor()->sci(SCI_INDICGETFORE, static_cast<uptr_t>(indicator)));
+                view.send(SCI_INDICSETALPHA, static_cast<uptr_t>(indicator), 220);
+                view.send(SCI_INDICSETOUTLINEALPHA, static_cast<uptr_t>(indicator), 255);
+            }
         });
     }
     // Funciones del documento activo
@@ -1772,16 +1809,21 @@ void MainWindow::createSearchMenu()
     auto add = [&addIn, search](const QString& text, const char* name, const QKeySequence& key, auto&& slot) {
         return addIn(search, text, name, key, slot);
     };
-    add(tr("&Find…"), "actionFind", QKeySequence::Find, [this] { showFindDialog(Tab::Find); });
+    add(tr("&Find…"), "actionFind", QKeySequence::Find, [this] {
+        if (_prefs.inlineFind)
+            showFindBar(false);
+        else
+            showFindDialog(Tab::Find);
+    });
     add(tr("Find in &Files…"), "actionFindInFiles", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F),
         [this] { showFindDialog(Tab::FindInFiles); });
     add(tr("Find &Next"), "actionFindNext", QKeySequence(Qt::Key_F3), [this] {
-        SearchOptions o = _findDialog ? _findDialog->options() : _lastOptions;
+        SearchOptions o = _findDialog && !_findBarUsedLast ? _findDialog->options() : _lastOptions;
         o.searchUp = false;
         findNextInCurrent(o);
     });
     add(tr("Find &Previous"), "actionFindPrevious", QKeySequence(Qt::SHIFT | Qt::Key_F3), [this] {
-        SearchOptions o = _findDialog ? _findDialog->options() : _lastOptions;
+        SearchOptions o = _findDialog && !_findBarUsedLast ? _findDialog->options() : _lastOptions;
         o.searchUp = true;
         findNextInCurrent(o);
     });
@@ -1789,7 +1831,12 @@ void MainWindow::createSearchMenu()
         [this] { findSelectedText(false); });
     add(tr("Select and Find Previous"), "actionFindSelectedPrevious",
         QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F3), [this] { findSelectedText(true); });
-    add(tr("&Replace…"), "actionReplace", QKeySequence(Qt::CTRL | Qt::Key_H), [this] { showFindDialog(Tab::Replace); });
+    add(tr("&Replace…"), "actionReplace", QKeySequence(Qt::CTRL | Qt::Key_H), [this] {
+        if (_prefs.inlineFind)
+            showFindBar(true);
+        else
+            showFindDialog(Tab::Replace);
+    });
     search->addSeparator();
     add(tr("&Go to…"), "actionGoTo", QKeySequence(Qt::CTRL | Qt::Key_G), [this] {
         const sptr_t lines = editor()->sci(SCI_GETLINECOUNT);
@@ -4251,6 +4298,21 @@ StickyScroll* MainWindow::stickyScrollOfCurrentView() const
     return _sticky[_activePane == _subPane ? 1 : 0];
 }
 
+FindBar* MainWindow::findBarOfCurrentView() const
+{
+    return _findBar[_activePane == _subPane ? 1 : 0];
+}
+
+// Buscar en línea: la barra de la vista activa, con la selección o la palabra del cursor
+void MainWindow::showFindBar(bool replace)
+{
+    FindBar* bar = findBarOfCurrentView();
+    if (!bar)
+        return;
+    hideWelcome(false);
+    bar->open(replace, _prefs.fillFindFieldWithSelected ? textForFindField() : QString());
+}
+
 // La ruta de navegación: el archivo y, si `symbols`, los símbolos del documento con el
 // bloque que ocupa cada uno (el plegado: del encabezado a su último hijo)
 void MainWindow::updateBreadcrumbs(int index, bool symbols)
@@ -4759,6 +4821,7 @@ QString MainWindow::textForFindField() const
 
 void MainWindow::showFindDialog(FindReplaceDialog::Tab tab)
 {
+    _findBarUsedLast = false;
     FindReplaceDialog* dialog = findDialog();
     if (tab == FindReplaceDialog::Tab::FindInFiles) {
         // El directorio del documento actual si el campo está vacío o se pide seguirlo

@@ -97,7 +97,7 @@ void ScrollBarMarks::updateNow()
     }
     // Lo marcado («Marcar todo») y el resaltado inteligente, con el color de su estilo
     const sptr_t length = _view->send(SCI_GETLENGTH);
-    for (const int indicator : {kIndicatorFound, kIndicatorSmart}) {
+    for (const int indicator : {kIndicatorFound, kIndicatorSmart, kIndicatorIncremental}) {
         const QColor color = fromScintilla(_view->send(SCI_INDICGETFORE, static_cast<uptr_t>(indicator)));
         int lastLine = -1;
         // Los tramos con y sin el indicador se recorren con SCI_INDICATOREND

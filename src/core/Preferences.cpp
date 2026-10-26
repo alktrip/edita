@@ -324,6 +324,7 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaRainbowBrackets", p.rainbowBrackets);
     r.boolText("EditaBreadcrumbs", p.breadcrumbs);
     r.boolText("EditaStickyScroll", p.stickyScroll);
+    r.boolText("EditaInlineFind", p.inlineFind);
     r.boolText("EditaWelcomePage", p.showWelcome);
     return p;
 }
@@ -456,6 +457,7 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaRainbowBrackets", yesNo(p.rainbowBrackets));
     w.text("EditaBreadcrumbs", yesNo(p.breadcrumbs));
     w.text("EditaStickyScroll", yesNo(p.stickyScroll));
+    w.text("EditaInlineFind", yesNo(p.inlineFind));
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }
 

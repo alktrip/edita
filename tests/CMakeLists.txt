@@ -44,6 +44,7 @@ edita_add_test(tst_visual LIBS edita_ui)
 edita_add_test(tst_welcome LIBS edita_ui)
 edita_add_test(tst_statusbar LIBS edita_ui)
 edita_add_test(tst_navigation LIBS edita_ui)
+edita_add_test(tst_findbar LIBS edita_ui)
 edita_add_test(tst_panels LIBS edita_ui)
 # Una sola instancia: también arranca el binario de verdad
 edita_add_test(tst_singleinstance LIBS edita_ui)

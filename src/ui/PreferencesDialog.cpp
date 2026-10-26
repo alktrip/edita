@@ -411,6 +411,8 @@ void PreferencesDialog::buildHighlighting()
 void PreferencesDialog::buildSearching()
 {
     auto* form = new QFormLayout(addPage(QStringLiteral("searching"), tr("Searching")));
+    _inlineFind = addCheck(form, tr("Ctrl+F and Ctrl+H open the inline find bar (the dialog stays in its \"⋯\" button)"),
+                           "inlineFind");
     _fillFind = addCheck(form, tr("Fill Find field with selected text"), "fillFindFieldWithSelected");
     _confirmReplaceAll = addCheck(form, tr("Confirm \"Replace All in All Opened Documents\""),
                                   "confirmReplaceInAllOpenDocs");
@@ -636,6 +638,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _markAllWord->setChecked(p.markAllWholeWord);
 
     _fillFind->setChecked(p.fillFindFieldWithSelected);
+    _inlineFind->setChecked(p.inlineFind);
     _confirmReplaceAll->setChecked(p.confirmReplaceInAllOpenDocs);
     _monoFind->setChecked(p.monospacedFontFindDlg);
 
@@ -775,6 +778,7 @@ Preferences PreferencesDialog::preferences() const
     p.markAllWholeWord = _markAllWord->isChecked();
 
     p.fillFindFieldWithSelected = _fillFind->isChecked();
+    p.inlineFind = _inlineFind->isChecked();
     p.confirmReplaceInAllOpenDocs = _confirmReplaceAll->isChecked();
     p.monospacedFontFindDlg = _monoFind->isChecked();
 

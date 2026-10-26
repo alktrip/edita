@@ -66,24 +66,49 @@ QToolButton* toolButton(const QString& icon, const QString& tip, const char* nam
 }
 
 // La zona visible en el mapa (ViewZoneDlg de N++): un rectángulo translúcido del acento
+// Encima del mapa: la zona que se ve en el editor, bien marcada (lo de fuera, algo
+// atenuado) y una raya donde está el cursor
 class ViewZone : public QWidget
 {
 public:
     using QWidget::QWidget;
+
+    void setZone(const QRect& zone, int caretY)
+    {
+        _zone = zone;
+        _caretY = caretY;
+        update();
+    }
 
 protected:
     void paintEvent(QPaintEvent*) override
     {
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing);
-        QColor fill = appearance::accent(appearance::isDarkApplied());
-        QColor border = fill;
-        fill.setAlpha(45);
-        border.setAlpha(150);
-        p.setPen(QPen(border, 1));
+        const bool dark = appearance::isDarkApplied();
+        const QColor accent = appearance::accent(dark);
+        // Fuera de la zona, un velo
+        const QColor veil = dark ? QColor(0, 0, 0, 70) : QColor(0, 0, 0, 22);
+        p.fillRect(QRect(0, 0, width(), std::max(0, _zone.top())), veil);
+        p.fillRect(QRect(0, _zone.bottom() + 1, width(), std::max(0, height() - _zone.bottom() - 1)), veil);
+        // La zona
+        QColor fill = accent;
+        QColor border = accent;
+        fill.setAlpha(dark ? 38 : 30);
+        border.setAlpha(230);
+        p.setPen(QPen(border, 1.5));
         p.setBrush(fill);
-        p.drawRoundedRect(QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5), 3, 3);
+        p.drawRoundedRect(QRectF(_zone).adjusted(1, 0.75, -1, -0.75), 3, 3);
+        // El cursor
+        if (_caretY >= 0) {
+            QColor caret = accent;
+            p.fillRect(QRect(0, _caretY, width(), 2), caret);
+        }
     }
+
+private:
+    QRect _zone;
+    int _caretY = -1;
 };
 
 } // namespace
@@ -151,6 +176,7 @@ DocumentMapPanel::DocumentMapPanel(QWidget* parent)
     _map->viewport()->installEventFilter(this);
     _map->viewport()->setCursor(Qt::PointingHandCursor);
     _zone = new ViewZone(_map->viewport());
+    _zone->setObjectName(QStringLiteral("documentMapZone"));
     _zone->setAttribute(Qt::WA_TransparentForMouseEvents);
     configureMap();
     auto* layout = new QVBoxLayout(this);
@@ -164,6 +190,11 @@ void DocumentMapPanel::configureMap()
     _map->send(SCI_SETZOOM, static_cast<uptr_t>(-10));
     for (int margin = 0; margin < 5; ++margin)
         _map->send(SCI_SETMARGINWIDTHN, static_cast<uptr_t>(margin), 0);
+    // Un margen estrecho con las marcas del documento: los cambios de Git (marcadores 0, 16
+    // y 17) y los marcadores (20); sus colores los pone el estilo (setEditor)
+    _map->send(SCI_SETMARGINTYPEN, 0, SC_MARGIN_SYMBOL);
+    _map->send(SCI_SETMARGINMASKN, 0, (1 << 0) | (1 << 16) | (1 << 17) | (1 << 20));
+    _map->send(SCI_SETMARGINWIDTHN, 0, 4);
     _map->send(SCI_SETVSCROLLBAR, 0);
     _map->send(SCI_SETHSCROLLBAR, 0);
     _map->send(SCI_SETCARETSTYLE, CARETSTYLE_INVISIBLE);
@@ -225,8 +256,12 @@ void DocumentMapPanel::sync()
         mapFirst = static_cast<sptr_t>(ratio * static_cast<double>(mapTotal - mapOnScreen) + 0.5);
     }
     _map->send(SCI_SETFIRSTVISIBLELINE, static_cast<uptr_t>(mapFirst));
-    _zone->setGeometry(viewZone());
-    _zone->update();
+    // La capa cubre todo el mapa: la zona y la raya del cursor, en coordenadas del mapa
+    _zone->setGeometry(_map->viewport()->rect());
+    const sptr_t lineHeight = std::max<sptr_t>(1, _map->send(SCI_TEXTHEIGHT, 0));
+    const sptr_t caretLine = _editor->send(SCI_LINEFROMPOSITION, static_cast<uptr_t>(_editor->send(SCI_GETCURRENTPOS)));
+    const sptr_t caretY = (_map->send(SCI_VISIBLEFROMDOCLINE, static_cast<uptr_t>(caretLine)) - mapFirst) * lineHeight;
+    static_cast<ViewZone*>(_zone)->setZone(viewZone(), static_cast<int>(caretY));
 }
 
 QRect DocumentMapPanel::viewZone() const

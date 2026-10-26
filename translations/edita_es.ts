@@ -1137,7 +1137,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocumentListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="+99"/>
+        <location filename="../src/ui/Panels.cpp" line="+124"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
@@ -1174,7 +1174,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FileBrowserPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="+368"/>
+        <location filename="../src/ui/Panels.cpp" line="+378"/>
         <source>Add folder</source>
         <translation>Añadir carpeta</translation>
     </message>
@@ -1227,6 +1227,106 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <source>Remove all</source>
         <translation>Quitar todas</translation>
+    </message>
+</context>
+<context>
+    <name>edita::FindBar</name>
+    <message>
+        <location filename="../src/ui/FindBar.cpp" line="+60"/>
+        <source>Toggle Replace</source>
+        <translation>Mostrar u ocultar Reemplazar</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Find</source>
+        <translation>Buscar</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Match case (Alt+C)</source>
+        <translation>Coincidir mayúsculas (Alt+C)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Match whole word only (Alt+W)</source>
+        <translation>Solo palabras completas (Alt+W)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Use regular expression (Alt+R)</source>
+        <translation>Expresión regular (Alt+R)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Previous match (Shift+Enter)</source>
+        <translation>Anterior (Mayús+Intro)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Next match (Enter)</source>
+        <translation>Siguiente (Intro)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>More options (the Find dialog)</source>
+        <translation>Más opciones (el diálogo Buscar)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Close (Esc)</source>
+        <translation>Cerrar (Esc)</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <location line="+2"/>
+        <source>Replace</source>
+        <translation>Reemplazar</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Replace this match (Enter)</source>
+        <translation>Reemplazar esta (Intro)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>All</source>
+        <translation>Todas</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Replace all (Ctrl+Alt+Enter)</source>
+        <translation>Reemplazar todas (Ctrl+Alt+Intro)</translation>
+    </message>
+    <message>
+        <location line="+151"/>
+        <source>Invalid regex</source>
+        <translation>Regex no válida</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>No results</source>
+        <translation>Sin resultados</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>%1 of %2</source>
+        <translation>%1 de %2</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>%n result(s)</source>
+        <translation>
+            <numerusform>%n resultado</numerusform>
+            <numerusform>%n resultados</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+59"/>
+        <source>%n replaced</source>
+        <translation>
+            <numerusform>%n reemplazada</numerusform>
+            <numerusform>%n reemplazadas</numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -1435,13 +1535,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+377"/>
-        <location line="+2325"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+378"/>
+        <location line="+2371"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2325"/>
+        <location line="-2371"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
@@ -1451,7 +1551,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+290"/>
+        <location line="+305"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1907,7 +2007,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+417"/>
+        <location line="+438"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -1953,12 +2053,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+733"/>
+        <location line="+743"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-709"/>
+        <location line="-719"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2035,7 +2135,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Buscar…</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+6"/>
         <source>Find in &amp;Files…</source>
         <translation>Buscar en arc&amp;hivos…</translation>
     </message>
@@ -2065,7 +2165,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Reemplazar…</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+7"/>
         <source>&amp;Go to…</source>
         <translation>&amp;Ir a…</translation>
     </message>
@@ -2130,12 +2230,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1004"/>
+        <location line="-1035"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-694"/>
+        <location line="-709"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2215,7 +2315,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+605"/>
+        <location line="+620"/>
         <location line="+603"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -2416,12 +2516,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Explorador de carpetas</translation>
     </message>
     <message>
-        <location line="+200"/>
+        <location line="+221"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
     <message>
-        <location line="+297"/>
+        <location line="+307"/>
         <source>Go to &amp;File…</source>
         <translation>Ir a &amp;archivo…</translation>
     </message>
@@ -3053,7 +3153,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+546"/>
+        <location line="+561"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
@@ -3068,7 +3168,7 @@ Continue?</source>
         <translation>¿Reemplazar todas las apariciones en todos los documentos abiertos?</translation>
     </message>
     <message>
-        <location line="+59"/>
+        <location line="+60"/>
         <source>in selection</source>
         <translation>en la selección</translation>
     </message>
@@ -4235,12 +4335,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+120"/>
+        <location line="+122"/>
         <source>No</source>
         <translation>No</translation>
     </message>
     <message>
-        <location line="-120"/>
+        <location line="-122"/>
         <source>Function completion (language API)</source>
         <translation>Funciones (API del lenguaje)</translation>
     </message>
@@ -4341,6 +4441,11 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
+        <source>Ctrl+F and Ctrl+H open the inline find bar (the dialog stays in its &quot;⋯&quot; button)</source>
+        <translation>Ctrl+F y Ctrl+H abren la barra de buscar en línea (el diálogo sigue en su botón «⋯»)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Fill Find field with selected text</source>
         <translation>Rellenar el campo Buscar con la selección</translation>
     </message>

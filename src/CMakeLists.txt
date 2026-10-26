@@ -127,6 +127,7 @@ add_library(edita_ui STATIC
     ui/ColorPreview.cpp
     ui/CommandPalette.cpp
     ui/FileIcons.cpp
+    ui/FindBar.cpp
     ui/GitChanges.cpp
     ui/NotificationBar.cpp
     ui/Breadcrumbs.cpp
