@@ -25,11 +25,11 @@ Edita se compila también para macOS, como un `.dmg` universal (Apple Silicon e 
 | Con GCC no cambia nada: 41 suites | ✅ |
 | El flujo de trabajo, el `Info.plist` y el script son válidos (YAML, XML, `bash -n`) | ✅ |
 | `.dmg` generado en GitHub Actions | ✅ `Edita-0.0.1-macos-universal.dmg` (37 MB), en https://github.com/alktrip/edita/actions |
-| Pruebas en macOS 14 (Qt 6.8.3, Apple Clang 15) | ✅ 35 de 37 suites en la sexta ejecución; las dos que faltaban se corrigieron después (ver abajo) |
+| Pruebas en macOS 14 (Qt 6.8.3, Apple Clang 15) | ✅ 37 de 37 suites (octava ejecución) |
 
 ## Lo que salió en las primeras ejecuciones en macOS
 
-Se necesitaron seis ejecuciones. Cada una avanzó un poco más y dejó algo que desde Linux no se veía:
+Se necesitaron ocho ejecuciones. Cada una avanzó un poco más y dejó algo que desde Linux no se veía:
 
 | Problema | Arreglo |
 |---|---|
@@ -42,6 +42,7 @@ Se necesitaron seis ejecuciones. Cada una avanzó un poco más y dejó algo que 
 | La libc++ de macOS no da nombre a la locale del entorno, y se tomaba por un fallo (la regex funcionaba igual) | Se devuelve un nombre |
 | Sin pantalla, la fuente fija de Qt en macOS («Monospace») no existe y salía una proporcional (el espacio virtual del editor de columnas salía el doble de ancho) | En macOS, Menlo, Monaco o Courier New si la de Qt no es monoespaciada |
 | `XDG_RUNTIME_DIR` no lo usa Qt en macOS | La instancia única lo respeta si está definido (como la configuración con `XDG_CONFIG_HOME`) |
+| La ruta del socket de la instancia única puede pasar de 104 bytes (el límite de macOS; en Linux, 108) | Si no cabe, el socket va a `/tmp` (el nombre lleva el hash de la configuración) |
 | Pruebas que suponían Linux: QSettings nativos de Qt, `/var` = `/private/var`, rutas largas que se partían, bash 3.2 sigue la lista tras Ctrl+C | Se omite en macOS, se aceptan las dos rutas, terminal más ancha, `sleep 30` sin nada detrás |
 
 Limitaciones: la app no está notarizada, así que la primera vez hay que abrirla con clic derecho › Abrir (o en Ajustes › Privacidad y seguridad › «Abrir igualmente»). Por ahora no incluye Python Script. El instalador de paquetes `.zip` del administrador de plugins necesita libzip, que el runner no tiene.
