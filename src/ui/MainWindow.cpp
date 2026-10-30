@@ -3775,7 +3775,7 @@ void MainWindow::showWindowsDialog()
     if (!_windowsDialog) {
         _windowsDialog = new WindowsDialog(this);
         auto paneNow = [this] { return _activePane ? _activePane : _mainPane; };
-        connect(_windowsDialog, &WindowsDialog::activateRequested, this, [this, paneNow](BufferId id) {
+        connect(_windowsDialog, &WindowsDialog::activateRequested, this, [paneNow](BufferId id) {
             EditorPane* pane = paneNow();
             if (pane->contains(id)) {
                 pane->activateBuffer(id);
