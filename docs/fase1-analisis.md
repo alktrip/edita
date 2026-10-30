@@ -312,6 +312,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 36 — Servidores de lenguaje (1) | Cliente LSP 3.17 (JSON-RPC, cola, UTF-8/UTF-16), 27 servidores conocidos, sincronización, diagnósticos, panel Problemas, autocompletado con fragmentos y hover | ✅ [fase36.md](fase36.md) |
 | 37 — Servidores de lenguaje (2) | Definición, referencias en el panel de resultados, renombrar (WorkspaceEdit), formato y ayuda de parámetros | ✅ [fase37.md](fase37.md) |
 | 38 — macOS | Código portable (forkpty/proc_pidinfo, ⌘ y Control en la terminal, rutas del .app, QFileOpenEvent), paquete Edita.app con Info.plist, .dmg universal con GitHub Actions | ✅ [fase38.md](fase38.md) |
+| 39 — Comparar | Myers por líneas y por caracteres, alineación con anotaciones, marcadores de fondo, desplazamiento sincronizado; con la otra vista, lo guardado o HEAD | ✅ [fase39.md](fase39.md) |
 
 ---
 

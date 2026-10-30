@@ -45,7 +45,15 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+1637"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+1646"/>
+        <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
+        <translation>
+            <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
+            <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n blocks</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+166"/>
         <source>%n reference(s)</source>
         <translation>
             <numerusform>%n reference</numerusform>
@@ -69,7 +77,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+3752"/>
+        <location line="+3763"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>

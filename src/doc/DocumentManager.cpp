@@ -168,6 +168,15 @@ void DocumentManager::releaseDocument(Buffer& buffer)
     _scratch->send(SCI_RELEASEDOCUMENT, 0, buffer._document);
 }
 
+void DocumentManager::setUntitledName(BufferId id, const QString& name)
+{
+    Buffer* buf = buffer(id);
+    if (!buf || !buf->isUntitled() || buf->_untitledName == name)
+        return;
+    buf->_untitledName = name;
+    notify(buf, BufferChange::Filename);
+}
+
 BufferId DocumentManager::newEmptyDocument()
 {
     const SciDocument doc = createDocument(false);

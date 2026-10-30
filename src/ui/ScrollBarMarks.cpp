@@ -5,6 +5,7 @@
 #include "ui/ScrollBarMarks.h"
 
 #include "syntax/SyntaxStyler.h"
+#include "ui/CompareSession.h"
 #include "ui/EditCommands.h"
 #include "ui/EditorView.h"
 #include "ui/GitChanges.h"
@@ -119,6 +120,14 @@ void ScrollBarMarks::updateNow()
     for (sptr_t line = _view->send(SCI_MARKERNEXT, 0, 1 << kBookmarkMarker); line >= 0 && static_cast<int>(_marks.size()) < kMaxMarks;
          line = _view->send(SCI_MARKERNEXT, static_cast<uptr_t>(line + 1), 1 << kBookmarkMarker))
         add(static_cast<int>(line), 1, bookmark, 2);
+    // Comparar: las líneas añadidas, quitadas y cambiadas (en el carril de Git)
+    const bool dark = fromScintilla(_view->send(SCI_STYLEGETBACK, STYLE_DEFAULT)).lightness() < 128;
+    for (const int marker : {CompareSession::kMarkerAdded, CompareSession::kMarkerRemoved, CompareSession::kMarkerChanged}) {
+        const QColor color = CompareSession::color(marker, dark).darker(dark ? 60 : 130);
+        for (sptr_t line = _view->send(SCI_MARKERNEXT, 0, 1 << marker); line >= 0 && static_cast<int>(_marks.size()) < kMaxMarks;
+             line = _view->send(SCI_MARKERNEXT, static_cast<uptr_t>(line + 1), 1 << marker))
+            add(static_cast<int>(line), 1, color, 0);
+    }
     _caretLine = static_cast<int>(_view->send(SCI_LINEFROMPOSITION, static_cast<uptr_t>(_view->send(SCI_GETCURRENTPOS))));
     update();
 }

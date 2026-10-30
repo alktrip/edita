@@ -66,6 +66,7 @@ class DocumentMapPanel;
 class RegexTesterPanel;
 class TerminalPanel;
 class LspManager;
+class CompareSession;
 class ProblemsPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
@@ -247,6 +248,12 @@ public:
     TerminalPanel* terminalPanel() const { return _terminal; }
     LspManager* lsp() const { return _lsp.get(); }
     ProblemsPanel* problemsPanel() const { return _problems; }
+    // Comparar (no existe en N++ sin el plugin Compare): con la otra vista, con lo guardado
+    // o con la versión de Git; la referencia va en la otra vista
+    enum class CompareWith { OtherView, Saved, GitHead };
+    bool startCompare(CompareWith with);
+    void stopCompare();
+    CompareSession* compareSession() const { return _compare.get(); }
     // Terminal integrada: la abre (con una terminal en `directory`, o en la del documento)
     void openTerminal(const QString& directory = {});
     void toggleTerminal();
@@ -381,6 +388,8 @@ private:
     void updateProblemsField();
     void goToLspPosition(const QString& path, int line, int character);
     void goToLocation(const QString& path, int line, int character, lsp::PositionEncoding encoding);
+    BufferId openReference(EditorPane* pane, const QString& name, const std::string& utf8, const Buffer& like);
+    void compareChanged();
     void applyTerminalStyle();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
     void applyShortcuts();
@@ -576,6 +585,11 @@ private:
     TerminalPanel* _terminal = nullptr;
     std::unique_ptr<LspManager> _lsp;
     ProblemsPanel* _problems = nullptr;
+    std::unique_ptr<CompareSession> _compare;
+    BufferId _compareBuffers[2] = {kInvalidBuffer, kInvalidBuffer}; // referencia, documento
+    BufferId _compareTemp = kInvalidBuffer;                          // la referencia que se creó
+    bool _compareIgnoreSpaces = false;
+    bool _compareIgnoreCase = false;
     std::vector<QPointer<QDockWidget>> _panelDocks; // al cerrar se destruyen antes que la ventana
     ShortcutsConfig _shortcutConfig;
     // Paneles de los plugins (NPPM_DMMREGASDCKDLG): se destruyen antes de descargar los plugins

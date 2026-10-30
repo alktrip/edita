@@ -39,6 +39,7 @@
 #include "ui/TerminalPanel.h"
 #include "ui/LspManager.h"
 #include "ui/ProblemsPanel.h"
+#include "ui/CompareSession.h"
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
@@ -433,6 +434,8 @@ MainWindow::MainWindow(QWidget* parent)
     connect(&_documents, &DocumentManager::bufferClosed, this, [this](BufferId id) {
         _indentOverrides.erase(id);
         _lsp->detach(id);
+        if (_compare && (id == _compareBuffers[0] || id == _compareBuffers[1]))
+            stopCompare();
         scheduleWelcomeUpdate();
         syncWatchedFiles();
         QTimer::singleShot(0, this, [this] { updatePanels(); });
@@ -535,6 +538,9 @@ void MainWindow::connectPane(EditorPane* pane)
             _scrollMarks[index]->scheduleUpdate();
     });
     connect(pane, &EditorPane::currentBufferChanged, this, [this, pane, index] {
+        // Otra pestaña en una de las vistas que se comparan: se acabó la comparación
+        if (_compare && pane->currentBuffer() != _compareBuffers[0] && pane->currentBuffer() != _compareBuffers[1])
+            stopCompare();
         applyIndentOverride(pane);
         _lsp->paintDiagnostics(*pane->editor(), pane->currentBuffer());
         updateProblemsField();
@@ -1044,6 +1050,38 @@ void MainWindow::createMenus()
               [this] { openTerminal(terminalDirectory()); });
     addAction(view, tr("Run Selection in Terminal"), "actionRunSelectionInTerminal", QKeySequence(),
               [this] { runSelectionInTerminal(); });
+    // Comparar (como el plugin Compare de N++)
+    QMenu* compare = view->addMenu(tr("Co&mpare"));
+    addAction(compare, tr("Compare with &Other View"), "actionCompareViews", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_C),
+              [this] { startCompare(CompareWith::OtherView); });
+    addAction(compare, tr("Compare with Last &Saved Version"), "actionCompareSaved", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_D),
+              [this] { startCompare(CompareWith::Saved); });
+    addAction(compare, tr("Compare with &Git (HEAD)"), "actionCompareGit", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_H),
+              [this] { startCompare(CompareWith::GitHead); });
+    compare->addSeparator();
+    addAction(compare, tr("&Next Difference"), "actionNextDifference", QKeySequence(), [this] {
+        if (_compare)
+            statusBar()->showMessage(tr("Difference %1 of %2").arg(_compare->goToDifference(editor(), true)).arg(_compare->changes().size()), 4000);
+    });
+    addAction(compare, tr("&Previous Difference"), "actionPreviousDifference", QKeySequence(), [this] {
+        if (_compare)
+            statusBar()->showMessage(tr("Difference %1 of %2").arg(_compare->goToDifference(editor(), false)).arg(_compare->changes().size()), 4000);
+    });
+    compare->addSeparator();
+    QAction* ignoreSpaces = addAction(compare, tr("Ignore &Spaces"), "actionCompareIgnoreSpaces", QKeySequence(), [this](bool on) {
+        _compareIgnoreSpaces = on;
+        if (_compare)
+            _compare->setOptions({_compareIgnoreSpaces, _compareIgnoreCase});
+    });
+    ignoreSpaces->setCheckable(true);
+    QAction* ignoreCase = addAction(compare, tr("Ignore &Case"), "actionCompareIgnoreCase", QKeySequence(), [this](bool on) {
+        _compareIgnoreCase = on;
+        if (_compare)
+            _compare->setOptions({_compareIgnoreSpaces, _compareIgnoreCase});
+    });
+    ignoreCase->setCheckable(true);
+    compare->addSeparator();
+    addAction(compare, tr("&Clear Comparison"), "actionCompareClear", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_X), [this] { stopCompare(); });
     view->addSeparator();
     _wrapAction = addAction(view, tr("&Word wrap"), "actionWrap", QKeySequence(),
                             [this](bool checked) { toggleViewOption(&Preferences::wrap, checked); });
@@ -1497,6 +1535,143 @@ void MainWindow::createPanels()
         dialog->showTab(o.replacement.empty() ? FindReplaceDialog::Tab::Find : FindReplaceDialog::Tab::Replace,
                         QString::fromStdString(o.pattern));
     });
+}
+
+// --- Comparar --------------------------------------------------------------------
+
+BufferId MainWindow::openReference(EditorPane* pane, const QString& name, const std::string& utf8, const Buffer& like)
+{
+    // Un documento sin archivo, de solo lectura y con el lenguaje del original
+    const LangType lang = like.language();
+    const QString userLanguage = like.userLanguage();
+    const BufferId id = _documents.newEmptyDocument();
+    pane->addBuffer(id); // en esa vista aunque esté vacía (setActivePane no cambia a una vacía)
+    pane->activateBuffer(id);
+    updatePaneVisibility();
+    _documents.setUntitledName(id, name);
+    EditorView* v = pane->editor();
+    v->send(SCI_SETTEXT, 0, reinterpret_cast<sptr_t>(utf8.c_str()));
+    v->sci(SCI_EMPTYUNDOBUFFER);
+    v->sci(SCI_SETSAVEPOINT);
+    if (Buffer* buf = _documents.buffer(id)) {
+        if (lang == LangType::User)
+            buf->setUserLanguage(userLanguage);
+        else
+            buf->setLanguage(lang);
+        buf->setUserReadOnly(true);
+    }
+    return id;
+}
+
+bool MainWindow::startCompare(CompareWith with)
+{
+    stopCompare();
+    EditorPane* current = _activePane;
+    EditorPane* other = otherPane(current);
+    const BufferId id = current->currentBuffer();
+    const Buffer* buf = _documents.buffer(id);
+    if (!buf)
+        return false;
+    EditorPane* oldPane = nullptr;
+    EditorPane* newPane = nullptr;
+    BufferId temp = kInvalidBuffer;
+    if (with == CompareWith::OtherView) {
+        // Con una sola vista: el documento pasa a la otra y se compara con la pestaña que queda
+        if (other->count() == 0) {
+            if (current->count() < 2) {
+                _prompter->warn(this, tr("Compare"), tr("Open two documents (or one in each view) to compare them."));
+                return false;
+            }
+            moveToOtherView();
+        }
+        oldPane = _mainPane;
+        newPane = _subPane;
+    } else {
+        if (buf->isUntitled()) {
+            _prompter->warn(this, tr("Compare"), tr("The document has not been saved to a file yet."));
+            return false;
+        }
+        const QString path = buf->filePath();
+        QByteArray bytes;
+        QString suffix;
+        if (with == CompareWith::Saved) {
+            QFile file(path);
+            if (!file.open(QIODevice::ReadOnly)) {
+                _prompter->warn(this, tr("Compare"), tr("Could not read %1").arg(path));
+                return false;
+            }
+            bytes = file.readAll();
+            suffix = tr("saved");
+        } else {
+            QProcess git;
+            git.start(QStringLiteral("git"), {QStringLiteral("-C"), QFileInfo(path).absolutePath(), QStringLiteral("cat-file"),
+                                              QStringLiteral("blob"), QStringLiteral("HEAD:./") + QFileInfo(path).fileName()});
+            if (!git.waitForFinished(10000) || git.exitStatus() != QProcess::NormalExit || git.exitCode() != 0) {
+                _prompter->warn(this, tr("Compare"), tr("%1 has no version in Git (HEAD).").arg(QFileInfo(path).fileName()));
+                return false;
+            }
+            bytes = git.readAllStandardOutput();
+            suffix = QStringLiteral("HEAD");
+        }
+        std::string utf8 = decodeAll(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), buf->encoding());
+        if (utf8.starts_with("\xEF\xBB\xBF"))
+            utf8.erase(0, 3);
+        temp = openReference(other, QStringLiteral("%1 (%2)").arg(buf->displayName(), suffix), utf8, *buf);
+        oldPane = other;
+        newPane = current;
+        setActivePane(current);
+    }
+    _compareBuffers[0] = oldPane->currentBuffer();
+    _compareBuffers[1] = newPane->currentBuffer();
+    _compareTemp = temp;
+    _compare = std::make_unique<CompareSession>(oldPane->editor(), newPane->editor());
+    connect(_compare.get(), &CompareSession::updated, this, &MainWindow::compareChanged);
+    // Otro tema: los colores y las máscaras de los márgenes, después de aplicarlo a las vistas
+    connect(&_syntax, &SyntaxManager::stylesChanged, _compare.get(), [session = _compare.get()] {
+        QTimer::singleShot(0, session, &CompareSession::recompute);
+    });
+    _compare->setOptions({_compareIgnoreSpaces, _compareIgnoreCase}); // (compara)
+    newPane->editor()->setFocus();
+    return true;
+}
+
+void MainWindow::compareChanged()
+{
+    if (!_compare)
+        return;
+    const CompareSession::Stats s = _compare->stats();
+    if (s.identical())
+        statusBar()->showMessage(tr("Compare: the documents are identical"), 8000);
+    else
+        statusBar()->showMessage(tr("Compare: %1 changed, %2 added, %3 removed lines in %n block(s)", nullptr, s.blocks)
+                                     .arg(s.changed).arg(s.added).arg(s.removed),
+                                 8000);
+    for (const QPointer<ScrollBarMarks>& marks : _scrollMarks) {
+        if (marks)
+            marks->scheduleUpdate();
+    }
+}
+
+void MainWindow::stopCompare()
+{
+    if (!_compare)
+        return;
+    std::unique_ptr<CompareSession> session = std::move(_compare);
+    session->disconnect(this);
+    // Las marcas viven en los documentos: se quitan aunque ya no estén a la vista
+    for (const BufferId id : _compareBuffers) {
+        if (const Buffer* buf = _documents.buffer(id))
+            withSearchView(*buf, [](ScintillaEditBase& view) { CompareSession::clearDecorations(view); });
+    }
+    session.reset();
+    const BufferId temp = _compareTemp;
+    _compareBuffers[0] = _compareBuffers[1] = _compareTemp = kInvalidBuffer;
+    if (temp != kInvalidBuffer && _documents.buffer(temp))
+        closeBuffer(temp); // la referencia (sin cambios: no pregunta)
+    for (const QPointer<ScrollBarMarks>& marks : _scrollMarks) {
+        if (marks)
+            marks->scheduleUpdate();
+    }
 }
 
 void MainWindow::attachToLsp(BufferId id)
@@ -2387,9 +2562,19 @@ void MainWindow::createSearchMenu()
     // Historial de cambios (IDM_SEARCH_CHANGED_NEXT/PREV, IDM_SEARCH_CLEAR_CHANGE_HISTORY)
     QMenu* changes = search->addMenu(tr("Change &History"));
     addIn(changes, tr("Go to &Next Change"), "actionNextChange", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Down),
-          [this] { goToChange(*editor(), true); });
+          [this] {
+              if (_compare) // comparando: las diferencias
+                  findChild<QAction*>(QStringLiteral("actionNextDifference"))->trigger();
+              else
+                  goToChange(*editor(), true);
+          });
     addIn(changes, tr("Go to &Previous Change"), "actionPreviousChange", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Up),
-          [this] { goToChange(*editor(), false); });
+          [this] {
+              if (_compare)
+                  findChild<QAction*>(QStringLiteral("actionPreviousDifference"))->trigger();
+              else
+                  goToChange(*editor(), false);
+          });
     addIn(changes, tr("&Clear All Changes"), "actionClearChangeHistory", QKeySequence(), [this] {
         clearChangeHistory(*editor());
         refreshCurrentDocument(); // deshacer ya no está disponible

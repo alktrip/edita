@@ -74,6 +74,8 @@ DocStatusBar::DocStatusBar(QWidget* parent)
     leftLayout->addStretch(1);
     _problems->hide();
     addWidget(left, 1);
+    // Un mensaje temporal se dibuja en el mismo sitio: mientras dura, el campo se oculta
+    connect(this, &QStatusBar::messageChanged, left, [left](const QString& message) { left->setVisible(message.isEmpty()); });
     addPermanentWidget(_length);
     addPermanentWidget(_position);
     addPermanentWidget(_indentation);

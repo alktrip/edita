@@ -556,7 +556,7 @@
 <context>
     <name>PluginInstaller</name>
     <message>
-        <location filename="../src/core/PluginInstaller.cpp" line="+91"/>
+        <location filename="../src/core/PluginInstaller.cpp" line="+95"/>
         <source>Not a valid .zip file: %1</source>
         <translation>No es un archivo .zip válido: %1</translation>
     </message>
@@ -1053,7 +1053,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocStatusBar</name>
     <message>
-        <location filename="../src/ui/DocStatusBar.cpp" line="+84"/>
+        <location filename="../src/ui/DocStatusBar.cpp" line="+86"/>
         <source>Language (click to change it)</source>
         <translation>Lenguaje (clic para cambiarlo)</translation>
     </message>
@@ -1150,7 +1150,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocumentManager</name>
     <message>
-        <location filename="../src/doc/DocumentManager.cpp" line="+241"/>
+        <location filename="../src/doc/DocumentManager.cpp" line="+250"/>
         <source>Not enough memory to open %1</source>
         <translation>No hay memoria suficiente para abrir %1</translation>
     </message>
@@ -1558,23 +1558,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+391"/>
-        <location line="+2818"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+392"/>
+        <location line="+3002"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-2818"/>
+        <location line="-3002"/>
+        <location line="+1208"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="+84"/>
+        <location line="-1122"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+339"/>
+        <location line="+342"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1869,7 +1870,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+64"/>
         <source>&amp;Word wrap</source>
         <translation>&amp;Ajuste de línea</translation>
     </message>
@@ -2030,7 +2031,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+798"/>
+        <location line="+935"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2076,12 +2077,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+750"/>
+        <location line="+760"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-726"/>
+        <location line="-736"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2253,12 +2254,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1434"/>
+        <location line="-1603"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-757"/>
+        <location line="-762"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2338,13 +2339,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+668"/>
-        <location line="+644"/>
+        <location line="+673"/>
+        <location line="+676"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-588"/>
+        <location line="-620"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2524,7 +2525,58 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ejecutar la selección en la terminal</translation>
     </message>
     <message>
-        <location line="+86"/>
+        <location line="+3"/>
+        <source>Co&amp;mpare</source>
+        <translation>Co&amp;mparar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Compare with &amp;Other View</source>
+        <translation>Comparar con la &amp;otra vista</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Compare with Last &amp;Saved Version</source>
+        <translation>Comparar con la última versión &amp;guardada</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Compare with &amp;Git (HEAD)</source>
+        <translation>Comparar con &amp;Git (HEAD)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>&amp;Next Difference</source>
+        <translation>Diferencia &amp;siguiente</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <location line="+4"/>
+        <source>Difference %1 of %2</source>
+        <translation>Diferencia %1 de %2</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>&amp;Previous Difference</source>
+        <translation>Diferencia &amp;anterior</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Ignore &amp;Spaces</source>
+        <translation>Ignorar &amp;espacios</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Ignore &amp;Case</source>
+        <translation>Ignorar &amp;mayúsculas</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>&amp;Clear Comparison</source>
+        <translation>&amp;Quitar la comparación</translation>
+    </message>
+    <message>
+        <location line="+85"/>
         <source>&amp;Style Configurator…</source>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
@@ -2604,7 +2656,48 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Problemas</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+129"/>
+        <location line="+9"/>
+        <location line="+9"/>
+        <location line="+10"/>
+        <source>Compare</source>
+        <translation>Comparar</translation>
+    </message>
+    <message>
+        <location line="-28"/>
+        <source>Open two documents (or one in each view) to compare them.</source>
+        <translation>Abre dos documentos (o uno en cada vista) para compararlos.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>The document has not been saved to a file yet.</source>
+        <translation>El documento aún no se ha guardado en un archivo.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>saved</source>
+        <translation>guardado</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>%1 has no version in Git (HEAD).</source>
+        <translation>%1 no tiene versión en Git (HEAD).</translation>
+    </message>
+    <message>
+        <location line="+34"/>
+        <source>Compare: the documents are identical</source>
+        <translation>Comparar: los documentos son idénticos</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
+        <translation>
+            <numerusform>Comparar: %1 líneas cambiadas, %2 añadidas y %3 quitadas en %n bloque</numerusform>
+            <numerusform>Comparar: %1 líneas cambiadas, %2 añadidas y %3 quitadas en %n bloques</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+54"/>
         <source>Problems (no language server for this document)</source>
         <translation>Problemas (este documento no tiene servidor de lenguaje)</translation>
     </message>
@@ -2820,12 +2913,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cambio &amp;siguiente</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+7"/>
         <source>Go to &amp;Previous Change</source>
         <translation>Cambio &amp;anterior</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+7"/>
         <source>&amp;Clear All Changes</source>
         <translation>&amp;Borrar el historial de cambios</translation>
     </message>
@@ -2884,12 +2977,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+250"/>
         <location line="+20"/>
-        <location line="+1409"/>
+        <location line="+1410"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1675"/>
+        <location line="-1676"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3125,7 +3218,7 @@ Do you want to save the file anyway?</source>
         <translation>Macro:</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+36"/>
         <source>&amp;Plugins</source>
         <translation>&amp;Plugins</translation>
     </message>
@@ -5764,7 +5857,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>edita::TerminalView</name>
     <message>
-        <location filename="../src/ui/Terminal.cpp" line="+1153"/>
+        <location filename="../src/ui/Terminal.cpp" line="+1230"/>
         <source>Copy</source>
         <translation>Copiar</translation>
     </message>
@@ -6496,7 +6589,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="+59"/>
+        <location filename="../src/main.cpp" line="+90"/>
         <source>Text editor inspired by Notepad++</source>
         <translation>Editor de texto inspirado en Notepad++</translation>
     </message>

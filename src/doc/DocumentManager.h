@@ -81,6 +81,8 @@ public:
 
     // Documento vacío "nuevo N", con el número libre más bajo (nextUntitledNewNumber)
     BufferId newEmptyDocument();
+    // El nombre que muestra un documento sin archivo («main.cpp (HEAD)» al comparar)
+    void setUntitledName(BufferId id, const QString& name);
 
     // Carga un archivo en un documento nuevo. `forcedCodepage` = -1 para detectar.
     // No comprueba si ya estaba abierto: para eso está findByPath() (doOpen en N++).
