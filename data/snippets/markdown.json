@@ -1,0 +1,35 @@
+{
+  "enlace": {
+    "prefix": "link",
+    "body": "[${1:texto}](${2:url})",
+    "description": "Enlace"
+  },
+  "imagen": {
+    "prefix": "img",
+    "body": "![${1:descripción}](${2:ruta})",
+    "description": "Imagen"
+  },
+  "código": {
+    "prefix": "code",
+    "body": [
+      "```${1:lenguaje}",
+      "$0",
+      "```"
+    ],
+    "description": "Bloque de código"
+  },
+  "tabla": {
+    "prefix": "table",
+    "body": [
+      "| ${1:Columna} | ${2:Columna} |",
+      "|---|---|",
+      "| $3 | $4 |"
+    ],
+    "description": "Tabla"
+  },
+  "tarea": {
+    "prefix": "task",
+    "body": "- [ ] ${1:tarea}",
+    "description": "Casilla de tarea"
+  }
+}

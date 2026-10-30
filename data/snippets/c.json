@@ -1,0 +1,105 @@
+{
+  "for": {
+    "prefix": "for",
+    "body": [
+      "for (${1:int} ${2:i} = 0; $2 < ${3:n}; ++$2) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Bucle for"
+  },
+  "while": {
+    "prefix": "while",
+    "body": [
+      "while (${1:condición}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Bucle while"
+  },
+  "do while": {
+    "prefix": "do",
+    "body": [
+      "do {",
+      "\t$0",
+      "} while (${1:condición});"
+    ],
+    "description": "Bucle do…while"
+  },
+  "if": {
+    "prefix": "if",
+    "body": [
+      "if (${1:condición}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "if"
+  },
+  "if else": {
+    "prefix": "ifelse",
+    "body": [
+      "if (${1:condición}) {",
+      "\t$2",
+      "} else {",
+      "\t$0",
+      "}"
+    ],
+    "description": "if…else"
+  },
+  "switch": {
+    "prefix": "switch",
+    "body": [
+      "switch (${1:valor}) {",
+      "case ${2:caso}:",
+      "\t$0",
+      "\tbreak;",
+      "default:",
+      "\tbreak;",
+      "}"
+    ],
+    "description": "switch"
+  },
+  "main": {
+    "prefix": "main",
+    "body": [
+      "int main(int argc, char* argv[])",
+      "{",
+      "\t$0",
+      "\treturn 0;",
+      "}"
+    ],
+    "description": "Función main"
+  },
+  "include": {
+    "prefix": "inc",
+    "body": "#include <${1:cabecera}>",
+    "description": "#include <…>"
+  },
+  "include local": {
+    "prefix": "incl",
+    "body": "#include \"${1:cabecera}.h\"",
+    "description": "#include \"…\""
+  },
+  "struct": {
+    "prefix": "struct",
+    "body": [
+      "struct ${1:Nombre}",
+      "{",
+      "\t$0",
+      "};"
+    ],
+    "description": "struct"
+  },
+  "guarda de cabecera": {
+    "prefix": "guard",
+    "body": [
+      "#ifndef ${1:${TM_FILENAME_BASE}_H}",
+      "#define $1",
+      "",
+      "$0",
+      "",
+      "#endif // $1"
+    ],
+    "description": "#ifndef … #define … #endif"
+  }
+}

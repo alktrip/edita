@@ -6,6 +6,7 @@
 
 #include "doc/DocumentManager.h"
 #include "syntax/SyntaxStyler.h"
+#include "ui/Snippets.h"
 
 #include <ScintillaEditBase.h>
 
@@ -591,7 +592,14 @@ void LspManager::insertCompletion(ScintillaEditBase& view, const CompletionItem&
     }
     int selectionStart = static_cast<int>(text.size());
     int selectionEnd = selectionStart;
-    if (item.value(QStringLiteral("insertTextFormat")).toInt() == 2) {
+    // Un fragmento con su controlador: lo pone él, y Tab recorre sus marcadores
+    auto* snippets = view.findChild<SnippetController*>();
+    QString snippetBody;
+    if (item.value(QStringLiteral("insertTextFormat")).toInt() == 2 && snippets) {
+        snippetBody = text;
+        text.clear();
+        selectionStart = selectionEnd = 0;
+    } else if (item.value(QStringLiteral("insertTextFormat")).toInt() == 2) {
         const lsp::ExpandedSnippet snippet = lsp::expandSnippet(text);
         text = snippet.text;
         selectionStart = snippet.selectionStart;
@@ -628,7 +636,10 @@ void LspManager::insertCompletion(ScintillaEditBase& view, const CompletionItem&
         view.send(SCI_SETTARGETRANGE, static_cast<uptr_t>(e.start), std::max(e.start, e.end));
         view.send(SCI_REPLACETARGET, static_cast<uptr_t>(e.text.size()), reinterpret_cast<sptr_t>(e.text.constData()));
     }
-    view.send(SCI_SETSEL, static_cast<uptr_t>(start + shift + selStartBytes), start + shift + selEndBytes);
+    if (!snippetBody.isEmpty())
+        snippets->insert(snippetBody, start + shift, start + shift);
+    else
+        view.send(SCI_SETSEL, static_cast<uptr_t>(start + shift + selStartBytes), start + shift + selEndBytes);
     view.send(SCI_ENDUNDOACTION);
     view.send(SCI_SCROLLCARET);
 }

@@ -1,0 +1,17 @@
+{
+  "Fecha de hoy": {
+    "prefix": "hoy",
+    "body": "$CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE",
+    "description": "La fecha de hoy (AAAA-MM-DD)"
+  },
+  "Fecha y hora": {
+    "prefix": "ahora",
+    "body": "$CURRENT_YEAR-$CURRENT_MONTH-$CURRENT_DATE $CURRENT_HOUR:$CURRENT_MINUTE",
+    "description": "La fecha y la hora"
+  },
+  "UUID": {
+    "prefix": "uuid",
+    "body": "$UUID",
+    "description": "Un UUID nuevo"
+  }
+}

@@ -390,6 +390,7 @@ void PreferencesDialog::buildAutoCompletion()
     _autocFromLen = addSpin(form, tr("From the:"), "autocFromLen", 1, 9, tr(" characters"));
     _autocIgnoreNumbers = addCheck(form, tr("Ignore numbers"), "autocIgnoreNumbers");
     _autocBrief = addCheck(form, tr("Brief list (only matching prefixes)"), "autocBrief");
+    _snippetsTab = addCheck(form, tr("Tab after the prefix of a snippet inserts it"), "snippetsTab");
     _funcParams = addCheck(form, tr("Function parameters hint on input \"(\""), "funcParams");
     form->addRow(new QLabel(tr("<b>Auto-Insert</b>")));
     _insertParentheses = addCheck(form, QStringLiteral("( )"), "insertParentheses");
@@ -662,6 +663,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _bookmarkMargin->setChecked(p.bookmarkMargin);
     _gitMargin->setChecked(p.gitMargin);
     _gitExplorer->setChecked(p.gitExplorer);
+    _snippetsTab->setChecked(p.snippetsTab);
     _gitBlameInline->setChecked(p.gitBlameInline);
     _currentLineNumber->setChecked(p.currentLineNumber);
     _scrollBarMarks->setChecked(p.scrollBarMarks);
@@ -815,6 +817,7 @@ Preferences PreferencesDialog::preferences() const
     p.bookmarkMargin = _bookmarkMargin->isChecked();
     p.gitMargin = _gitMargin->isChecked();
     p.gitExplorer = _gitExplorer->isChecked();
+    p.snippetsTab = _snippetsTab->isChecked();
     p.gitBlameInline = _gitBlameInline->isChecked();
     p.currentLineNumber = _currentLineNumber->isChecked();
     p.scrollBarMarks = _scrollBarMarks->isChecked();

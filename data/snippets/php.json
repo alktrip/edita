@@ -1,0 +1,39 @@
+{
+  "php": {
+    "prefix": "php",
+    "body": [
+      "<?php",
+      "",
+      "$0"
+    ],
+    "description": "<?php"
+  },
+  "function": {
+    "prefix": "fn",
+    "body": [
+      "function ${1:nombre}(${2}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Función"
+  },
+  "class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Nombre}",
+      "{",
+      "\t$0",
+      "}"
+    ],
+    "description": "Clase"
+  },
+  "foreach": {
+    "prefix": "fore",
+    "body": [
+      "foreach (\\$${1:lista} as \\$${2:elemento}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "foreach"
+  }
+}

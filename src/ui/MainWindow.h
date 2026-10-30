@@ -69,6 +69,8 @@ class LspManager;
 class CompareSession;
 class GitStatus;
 class GitBlame;
+class SnippetLibrary;
+class SnippetController;
 class ProblemsPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
@@ -126,6 +128,7 @@ public:
     EditorView* editor() const;
     DocStatusBar* docStatusBar() const { return _statusBar; }
     QuickPicker* statusPicker() const { return _picker; } // para las pruebas
+    QuickPicker* ensurePicker(); // la lista con buscador (se crea la primera vez)
     BufferId currentBuffer() const;
 
     // --- Archivo -------------------------------------------------------------
@@ -260,6 +263,11 @@ public:
     GitBlame* gitBlameOfCurrentView() const;
     // Abre en un documento nuevo el commit de la línea del cursor (git show)
     bool showCommitOfCurrentLine();
+    // Fragmentos de código: la lista para elegir uno y el archivo del usuario del lenguaje
+    SnippetLibrary* snippetLibrary() const { return _snippets; }
+    SnippetController* snippetControllerOfCurrentView() const;
+    void showSnippetPicker();
+    void editUserSnippets();
     // Vuelve a leer el estado de Git de las carpetas de trabajo (en un momento)
     void scheduleGitStatus();
     // Terminal integrada: la abre (con una terminal en `directory`, o en la del documento)
@@ -393,6 +401,7 @@ private:
     QString terminalDirectory() const;
     void attachToLsp(BufferId id);
     void updateDiagnostics();
+    void updateSnippetContext(EditorPane* pane);
     void updateProblemsField();
     void goToLspPosition(const QString& path, int line, int character);
     void goToLocation(const QString& path, int line, int character, lsp::PositionEncoding encoding);
@@ -551,6 +560,8 @@ private:
     // Cambios de Git en el margen y marcas en la barra de desplazamiento, de cada vista
     QPointer<GitChanges> _git[2];
     QPointer<GitBlame> _blame[2];
+    SnippetLibrary* _snippets = nullptr;
+    QPointer<SnippetController> _snippetControllers[2];
     QPointer<ScrollBarMarks> _scrollMarks[2];
     QPointer<ColorPreview> _colorPreview[2];
     QPointer<RainbowBrackets> _rainbow[2];

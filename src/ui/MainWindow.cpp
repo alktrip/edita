@@ -42,6 +42,7 @@
 #include "ui/CompareSession.h"
 #include "ui/GitBlame.h"
 #include "ui/GitStatus.h"
+#include "ui/Snippets.h"
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
@@ -340,6 +341,9 @@ MainWindow::MainWindow(QWidget* parent)
                 reply(applyWorkspaceEdit(edit, encoding) >= 0);
             });
 
+    // Fragmentos de código (los de Edita y los del usuario)
+    _snippets = new SnippetLibrary(this);
+
     // Las dos vistas de N++ (_mainEditView/_subEditView) en un divisor; la
     // secundaria se oculta mientras no tenga documentos
     _mainPane = new EditorPane(_documents, _splitter);
@@ -414,9 +418,14 @@ MainWindow::MainWindow(QWidget* parent)
         // Guardar con QSaveFile sustituye el archivo: hay que volver a vigilarlo
         if (mask & (BufferChange::Filename | BufferChange::Timestamp | BufferChange::Status))
             syncWatchedFiles();
-        // Otro lenguaje u otro nombre: quizá otro servidor de lenguaje
-        if (mask & (BufferChange::Language | BufferChange::Filename))
+        // Otro lenguaje u otro nombre: quizá otro servidor de lenguaje y otros fragmentos
+        if (mask & (BufferChange::Language | BufferChange::Filename)) {
             attachToLsp(id);
+            for (EditorPane* pane : {_mainPane, _subPane}) {
+                if (pane->currentBuffer() == id)
+                    updateSnippetContext(pane);
+            }
+        }
     });
 
     // Cambios externos: N++ comprueba al activar la ventana o una pestaña; además
@@ -486,6 +495,7 @@ void MainWindow::connectPane(EditorPane* pane)
     const int index = pane == _subPane ? 1 : 0;
     _git[index] = new GitChanges(pane->editor());
     _blame[index] = new GitBlame(pane->editor());
+    _snippetControllers[index] = new SnippetController(pane->editor(), *_snippets);
     _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
     _colorPreview[index] = new ColorPreview(pane->editor());
     _rainbow[index] = new RainbowBrackets(pane->editor());
@@ -547,6 +557,7 @@ void MainWindow::connectPane(EditorPane* pane)
         applyIndentOverride(pane);
         _lsp->paintDiagnostics(*pane->editor(), pane->currentBuffer());
         updateProblemsField();
+        updateSnippetContext(pane);
         scheduleWelcomeUpdate();
         updateGitDocument(pane);
         updateLanguageDecorations(index);
@@ -1004,6 +1015,8 @@ void MainWindow::createMenus()
     // Con el servidor de lenguaje (no existen en N++)
     addAction(edit, tr("Rena&me Symbol…"), "actionRenameSymbol", QKeySequence(), [this] { renameSymbol(); });
     addAction(edit, tr("F&ormat Document"), "actionFormatDocument", QKeySequence(Qt::ALT | Qt::SHIFT | Qt::Key_F), [this] { formatDocument(); });
+    // Fragmentos de código (no existen en N++)
+    addAction(edit, tr("Insert S&nippet…"), "actionInsertSnippet", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_J), [this] { showSnippetPicker(); });
     edit->addSeparator();
     // IDM_EDIT_COLUMNMODE: Editor de columnas (Alt+C)
     addAction(edit, tr("Colu&mn Editor…"), "actionColumnEditor", QKeySequence(Qt::ALT | Qt::Key_C), [this] {
@@ -1172,6 +1185,7 @@ void MainWindow::createMenus()
     addAction(settings, tr("&Style Configurator…"), "actionStyleConfigurator", QKeySequence(),
               [this] { showStyleConfigurator(); });
     addAction(settings, tr("Shortcut &Mapper…"), "actionShortcutMapper", QKeySequence(), [this] { showShortcutMapper(); });
+    addAction(settings, tr("Edit S&nippets…"), "actionEditSnippets", QKeySequence(), [this] { editUserSnippets(); });
     // Servidores de lenguaje (no existen en N++)
     settings->addSeparator();
     QMenu* lspMenu = settings->addMenu(tr("&Language Server"));
@@ -1687,6 +1701,66 @@ void MainWindow::stopCompare()
     }
 }
 
+QuickPicker* MainWindow::ensurePicker()
+{
+    if (!_picker)
+        _picker = new QuickPicker(this);
+    return _picker;
+}
+
+void MainWindow::updateSnippetContext(EditorPane* pane)
+{
+    SnippetController* controller = _snippetControllers[pane == _mainPane ? 0 : 1];
+    const Buffer* buf = _documents.buffer(pane->currentBuffer());
+    if (!controller)
+        return;
+    if (!buf)
+        controller->setContext(QString(), QString());
+    else
+        controller->setContext(SnippetLibrary::languageKey(static_cast<int>(buf->language()), buf->userLanguage()),
+                               buf->isUntitled() ? QString() : buf->filePath());
+}
+
+SnippetController* MainWindow::snippetControllerOfCurrentView() const
+{
+    return _snippetControllers[_activePane == _mainPane ? 0 : 1];
+}
+
+void MainWindow::showSnippetPicker()
+{
+    SnippetController* controller = snippetControllerOfCurrentView();
+    if (!controller)
+        return;
+    const auto definitions = _snippets->forLanguage(controller->language());
+    if (definitions.empty()) {
+        statusBar()->showMessage(tr("There are no snippets for this language"), 5000);
+        return;
+    }
+    // Lo seleccionado se sustituye por el fragmento (y es $TM_SELECTED_TEXT)
+    std::vector<QuickPicker::Item> items;
+    for (const snippet::Definition& d : definitions) {
+        items.push_back({QStringLiteral("%1  —  %2").arg(d.prefix, d.description.isEmpty() ? d.name : d.description), d.name, false,
+                         [this, body = d.body] {
+                             EditorView* v = editor();
+                             const sptr_t start = v->sci(SCI_GETSELECTIONSTART);
+                             const sptr_t end = v->sci(SCI_GETSELECTIONEND);
+                             const auto* raw = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(start), end - start));
+                             const QString selected = raw ? QString::fromUtf8(raw, static_cast<qsizetype>(end - start)) : QString();
+                             if (SnippetController* c = snippetControllerOfCurrentView())
+                                 c->insert(body, start, end, selected);
+                             v->setFocus();
+                         }});
+    }
+    ensurePicker()->popup(editor(), tr("Insert snippet"), items);
+}
+
+void MainWindow::editUserSnippets()
+{
+    SnippetController* controller = snippetControllerOfCurrentView();
+    const QString language = controller && !controller->language().isEmpty() ? controller->language() : QStringLiteral("global");
+    openFile(_snippets->ensureUserFile(language));
+}
+
 void MainWindow::scheduleGitStatus()
 {
     if (_gitStatusTimer)
@@ -1757,7 +1831,7 @@ void MainWindow::goToDefinition()
             items.push_back({QStringLiteral("%1:%2").arg(QFileInfo(l.path).fileName()).arg(l.line + 1), QDir::toNativeSeparators(l.path), false,
                              [this, l, encoding] { goToLocation(l.path, l.line, l.character, encoding); }});
         }
-        statusPicker()->popup(editor(), tr("Go to definition"), items);
+        ensurePicker()->popup(editor(), tr("Go to definition"), items);
     });
     if (!asked)
         statusBar()->showMessage(tr("The language server of this document cannot find definitions"), 5000);
@@ -2801,6 +2875,9 @@ bool MainWindow::saveBuffer(BufferId id)
         notifyPlugins(NPPN_FILESAVED, id);
         _lsp->documentSaved(id);
         scheduleGitStatus();
+        // Un archivo de fragmentos del usuario: se vuelven a leer
+        if (absolutePath(path).startsWith(QDir(SnippetLibrary::userDirectory()).absolutePath() + QLatin1Char('/')))
+            _snippets->reload();
         for (const QPointer<GitBlame>& blame : _blame) {
             if (blame)
                 blame->reload();
@@ -3075,6 +3152,8 @@ void MainWindow::applyPreferences()
             _git[i]->setEnabled(p.gitMargin);
         if (_blame[i])
             _blame[i]->setInlineEnabled(p.gitBlameInline);
+        if (_snippetControllers[i])
+            _snippetControllers[i]->setTabExpansion(p.snippetsTab);
         if (_scrollMarks[i])
             _scrollMarks[i]->setEnabled(p.scrollBarMarks);
     }
@@ -4793,9 +4872,7 @@ void MainWindow::showStatusPicker(int which)
     default:
         return;
     }
-    if (!_picker)
-        _picker = new QuickPicker(this);
-    _picker->popup(_statusBar->field(field), placeholder, std::move(items));
+    ensurePicker()->popup(_statusBar->field(field), placeholder, std::move(items));
 }
 
 // --- Página de inicio -----------------------------------------------------------------

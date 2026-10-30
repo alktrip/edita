@@ -117,6 +117,7 @@ private:
     QCheckBox* _bookmarkMargin = nullptr;
     QCheckBox* _gitMargin = nullptr;
     QCheckBox* _gitExplorer = nullptr;
+    QCheckBox* _snippetsTab = nullptr;
     QCheckBox* _gitBlameInline = nullptr;
     QCheckBox* _currentLineNumber = nullptr;
     QCheckBox* _activeIndentGuide = nullptr;

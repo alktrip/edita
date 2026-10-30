@@ -1,0 +1,29 @@
+{
+  "media": {
+    "prefix": "media",
+    "body": [
+      "@media (${1:max-width}: ${2:600px}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "@media"
+  },
+  "flex": {
+    "prefix": "flex",
+    "body": [
+      "display: flex;",
+      "justify-content: ${1:center};",
+      "align-items: ${2:center};"
+    ],
+    "description": "Flexbox"
+  },
+  "grid": {
+    "prefix": "grid",
+    "body": [
+      "display: grid;",
+      "grid-template-columns: ${1:repeat(3, 1fr)};",
+      "gap: ${2:1rem};"
+    ],
+    "description": "Grid"
+  }
+}

@@ -143,6 +143,7 @@ struct Preferences
     bool inlineFind = true;
     QString terminalShell; // vacío = $SHELL
     bool lspEnabled = true;
+    bool snippetsTab = true;   // Tab tras el prefijo de un fragmento lo expande
     bool gitExplorer = true;   // el estado de Git en el explorador de carpetas
     bool gitBlameInline = true; // quién cambió la línea del cursor, al final de la línea
     QString lspServers;    // «id=orden» por línea (vacío: las órdenes conocidas)

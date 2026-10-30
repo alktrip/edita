@@ -161,7 +161,7 @@ while True:
         result = []
         for uri, rng in occurrences(word):
             line = all_texts()[uri].split("\n")[rng["start"]["line"]]
-            if line.lstrip().startswith("def ") or line.lstrip().startswith("class "):
+            if line.lstrip().startswith("def ") or line.lstrip().startswith("class ") or line.lstrip().startswith("multi ="):
                 result.append({"targetUri": uri, "targetRange": rng, "targetSelectionRange": rng})
         send({"id": msg["id"], "result": result or None})
     elif method == "textDocument/references":

@@ -1,0 +1,27 @@
+{
+  "select": {
+    "prefix": "sel",
+    "body": "SELECT ${1:*}\nFROM ${2:tabla}\nWHERE ${3:condición};",
+    "description": "SELECT"
+  },
+  "insert": {
+    "prefix": "ins",
+    "body": "INSERT INTO ${1:tabla} (${2:columnas})\nVALUES (${3:valores});",
+    "description": "INSERT"
+  },
+  "update": {
+    "prefix": "upd",
+    "body": "UPDATE ${1:tabla}\nSET ${2:columna} = ${3:valor}\nWHERE ${4:condición};",
+    "description": "UPDATE"
+  },
+  "create table": {
+    "prefix": "ct",
+    "body": [
+      "CREATE TABLE ${1:tabla} (",
+      "\t${2:id} INTEGER PRIMARY KEY,",
+      "\t$0",
+      ");"
+    ],
+    "description": "CREATE TABLE"
+  }
+}

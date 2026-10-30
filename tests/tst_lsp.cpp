@@ -15,6 +15,7 @@
 #include "ui/LspManager.h"
 #include "ui/MainWindow.h"
 #include "ui/ProblemsPanel.h"
+#include "ui/QuickPicker.h"
 #include "ui/SearchResultsPanel.h"
 
 #include <QAction>
@@ -355,6 +356,17 @@ private slots:
             v->sci(SCI_AUTOCCANCEL);
         QTest::keyClicks(v, "2)");
         QTRY_COMPARE(v->sci(SCI_CALLTIPACTIVE), sptr_t{0});
+
+        // Varias definiciones: una lista para elegir
+        writeFile(dir + "/multi.py", "multi = 1\nmulti = 2\nprint(multi)\n");
+        QVERIFY(w.openFile(dir + "/multi.py") != kInvalidBuffer);
+        QTRY_VERIFY(lsp->supports(w.currentBuffer(), "definitionProvider"));
+        w.editor()->sci(SCI_GOTOPOS, static_cast<uptr_t>(w.editor()->sci(SCI_POSITIONFROMLINE, 2) + 7));
+        w.findChild<QAction*>("actionGoToDefinition")->trigger();
+        QTRY_VERIFY(w.statusPicker() && w.statusPicker()->isVisible());
+        QCOMPARE(w.statusPicker()->visibleTexts().size(), 2);
+        QVERIFY(w.statusPicker()->activate(QStringLiteral("multi.py:2")));
+        QCOMPARE(w.editor()->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(w.editor()->sci(SCI_GETCURRENTPOS))), sptr_t{1});
 
         // Un WorkspaceEdit con «changes» (como los de workspace/applyEdit)
         const QJsonObject edit{{"changes", QJsonObject{{lsp::uriFromPath(dir + "/lib.py"),

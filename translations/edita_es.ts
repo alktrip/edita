@@ -1646,7 +1646,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::LspManager</name>
     <message>
-        <location filename="../src/ui/LspManager.cpp" line="+244"/>
+        <location filename="../src/ui/LspManager.cpp" line="+245"/>
         <source>%1 (starting)</source>
         <translation>%1 (iniciando)</translation>
     </message>
@@ -1664,24 +1664,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+394"/>
-        <location line="+3038"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+398"/>
+        <location line="+3113"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3038"/>
-        <location line="+1219"/>
+        <location line="-3113"/>
+        <location line="+1229"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1133"/>
+        <location line="-1138"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+343"/>
+        <location line="+345"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1966,7 +1966,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Completar &amp;ruta</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+16"/>
         <source>Read-&amp;Only</source>
         <translation>Solo &amp;lectura</translation>
     </message>
@@ -2112,7 +2112,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+28"/>
         <source>&amp;Help</source>
         <translation>A&amp;yuda</translation>
     </message>
@@ -2137,7 +2137,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+952"/>
+        <location line="+1012"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2183,12 +2183,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+775"/>
+        <location line="+778"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-751"/>
+        <location line="-754"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2360,12 +2360,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1620"/>
+        <location line="-1683"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-763"/>
+        <location line="-773"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2445,13 +2445,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+674"/>
-        <location line="+676"/>
+        <location line="+684"/>
+        <location line="+679"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-620"/>
+        <location line="-623"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2581,6 +2581,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Dar f&amp;ormato al documento</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>Insert S&amp;nippet…</source>
+        <translation>Insertar &amp;fragmento…</translation>
+    </message>
+    <message>
         <location line="+3"/>
         <source>Colu&amp;mn Editor…</source>
         <translation>Editor de colu&amp;mnas…</translation>
@@ -2690,6 +2695,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+2"/>
         <source>Shortcut &amp;Mapper…</source>
         <translation>Asignación de a&amp;tajos…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edit S&amp;nippets…</source>
+        <translation>Editar &amp;fragmentos…</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2803,7 +2813,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+60"/>
+        <location line="+63"/>
+        <source>There are no snippets for this language</source>
+        <translation>No hay fragmentos para este lenguaje</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Insert snippet</source>
+        <translation>Insertar fragmento</translation>
+    </message>
+    <message>
+        <location line="+39"/>
         <source>Problems (no language server for this document)</source>
         <translation>Problemas (este documento no tiene servidor de lenguaje)</translation>
     </message>
@@ -3080,25 +3100,25 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+176"/>
+        <location line="+179"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-175"/>
+        <location line="-178"/>
         <source>Save As…</source>
         <translation>Guardar como…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+255"/>
+        <location line="+258"/>
         <location line="+20"/>
-        <location line="+1413"/>
+        <location line="+1415"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1684"/>
+        <location line="-1689"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3159,7 +3179,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 %2</translation>
     </message>
     <message>
-        <location line="+107"/>
+        <location line="+110"/>
         <location line="+11"/>
         <source>Save As</source>
         <translation>Guardar como</translation>
@@ -3227,7 +3247,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+178"/>
+        <location line="+180"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -3555,7 +3575,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+360"/>
+        <location line="+358"/>
         <source>This line is not committed yet</source>
         <translation>Esta línea aún no está confirmada</translation>
     </message>
@@ -3565,7 +3585,7 @@ Continue?</source>
         <translation>Esta línea no tiene historia en Git</translation>
     </message>
     <message>
-        <location line="+243"/>
+        <location line="+245"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
@@ -4551,12 +4571,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+263"/>
+        <location line="+264"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-263"/>
+        <location line="-264"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -4758,12 +4778,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+122"/>
+        <location line="+123"/>
         <source>No</source>
         <translation>No</translation>
     </message>
     <message>
-        <location line="-122"/>
+        <location line="-123"/>
         <source>Function completion (language API)</source>
         <translation>Funciones (API del lenguaje)</translation>
     </message>
@@ -4791,6 +4811,11 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+1"/>
         <source>Brief list (only matching prefixes)</source>
         <translation>Lista breve (solo lo que empieza igual)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Tab after the prefix of a snippet inserts it</source>
+        <translation>Tab tras el prefijo de un fragmento lo inserta</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -5757,6 +5782,34 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
 Assign it here and remove it from there?</source>
         <translation>%1 ya lo usa «%2».
 ¿Asignarlo aquí y quitárselo?</translation>
+    </message>
+</context>
+<context>
+    <name>edita::SnippetLibrary</name>
+    <message>
+        <location filename="../src/ui/Snippets.cpp" line="+113"/>
+        <source>{
+    // Snippets for %1 (the format of VS Code). They replace the ones of Edita with the same name or prefix.
+    // Type the prefix and press Tab. $1, $2… are the places Tab goes to; ${1:text} with a text; $0, the end.
+    // Example:
+    // &quot;For loop&quot;: {
+    //     &quot;prefix&quot;: &quot;for&quot;,
+    //     &quot;body&quot;: [&quot;for (int ${1:i} = 0; $1 &lt; ${2:n}; ++$1) {&quot;, &quot;\t$0&quot;, &quot;}&quot;],
+    //     &quot;description&quot;: &quot;A for loop&quot;
+    // }
+}
+</source>
+        <translation>{
+    // Fragmentos de %1 (el formato de VS Code). Sustituyen a los de Edita con el mismo nombre o prefijo.
+    // Escribe el prefijo y pulsa Tab. $1, $2… son los sitios a los que va Tab; ${1:texto}, con un texto; $0, el final.
+    // Ejemplo:
+    // &quot;Bucle for&quot;: {
+    //     &quot;prefix&quot;: &quot;for&quot;,
+    //     &quot;body&quot;: [&quot;for (int ${1:i} = 0; $1 &lt; ${2:n}; ++$1) {&quot;, &quot;\t$0&quot;, &quot;}&quot;],
+    //     &quot;description&quot;: &quot;Un bucle for&quot;
+    // }
+}
+</translation>
     </message>
 </context>
 <context>

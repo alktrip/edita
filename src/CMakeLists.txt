@@ -49,6 +49,8 @@ add_library(edita_core STATIC
     core/Preferences.h
     core/Position.h
     core/Session.cpp
+    core/Snippet.cpp
+    core/Snippet.h
     core/Session.h
     core/TextFile.cpp
     core/TextFile.h)
@@ -157,6 +159,7 @@ add_library(edita_ui STATIC
     ui/Terminal.cpp
     ui/TerminalPanel.cpp
     ui/ScrollBarMarks.cpp
+    ui/Snippets.cpp
     ui/ColumnEditorDialog.h
     ui/DocStatusBar.cpp
     ui/DocStatusBar.h

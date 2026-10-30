@@ -1,0 +1,84 @@
+{
+  "function": {
+    "prefix": "fn",
+    "body": [
+      "function ${1:nombre}(${2}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Función"
+  },
+  "arrow": {
+    "prefix": "af",
+    "body": "const ${1:nombre} = (${2}) => {\n\t$0\n};",
+    "description": "Función flecha"
+  },
+  "for": {
+    "prefix": "for",
+    "body": [
+      "for (let ${1:i} = 0; $1 < ${2:arreglo}.length; $1++) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Bucle for"
+  },
+  "for of": {
+    "prefix": "forof",
+    "body": [
+      "for (const ${1:elemento} of ${2:iterable}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "for…of"
+  },
+  "if": {
+    "prefix": "if",
+    "body": [
+      "if (${1:condición}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "if"
+  },
+  "class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Nombre} {",
+      "\tconstructor(${2}) {",
+      "\t\t$0",
+      "\t}",
+      "}"
+    ],
+    "description": "Clase"
+  },
+  "try": {
+    "prefix": "try",
+    "body": [
+      "try {",
+      "\t$1",
+      "} catch (${2:error}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "try…catch"
+  },
+  "console.log": {
+    "prefix": "log",
+    "body": "console.log(${1});",
+    "description": "console.log"
+  },
+  "import": {
+    "prefix": "imp",
+    "body": "import { ${2} } from '${1:módulo}';",
+    "description": "import"
+  },
+  "async function": {
+    "prefix": "afn",
+    "body": [
+      "async function ${1:nombre}(${2}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Función async"
+  }
+}

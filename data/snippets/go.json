@@ -1,0 +1,49 @@
+{
+  "func": {
+    "prefix": "fn",
+    "body": [
+      "func ${1:nombre}(${2}) ${3:error }{",
+      "\t$0",
+      "}"
+    ],
+    "description": "Función"
+  },
+  "iferr": {
+    "prefix": "iferr",
+    "body": [
+      "if err != nil {",
+      "\treturn ${1:err}",
+      "}"
+    ],
+    "description": "if err != nil"
+  },
+  "for range": {
+    "prefix": "forr",
+    "body": [
+      "for ${1:_}, ${2:v} := range ${3:lista} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "for … range"
+  },
+  "struct": {
+    "prefix": "struct",
+    "body": [
+      "type ${1:Nombre} struct {",
+      "\t$0",
+      "}"
+    ],
+    "description": "struct"
+  },
+  "main": {
+    "prefix": "main",
+    "body": [
+      "package main",
+      "",
+      "func main() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "main"
+  }
+}

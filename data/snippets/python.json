@@ -1,0 +1,102 @@
+{
+  "def": {
+    "prefix": "def",
+    "body": [
+      "def ${1:nombre}(${2}):",
+      "\t${3:\"\"\"${4:Descripción.}\"\"\"}",
+      "\t$0"
+    ],
+    "description": "Función"
+  },
+  "class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Nombre}:",
+      "\tdef __init__(self${2}):",
+      "\t\t$0"
+    ],
+    "description": "Clase"
+  },
+  "if": {
+    "prefix": "if",
+    "body": [
+      "if ${1:condición}:",
+      "\t$0"
+    ],
+    "description": "if"
+  },
+  "if else": {
+    "prefix": "ifelse",
+    "body": [
+      "if ${1:condición}:",
+      "\t$2",
+      "else:",
+      "\t$0"
+    ],
+    "description": "if…else"
+  },
+  "for": {
+    "prefix": "for",
+    "body": [
+      "for ${1:elemento} in ${2:iterable}:",
+      "\t$0"
+    ],
+    "description": "Bucle for"
+  },
+  "for range": {
+    "prefix": "forr",
+    "body": [
+      "for ${1:i} in range(${2:n}):",
+      "\t$0"
+    ],
+    "description": "for … in range"
+  },
+  "while": {
+    "prefix": "while",
+    "body": [
+      "while ${1:condición}:",
+      "\t$0"
+    ],
+    "description": "Bucle while"
+  },
+  "try": {
+    "prefix": "try",
+    "body": [
+      "try:",
+      "\t$1",
+      "except ${2:Exception} as ${3:e}:",
+      "\t$0"
+    ],
+    "description": "try…except"
+  },
+  "with": {
+    "prefix": "with",
+    "body": [
+      "with ${1:open(${2:ruta})} as ${3:f}:",
+      "\t$0"
+    ],
+    "description": "with"
+  },
+  "main": {
+    "prefix": "main",
+    "body": [
+      "def main():",
+      "\t$0",
+      "",
+      "",
+      "if __name__ == \"__main__\":",
+      "\tmain()"
+    ],
+    "description": "Punto de entrada"
+  },
+  "print": {
+    "prefix": "pr",
+    "body": "print(${1})",
+    "description": "print"
+  },
+  "f-string": {
+    "prefix": "fs",
+    "body": "f\"${1}{${2:valor}}\"",
+    "description": "f-string"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "fn": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:nombre}(${2}) ${3:-> ${4:()} }{",
+      "\t$0",
+      "}"
+    ],
+    "description": "Función"
+  },
+  "struct": {
+    "prefix": "struct",
+    "body": [
+      "struct ${1:Nombre} {",
+      "\t${2:campo}: ${3:Tipo},$0",
+      "}"
+    ],
+    "description": "struct"
+  },
+  "impl": {
+    "prefix": "impl",
+    "body": [
+      "impl ${1:Tipo} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "impl"
+  },
+  "match": {
+    "prefix": "match",
+    "body": [
+      "match ${1:valor} {",
+      "\t${2:patrón} => $3,",
+      "\t_ => $0,",
+      "}"
+    ],
+    "description": "match"
+  },
+  "test": {
+    "prefix": "test",
+    "body": [
+      "#[test]",
+      "fn ${1:nombre}() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Prueba"
+  },
+  "println": {
+    "prefix": "pl",
+    "body": "println!(\"${1:{\\}}\", ${2});",
+    "description": "println!"
+  }
+}

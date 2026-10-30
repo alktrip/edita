@@ -1,0 +1,59 @@
+{
+  "shebang": {
+    "prefix": "#!",
+    "body": [
+      "#!/usr/bin/env bash",
+      "set -euo pipefail",
+      "",
+      "$0"
+    ],
+    "description": "Cabecera de script"
+  },
+  "if": {
+    "prefix": "if",
+    "body": [
+      "if [[ ${1:condición} ]]; then",
+      "\t$0",
+      "fi"
+    ],
+    "description": "if"
+  },
+  "for": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} in ${2:lista}; do",
+      "\t$0",
+      "done"
+    ],
+    "description": "Bucle for"
+  },
+  "while": {
+    "prefix": "while",
+    "body": [
+      "while ${1:condición}; do",
+      "\t$0",
+      "done"
+    ],
+    "description": "Bucle while"
+  },
+  "function": {
+    "prefix": "fn",
+    "body": [
+      "${1:nombre}() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Función"
+  },
+  "case": {
+    "prefix": "case",
+    "body": [
+      "case \"${1:\\$var}\" in",
+      "\t${2:patrón})",
+      "\t\t$0",
+      "\t\t;;",
+      "esac"
+    ],
+    "description": "case"
+  }
+}
