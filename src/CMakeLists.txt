@@ -144,7 +144,9 @@ add_library(edita_ui STATIC
     ui/CommandPalette.cpp
     ui/FileIcons.cpp
     ui/FindBar.cpp
+    ui/GitBlame.cpp
     ui/GitChanges.cpp
+    ui/GitStatus.cpp
     ui/NotificationBar.cpp
     ui/Breadcrumbs.cpp
     ui/QuickPicker.cpp

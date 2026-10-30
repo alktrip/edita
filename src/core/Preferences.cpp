@@ -327,6 +327,8 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaInlineFind", p.inlineFind);
     p.terminalShell = r.text("EditaTerminalShell");
     r.boolText("EditaLsp", p.lspEnabled);
+    r.boolText("EditaGitExplorer", p.gitExplorer);
+    r.boolText("EditaGitBlameInline", p.gitBlameInline);
     p.lspServers = r.text("EditaLspServers");
     r.boolText("EditaWelcomePage", p.showWelcome);
     return p;
@@ -463,6 +465,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaInlineFind", yesNo(p.inlineFind));
     w.text("EditaTerminalShell", p.terminalShell);
     w.text("EditaLsp", yesNo(p.lspEnabled));
+    w.text("EditaGitExplorer", yesNo(p.gitExplorer));
+    w.text("EditaGitBlameInline", yesNo(p.gitBlameInline));
     w.text("EditaLspServers", p.lspServers);
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }

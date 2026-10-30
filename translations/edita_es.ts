@@ -1137,7 +1137,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocumentListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="+124"/>
+        <location filename="../src/ui/Panels.cpp" line="+125"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
@@ -1174,7 +1174,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FileBrowserPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="+378"/>
+        <location filename="../src/ui/Panels.cpp" line="+384"/>
         <source>Add folder</source>
         <translation>Añadir carpeta</translation>
     </message>
@@ -1189,7 +1189,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Plegar todo</translation>
     </message>
     <message>
-        <location line="+188"/>
+        <location line="+74"/>
+        <source>Git branch: %1</source>
+        <translation>Rama de Git: %1</translation>
+    </message>
+    <message>
+        <location line="+161"/>
         <source>Add folder…</source>
         <translation>Añadir carpeta…</translation>
     </message>
@@ -1501,7 +1506,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FunctionListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="-362"/>
+        <location filename="../src/ui/Panels.cpp" line="-415"/>
         <source>Search</source>
         <translation>Buscar</translation>
     </message>
@@ -1514,6 +1519,69 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+2"/>
         <source>Reload</source>
         <translation>Volver a cargar</translation>
+    </message>
+</context>
+<context>
+    <name>edita::GitBlame</name>
+    <message>
+        <location filename="../src/ui/GitBlame.cpp" line="+205"/>
+        <source>just now</source>
+        <translation>justo ahora</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n minute(s) ago</source>
+        <translation>
+            <numerusform>hace %n minuto</numerusform>
+            <numerusform>hace %n minutos</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n hour(s) ago</source>
+        <translation>
+            <numerusform>hace %n hora</numerusform>
+            <numerusform>hace %n horas</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n day(s) ago</source>
+        <translation>
+            <numerusform>hace %n día</numerusform>
+            <numerusform>hace %n días</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n month(s) ago</source>
+        <translation>
+            <numerusform>hace %n mes</numerusform>
+            <numerusform>hace %n meses</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n year(s) ago</source>
+        <translation>
+            <numerusform>hace %n año</numerusform>
+            <numerusform>hace %n años</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>You, not committed yet</source>
+        <translation>Tú, sin confirmar</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Not committed yet</source>
+        <translation>Sin confirmar</translation>
+    </message>
+    <message>
+        <location line="+87"/>
+        <source>Not committed</source>
+        <translation>Sin confirmar</translation>
     </message>
 </context>
 <context>
@@ -1538,6 +1606,44 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::GitStatus</name>
+    <message>
+        <location filename="../src/ui/GitStatus.cpp" line="+208"/>
+        <source>Modified</source>
+        <translation>Modificado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Added to the index</source>
+        <translation>Añadido al índice</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Untracked</source>
+        <translation>Sin seguimiento</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Renamed</source>
+        <translation>Renombrado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Deleted</source>
+        <translation>Borrado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Conflict</source>
+        <translation>En conflicto</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Ignored</source>
+        <translation>Ignorado</translation>
+    </message>
+</context>
+<context>
     <name>edita::LspManager</name>
     <message>
         <location filename="../src/ui/LspManager.cpp" line="+244"/>
@@ -1558,24 +1664,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+392"/>
-        <location line="+3002"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+394"/>
+        <location line="+3038"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3002"/>
-        <location line="+1208"/>
+        <location line="-3038"/>
+        <location line="+1219"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1122"/>
+        <location line="-1133"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+342"/>
+        <location line="+343"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2031,7 +2137,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+935"/>
+        <location line="+952"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2077,12 +2183,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+760"/>
+        <location line="+775"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-736"/>
+        <location line="-751"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2254,12 +2360,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1603"/>
+        <location line="-1620"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-762"/>
+        <location line="-763"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2339,7 +2445,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+673"/>
+        <location line="+674"/>
         <location line="+676"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -2656,7 +2762,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Problemas</translation>
     </message>
     <message>
-        <location line="+129"/>
+        <location line="+139"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+10"/>
@@ -2697,7 +2803,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+54"/>
+        <location line="+60"/>
         <source>Problems (no language server for this document)</source>
         <translation>Problemas (este documento no tiene servidor de lenguaje)</translation>
     </message>
@@ -2782,7 +2888,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+293"/>
+        <location line="+294"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -2933,6 +3039,16 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cambio de G&amp;it anterior</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>Show Git &amp;Blame</source>
+        <translation>Mostrar Git &amp;blame</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Show C&amp;ommit of the Current Line</source>
+        <translation>Mostrar el c&amp;ommit de la línea actual</translation>
+    </message>
+    <message>
         <location line="+11"/>
         <source>Close</source>
         <translation>Cerrar</translation>
@@ -2964,25 +3080,25 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+171"/>
+        <location line="+176"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-170"/>
+        <location line="-175"/>
         <source>Save As…</source>
         <translation>Guardar como…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+250"/>
+        <location line="+255"/>
         <location line="+20"/>
-        <location line="+1410"/>
+        <location line="+1413"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1676"/>
+        <location line="-1684"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3043,7 +3159,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 %2</translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+107"/>
         <location line="+11"/>
         <source>Save As</source>
         <translation>Guardar como</translation>
@@ -3111,7 +3227,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+175"/>
+        <location line="+178"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -3348,7 +3464,7 @@ Keep this file in editor?</source>
 ¿Desea mantenerlo en el editor?</translation>
     </message>
     <message>
-        <location line="+259"/>
+        <location line="+264"/>
         <source>Save modifications</source>
         <translation>Guardar las modificaciones</translation>
     </message>
@@ -3439,7 +3555,17 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+561"/>
+        <location line="+360"/>
+        <source>This line is not committed yet</source>
+        <translation>Esta línea aún no está confirmada</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>No Git history for this line</source>
+        <translation>Esta línea no tiene historia en Git</translation>
+    </message>
+    <message>
+        <location line="+243"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
@@ -4334,12 +4460,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+72"/>
+        <location line="+74"/>
         <source>Default</source>
         <translation>Ninguna</translation>
     </message>
     <message>
-        <location line="-72"/>
+        <location line="-74"/>
         <source>Aligned</source>
         <translation>Alineada</translation>
     </message>
@@ -4425,12 +4551,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+261"/>
+        <location line="+263"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-261"/>
+        <location line="-263"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -4461,6 +4587,16 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+2"/>
+        <source>Git status of the files in Folder as Workspace</source>
+        <translation>Estado de Git de los archivos en Carpeta como espacio de trabajo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Who changed the current line (Git blame), at the end of the line</source>
+        <translation>Quién cambió la línea actual (Git blame), al final de la línea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Marks in the scroll bar (Git, bookmarks, Mark All, smart highlighting, caret)</source>
         <translation>Marcas en la barra de desplazamiento (Git, marcadores, Marcar todo, resaltado inteligente, cursor)</translation>
     </message>

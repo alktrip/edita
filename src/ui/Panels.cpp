@@ -21,6 +21,7 @@
 #include "ui/Appearance.h"
 #include "ui/FileIcons.h"
 #include "ui/FunctionParser.h"
+#include "ui/GitStatus.h"
 #include "ui/Icons.h"
 
 #include <QApplication>
@@ -479,6 +480,11 @@ FileBrowserPanel::FileBrowserPanel(QWidget* parent)
     _tree = new QTreeWidget(this);
     _tree->setObjectName(QStringLiteral("folderTree"));
     _tree->setHeaderHidden(true);
+    // La segunda columna: la letra del estado de Git (M, A, U…)
+    _tree->setColumnCount(2);
+    _tree->header()->setStretchLastSection(false);
+    _tree->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+    _tree->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     _tree->setContextMenuPolicy(Qt::CustomContextMenu);
     _watcher = new QFileSystemWatcher(this);
     connect(_tree, &QTreeWidget::itemExpanded, this, [this](QTreeWidgetItem* item) { populate(item); });
@@ -497,6 +503,7 @@ FileBrowserPanel::FileBrowserPanel(QWidget* parent)
         };
         for (int i = 0; i < _tree->topLevelItemCount(); ++i)
             find(_tree->topLevelItem(i));
+        emit folderChanged();
     });
 
     QToolButton* add = toolButton(QStringLiteral("folder-add"), tr("Add folder"), "folderAdd", this);
@@ -542,7 +549,54 @@ QTreeWidgetItem* FileBrowserPanel::makeItem(const QString& path, bool isDir)
                            : fileicons::enabled() ? fileicons::forFile(path) : icons::icon(QStringLiteral("new")));
     if (isDir)
         item->setChildIndicatorPolicy(QTreeWidgetItem::ShowIndicator);
+    decorate(item);
     return item;
+}
+
+void FileBrowserPanel::setGitStatus(const GitStatus* status)
+{
+    if (_git)
+        disconnect(_git, nullptr, this, nullptr);
+    _git = status;
+    if (status)
+        connect(status, &GitStatus::updated, this, &FileBrowserPanel::refreshGitDecorations);
+    refreshGitDecorations();
+}
+
+void FileBrowserPanel::refreshGitDecorations()
+{
+    std::function<void(QTreeWidgetItem*)> walk = [&](QTreeWidgetItem* item) {
+        decorate(item);
+        for (int i = 0; i < item->childCount(); ++i)
+            walk(item->child(i));
+    };
+    for (int i = 0; i < _tree->topLevelItemCount(); ++i)
+        walk(_tree->topLevelItem(i));
+}
+
+void FileBrowserPanel::decorate(QTreeWidgetItem* item) const
+{
+    const QString path = item->data(0, kPathRole).toString();
+    const GitStatus::State state = _git ? _git->stateOf(path) : GitStatus::State::None;
+    const bool dark = palette().color(QPalette::Base).lightness() < 128;
+    const bool isDir = item->data(0, kIsDirRole).toBool();
+    QString tip = path;
+    if (!item->parent() && _git && !_git->branchOf(path).isEmpty())
+        tip += QLatin1Char('\n') + tr("Git branch: %1").arg(_git->branchOf(path));
+    if (state == GitStatus::State::None) {
+        item->setForeground(0, QBrush());
+        item->setText(1, QString());
+        item->setToolTip(0, tip);
+        return;
+    }
+    const QColor color = GitStatus::color(state, dark);
+    item->setForeground(0, color);
+    item->setForeground(1, color);
+    // Las carpetas, un punto (lo que tienen dentro ya lleva su letra)
+    item->setText(1, state == GitStatus::State::Ignored ? QString() : isDir ? QStringLiteral("•") : GitStatus::badge(state));
+    item->setTextAlignment(1, Qt::AlignRight | Qt::AlignVCenter);
+    item->setToolTip(0, tip + QLatin1Char('\n') + GitStatus::description(state));
+    item->setToolTip(1, GitStatus::description(state));
 }
 
 void FileBrowserPanel::populate(QTreeWidgetItem* item)

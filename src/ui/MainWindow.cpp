@@ -40,6 +40,8 @@
 #include "ui/LspManager.h"
 #include "ui/ProblemsPanel.h"
 #include "ui/CompareSession.h"
+#include "ui/GitBlame.h"
+#include "ui/GitStatus.h"
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
@@ -483,6 +485,7 @@ void MainWindow::connectPane(EditorPane* pane)
     // Git en el margen y marcas en la barra de desplazamiento (no existen en N++)
     const int index = pane == _subPane ? 1 : 0;
     _git[index] = new GitChanges(pane->editor());
+    _blame[index] = new GitBlame(pane->editor());
     _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
     _colorPreview[index] = new ColorPreview(pane->editor());
     _rainbow[index] = new RainbowBrackets(pane->editor());
@@ -1523,6 +1526,16 @@ void MainWindow::createPanels()
     connect(&_syntax, &SyntaxManager::stylesChanged, this, [this] { QTimer::singleShot(0, this, [this] { applyTerminalStyle(); }); });
     connect(_folderPanel, &FileBrowserPanel::openTerminal, this, [this](const QString& dir) { openTerminal(dir); });
     connect(_problems, &ProblemsPanel::activated, this, &MainWindow::goToLspPosition);
+    // Git en el explorador: el estado de cada archivo, al cambiar algo
+    _gitStatus = new GitStatus(this);
+    _gitStatusTimer = new QTimer(this);
+    _gitStatusTimer->setSingleShot(true);
+    _gitStatusTimer->setInterval(400);
+    connect(_gitStatusTimer, &QTimer::timeout, this, [this] {
+        _gitStatus->refresh(_prefs.gitExplorer ? _folderPanel->roots() : QStringList());
+    });
+    _folderPanel->setGitStatus(_gitStatus);
+    connect(_folderPanel, &FileBrowserPanel::folderChanged, this, &MainWindow::scheduleGitStatus);
 
     // Probador de regex: el texto de prueba sale de la selección o del documento
     _regexTester->applyStyles(_syntax);
@@ -1672,6 +1685,12 @@ void MainWindow::stopCompare()
         if (marks)
             marks->scheduleUpdate();
     }
+}
+
+void MainWindow::scheduleGitStatus()
+{
+    if (_gitStatusTimer)
+        _gitStatusTimer->start();
 }
 
 void MainWindow::attachToLsp(BufferId id)
@@ -2011,6 +2030,7 @@ QDockWidget* MainWindow::panelDock(const QString& name) const
 bool MainWindow::addFolderToWorkspace(const QString& folder)
 {
     const bool added = _folderPanel->addRoot(folder);
+    scheduleGitStatus();
     panelDock(QStringLiteral("folderAsWorkspace"))->show();
     // Carpetas recientes (para la página de inicio), en config.xml
     const QString clean = absolutePath(folder);
@@ -2583,6 +2603,16 @@ void MainWindow::createSearchMenu()
     changes->addSeparator();
     addIn(changes, tr("Go to Next &Git Change"), "actionNextGitChange", QKeySequence(), [this] { goToGitChange(true); });
     addIn(changes, tr("Go to Previous G&it Change"), "actionPreviousGitChange", QKeySequence(), [this] { goToGitChange(false); });
+    changes->addSeparator();
+    QAction* blameAction = addIn(changes, tr("Show Git &Blame"), "actionGitBlame", QKeySequence(), [this] {
+        const bool on = findChild<QAction*>(QStringLiteral("actionGitBlame"))->isChecked();
+        for (const QPointer<GitBlame>& blame : _blame) {
+            if (blame)
+                blame->setMarginVisible(on);
+        }
+    });
+    blameAction->setCheckable(true);
+    addIn(changes, tr("Show C&ommit of the Current Line"), "actionShowLineCommit", QKeySequence(), [this] { showCommitOfCurrentLine(); });
 }
 
 void MainWindow::showTabContextMenu(BufferId id, const QPoint& globalPos)
@@ -2770,6 +2800,11 @@ bool MainWindow::saveBuffer(BufferId id)
     if (result.ok()) {
         notifyPlugins(NPPN_FILESAVED, id);
         _lsp->documentSaved(id);
+        scheduleGitStatus();
+        for (const QPointer<GitBlame>& blame : _blame) {
+            if (blame)
+                blame->reload();
+        }
     }
     if (!result.ok()) {
         _prompter->warn(this, tr("Save"), result.errorString);
@@ -3000,6 +3035,7 @@ void MainWindow::applyPreferences()
     _lsp->setAutoComplete(p.autocStatus != 0, p.autocFromLen);
     _lsp->setOverrides(lsp::parseOverrides(p.lspServers));
     _lsp->setEnabled(p.lspEnabled);
+    scheduleGitStatus();
     for (std::size_t i = 0; i < _documents.count(); ++i)
         attachToLsp(_documents.bufferAt(i)->id());
     QCoreApplication::setAttribute(Qt::AA_DontUseNativeDialogs, p.qtFileDialog);
@@ -3037,6 +3073,8 @@ void MainWindow::applyPreferences()
             _sticky[i]->setEnabled(p.stickyScroll);
         if (_git[i])
             _git[i]->setEnabled(p.gitMargin);
+        if (_blame[i])
+            _blame[i]->setInlineEnabled(p.gitBlameInline);
         if (_scrollMarks[i])
             _scrollMarks[i]->setEnabled(p.scrollBarMarks);
     }
@@ -4527,6 +4565,11 @@ void MainWindow::changeEvent(QEvent* event)
             if (git)
                 git->reload();
         }
+        for (const QPointer<GitBlame>& blame : _blame) {
+            if (blame)
+                blame->reload();
+        }
+        scheduleGitStatus();
     }
 }
 
@@ -5080,6 +5123,50 @@ void MainWindow::updateGitDocument(EditorPane* pane)
         git->setDocument(QString(), TextEncoding::utf8());
     else
         git->setDocument(absolutePath(buf->filePath()), buf->encoding());
+    if (GitBlame* blame = _blame[pane == _mainPane ? 0 : 1]) {
+        if (!buf || buf->isUntitled())
+            blame->setDocument(QString(), TextEncoding::utf8());
+        else
+            blame->setDocument(absolutePath(buf->filePath()), buf->encoding());
+    }
+}
+
+GitBlame* MainWindow::gitBlameOfCurrentView() const
+{
+    return _blame[_activePane == _mainPane ? 0 : 1];
+}
+
+bool MainWindow::showCommitOfCurrentLine()
+{
+    GitBlame* blame = gitBlameOfCurrentView();
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    if (!blame || !buf || buf->isUntitled())
+        return false;
+    const auto line = static_cast<int>(editor()->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(editor()->sci(SCI_GETCURRENTPOS))));
+    const GitBlame::Commit* commit = blame->commitAt(line);
+    if (!commit || commit->uncommitted) {
+        statusBar()->showMessage(commit ? tr("This line is not committed yet") : tr("No Git history for this line"), 5000);
+        return false;
+    }
+    // (copia: al abrir el documento nuevo, el blame de esta vista se vacía)
+    const QString hash = commit->hash;
+    QProcess git;
+    git.start(QStringLiteral("git"), {QStringLiteral("-C"), QFileInfo(buf->filePath()).absolutePath(), QStringLiteral("show"),
+                                      QStringLiteral("--no-color"), hash});
+    if (!git.waitForFinished(15000) || git.exitCode() != 0)
+        return false;
+    // En un documento de solo lectura, como diff
+    const BufferId id = newDocument();
+    _documents.setUntitledName(id, hash.left(7));
+    editor()->send(SCI_SETTEXT, 0, reinterpret_cast<sptr_t>(git.readAllStandardOutput().constData()));
+    editor()->sci(SCI_EMPTYUNDOBUFFER);
+    editor()->sci(SCI_SETSAVEPOINT);
+    editor()->sci(SCI_GOTOPOS, 0);
+    if (Buffer* doc = _documents.buffer(id)) {
+        doc->setLanguage(LangType::Diff);
+        doc->setUserReadOnly(true);
+    }
+    return true;
 }
 
 // El siguiente (o anterior) cambio respecto a Git desde el cursor, dando la vuelta

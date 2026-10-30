@@ -41,6 +41,7 @@ class QTreeWidgetItem;
 namespace edita {
 
 class FunctionParsers;
+class GitStatus;
 
 // Lista de documentos (VerticalFileSwitcher de N++): los abiertos en las dos vistas,
 // con su estado; un clic lo activa y el clic central lo cierra
@@ -164,8 +165,13 @@ public:
     QTreeWidget* tree() const { return _tree; }
     // Al cambiar la preferencia de los iconos por tipo de archivo
     void refreshIcons();
+    // El estado de Git de cada archivo (color y letra); se repinta cuando cambia
+    void setGitStatus(const GitStatus* status);
+    void refreshGitDecorations();
 
 signals:
+    // Algo cambió en una carpeta desplegada (para volver a leer el estado de Git)
+    void folderChanged();
     void openFile(const QString& path);
     void findInFolder(const QString& folder);
     void openTerminal(const QString& folder);
@@ -178,8 +184,11 @@ private:
     void showMenu(const QPoint& pos);
     QTreeWidgetItem* rootFor(const QString& path) const;
 
+    void decorate(QTreeWidgetItem* item) const;
+
     QTreeWidget* _tree = nullptr;
     QFileSystemWatcher* _watcher = nullptr;
+    QPointer<const GitStatus> _git;
 };
 
 } // namespace edita

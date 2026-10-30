@@ -45,10 +45,11 @@ Después del MVP:
 - Fase 37: LSP, parte 2: **ir a la definición** (F12), **referencias** (Mayús+F12), **renombrar**, **dar formato** (Alt+Mayús+F) y **ayuda de parámetros**.
 - Fase 38: **versión para macOS**: un `.dmg` universal (Apple Silicon e Intel) que compila GitHub Actions (`.github/workflows/macos.yml`), con el código adaptado (terminal, paquete `.app`, abrir desde Finder).
 - Fase 39: **comparar documentos** lado a lado (con la otra vista, con lo guardado o con Git), alineados, con los caracteres distintos resaltados.
+- Fase 40: **Git en el explorador** (archivos modificados, nuevos e ignorados con color y letra) y **Git blame** (autor y fecha al final de la línea del cursor y en un margen).
 
 Plan en [docs/fase1-analisis.md](docs/fase1-analisis.md);
 registro de cada fase: [0](docs/fase0.md), [1](docs/fase1.md), [2](docs/fase2.md),
-[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md), [26](docs/fase26.md), [27](docs/fase27.md), [28](docs/fase28.md), [29](docs/fase29.md), [30](docs/fase30.md), [31](docs/fase31.md), [32](docs/fase32.md), [33](docs/fase33.md), [34](docs/fase34.md), [35](docs/fase35.md), [36](docs/fase36.md), [37](docs/fase37.md), [38](docs/fase38.md), [39](docs/fase39.md).
+[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md), [26](docs/fase26.md), [27](docs/fase27.md), [28](docs/fase28.md), [29](docs/fase29.md), [30](docs/fase30.md), [31](docs/fase31.md), [32](docs/fase32.md), [33](docs/fase33.md), [34](docs/fase34.md), [35](docs/fase35.md), [36](docs/fase36.md), [37](docs/fase37.md), [38](docs/fase38.md), [39](docs/fase39.md), [40](docs/fase40.md).
 
 Uso: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst]`
 

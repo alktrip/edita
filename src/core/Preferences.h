@@ -143,6 +143,8 @@ struct Preferences
     bool inlineFind = true;
     QString terminalShell; // vacío = $SHELL
     bool lspEnabled = true;
+    bool gitExplorer = true;   // el estado de Git en el explorador de carpetas
+    bool gitBlameInline = true; // quién cambió la línea del cursor, al final de la línea
     QString lspServers;    // «id=orden» por línea (vacío: las órdenes conocidas)
     // Página de inicio mientras el único documento es uno nuevo y vacío (EditaWelcomePage)
     bool showWelcome = true;

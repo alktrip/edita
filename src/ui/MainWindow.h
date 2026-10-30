@@ -67,6 +67,8 @@ class RegexTesterPanel;
 class TerminalPanel;
 class LspManager;
 class CompareSession;
+class GitStatus;
+class GitBlame;
 class ProblemsPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
@@ -254,6 +256,12 @@ public:
     bool startCompare(CompareWith with);
     void stopCompare();
     CompareSession* compareSession() const { return _compare.get(); }
+    GitStatus* gitStatus() const { return _gitStatus; }
+    GitBlame* gitBlameOfCurrentView() const;
+    // Abre en un documento nuevo el commit de la línea del cursor (git show)
+    bool showCommitOfCurrentLine();
+    // Vuelve a leer el estado de Git de las carpetas de trabajo (en un momento)
+    void scheduleGitStatus();
     // Terminal integrada: la abre (con una terminal en `directory`, o en la del documento)
     void openTerminal(const QString& directory = {});
     void toggleTerminal();
@@ -542,6 +550,7 @@ private:
     CommandPalette* _palette = nullptr;
     // Cambios de Git en el margen y marcas en la barra de desplazamiento, de cada vista
     QPointer<GitChanges> _git[2];
+    QPointer<GitBlame> _blame[2];
     QPointer<ScrollBarMarks> _scrollMarks[2];
     QPointer<ColorPreview> _colorPreview[2];
     QPointer<RainbowBrackets> _rainbow[2];
@@ -586,6 +595,8 @@ private:
     std::unique_ptr<LspManager> _lsp;
     ProblemsPanel* _problems = nullptr;
     std::unique_ptr<CompareSession> _compare;
+    GitStatus* _gitStatus = nullptr;
+    QTimer* _gitStatusTimer = nullptr;
     BufferId _compareBuffers[2] = {kInvalidBuffer, kInvalidBuffer}; // referencia, documento
     BufferId _compareTemp = kInvalidBuffer;                          // la referencia que se creó
     bool _compareIgnoreSpaces = false;

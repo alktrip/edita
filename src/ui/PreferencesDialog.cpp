@@ -325,6 +325,8 @@ void PreferencesDialog::buildMargins()
     _gitMargin = addCheck(form, tr("Changes since the last Git commit"), "gitMargin");
     _gitMargin->setToolTip(tr("Green: added lines, blue: modified lines, red: deleted lines. Hover a mark to see the "
                               "original lines."));
+    _gitExplorer = addCheck(form, tr("Git status of the files in Folder as Workspace"), "gitExplorer");
+    _gitBlameInline = addCheck(form, tr("Who changed the current line (Git blame), at the end of the line"), "gitBlameInline");
     _scrollBarMarks = addCheck(form, tr("Marks in the scroll bar (Git, bookmarks, Mark All, smart highlighting, caret)"),
                                "scrollBarMarks");
 }
@@ -659,6 +661,8 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _edgeBackground->setChecked(p.edgeBackground);
     _bookmarkMargin->setChecked(p.bookmarkMargin);
     _gitMargin->setChecked(p.gitMargin);
+    _gitExplorer->setChecked(p.gitExplorer);
+    _gitBlameInline->setChecked(p.gitBlameInline);
     _currentLineNumber->setChecked(p.currentLineNumber);
     _scrollBarMarks->setChecked(p.scrollBarMarks);
     setComboValue(_changeHistory, p.changeHistory);
@@ -810,6 +814,8 @@ Preferences PreferencesDialog::preferences() const
     p.edgeBackground = _edgeBackground->isChecked();
     p.bookmarkMargin = _bookmarkMargin->isChecked();
     p.gitMargin = _gitMargin->isChecked();
+    p.gitExplorer = _gitExplorer->isChecked();
+    p.gitBlameInline = _gitBlameInline->isChecked();
     p.currentLineNumber = _currentLineNumber->isChecked();
     p.scrollBarMarks = _scrollBarMarks->isChecked();
     p.changeHistory = comboValue(_changeHistory);

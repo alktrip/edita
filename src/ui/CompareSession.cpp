@@ -153,7 +153,7 @@ void CompareSession::configure(ScintillaEditBase& view)
     // Un marcador de fondo solo pinta la línea si no está en la máscara de ningún margen
     // (el de símbolos de Edita acepta todos los que no son de plegado)
     const int bits = (1 << kMarkerAdded) | (1 << kMarkerRemoved) | (1 << kMarkerChanged);
-    for (uptr_t margin = 0; margin < 5; ++margin)
+    for (uptr_t margin = 0; margin < static_cast<uptr_t>(view.send(SCI_GETMARGINS)); ++margin)
         view.send(SCI_SETMARGINMASKN, margin, view.send(SCI_GETMARGINMASKN, margin) & ~bits);
     view.send(SCI_INDICSETSTYLE, kIndicatorChars, INDIC_FULLBOX);
     view.send(SCI_INDICSETFORE, kIndicatorChars, toScintilla(color(0, dark)));

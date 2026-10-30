@@ -32,6 +32,49 @@
     </message>
 </context>
 <context>
+    <name>edita::GitBlame</name>
+    <message numerus="yes">
+        <location filename="../src/ui/GitBlame.cpp" line="+207"/>
+        <source>%n minute(s) ago</source>
+        <translation>
+            <numerusform>%n minute ago</numerusform>
+            <numerusform>%n minutes ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n hour(s) ago</source>
+        <translation>
+            <numerusform>%n hour ago</numerusform>
+            <numerusform>%n hours ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>%n day(s) ago</source>
+        <translation>
+            <numerusform>%n day ago</numerusform>
+            <numerusform>%n days ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n month(s) ago</source>
+        <translation>
+            <numerusform>%n month ago</numerusform>
+            <numerusform>%n months ago</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+1"/>
+        <source>%n year(s) ago</source>
+        <translation>
+            <numerusform>%n year ago</numerusform>
+            <numerusform>%n years ago</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::GitChanges</name>
     <message numerus="yes">
         <location filename="../src/ui/GitChanges.cpp" line="+315"/>
@@ -45,7 +88,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+1646"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+1659"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -53,7 +96,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+166"/>
+        <location line="+172"/>
         <source>%n reference(s)</source>
         <translation>
             <numerusform>%n reference</numerusform>
@@ -77,7 +120,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+3763"/>
+        <location line="+3829"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
