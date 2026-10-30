@@ -730,12 +730,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Guardar en %1 de todos modos</translation>
     </message>
     <message>
-        <location line="+16"/>
-        <source>Save Macro</source>
-        <translation>Guardar la macro</translation>
-    </message>
-    <message>
-        <location line="+14"/>
+        <location line="+30"/>
         <source>Name:</source>
         <translation>Nombre:</translation>
     </message>
@@ -1707,19 +1702,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+410"/>
-        <location line="+3318"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+415"/>
+        <location line="+3500"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3318"/>
-        <location line="+1280"/>
+        <location line="-3500"/>
+        <location line="+1303"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1186"/>
+        <location line="-1209"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2155,7 +2150,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+29"/>
         <source>&amp;Help</source>
         <translation>A&amp;yuda</translation>
     </message>
@@ -2180,7 +2175,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1144"/>
+        <location line="+1166"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2403,12 +2398,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1819"/>
+        <location line="-1842"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-830"/>
+        <location line="-834"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2488,13 +2483,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+717"/>
-        <location line="+705"/>
+        <location line="+721"/>
+        <location line="+728"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-684"/>
+        <location line="-707"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
@@ -2790,7 +2785,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Este documento no tiene servidor de lenguaje</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+14"/>
         <source>User &amp;Manual</source>
         <translation>&amp;Manual de usuario</translation>
     </message>
@@ -2800,12 +2795,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Página de &amp;inicio</translation>
     </message>
     <message>
-        <location line="+102"/>
+        <location line="+103"/>
         <source>Macro</source>
         <translation>Macro</translation>
     </message>
     <message>
-        <location line="+125"/>
+        <location line="+146"/>
         <source>Toolbar</source>
         <translation>Barra de herramientas</translation>
     </message>
@@ -3232,12 +3227,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1418"/>
+        <location line="+1577"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1697"/>
+        <location line="-1856"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3382,12 +3377,12 @@ Do you want to save the file anyway?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+59"/>
+        <location line="+218"/>
         <source>Start &amp;Recording</source>
         <translation>&amp;Iniciar la grabación</translation>
     </message>
     <message>
-        <location line="-56"/>
+        <location line="-215"/>
         <source>&amp;Playback</source>
         <translation>&amp;Reproducir</translation>
     </message>
@@ -3402,7 +3397,37 @@ Do you want to save the file anyway?</source>
         <translation>&amp;Ejecutar una macro varias veces…</translation>
     </message>
     <message>
-        <location line="+32"/>
+        <location line="+9"/>
+        <source>&amp;Run</source>
+        <translation>E&amp;jecutar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Run…</source>
+        <translation>&amp;Ejecutar…</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Modify Shortcut/Delete Command…</source>
+        <translation>Modificar el atajo o eliminar una orden…</translation>
+    </message>
+    <message>
+        <location line="+93"/>
+        <source>Could not open %1</source>
+        <translation>No se pudo abrir %1</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Could not run %1</source>
+        <translation>No se pudo ejecutar %1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Save Command</source>
+        <translation>Guardar la orden</translation>
+    </message>
+    <message>
+        <location line="+56"/>
         <source>&amp;Delete a Macro</source>
         <translation>E&amp;liminar una macro</translation>
     </message>
@@ -3432,7 +3457,12 @@ Do you want to save the file anyway?</source>
         <translation>Macro grabada: %1 pasos</translation>
     </message>
     <message>
-        <location line="+115"/>
+        <location line="+101"/>
+        <source>Save Macro</source>
+        <translation>Guardar la macro</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Could not save %1</source>
         <translation>No se pudo guardar %1</translation>
     </message>
@@ -3447,7 +3477,9 @@ Do you want to save the file anyway?</source>
         <translation>Macro grabada</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="-254"/>
+        <location line="+18"/>
+        <location line="+239"/>
         <location line="+10"/>
         <source>Run</source>
         <translation>Ejecutar</translation>
@@ -5812,6 +5844,49 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
 </context>
 <context>
+    <name>edita::RunDialog</name>
+    <message>
+        <location filename="../src/ui/RunDialog.cpp" line="+25"/>
+        <source>Run…</source>
+        <translation>Ejecutar…</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Choose the program</source>
+        <translation>Elegir el programa</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Program</source>
+        <translation>Programa</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Insert a variable</source>
+        <translation>Insertar una variable</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Run</source>
+        <translation>Ejecutar</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Save…</source>
+        <translation>Guardar…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>The program to run:</source>
+        <translation>El programa que se ejecuta:</translation>
+    </message>
+</context>
+<context>
     <name>edita::SearchResultsPanel</name>
     <message numerus="yes">
         <location filename="../src/ui/SearchResultsPanel.cpp" line="+42"/>
@@ -5890,12 +5965,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     <name>edita::ShortcutMapperDialog</name>
     <message>
         <location filename="../src/ui/ShortcutMapperDialog.cpp" line="+56"/>
-        <location line="+38"/>
+        <location line="+39"/>
         <source>Shortcut</source>
         <translation>Atajo</translation>
     </message>
     <message>
-        <location line="-25"/>
+        <location line="-26"/>
         <source>Press the new key combination.</source>
         <translation>Pulse la nueva combinación de teclas.</translation>
     </message>
@@ -5925,12 +6000,17 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Órdenes de Scintilla</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+0"/>
+        <source>Run commands</source>
+        <translation>Órdenes de Ejecutar</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="+1"/>
         <source>Plugin</source>
         <translation>Plugin</translation>
     </message>
@@ -5940,7 +6020,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Categoría</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+0"/>
+        <source>Command</source>
+        <translation>Orden</translation>
+    </message>
+    <message>
+        <location line="+16"/>
         <source>Filter</source>
         <translation>Filtrar</translation>
     </message>
@@ -5975,7 +6060,17 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>¿Eliminar la macro «%1»?</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+4"/>
+        <source>Delete command</source>
+        <translation>Eliminar la orden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Delete the command &quot;%1&quot;?</source>
+        <translation>¿Eliminar la orden «%1»?</translation>
+    </message>
+    <message>
+        <location line="+97"/>
         <source>Shortcut conflict</source>
         <translation>Atajo repetido</translation>
     </message>

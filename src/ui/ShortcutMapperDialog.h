@@ -50,6 +50,8 @@ public:
     // "Borrar": la orden se queda sin atajo
     bool clear(ShortcutEntry::Kind kind, const QString& id);
     void setFilter(const QString& text);
+    // Abre en esa pestaña (Ejecutar › Modificar atajo/Eliminar orden…)
+    void showKind(ShortcutEntry::Kind kind);
 
 private:
     void refresh();
@@ -60,7 +62,7 @@ private:
     Prompter& _prompter;
     std::vector<ShortcutEntry> _entries;
     QTabWidget* _tabs = nullptr;
-    QTableWidget* _tables[4] = {};
+    QTableWidget* _tables[5] = {};
     QLineEdit* _filter = nullptr;
     QPushButton* _delete = nullptr;
 };

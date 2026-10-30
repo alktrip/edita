@@ -29,6 +29,7 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 
 - **Menú principal**: todas las órdenes de los menús, con su menú como categoría.
 - **Macros**: las macros guardadas.
+- **Órdenes de Ejecutar**: las órdenes guardadas en el [menú Ejecutar](12-macros.md#el-menu-ejecutar).
 - **Órdenes de plugins**: las órdenes de los plugins.
 - **Órdenes de Scintilla**: las teclas del propio editor (moverse por palabras, borrar líneas,
   seleccionar…).

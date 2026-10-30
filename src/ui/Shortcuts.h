@@ -69,9 +69,9 @@ struct ShortcutsConfig
 // plugin o una de Scintilla, con sus atajos actuales y los de serie
 struct ShortcutEntry
 {
-    enum class Kind { Menu, Macros, Plugin, Scintilla };
+    enum class Kind { Menu, Macros, RunCommands, Plugin, Scintilla }; // el orden de las pestañas de N++
     Kind kind = Kind::Menu;
-    QString id;       // objectName de la acción, índice de la macro, "módulo:índice", SCI_*
+    QString id;       // objectName de la acción, índice de la macro o de la orden, "módulo:índice", SCI_*
     QString name;
     QString category; // menú, plugin
     std::vector<KeyCombo> keys;

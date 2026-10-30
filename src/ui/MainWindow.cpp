@@ -36,6 +36,7 @@
 #include "ui/NotificationBar.h"
 #include "ui/QuickPicker.h"
 #include "ui/RegexTester.h"
+#include "ui/RunDialog.h"
 #include "ui/TerminalPanel.h"
 #include "ui/LspManager.h"
 #include "ui/ManualWindow.h"
@@ -405,7 +406,11 @@ MainWindow::MainWindow(QWidget* parent)
     if (!QFileInfo::exists(shortcutsPath())) {
         _savedMacros = {defaultTrimAndSaveMacro()};
         writeMacros(shortcutsPath(), _savedMacros);
-    } else if (!readMacros(shortcutsPath(), _savedMacros)) {
+        // Y las órdenes de Ejecutar que trae N++
+        const QString appImage = qEnvironmentVariable("APPIMAGE");
+        _userCommands = defaultUserCommands(appImage.isEmpty() ? QCoreApplication::applicationFilePath() : appImage);
+        writeUserCommands(shortcutsPath(), _userCommands);
+    } else if (!readMacros(shortcutsPath(), _savedMacros) || !readUserCommands(shortcutsPath(), _userCommands)) {
         QTimer::singleShot(0, this, [this] {
             _prompter->warn(this, tr("Macros"), tr("Could not read %1").arg(shortcutsPath()));
         });
@@ -1267,6 +1272,7 @@ void MainWindow::createMenus()
     });
 
     createMacroMenu();
+    createRunMenu();
     loadPlugins();
 
     // Ayuda
@@ -1357,6 +1363,7 @@ std::vector<ShortcutEntry> MainWindow::shortcutEntries() const
             }
             const QString name = action->objectName();
             if (!name.startsWith(QLatin1String("action")) || name.startsWith(QLatin1String("actionMacro"))
+                || name.startsWith(QLatin1String("actionRunCommand"))
                 || seen.contains(action))
                 continue;
             seen.insert(action);
@@ -1375,6 +1382,14 @@ std::vector<ShortcutEntry> MainWindow::shortcutEntries() const
         if (m.key)
             keys.push_back(KeyCombo{m.ctrl, m.alt, m.shift, m.key});
         entries.push_back({Kind::Macros, QString::number(i), m.name, tr("Macro"), keys, {}});
+    }
+    // Órdenes del menú Ejecutar
+    for (std::size_t i = 0; i < _userCommands.size(); ++i) {
+        const UserCommand& c = _userCommands[i];
+        std::vector<KeyCombo> keys;
+        if (c.key)
+            keys.push_back(KeyCombo{c.ctrl, c.alt, c.shift, c.key});
+        entries.push_back({Kind::RunCommands, QString::number(i), c.name, c.command, keys, {}});
     }
     // Órdenes de los plugins
     for (QAction* action : findChildren<QAction*>()) {
@@ -1411,6 +1426,19 @@ bool MainWindow::setShortcutKeys(ShortcutEntry::Kind kind, const QString& id, co
         macro.key = combo.key;
         const bool ok = writeMacros(shortcutsPath(), _savedMacros);
         rebuildMacroMenu();
+        return ok;
+    }
+    case Kind::RunCommands: {
+        const int index = id.toInt();
+        if (index < 0 || static_cast<std::size_t>(index) >= _userCommands.size())
+            return false;
+        UserCommand& command = _userCommands[static_cast<std::size_t>(index)];
+        command.ctrl = combo.ctrl;
+        command.alt = combo.alt;
+        command.shift = combo.shift;
+        command.key = combo.key;
+        const bool ok = writeUserCommands(shortcutsPath(), _userCommands);
+        rebuildRunMenu();
         return ok;
     }
     case Kind::Menu: {
@@ -3551,6 +3579,165 @@ void MainWindow::createMacroMenu()
     rebuildMacroMenu();
 }
 
+void MainWindow::createRunMenu()
+{
+    // Menú Ejecutar de N++: Ejecutar… (F5), las órdenes guardadas y la Asignación de atajos
+    _runMenu = menuBar()->addMenu(tr("&Run"));
+    _runMenu->setObjectName(QStringLiteral("menuRun"));
+    QAction* run = _runMenu->addAction(tr("&Run…"), this, &MainWindow::showRunDialog);
+    run->setObjectName(QStringLiteral("actionRun"));
+    run->setShortcut(QKeySequence(Qt::Key_F5));
+    _runMenu->addSeparator();
+    _runCommandsEnd = _runMenu->addSeparator();
+    QAction* edit = _runMenu->addAction(tr("Modify Shortcut/Delete Command…"), this, [this] {
+        ShortcutMapperDialog dialog(*this, *_prompter, this);
+        dialog.showKind(ShortcutEntry::Kind::RunCommands);
+        dialog.exec();
+        if (_manual)
+            _manual->reload();
+    });
+    edit->setObjectName(QStringLiteral("actionEditRunCommands"));
+    rebuildRunMenu();
+}
+
+void MainWindow::rebuildRunMenu()
+{
+    for (QAction* action : _userCommandActions) {
+        _runMenu->removeAction(action);
+        delete action;
+    }
+    _userCommandActions.clear();
+    for (std::size_t i = 0; i < _userCommands.size(); ++i) {
+        const UserCommand& command = _userCommands[i];
+        auto* action = new QAction(command.name, _runMenu);
+        action->setObjectName(QStringLiteral("actionRunCommand%1").arg(i));
+        action->setToolTip(command.command);
+        if (const int key = qtKeyFromVirtualKey(command.key)) {
+            Qt::KeyboardModifiers modifiers;
+            modifiers.setFlag(Qt::ControlModifier, command.ctrl);
+            modifiers.setFlag(Qt::AltModifier, command.alt);
+            modifiers.setFlag(Qt::ShiftModifier, command.shift);
+            action->setShortcut(QKeySequence(QKeyCombination(modifiers, static_cast<Qt::Key>(key))));
+        }
+        connect(action, &QAction::triggered, this, [this, i] {
+            if (i < _userCommands.size())
+                runCommand(_userCommands[i].command);
+        });
+        _runMenu->insertAction(_runCommandsEnd, action);
+        _userCommandActions.push_back(action);
+    }
+    _runCommandsEnd->setVisible(!_userCommands.empty());
+}
+
+void MainWindow::showRunDialog()
+{
+    if (!_runDialog) {
+        _runDialog = new RunDialog(this);
+        connect(_runDialog, &RunDialog::runRequested, this, [this](const QString& command) {
+            // Como N++: si se lanzó, queda en el historial y el diálogo se cierra
+            if (runCommand(command)) {
+                _runHistory.removeAll(command);
+                _runHistory.prepend(command);
+                _runDialog->setHistory(_runHistory);
+                _runDialog->accept();
+            }
+        });
+        connect(_runDialog, &RunDialog::saveRequested, this, [this](const QString& command) { saveUserCommand(command); });
+    }
+    _runDialog->setHistory(_runHistory);
+    _runDialog->show();
+    _runDialog->raise();
+    _runDialog->activateWindow();
+    _runDialog->combo()->setFocus();
+}
+
+QString MainWindow::expandRunCommand(const QString& command) const
+{
+    RunVariables v;
+    EditorView* view = _activePane ? _activePane->editor() : nullptr;
+    if (const Buffer* buf = _documents.buffer(_activePane ? _activePane->currentBuffer() : kInvalidBuffer))
+        v.fullCurrentPath = buf->isUntitled() ? buf->displayName() : buf->filePath();
+    if (view) {
+        v.currentWord = QString::fromStdString(selectedTextOrWord(*view));
+        const sptr_t pos = view->sci(SCI_GETCURRENTPOS);
+        const sptr_t line = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pos));
+        v.line = line + 1;
+        v.column = view->sci(SCI_GETCOLUMN, static_cast<uptr_t>(pos)) + 1;
+        const sptr_t start = view->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+        const sptr_t end = view->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line));
+        const auto* text = reinterpret_cast<const char*>(view->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(start), end - start));
+        v.currentLineText = text ? QString::fromUtf8(text, static_cast<qsizetype>(end - start)) : QString();
+    }
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    v.appPath = appImage.isEmpty() ? QCoreApplication::applicationFilePath() : appImage;
+    v.appDirectory = QFileInfo(v.appPath).absolutePath();
+    return expandRunVariables(command, v);
+}
+
+bool MainWindow::runCommand(const QString& command)
+{
+    const QString expanded = expandRunCommand(command).trimmed();
+    if (expanded.isEmpty())
+        return false;
+    if (isUrlCommand(expanded)) {
+        if (QDesktopServices::openUrl(QUrl(expanded)))
+            return true;
+        _prompter->warn(this, tr("Run"), tr("Could not open %1").arg(expanded));
+        return false;
+    }
+    // En la carpeta del documento (o en la personal); lo que pone el AppImage no pasa
+    QString directory = QDir::homePath();
+    if (const Buffer* buf = _documents.buffer(currentBuffer()); buf && !buf->isUntitled())
+        directory = QFileInfo(buf->filePath()).absolutePath();
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    for (const char* name : {"APPIMAGE", "APPDIR", "ARGV0", "OWD", "APPIMAGE_EXTRACT_AND_RUN"})
+        environment.remove(QString::fromLatin1(name));
+    QProcess process;
+    process.setProgram(QStringLiteral("/bin/sh"));
+    process.setArguments({QStringLiteral("-c"), expanded});
+    process.setWorkingDirectory(directory);
+    process.setProcessEnvironment(environment);
+    process.setStandardInputFile(QProcess::nullDevice());
+    if (process.startDetached())
+        return true;
+    _prompter->warn(this, tr("Run"), tr("Could not run %1").arg(expanded));
+    return false;
+}
+
+bool MainWindow::saveUserCommand(const QString& command)
+{
+    QString name;
+    QKeySequence shortcut;
+    if (command.trimmed().isEmpty() || !_prompter->askNameAndShortcut(this, tr("Save Command"), name, shortcut))
+        return false;
+    UserCommand c;
+    c.name = name;
+    c.command = command.trimmed();
+    if (!shortcut.isEmpty()) {
+        const QKeyCombination combo = shortcut[0];
+        c.ctrl = combo.keyboardModifiers().testFlag(Qt::ControlModifier);
+        c.alt = combo.keyboardModifiers().testFlag(Qt::AltModifier);
+        c.shift = combo.keyboardModifiers().testFlag(Qt::ShiftModifier);
+        c.key = virtualKeyFromQtKey(combo.key());
+    }
+    _userCommands.push_back(c);
+    const bool ok = writeUserCommands(shortcutsPath(), _userCommands);
+    rebuildRunMenu();
+    if (_manual)
+        _manual->reload();
+    return ok;
+}
+
+bool MainWindow::deleteUserCommand(int index)
+{
+    if (index < 0 || static_cast<std::size_t>(index) >= _userCommands.size())
+        return false;
+    _userCommands.erase(_userCommands.begin() + index);
+    const bool ok = writeUserCommands(shortcutsPath(), _userCommands);
+    rebuildRunMenu();
+    return ok;
+}
+
 void MainWindow::rebuildMacroMenu()
 {
     for (QAction* action : _savedMacroActions) {
@@ -3711,7 +3898,7 @@ bool MainWindow::saveCurrentMacro()
         return false;
     QString name;
     QKeySequence shortcut;
-    if (!_prompter->askMacroName(this, name, shortcut))
+    if (!_prompter->askNameAndShortcut(this, tr("Save Macro"), name, shortcut))
         return false;
     SavedMacro macro;
     macro.name = name;

@@ -87,11 +87,13 @@ ShortcutMapperDialog::ShortcutMapperDialog(MainWindow& window, Prompter& prompte
     setWindowTitle(tr("Shortcut Mapper"));
     _tabs = new QTabWidget;
     _tabs->setObjectName(QStringLiteral("tabs"));
-    const QString titles[] = {tr("Main menu"), tr("Macros"), tr("Plugin commands"), tr("Scintilla commands")};
-    for (int i = 0; i < 4; ++i) {
+    const QString titles[] = {tr("Main menu"), tr("Macros"), tr("Run commands"), tr("Plugin commands"), tr("Scintilla commands")};
+    for (int i = 0; i < 5; ++i) {
+        const auto kind = static_cast<Kind>(i);
         auto* table = new QTableWidget(0, 3);
         table->setObjectName(QStringLiteral("table%1").arg(i));
-        table->setHorizontalHeaderLabels({tr("Name"), tr("Shortcut"), i == 2 ? tr("Plugin") : tr("Category")});
+        table->setHorizontalHeaderLabels({tr("Name"), tr("Shortcut"),
+                                          kind == Kind::Plugin ? tr("Plugin") : kind == Kind::RunCommands ? tr("Command") : tr("Category")});
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
         table->setSelectionMode(QAbstractItemView::SingleSelection);
         table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -103,8 +105,7 @@ ShortcutMapperDialog::ShortcutMapperDialog(MainWindow& window, Prompter& prompte
         _tables[i] = table;
         _tabs->addTab(table, titles[i]);
     }
-    if (_tables[3])
-        _tables[3]->setColumnHidden(2, true);
+    table(Kind::Scintilla)->setColumnHidden(2, true);
 
     _filter = new QLineEdit;
     _filter->setObjectName(QStringLiteral("filter"));
@@ -130,10 +131,16 @@ ShortcutMapperDialog::ShortcutMapperDialog(MainWindow& window, Prompter& prompte
             && _prompter.confirm(this, tr("Delete macro"), tr("Delete the macro \"%1\"?").arg(entry->name))) {
             _window.deleteSavedMacro(entry->id.toInt());
             refresh();
+        } else if (entry && entry->kind == Kind::RunCommands
+                   && _prompter.confirm(this, tr("Delete command"), tr("Delete the command \"%1\"?").arg(entry->name))) {
+            _window.deleteUserCommand(entry->id.toInt());
+            refresh();
         }
     });
     connect(close, &QPushButton::clicked, this, &QDialog::accept);
-    connect(_tabs, &QTabWidget::currentChanged, this, [this](int index) { _delete->setEnabled(index == 1); });
+    connect(_tabs, &QTabWidget::currentChanged, this, [this](int index) {
+        _delete->setEnabled(index == static_cast<int>(Kind::Macros) || index == static_cast<int>(Kind::RunCommands));
+    });
     _delete->setEnabled(false);
 
     auto* buttons = new QHBoxLayout;
@@ -150,6 +157,11 @@ ShortcutMapperDialog::ShortcutMapperDialog(MainWindow& window, Prompter& prompte
     resize(760, 560);
 }
 
+void ShortcutMapperDialog::showKind(Kind kind)
+{
+    _tabs->setCurrentIndex(static_cast<int>(kind));
+}
+
 QTableWidget* ShortcutMapperDialog::table(Kind kind) const
 {
     return _tables[static_cast<int>(kind)];
@@ -158,7 +170,7 @@ QTableWidget* ShortcutMapperDialog::table(Kind kind) const
 void ShortcutMapperDialog::refresh()
 {
     _entries = _window.shortcutEntries();
-    int rows[4] = {};
+    int rows[5] = {};
     for (QTableWidget* t : _tables)
         t->setRowCount(0);
     for (std::size_t i = 0; i < _entries.size(); ++i) {

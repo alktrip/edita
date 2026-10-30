@@ -36,6 +36,7 @@ add_library(edita_core STATIC
     core/LineDiff.cpp
     core/FuzzyMatch.cpp
     core/Macro.cpp
+    core/UserCommands.cpp
     core/Macro.h
     core/Paths.cpp
     core/Paths.h
@@ -155,6 +156,7 @@ add_library(edita_ui STATIC
     ui/QuickPicker.cpp
     ui/RainbowBrackets.cpp
     ui/RegexTester.cpp
+    ui/RunDialog.cpp
     ui/LspManager.cpp
     ui/ManualWindow.cpp
     ui/ProblemsPanel.cpp

@@ -26,6 +26,7 @@
 #include "core/Macro.h"
 #include "core/Preferences.h"
 #include "core/Session.h"
+#include "core/UserCommands.h"
 #include "doc/Buffer.h"
 #include "doc/DocumentManager.h"
 #include "search/SearchEngine.h"
@@ -85,6 +86,7 @@ class Breadcrumbs;
 class StickyScroll;
 class FindBar;
 class WelcomePage;
+class RunDialog;
 class ScrollBarMarks;
 }
 class QPagedPaintDevice;
@@ -354,6 +356,18 @@ public:
     bool saveCurrentMacro();
     const std::vector<SavedMacro>& savedMacros() const { return _savedMacros; }
     bool deleteSavedMacro(int index);
+    // Menú Ejecutar (RunDlg, UserCommand de N++)
+    void showRunDialog();
+    // La orden con sus $(VARIABLES) sustituidas para el documento y el cursor actuales
+    QString expandRunCommand(const QString& command) const;
+    // Command::run: una dirección se abre en el navegador; lo demás, con /bin/sh -c en la
+    // carpeta del documento. false si no se pudo lanzar
+    bool runCommand(const QString& command);
+    // Guarda la orden en el menú Ejecutar (pide el nombre y el atajo)
+    bool saveUserCommand(const QString& command);
+    bool deleteUserCommand(int index);
+    const std::vector<UserCommand>& userCommands() const { return _userCommands; }
+    RunDialog* runDialog() const { return _runDialog; }
     QString shortcutsPath() const;
 
     // --- Plugins (menú Plugins) ----------------------------------------------------------
@@ -508,6 +522,8 @@ private:
     void runMenuCommand(int idm, const std::function<void()>& command);
     QAction* actionForCommand(int idm) const;
     void createMacroMenu();
+    void createRunMenu();
+    void rebuildRunMenu();
     void loadPlugins();
     void notifyPlugins(unsigned int code, BufferId id);
     void rebuildMacroMenu();
@@ -671,6 +687,12 @@ private:
     int _suppressRecording = 0; // > 0: lo que llega de Scintilla no se graba
     Macro _macro;
     std::vector<SavedMacro> _savedMacros;
+    std::vector<UserCommand> _userCommands;
+    QMenu* _runMenu = nullptr;
+    QAction* _runCommandsEnd = nullptr; // separador antes de «Modificar atajo/Eliminar orden…»
+    std::vector<QAction*> _userCommandActions;
+    QStringList _runHistory;
+    RunDialog* _runDialog = nullptr;
     QMenu* _macroMenu = nullptr;
     QAction* _recordAction = nullptr;
     QAction* _playAction = nullptr;

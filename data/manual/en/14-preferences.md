@@ -29,6 +29,7 @@ Most options are described in the chapter of their feature; this is a summary.
 
 - **Main menu**: every menu command, with its menu as category.
 - **Macros**: the saved macros.
+- **Run commands**: the commands saved in the [Run menu](12-macros.md#the-run-menu).
 - **Plugin commands**: the commands of the plugins.
 - **Scintilla commands**: the keys of the editor itself (move by words, delete lines, select…).
 

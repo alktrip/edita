@@ -100,11 +100,11 @@ Prompter::UnmappableChoice DialogPrompter::askUnmappable(QWidget* parent, const 
     return UnmappableChoice::Cancel;
 }
 
-bool DialogPrompter::askMacroName(QWidget* parent, QString& name, QKeySequence& shortcut)
+bool DialogPrompter::askNameAndShortcut(QWidget* parent, const QString& title, QString& name, QKeySequence& shortcut)
 {
-    // MacroShortcut::doDialog: nombre y combinación de teclas
+    // MacroShortcut::doDialog (macros y órdenes de Ejecutar): nombre y combinación de teclas
     QDialog dialog(parent);
-    dialog.setWindowTitle(QCoreApplication::translate("Prompter", "Save Macro"));
+    dialog.setWindowTitle(title);
     auto* nameEdit = new QLineEdit(name, &dialog);
     auto* keyEdit = new QKeySequenceEdit(shortcut, &dialog);
     keyEdit->setMaximumSequenceLength(1);

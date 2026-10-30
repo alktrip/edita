@@ -85,11 +85,11 @@ public:
         return unmappableChoices.dequeue();
     }
 
-    bool askMacroName(QWidget*, QString& name, QKeySequence& shortcut) override
+    bool askNameAndShortcut(QWidget*, const QString&, QString& name, QKeySequence& shortcut) override
     {
         asked << QStringLiteral("macroName");
         if (macroNames.isEmpty()) {
-            QTest::qFail("askMacroName sin respuesta programada", __FILE__, __LINE__);
+            QTest::qFail("askNameAndShortcut sin respuesta programada", __FILE__, __LINE__);
             return false;
         }
         const auto answer = macroNames.dequeue();

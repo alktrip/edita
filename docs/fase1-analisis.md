@@ -321,6 +321,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 45 — Manual de usuario (3) | Capturas automáticas en los dos idiomas, tabla de atajos generada desde los menús, prueba de que cada orden de los menús está en el manual; corrige el choque de los marcadores de comparar y la bombilla con los del historial de cambios | ✅ [fase45.md](fase45.md) |
 | 46 — Pestaña Marcar | Marcar todo con «Find Mark Style», marcador en la línea, borrar en cada búsqueda, en la selección, borrar marcas, copiar el texto marcado; Buscar › Marcar… (Ctrl+M) y Copiar el texto con estilo | ✅ [fase46.md](fase46.md) |
 | 47 — Sesiones con nombre | Archivo › Cargar una sesión / Guardar la sesión (con las carpetas del explorador), extensión de las sesiones y --openSession | ✅ [fase47.md](fase47.md) |
+| 48 — Menú Ejecutar | Ejecutar… (F5) con variables $(…), órdenes guardadas con nombre y atajo en shortcuts.xml (<UserDefinedCommands>), las tres de N++ y su pestaña en la Asignación de atajos | ✅ [fase48.md](fase48.md) |
 
 ---
 
