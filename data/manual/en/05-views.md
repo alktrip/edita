@@ -42,6 +42,30 @@ Edita can show two documents side by side (or one above the other):
 
 The other view closes when its last document is closed. The divider can be dragged.
 
+## The Window menu
+
+The **Window** menu lists the documents of the current view, numbered (Alt+W and the number opens
+one), with a `*` on those with unsaved changes; the current one is checked.
+
+**Sort By** orders the tabs of the current view:
+
+| Ascending | Descending |
+|---|---|
+| {{item:actionSortTabsNameAsc}} | {{item:actionSortTabsNameDesc}} |
+| {{item:actionSortTabsPathAsc}} | {{item:actionSortTabsPathDesc}} |
+| {{item:actionSortTabsTypeAsc}} | {{item:actionSortTabsTypeDesc}} |
+| {{item:actionSortTabsSizeAsc}} | {{item:actionSortTabsSizeDesc}} |
+| {{item:actionSortTabsModifiedAsc}} | {{item:actionSortTabsModifiedDesc}} |
+
+{{actionWindowsList}} opens a list of the documents of the current view with their name, path,
+type and size. Click a column to sort the list by it. Select one or several documents (with Ctrl
+or Shift) and:
+
+- **Activate** (or double click) switches to the document.
+- **Save** saves the selected documents that have changes.
+- **Close window(s)** closes them (asking about unsaved changes).
+- **Sort tabs** puts the tabs in the order of the list.
+
 ## Display options
 
 | Command | What it does |

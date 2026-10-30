@@ -70,6 +70,7 @@ edita_add_test(tst_mark LIBS edita_ui)
 edita_add_test(tst_namedsessions LIBS edita_ui)
 edita_add_test(tst_run LIBS edita_ui)
 edita_add_test(tst_hidelines LIBS edita_ui)
+edita_add_test(tst_windows LIBS edita_ui)
 edita_add_test(tst_panels LIBS edita_ui)
 # Una sola instancia: también arranca el binario de verdad
 edita_add_test(tst_singleinstance LIBS edita_ui)

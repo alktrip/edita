@@ -68,6 +68,8 @@ public:
     void removeBuffer(BufferId id);
     // Guarda en el Buffer la posición actual del editor (saveCurrentPos)
     void syncCurrentPosition();
+    // Pone las pestañas en ese orden (los documentos que no estén en la lista, al final)
+    void reorder(const std::vector<BufferId>& order);
 
 signals:
     void currentBufferChanged(edita::BufferId id);

@@ -210,6 +210,7 @@ add_library(edita_ui STATIC
     ui/StickyScroll.cpp
     ui/StyleConfiguratorDialog.cpp
     ui/WelcomePage.cpp
+    ui/WindowsDialog.cpp
     ui/StyleConfiguratorDialog.h
     ui/Appearance.cpp
     ui/Appearance.h

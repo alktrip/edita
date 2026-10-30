@@ -35,6 +35,7 @@
 #include "ui/EditCommands.h"
 #include "ui/FindReplaceDialog.h"
 #include "ui/ManualWindow.h"
+#include "ui/WindowsDialog.h"
 #include "ui/PluginsAdminDialog.h"
 #include "ui/Shortcuts.h"
 
@@ -368,6 +369,12 @@ public:
     bool deleteUserCommand(int index);
     const std::vector<UserCommand>& userCommands() const { return _userCommands; }
     RunDialog* runDialog() const { return _runDialog; }
+    // Menú Ventana (WindowsMenu, WindowsDlg de N++)
+    enum class TabSort { Name, Path, Type, Size, Modified };
+    // Ventana › Ordenar por: las pestañas de la vista actual
+    void sortTabs(TabSort by, bool ascending);
+    void showWindowsDialog();
+    WindowsDialog* windowsDialog() const { return _windowsDialog; }
     QString shortcutsPath() const;
 
     // --- Plugins (menú Plugins) ----------------------------------------------------------
@@ -523,6 +530,9 @@ private:
     QAction* actionForCommand(int idm) const;
     void createMacroMenu();
     void createRunMenu();
+    void createWindowMenu();
+    void rebuildWindowMenu();
+    std::vector<WindowsDialog::Row> windowRows() const;
     void rebuildRunMenu();
     void loadPlugins();
     void notifyPlugins(unsigned int code, BufferId id);
@@ -693,6 +703,10 @@ private:
     std::vector<QAction*> _userCommandActions;
     QStringList _runHistory;
     RunDialog* _runDialog = nullptr;
+    QMenu* _windowMenu = nullptr;
+    QAction* _windowDocumentsStart = nullptr; // separador antes de la lista de documentos
+    std::vector<QAction*> _windowDocumentActions;
+    WindowsDialog* _windowsDialog = nullptr;
     QMenu* _macroMenu = nullptr;
     QAction* _recordAction = nullptr;
     QAction* _playAction = nullptr;

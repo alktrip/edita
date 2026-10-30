@@ -188,7 +188,11 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
         {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
         {"actionDocumentList", 44070},   {"actionFunctionList", 44084},   {"actionFolderAsWorkspace", 44085},
-        {"actionOpenFolderAsWorkspace", 41022}, {"actionLoadSession", 41012}, {"actionSaveSession", 41013},
+        {"actionOpenFolderAsWorkspace", 41022}, {"actionWindowsList", 11001},
+        {"actionSortTabsNameAsc", 11002}, {"actionSortTabsNameDesc", 11003}, {"actionSortTabsPathAsc", 11004},
+        {"actionSortTabsPathDesc", 11005}, {"actionSortTabsTypeAsc", 11006}, {"actionSortTabsTypeDesc", 11007},
+        {"actionSortTabsSizeAsc", 11008}, {"actionSortTabsSizeDesc", 11009}, {"actionSortTabsModifiedAsc", 11010},
+        {"actionSortTabsModifiedDesc", 11011}, {"actionLoadSession", 41012}, {"actionSaveSession", 41013},
     };
     for (const auto& [name, idm] : kCommands) {
         if (actionName == QLatin1String(name))
@@ -1284,6 +1288,7 @@ void MainWindow::createMenus()
 
     createMacroMenu();
     createRunMenu();
+    createWindowMenu();
     loadPlugins();
 
     // Ayuda
@@ -3640,6 +3645,161 @@ void MainWindow::rebuildRunMenu()
         _userCommandActions.push_back(action);
     }
     _runCommandsEnd->setVisible(!_userCommands.empty());
+}
+
+void MainWindow::createWindowMenu()
+{
+    _windowMenu = menuBar()->addMenu(tr("&Window"));
+    _windowMenu->setObjectName(QStringLiteral("menuWindow"));
+    QMenu* sortBy = _windowMenu->addMenu(tr("Sort By"));
+    struct SortItem
+    {
+        const char* text;
+        const char* name;
+        TabSort by;
+        bool ascending;
+    };
+    static constexpr SortItem kSorts[] = {
+        {QT_TR_NOOP("Name A to Z"), "actionSortTabsNameAsc", TabSort::Name, true},
+        {QT_TR_NOOP("Name Z to A"), "actionSortTabsNameDesc", TabSort::Name, false},
+        {QT_TR_NOOP("Path A to Z"), "actionSortTabsPathAsc", TabSort::Path, true},
+        {QT_TR_NOOP("Path Z to A"), "actionSortTabsPathDesc", TabSort::Path, false},
+        {QT_TR_NOOP("Type A to Z"), "actionSortTabsTypeAsc", TabSort::Type, true},
+        {QT_TR_NOOP("Type Z to A"), "actionSortTabsTypeDesc", TabSort::Type, false},
+        {QT_TR_NOOP("Content Length Ascending"), "actionSortTabsSizeAsc", TabSort::Size, true},
+        {QT_TR_NOOP("Content Length Descending"), "actionSortTabsSizeDesc", TabSort::Size, false},
+        {QT_TR_NOOP("Modified Time Ascending"), "actionSortTabsModifiedAsc", TabSort::Modified, true},
+        {QT_TR_NOOP("Modified Time Descending"), "actionSortTabsModifiedDesc", TabSort::Modified, false},
+    };
+    for (const SortItem& item : kSorts) {
+        QAction* action = sortBy->addAction(tr(item.text), this, [this, item] { sortTabs(item.by, item.ascending); });
+        action->setObjectName(QString::fromLatin1(item.name));
+    }
+    QAction* windows = _windowMenu->addAction(tr("&Windows…"), this, &MainWindow::showWindowsDialog);
+    windows->setObjectName(QStringLiteral("actionWindowsList"));
+    _windowDocumentsStart = _windowMenu->addSeparator();
+    // Los documentos de la vista actual, al abrir el menú (IDM_WINDOW_MRU_FIRST…)
+    connect(_windowMenu, &QMenu::aboutToShow, this, &MainWindow::rebuildWindowMenu);
+    rebuildWindowMenu();
+}
+
+void MainWindow::rebuildWindowMenu()
+{
+    for (QAction* action : _windowDocumentActions) {
+        _windowMenu->removeAction(action);
+        delete action;
+    }
+    _windowDocumentActions.clear();
+    EditorPane* pane = _activePane ? _activePane : _mainPane;
+    if (!pane)
+        return;
+    const std::vector<BufferId> ids = pane->buffers();
+    constexpr std::size_t kMax = 40; // IDM_WINDOW_MRU_LIMIT - IDM_WINDOW_MRU_FIRST + 1
+    for (std::size_t i = 0; i < ids.size() && i < kMax; ++i) {
+        const Buffer* buf = _documents.buffer(ids[i]);
+        if (!buf)
+            continue;
+        // BuildMenuFileName: «&1: nombre», con «*» si tiene cambios sin guardar
+        QString name = buf->displayName();
+        name.replace(QLatin1Char('&'), QStringLiteral("&&"));
+        const QString number = i < 9 ? QStringLiteral("&%1").arg(i + 1) : QString::number(i + 1);
+        auto* action = new QAction(QStringLiteral("%1: %2%3").arg(number, name, buf->isDirty() ? QStringLiteral("*") : QString()),
+                                   _windowMenu);
+        action->setObjectName(QStringLiteral("actionWindowDocument%1").arg(i));
+        action->setCheckable(true);
+        action->setChecked(ids[i] == pane->currentBuffer());
+        const BufferId id = ids[i];
+        connect(action, &QAction::triggered, this, [this, pane, id] {
+            if (pane->contains(id)) {
+                pane->activateBuffer(id);
+                setActivePane(pane);
+                pane->editor()->setFocus();
+            }
+        });
+        _windowMenu->addAction(action);
+        _windowDocumentActions.push_back(action);
+    }
+    _windowDocumentsStart->setVisible(!_windowDocumentActions.empty());
+}
+
+std::vector<WindowsDialog::Row> MainWindow::windowRows() const
+{
+    std::vector<WindowsDialog::Row> rows;
+    EditorPane* pane = _activePane ? _activePane : _mainPane;
+    for (const BufferId id : pane->buffers()) {
+        const Buffer* buf = _documents.buffer(id);
+        if (!buf)
+            continue;
+        WindowsDialog::Row row;
+        row.id = id;
+        row.name = buf->displayName();
+        row.path = buf->isUntitled() ? QString() : buf->filePath();
+        row.type = buf->language() == LangType::User && !buf->userLanguage().isEmpty()
+            ? buf->userLanguage()
+            : QCoreApplication::translate("LangType", languageInfo(buf->language()).longName);
+        row.size = static_cast<qint64>(_documents.text(id).size());
+        row.modified = buf->isDirty();
+        rows.push_back(row);
+    }
+    return rows;
+}
+
+void MainWindow::sortTabs(TabSort by, bool ascending)
+{
+    // WindowsDlg::sort + doSortToTabs, sobre la vista actual
+    EditorPane* pane = _activePane ? _activePane : _mainPane;
+    std::vector<WindowsDialog::Row> rows = windowRows();
+    auto modified = [this](BufferId id) {
+        const Buffer* buf = _documents.buffer(id);
+        return buf && !buf->isUntitled() ? buf->lastModified() : QDateTime();
+    };
+    auto less = [&](const WindowsDialog::Row& a, const WindowsDialog::Row& b) {
+        switch (by) {
+        case TabSort::Name: return QString::compare(a.name, b.name, Qt::CaseInsensitive) < 0;
+        case TabSort::Path: return QString::compare(a.path, b.path, Qt::CaseInsensitive) < 0;
+        case TabSort::Type: return QString::compare(a.type, b.type, Qt::CaseInsensitive) < 0;
+        case TabSort::Size: return a.size < b.size;
+        case TabSort::Modified: return modified(a.id) < modified(b.id);
+        }
+        return false;
+    };
+    std::stable_sort(rows.begin(), rows.end(), [&](const auto& a, const auto& b) { return ascending ? less(a, b) : less(b, a); });
+    std::vector<BufferId> order;
+    for (const auto& row : rows)
+        order.push_back(row.id);
+    pane->reorder(order);
+}
+
+void MainWindow::showWindowsDialog()
+{
+    if (!_windowsDialog) {
+        _windowsDialog = new WindowsDialog(this);
+        auto paneNow = [this] { return _activePane ? _activePane : _mainPane; };
+        connect(_windowsDialog, &WindowsDialog::activateRequested, this, [this, paneNow](BufferId id) {
+            EditorPane* pane = paneNow();
+            if (pane->contains(id)) {
+                pane->activateBuffer(id);
+                pane->editor()->setFocus();
+            }
+        });
+        connect(_windowsDialog, &WindowsDialog::saveRequested, this, [this](const std::vector<BufferId>& ids) {
+            for (const BufferId id : ids) {
+                if (const Buffer* buf = _documents.buffer(id); buf && buf->isDirty())
+                    saveBuffer(id);
+            }
+            _windowsDialog->setRows(windowRows(), currentBuffer());
+        });
+        connect(_windowsDialog, &WindowsDialog::closeRequested, this, [this, paneNow](const std::vector<BufferId>& ids) {
+            closeBuffers(ids, false, paneNow());
+            _windowsDialog->setRows(windowRows(), currentBuffer());
+        });
+        connect(_windowsDialog, &WindowsDialog::sortTabsRequested, this,
+                [paneNow](const std::vector<BufferId>& order) { paneNow()->reorder(order); });
+    }
+    _windowsDialog->setRows(windowRows(), currentBuffer());
+    _windowsDialog->show();
+    _windowsDialog->raise();
+    _windowsDialog->activateWindow();
 }
 
 void MainWindow::showRunDialog()

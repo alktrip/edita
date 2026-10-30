@@ -133,6 +133,20 @@ void EditorPane::activateBuffer(BufferId id)
     emit currentBufferChanged(id);
 }
 
+void EditorPane::reorder(const std::vector<BufferId>& order)
+{
+    const QSignalBlocker blocker(_tabs);
+    int target = 0;
+    for (const BufferId id : order) {
+        const int index = _tabs->indexOf(id);
+        if (index < 0)
+            continue;
+        if (index != target)
+            _tabs->moveTab(index, target);
+        ++target;
+    }
+}
+
 void EditorPane::removeBuffer(BufferId id)
 {
     const int index = _tabs->indexOf(id);

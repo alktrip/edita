@@ -44,6 +44,30 @@ Edita puede mostrar dos documentos uno al lado del otro (o uno encima del otro):
 
 La otra vista se cierra cuando se cierra su último documento. La división se puede arrastrar.
 
+## El menú Ventana
+
+El menú **Ventana** muestra los documentos de la vista actual, numerados (Alt+N y el número abre
+uno), con un `*` en los que tienen cambios sin guardar; el actual está marcado.
+
+**Ordenar por** ordena las pestañas de la vista actual:
+
+| Ascendente | Descendente |
+|---|---|
+| {{item:actionSortTabsNameAsc}} | {{item:actionSortTabsNameDesc}} |
+| {{item:actionSortTabsPathAsc}} | {{item:actionSortTabsPathDesc}} |
+| {{item:actionSortTabsTypeAsc}} | {{item:actionSortTabsTypeDesc}} |
+| {{item:actionSortTabsSizeAsc}} | {{item:actionSortTabsSizeDesc}} |
+| {{item:actionSortTabsModifiedAsc}} | {{item:actionSortTabsModifiedDesc}} |
+
+{{actionWindowsList}} abre una lista de los documentos de la vista actual con su nombre, ruta, tipo y
+tamaño. Pulsa una columna para ordenar la lista por ella. Elige uno o varios documentos (con Ctrl o
+Mayús) y:
+
+- **Activar** (o doble clic) cambia a ese documento.
+- **Guardar** guarda los elegidos que tienen cambios.
+- **Cerrar** los cierra (preguntando por los cambios sin guardar).
+- **Ordenar las pestañas** deja las pestañas en el orden de la lista.
+
 ## Opciones de visualización
 
 | Orden | Qué hace |

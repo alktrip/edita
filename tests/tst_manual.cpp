@@ -110,7 +110,7 @@ private slots:
     void everyMenuCommandIsInTheManual()
     {
         auto w = window();
-        static const QRegularExpression generated(QStringLiteral("^action(Lang[1-9]|Macro[1-9]|RunCommand|Charset)[0-9]*$"));
+        static const QRegularExpression generated(QStringLiteral("^action(Lang[1-9]|Macro[1-9]|RunCommand|WindowDocument|Charset)[0-9]*$"));
         for (const QString& language : kLanguages) {
             QSet<QString> cited;
             const QDir dir(sourceDir(language));

@@ -1702,19 +1702,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+415"/>
-        <location line="+3513"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+419"/>
+        <location line="+3669"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3513"/>
-        <location line="+1316"/>
+        <location line="-3669"/>
+        <location line="+1317"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1222"/>
+        <location line="-1223"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2150,7 +2150,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+36"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2393,12 +2393,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1852"/>
+        <location line="-1853"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-837"/>
+        <location line="-841"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2478,13 +2478,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+724"/>
-        <location line="+738"/>
+        <location line="+728"/>
+        <location line="+739"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-717"/>
+        <location line="-718"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
@@ -2785,7 +2785,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Este documento no tiene servidor de lenguaje</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+16"/>
         <source>Help</source>
         <translation>Ayuda</translation>
     </message>
@@ -3232,12 +3232,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1577"/>
+        <location line="+1732"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1856"/>
+        <location line="-2011"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3382,12 +3382,12 @@ Do you want to save the file anyway?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+218"/>
+        <location line="+373"/>
         <source>Start &amp;Recording</source>
         <translation>&amp;Iniciar la grabación</translation>
     </message>
     <message>
-        <location line="-215"/>
+        <location line="-370"/>
         <source>&amp;Playback</source>
         <translation>&amp;Reproducir</translation>
     </message>
@@ -3417,7 +3417,72 @@ Do you want to save the file anyway?</source>
         <translation>Modificar el atajo o eliminar una orden…</translation>
     </message>
     <message>
-        <location line="+93"/>
+        <location line="+42"/>
+        <source>&amp;Window</source>
+        <translation>Ve&amp;ntana</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sort By</source>
+        <translation>Ordenar por</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Name A to Z</source>
+        <translation>Nombre de la A a la Z</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Name Z to A</source>
+        <translation>Nombre de la Z a la A</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Path A to Z</source>
+        <translation>Ruta de la A a la Z</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Path Z to A</source>
+        <translation>Ruta de la Z a la A</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type A to Z</source>
+        <translation>Tipo de la A a la Z</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Type Z to A</source>
+        <translation>Tipo de la Z a la A</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Content Length Ascending</source>
+        <translation>Tamaño del contenido ascendente</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Content Length Descending</source>
+        <translation>Tamaño del contenido descendente</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Modified Time Ascending</source>
+        <translation>Fecha de modificación ascendente</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Modified Time Descending</source>
+        <translation>Fecha de modificación descendente</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>&amp;Windows…</source>
+        <translation>&amp;Ventanas…</translation>
+    </message>
+    <message>
+        <location line="+180"/>
         <source>Could not open %1</source>
         <translation>No se pudo abrir %1</translation>
     </message>
@@ -7035,6 +7100,59 @@ Do you want to save your changes before switching themes?</source>
         <location line="+0"/>
         <source>No recent files yet</source>
         <translation>Todavía no hay archivos recientes</translation>
+    </message>
+</context>
+<context>
+    <name>edita::WindowsDialog</name>
+    <message>
+        <location filename="../src/ui/WindowsDialog.cpp" line="+43"/>
+        <source>Windows</source>
+        <translation>Ventanas</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Name</source>
+        <translation>Nombre</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Path</source>
+        <translation>Ruta</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Type</source>
+        <translation>Tipo</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Size</source>
+        <translation>Tamaño</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>&amp;Activate</source>
+        <translation>&amp;Activar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Save</source>
+        <translation>&amp;Guardar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Close window(s)</source>
+        <translation>&amp;Cerrar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Sort &amp;tabs</source>
+        <translation>&amp;Ordenar las pestañas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;OK</source>
+        <translation>Ace&amp;ptar</translation>
     </message>
 </context>
 <context>
