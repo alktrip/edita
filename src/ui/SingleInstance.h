@@ -33,6 +33,7 @@ struct InstanceRequest
     QStringList files;
     int line = -1;   // -n
     int column = -1; // -c
+    QString session; // --openSession (-openSession de N++)
 
     QByteArray toJson() const;
     static bool fromJson(const QByteArray& json, InstanceRequest& request);

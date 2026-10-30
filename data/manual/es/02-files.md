@@ -105,6 +105,25 @@ Si Edita o el equipo se detienen de forma inesperada, los documentos vuelven con
 incluso los que nunca se guardaron. Por eso, al cerrar Edita con documentos sin guardar tampoco
 se pregunta nada: se conservan para la próxima sesión.
 
+### Sesiones con nombre
+
+Además de la sesión automática, puedes guardar grupos de archivos para abrirlos juntos después, por
+ejemplo uno por proyecto o por tarea:
+
+- {{actionSaveSession}} guarda los archivos abiertos (con su posición, lenguaje, codificación y
+  marcadores, y la vista dividida) en un archivo de sesión. Los documentos que nunca se guardaron no
+  se incluyen. Si el Explorador de carpetas está a la vista, también se guardan sus carpetas.
+- {{actionLoadSession}} abre los archivos de un archivo de sesión, **además** de los que ya están
+  abiertos, y añade sus carpetas al Explorador de carpetas. Los archivos que ya no existen se
+  muestran en una barra encima del editor.
+
+Los archivos de sesión tienen el formato del `session.xml` de Notepad++, así que se pueden cargar
+sesiones guardadas por Notepad++ (y al revés). Si eliges una **Extensión de los archivos de sesión**
+en la página Copias de seguridad de {{actionPreferences}} (por ejemplo `edita-session`), el diálogo
+de guardar la usa, y al abrir un archivo con esa extensión (desde el diálogo Abrir, el
+administrador de archivos o la línea de órdenes) se carga como sesión. `--openSession archivo` en
+la línea de órdenes hace lo mismo con cualquier nombre.
+
 **Al guardar, copiar la versión anterior** conserva el contenido anterior del archivo cada vez que
 lo guardas: como `archivo.bak` junto al archivo, o con la fecha en el nombre en una carpeta
 `nppBackup`. Las copias pueden ir a una carpeta fija en lugar de a la del archivo.

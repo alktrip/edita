@@ -46,7 +46,7 @@ siempre los atajos del sistema en el que estás.
 Ejecuta `edita` para abrir el editor. En la línea de órdenes puedes pasar archivos y opciones:
 
 ```
-edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst]
+edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst] [--openSession archivo]
 ```
 
 | Opción | Significado |
@@ -56,6 +56,7 @@ edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst]
 | `-c columna` | Pone el cursor en esa columna. |
 | `--nosession` | Ni restaura ni guarda la sesión (los archivos que estaban abiertos). |
 | `--multiInst` | Abre otra ventana aunque Edita ya esté abierto. |
+| `--openSession archivo` | Abre los archivos de un archivo de sesión (ver [Sesiones con nombre](02-files.md#sesiones-con-nombre)). |
 
 Edita funciona como **una sola instancia**: si ya hay una ventana abierta, los archivos que abras
 desde el administrador de archivos o desde la línea de órdenes se abren como pestañas en esa

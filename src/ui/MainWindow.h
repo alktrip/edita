@@ -182,7 +182,16 @@ public:
     // --- Sesión (session.xml) ------------------------------------------------------------
     QString sessionPath() const;
     // getCurrentOpenedFiles: lo que hay abierto ahora
-    Session captureSession();
+    // `named`: para Archivo › Guardar sesión: solo archivos que existen (sin copias ni
+    // documentos sin título) y, si `withFolders`, las carpetas del explorador
+    Session captureSession(bool named = false, bool withFolders = true);
+    // Archivo › Cargar sesión (fileLoadSession): añade los archivos y las carpetas de la
+    // sesión a lo que ya está abierto. false si no es una sesión
+    bool loadSessionFile(const QString& path);
+    // Archivo › Guardar sesión (fileSaveSession)
+    bool saveSessionFile(const QString& path, bool withFolders);
+    // isFileSession: tiene la extensión de las sesiones (Preferencias › Copias de seguridad)
+    bool isSessionFile(const QString& path) const;
     // loadSession: abre los archivos de la sesión (los que falten se omiten)
     void restoreSession(const Session& session, QStringList* missing = nullptr);
     // Lee session.xml (o su copia de seguridad si está dañado) y lo restaura

@@ -98,6 +98,24 @@ the modified documents every few seconds in `~/.config/edita/backup/`. If Edita 
 stops unexpectedly, the documents come back with their changes, even those that were never saved.
 Closing Edita with unsaved documents doesn't ask either: they are kept for the next session.
 
+### Named sessions
+
+Besides the automatic session, you can keep groups of files to open them together later, for
+example one per project or task:
+
+- {{actionSaveSession}} saves the open files (with their position, language, encoding and
+  bookmarks, and the split view) in a session file. Documents that were never saved are not
+  included. If the Folder as Workspace panel is visible, its folders are saved too.
+- {{actionLoadSession}} opens the files of a session file, **in addition** to those already open,
+  and adds its folders to the Folder as Workspace. Files that no longer exist are listed in a bar
+  above the editor.
+
+Session files have the format of the `session.xml` of Notepad++, so sessions saved by Notepad++
+can be loaded (and the other way round). If you set a **Session file extension** in the Backup page
+of {{actionPreferences}} (for example `edita-session`), the save dialog uses it, and opening a file
+with that extension (from the Open dialog, the file manager or the command line) loads it as a
+session. `--openSession file` on the command line does the same with any name.
+
 **On save, back up the previous version** keeps the previous contents of the file every time you
 save it: as `file.bak` next to the file, or with the date in the name in an `nppBackup` folder.
 The backups can go to a fixed folder instead of the file's folder.

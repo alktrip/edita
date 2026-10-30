@@ -187,7 +187,7 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
         {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
         {"actionDocumentList", 44070},   {"actionFunctionList", 44084},   {"actionFolderAsWorkspace", 44085},
-        {"actionOpenFolderAsWorkspace", 41022},
+        {"actionOpenFolderAsWorkspace", 41022}, {"actionLoadSession", 41012}, {"actionSaveSession", 41013},
     };
     for (const auto& [name, idm] : kCommands) {
         if (actionName == QLatin1String(name))
@@ -890,6 +890,30 @@ void MainWindow::createMenus()
     addAction(file, tr("Clos&e All"), "actionCloseAll", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_W), [this] { closeAll(); });
     addAction(file, tr("Close All but Acti&ve Document"), "actionCloseAllBut", QKeySequence(),
               [this] { closeAllBut(currentBuffer()); });
+    file->addSeparator();
+    // IDM_FILE_LOADSESSION, IDM_FILE_SAVESESSION
+    auto sessionFilters = [this] {
+        const QString all = tr("All types (*)");
+        return _prefs.sessionExt.isEmpty() ? all : tr("Session file (*.%1)").arg(_prefs.sessionExt) + QStringLiteral(";;") + all;
+    };
+    addAction(file, tr("Load Sess&ion…"), "actionLoadSession", QKeySequence(), [this, sessionFilters] {
+        const QStringList names = _prompter->openFileNames(this, suggestedDirectory(), sessionFilters());
+        if (!names.isEmpty())
+            loadSessionFile(names.front());
+    });
+    addAction(file, tr("Save Sess&ion…"), "actionSaveSession", QKeySequence(), [this, sessionFilters] {
+        const QString suggested = QDir(suggestedDirectory()).filePath(
+            _prefs.sessionExt.isEmpty() ? QStringLiteral("session.xml") : QStringLiteral("session.") + _prefs.sessionExt);
+        QString name = _prompter->saveFileName(this, suggested, sessionFilters(), QString());
+        if (name.isEmpty())
+            return;
+        if (!_prefs.sessionExt.isEmpty() && QFileInfo(name).suffix().isEmpty())
+            name += QLatin1Char('.') + _prefs.sessionExt;
+        // Las carpetas del explorador van si el panel está a la vista (la casilla de N++
+        // «Guardar Carpeta como espacio de trabajo» está marcada en ese caso)
+        QDockWidget* folders = panelDock(QStringLiteral("folderAsWorkspace"));
+        saveSessionFile(name, folders && folders->isVisible());
+    });
     file->addSeparator();
     addAction(file, tr("&Print…"), "actionPrint", QKeySequence::Print, [this] { printWithDialog(); });
     addAction(file, tr("Print No&w"), "actionPrintNow", QKeySequence(), [this] { printNow(); });
@@ -2349,6 +2373,8 @@ void MainWindow::updatePanels()
 
 void MainWindow::openFromOtherInstance(const InstanceRequest& request, bool raise)
 {
+    if (!request.session.isEmpty())
+        loadSessionFile(request.session);
     openFiles(request.files, /*askToCreate*/ true);
     if (request.line > 0)
         goToLine(request.line, request.column > 0 ? request.column : 1);
@@ -2952,6 +2978,11 @@ BufferId MainWindow::openFile(const QString& path, bool askToCreate)
         return kInvalidBuffer;
     const QString absPath = absolutePath(path);
     const QFileInfo info(absPath);
+    // Notepad_plus::doOpen: un archivo de sesión abre sus archivos
+    if (isSessionFile(absPath) && info.isFile()) {
+        loadSessionFile(absPath);
+        return kInvalidBuffer;
+    }
 
     if (const BufferId existing = _documents.findByPath(absPath); existing != kInvalidBuffer) {
         // switchToFile: en la vista que lo muestre (primero la activa)
@@ -6490,11 +6521,11 @@ QString MainWindow::sessionPath() const
     return QDir(paths::configDir()).filePath(QStringLiteral("session.xml"));
 }
 
-Session MainWindow::captureSession()
+Session MainWindow::captureSession(bool named, bool withFolders)
 {
     // Notepad_plus::getCurrentOpenedFiles
     Session session;
-    const bool snapshot = isSnapshotMode();
+    const bool snapshot = isSnapshotMode() && !named;
     EditorPane* panes[] = {_mainPane, _subPane};
     for (int k = 0; k < 2; ++k) {
         EditorPane* pane = panes[k];
@@ -6536,7 +6567,7 @@ Session MainWindow::captureSession()
     }
     session.activeView = (_activePane == _subPane && !session.subView.empty()) ? 1 : 0;
     // Las carpetas del Explorador de carpetas (session._includeFileBrowser)
-    if (_folderPanel && !_folderPanel->roots().isEmpty()) {
+    if (withFolders && _folderPanel && !_folderPanel->roots().isEmpty()) {
         session.hasFileBrowser = true;
         session.folderRoots = _folderPanel->state();
         session.folderSelected = _folderPanel->selectedPath();
@@ -6631,6 +6662,45 @@ void MainWindow::restoreSession(const Session& session, QStringList* missing)
     _activePane = active;
     refreshCurrentDocument();
     active->editor()->setFocus();
+}
+
+bool MainWindow::isSessionFile(const QString& path) const
+{
+    return !_prefs.sessionExt.isEmpty() && QFileInfo(path).suffix().compare(_prefs.sessionExt, Qt::CaseInsensitive) == 0;
+}
+
+bool MainWindow::loadSessionFile(const QString& path)
+{
+    Session session;
+    QString error;
+    if (!readSessionFile(path, session, &error)) {
+        _prompter->warn(this, tr("Load Session"), tr("%1 is not a session file.").arg(QFileInfo(path).fileName()));
+        return false;
+    }
+    // Las carpetas se añaden a las que ya hay (las de la sesión no sustituyen a las abiertas)
+    if (session.hasFileBrowser) {
+        for (const Session::FolderRoot& root : session.folderRoots) {
+            if (QFileInfo(root.folder).isDir())
+                addFolderToWorkspace(root.folder);
+        }
+        session.hasFileBrowser = false;
+    }
+    QStringList missing;
+    restoreSession(session, &missing);
+    if (!missing.isEmpty())
+        _notifications->show(NotificationBar::Kind::Warning, tr("Load Session"),
+                             tr("These files of the session could not be opened:\n%1").arg(missing.join(QLatin1Char('\n'))));
+    return true;
+}
+
+bool MainWindow::saveSessionFile(const QString& path, bool withFolders)
+{
+    QString error;
+    if (!writeSessionFile(path, captureSession(/*named*/ true, withFolders), &error)) {
+        _prompter->warn(this, tr("Save Session"), error);
+        return false;
+    }
+    return true;
 }
 
 bool MainWindow::restoreLastSession()

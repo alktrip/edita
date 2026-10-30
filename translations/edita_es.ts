@@ -1708,18 +1708,18 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     <name>edita::MainWindow</name>
     <message>
         <location filename="../src/ui/MainWindow.cpp" line="+410"/>
-        <location line="+3287"/>
+        <location line="+3318"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3287"/>
-        <location line="+1256"/>
+        <location line="-3318"/>
+        <location line="+1280"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1162"/>
+        <location line="-1186"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -1784,7 +1784,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cerrar todo &amp;menos el actual</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+27"/>
         <source>&amp;Print…</source>
         <translation>&amp;Imprimir…</translation>
     </message>
@@ -2180,7 +2180,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1142"/>
+        <location line="+1144"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2226,12 +2226,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+794"/>
+        <location line="+799"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-770"/>
+        <location line="-775"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2403,12 +2403,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1817"/>
+        <location line="-1819"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-806"/>
+        <location line="-830"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2489,12 +2489,32 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+717"/>
-        <location line="+681"/>
+        <location line="+705"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-625"/>
+        <location line="-684"/>
+        <source>All types (*)</source>
+        <translation>Todos los tipos (*)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Session file (*.%1)</source>
+        <translation>Archivo de sesión (*.%1)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Load Sess&amp;ion…</source>
+        <translation>Cargar una ses&amp;ión…</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Save Sess&amp;ion…</source>
+        <translation>Guardar la ses&amp;ión…</translation>
+    </message>
+    <message>
+        <location line="+51"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2986,7 +3006,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+294"/>
+        <location line="+296"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -3199,25 +3219,25 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+179"/>
+        <location line="+184"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-178"/>
+        <location line="-183"/>
         <source>Save As…</source>
         <translation>Guardar como…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+258"/>
+        <location line="+263"/>
         <location line="+20"/>
         <location line="+1418"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1692"/>
+        <location line="-1697"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3247,7 +3267,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Solo lectura</translation>
     </message>
     <message>
-        <location line="+70"/>
+        <location line="+75"/>
         <location line="+15"/>
         <source>Open</source>
         <translation>Abrir</translation>
@@ -3944,7 +3964,30 @@ Continue?</source>
         <translation>¿Reemplazar todas las apariciones de «%1» por «%2» en los archivos «%3» de %4?</translation>
     </message>
     <message>
-        <location line="+286"/>
+        <location line="+287"/>
+        <location line="+14"/>
+        <source>Load Session</source>
+        <translation>Cargar una sesión</translation>
+    </message>
+    <message>
+        <location line="-14"/>
+        <source>%1 is not a session file.</source>
+        <translation>%1 no es un archivo de sesión.</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>These files of the session could not be opened:
+%1</source>
+        <translation>No se pudieron abrir estos archivos de la sesión:
+%1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Save Session</source>
+        <translation>Guardar la sesión</translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <location line="+10"/>
         <source>Session</source>
         <translation>Sesión</translation>
@@ -4716,12 +4759,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+267"/>
+        <location line="+272"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-267"/>
+        <location line="-272"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -5239,7 +5282,17 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>En esta carpeta en lugar de la del archivo:</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+5"/>
+        <source>Files with this extension are opened as sessions (File › Load Session…)</source>
+        <translation>Los archivos con esta extensión se abren como sesiones (Archivo › Cargar una sesión…)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Session file extension:</source>
+        <translation>Extensión de los archivos de sesión:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>MISC.</source>
         <translation>Varios</translation>
     </message>
@@ -6953,7 +7006,12 @@ Do you want to save your changes before switching themes?</source>
         <translation>Abrir una instancia nueva aunque Edita ya esté abierto.</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
+        <source>Open the files of a session file.</source>
+        <translation>Abre los archivos de un archivo de sesión.</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>files</source>
         <translation>archivos</translation>
     </message>

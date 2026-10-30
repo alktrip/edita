@@ -104,7 +104,12 @@ int main(int argc, char* argv[])
     parser.addOption(lineOption);
     parser.addOption(columnOption);
     parser.addOption(noSessionOption);
+    // -openSession de N++: el archivo es una sesión (sus archivos se abren)
+    const QCommandLineOption sessionOption(QStringLiteral("openSession"),
+                                           QCoreApplication::translate("main", "Open the files of a session file."),
+                                           QStringLiteral("file"));
     parser.addOption(multiInstOption);
+    parser.addOption(sessionOption);
     parser.addPositionalArgument(QCoreApplication::translate("main", "files"), QCoreApplication::translate("main", "Files to open."),
                                  QCoreApplication::translate("main", "[files…]"));
     parser.process(app);
@@ -117,6 +122,8 @@ int main(int argc, char* argv[])
         request.line = parser.value(lineOption).toInt();
     if (parser.isSet(columnOption))
         request.column = parser.value(columnOption).toInt();
+    if (parser.isSet(sessionOption))
+        request.session = QFileInfo(parser.value(sessionOption)).absoluteFilePath();
 
     // winmain.cpp de N++: con una sola instancia (lo normal), si ya hay una abierta se
     // le pasan los archivos y esta termina

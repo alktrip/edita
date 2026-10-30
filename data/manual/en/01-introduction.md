@@ -44,7 +44,7 @@ shows the shortcuts of the system you are using.
 Run `edita` to open the editor. You can pass files and options on the command line:
 
 ```
-edita [files…] [-n line] [-c column] [--nosession] [--multiInst]
+edita [files…] [-n line] [-c column] [--nosession] [--multiInst] [--openSession file]
 ```
 
 | Option | Meaning |
@@ -54,6 +54,7 @@ edita [files…] [-n line] [-c column] [--nosession] [--multiInst]
 | `-c column` | Places the cursor on that column. |
 | `--nosession` | Neither restores nor saves the session (the files that were open). |
 | `--multiInst` | Opens a new window even if Edita is already running. |
+| `--openSession file` | Opens the files of a session file (see [Named sessions](02-files.md#named-sessions)). |
 
 Edita runs as a **single instance**: if a window is already open, the files you open from the
 file manager or the command line are opened as tabs in that window. To always open a new window,

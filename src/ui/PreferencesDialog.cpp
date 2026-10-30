@@ -511,6 +511,11 @@ void PreferencesDialog::buildBackup()
                              {{tr("No"), 0}, {tr("file.bak"), 1}, {tr("Verbose, in nppBackup/"), 2}});
     _customBackupDir = addCheck(form, tr("In this folder instead of the file's folder:"), "useCustomBackupDir");
     _backupDir = addDirectory(form, QString(), "backupDir", this);
+    _sessionExt = new QLineEdit;
+    _sessionExt->setObjectName(QStringLiteral("sessionExt"));
+    _sessionExt->setPlaceholderText(QStringLiteral("edita-session"));
+    _sessionExt->setToolTip(tr("Files with this extension are opened as sessions (File › Load Session…)"));
+    form->addRow(tr("Session file extension:"), _sessionExt);
 }
 
 void PreferencesDialog::buildMisc()
@@ -751,6 +756,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     setComboValue(_backupOnSave, static_cast<int>(p.backupOnSave));
     _customBackupDir->setChecked(p.useCustomBackupDir);
     _backupDir->setText(p.backupDir);
+    _sessionExt->setText(p.sessionExt);
 
     _detect->setChecked(p.detectsChanges());
     _detectAll->setChecked(p.detectsAllFiles());
@@ -904,6 +910,9 @@ Preferences PreferencesDialog::preferences() const
     p.backupOnSave = static_cast<BackupOnSave>(comboValue(_backupOnSave));
     p.useCustomBackupDir = _customBackupDir->isChecked();
     p.backupDir = _backupDir->text().trimmed();
+    p.sessionExt = _sessionExt->text().trimmed();
+    if (p.sessionExt.startsWith(QLatin1Char('.')))
+        p.sessionExt.remove(0, 1);
 
     int detection = FileAutoDetection::Disabled;
     if (_detect->isChecked()) {

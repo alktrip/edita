@@ -19,7 +19,7 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 | Resaltado | Resaltado inteligente y sus opciones, etiqueta HTML/XML pareja y las opciones de los estilos de token. |
 | Búsqueda | La barra de buscar en línea, rellenar el campo de búsqueda con la selección, la confirmación de Reemplazar todo en todos los documentos y la fuente del diálogo Buscar. |
 | Impresión | Números de línea, colores, saltos de página, márgenes, cabecera y pie. |
-| Copias de seguridad | Sesión, modo snapshot y la copia de la versión anterior al guardar. |
+| Copias de seguridad | Sesión, modo snapshot, la copia de la versión anterior al guardar y la extensión de los archivos de sesión. |
 | Varios | Detección de cambios hechos por otros programas, detección de la codificación, juego de caracteres por defecto y la shell de la terminal. |
 | Servidores de lenguaje | Activarlos o desactivarlos, las pistas al final de las líneas y la orden de cada servidor. |
 

@@ -44,6 +44,8 @@ QByteArray InstanceRequest::toJson() const
     o.insert(QStringLiteral("files"), QJsonArray::fromStringList(files));
     o.insert(QStringLiteral("line"), line);
     o.insert(QStringLiteral("column"), column);
+    if (!session.isEmpty())
+        o.insert(QStringLiteral("session"), session);
     return QJsonDocument(o).toJson(QJsonDocument::Compact) + '\n';
 }
 
@@ -60,6 +62,7 @@ bool InstanceRequest::fromJson(const QByteArray& json, InstanceRequest& request)
     }
     request.line = o.value(QStringLiteral("line")).toInt(-1);
     request.column = o.value(QStringLiteral("column")).toInt(-1);
+    request.session = o.value(QStringLiteral("session")).toString();
     return true;
 }
 

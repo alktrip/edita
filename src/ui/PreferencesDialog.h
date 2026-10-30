@@ -129,6 +129,7 @@ private:
     QCheckBox* _stickyScroll = nullptr;
     QCheckBox* _inlineFind = nullptr;
     QLineEdit* _terminalShell = nullptr;
+    QLineEdit* _sessionExt = nullptr;
     QCheckBox* _lspEnabled = nullptr;
     QCheckBox* _inlayHints = nullptr;
     QTableWidget* _lspServers = nullptr;

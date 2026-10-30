@@ -326,6 +326,7 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaStickyScroll", p.stickyScroll);
     r.boolText("EditaInlineFind", p.inlineFind);
     p.terminalShell = r.text("EditaTerminalShell");
+    p.sessionExt = r.text("sessionExt");
     r.boolText("EditaLsp", p.lspEnabled);
     r.boolText("EditaGitExplorer", p.gitExplorer);
     r.boolText("EditaSnippetsTab", p.snippetsTab);
@@ -466,6 +467,7 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaStickyScroll", yesNo(p.stickyScroll));
     w.text("EditaInlineFind", yesNo(p.inlineFind));
     w.text("EditaTerminalShell", p.terminalShell);
+    w.text("sessionExt", p.sessionExt);
     w.text("EditaLsp", yesNo(p.lspEnabled));
     w.text("EditaGitExplorer", yesNo(p.gitExplorer));
     w.text("EditaSnippetsTab", yesNo(p.snippetsTab));

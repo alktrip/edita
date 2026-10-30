@@ -19,7 +19,7 @@ Most options are described in the chapter of their feature; this is a summary.
 | Highlighting | Smart highlighting and its options, matching HTML/XML tags, and the options of the token styles. |
 | Searching | The inline find bar, filling the search field with the selection, the confirmation of Replace All in all documents and the font of the Find dialog. |
 | Print | Line numbers, colors, page breaks, margins, header and footer. |
-| Backup | Session, snapshot mode and the backup of the previous version on save. |
+| Backup | Session, snapshot mode, the backup of the previous version on save and the extension of session files. |
 | MISC. | Detection of changes made by other programs, encoding detection, default character set and the shell of the terminal. |
 | Language Servers | Turning them on or off, the hints at the end of the lines and the command of each server. |
 

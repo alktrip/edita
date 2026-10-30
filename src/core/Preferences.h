@@ -142,6 +142,8 @@ struct Preferences
     // Ctrl+F y Ctrl+H abren la barra de buscar en línea, no el diálogo (EditaInlineFind)
     bool inlineFind = true;
     QString terminalShell; // vacío = $SHELL
+    // _definedSessionExt de N++: los archivos con esta extensión se abren como sesión
+    QString sessionExt;
     bool lspEnabled = true;
     bool snippetsTab = true;
     bool inlayHints = true;    // las pistas del servidor de lenguaje, al final de la línea   // Tab tras el prefijo de un fragmento lo expande
