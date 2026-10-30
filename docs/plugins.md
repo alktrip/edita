@@ -63,16 +63,26 @@ El `CMakeLists.txt` del overlay compila los fuentes originales con la capa de co
 cmake_minimum_required(VERSION 3.20)
 project(MiPlugin CXX)
 include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)
-edita_npp_plugin(MiPlugin SOURCES ../src/plugin.cpp ../src/otro.cpp)
+edita_npp_plugin(MiPlugin UNICODE SOURCES ../src/plugin.cpp ../src/otro.cpp)
 ```
 
-`compat/windows.h` y compañía hacen que compile el código que usa:
+**`UNICODE`** compila como los plugins de N++ desde la 8.0: `TCHAR` es `wchar_t`, y también lo son `getName()`, `FuncItem._itemName` y las cadenas de los mensajes `NPPM_*`. Es lo que necesita casi cualquier plugin actual. Sin `UNICODE`, `TCHAR` es `char` en UTF-8, como en los plugins antiguos (MIME Tools 3.1). En Linux y macOS `wchar_t` mide 4 bytes y no 2. El código que usa las funciones de Win32 (`MultiByteToWideChar`, `lstrlen`…) funciona igual. El que da por hecho UTF-16 (`sizeof(wchar_t) == 2`, pares sustitutos) necesita un parche en la receta.
 
-- la API de plugins: `NppData`, `FuncItem`, `DllMain`, `::SendMessage` a N++ y a Scintilla;
-- cadenas `TCHAR` (que aquí es `char` en UTF-8);
-- `MessageBox`.
+`compat/windows.h` y compañía (`tchar.h`, `shlwapi.h`, `strsafe.h`, `commdlg.h`…) hacen que compile el código que usa:
 
-Los diálogos y las ventanas Win32 no se emulan. Si el plugin los necesita, el overlay trae un port de su interfaz en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en `data/plugins/recipes/XMLTools`. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
+- **la API de plugins:** `NppData`, `FuncItem`, `DllMain` (recibe el `HINSTANCE` del plugin) y `::SendMessage` a N++ y a Scintilla. En modo `UNICODE`, la capa convierte a UTF-8 los nombres, las órdenes y los mensajes con cadenas: rutas, sesiones, barra de estado, `NPPM_MSGTOPLUGIN` (`"Otro.dll"` ↔ `"Otro.so"`)… Los `cmdID` que da Edita aparecen en la tabla del plugin;
+- **archivos:** `CreateFile`, `ReadFile`, `WriteFile`, `FindFirstFile` (sin distinguir mayúsculas), `GetFileAttributes`, copiar, mover, borrar y directorios. Las rutas pueden usar `\`;
+- **archivos `.ini`:** `GetPrivateProfileString`/`Int`/`Section`/`SectionNames` y `WritePrivateProfileString`, en UTF-8. Leen también los `.ini` en UTF-16 que deja N++ y los conservan en UTF-16;
+- **texto:** `MultiByteToWideChar` y `WideCharToMultiByte` (las páginas de código del sistema son UTF-8; 1252 es Latin-1), las funciones `lstr*`, `CharUpper` y `CharLower`;
+- **`printf` de MSVC:** en `swprintf`, `wsprintf`, `_snwprintf`, `swprintf_s`, `StringCchPrintf`…, `%s` es `wchar_t` y `%S` es `char`, como en Windows (en C es al revés); `%I64d` también funciona;
+- **el CRT de MSVC:** `wcscpy_s` y compañía (también con arreglos: `wcscpy_s(buf, L"…")`), `_itow`, `_wtoi`, `_wfopen` (con `ccs=UTF-8`), `_wcsicmp`…;
+- **rutas (`shlwapi`):** `PathAppend`, `PathCombine`, `PathFindFileName`, `PathRemoveFileSpec`, `PathFileExists`… Aceptan `\` y `/`; los separadores que añaden son `/`;
+- **módulos y sistema:** `GetModuleFileName` (con el `HINSTANCE` del plugin, su `.so`; con `NULL`, Edita), `GetEnvironmentVariable`, `ExpandEnvironmentStrings`, `SHGetFolderPath` (`CSIDL_APPDATA` es `~/.config`), `GetTickCount`, `GetLocalTime`, `Sleep`, `GlobalAlloc`/`LocalAlloc`;
+- **interfaz sin ventanas:** `MessageBox` (Qt), el portapapeles (`OpenClipboard`, `SetClipboardData` y `GetClipboardData` con `CF_UNICODETEXT`, `CF_TEXT` y formatos registrados), `GetKeyState` (Mayús, Ctrl, Alt) y `ShellExecute` (abre archivos y direcciones con la aplicación del sistema o lanza un programa).
+
+Antes de compilar, el administrador corrige los `#include` que solo funcionan en Windows: `<Windows.h>`, `"..\PluginInterface.h"`, `"Resource.H"`. Un `#include` se reescribe solo si en Linux no encuentra su archivo. Se desactiva con `"fix-includes": false` en la receta.
+
+Los diálogos y las ventanas Win32 todavía no se emulan: `CreateDialogParam` y `DialogBoxParam` muestran un aviso, y los paneles acoplables de la plantilla de N++ (`NPPM_DMMREGASDCKDLG` con un `tTbData`) no se registran. Si el plugin los necesita, el overlay trae un port de su interfaz en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en `data/plugins/recipes/XMLTools`. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
 
 ## De Notepad++ a Edita
 
@@ -81,7 +91,7 @@ Los diálogos y las ventanas Win32 no se emulan. Si el plugin los necesita, el o
 | `NppData { _nppHandle, _scintillaMainHandle, _scintillaSecondHandle }` | `EditaData { host, mainEditor, subEditor, send }` |
 | `::SendMessage(nppData._nppHandle, NPPM_X, w, l)` | `data.send(data.host, NPPM_X, w, l)` |
 | `::SendMessage(scintilla, SCI_X, w, l)` | `data.send(data.mainEditor /* o subEditor */, SCI_X, w, l)` |
-| `wchar_t` / `TCHAR` en nombres y rutas | `char` en UTF-8 |
+| `wchar_t` / `TCHAR` en nombres y rutas | `char` en UTF-8 (un plugin de N++ compilado con `UNICODE` sigue usando `wchar_t`: la capa convierte) |
 | Mensajes que devuelven una ruta: tamaño en `wchar_t` | tamaño del búfer en bytes, contando el nulo (devuelven 0 si no cabe) |
 | `FuncItem._itemName` (`wchar_t[64]`) | `EditaFuncItem.itemName` (`char[64]`, UTF-8) |
 | Diálogos y ventanas Win32 | Lo que quiera el plugin: Qt, GTK… o nada (el de ejemplo usa la barra de estado) |

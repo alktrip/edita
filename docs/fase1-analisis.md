@@ -324,6 +324,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 48 — Menú Ejecutar | Ejecutar… (F5) con variables $(…), órdenes guardadas con nombre y atajo en shortcuts.xml (<UserDefinedCommands>), las tres de N++ y su pestaña en la Asignación de atajos | ✅ [fase48.md](fase48.md) |
 | 49 — Ocultar líneas | Ver › Ocultar líneas (Alt+H) con las marcas 18/19 de N++, unir secciones, mostrar con un clic, restaurar al cambiar de documento y al desplegar | ✅ [fase49.md](fase49.md) |
 | 50 — Menú Ventana | Ordenar las pestañas (nombre, ruta, tipo, tamaño, fecha), la lista de documentos de la vista en el menú y el diálogo Ventanas (activar, guardar, cerrar varios, ordenar las pestañas) | ✅ [fase50.md](fase50.md) |
+| 51 — Capa de compatibilidad v2 (1) | Modo Unicode para los plugins de N++ (TCHAR = wchar_t, conversión de FuncItem, getName y NPPM_* con cadenas), Win32 sin ventanas (archivos, .ini, conversiones, printf de MSVC, CRT, shlwapi, strsafe, módulos, portapapeles, ShellExecute) y corrección de los #include de Windows en las recetas | ✅ [fase51.md](fase51.md) |
 
 ---
 

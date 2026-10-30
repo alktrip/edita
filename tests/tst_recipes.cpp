@@ -124,6 +124,114 @@ extern "C" __declspec(dllexport) LRESULT messageProc(UINT m, WPARAM, LPARAM) { r
                     {"demo-1.0/readme.txt", "Plugin de ejemplo\n"}});
 }
 
+// Fase 51: un plugin moderno de N++ (desde la 8.0 son Unicode): FuncItem y getName()
+// con wchar_t, mensajes NPPM_* con cadenas wchar_t, la parte de Win32 sin ventanas
+// (shlwapi, strsafe, .ini, conversiones, GetModuleFileName) y #include escritos en Windows
+// (mayúsculas distintas y '\'), que la receta corrige.
+QByteArray unicodeSource()
+{
+    const QByteArray msgs = R"cpp(#pragma once
+#define NPPMSG (WM_USER + 1000)
+#define NPPM_GETCURRENTSCINTILLA (NPPMSG + 4)
+#define NPPM_SETMENUITEMCHECK (NPPMSG + 40)
+#define NPPM_GETPLUGINSCONFIGDIR (NPPMSG + 46)
+#define NPPM_MSGTOPLUGIN (NPPMSG + 47)
+#define RUNCOMMAND_USER (WM_USER + 3000)
+#define NPPM_GETFULLCURRENTPATH (RUNCOMMAND_USER + 1)
+struct CommunicationInfo { long internalMsg; const wchar_t* srcModuleName; void* info; };
+)cpp";
+    const QByteArray pluginInterface = R"cpp(#pragma once
+#include "Scintilla.h"
+#include "Notepad_plus_msgs.h"
+struct NppData { HWND _nppHandle = nullptr; HWND _scintillaMainHandle = nullptr; HWND _scintillaSecondHandle = nullptr; };
+typedef void (__cdecl * PFUNCPLUGINCMD)();
+struct ShortcutKey { bool _isCtrl = false; bool _isAlt = false; bool _isShift = false; UCHAR _key = 0; };
+const int menuItemSize = 64;
+struct FuncItem { wchar_t _itemName[menuItemSize] = { '\0' }; PFUNCPLUGINCMD _pFunc = nullptr; int _cmdID = 0; bool _init2Check = false; ShortcutKey *_pShKey = nullptr; };
+extern "C" __declspec(dllexport) void setInfo(NppData);
+extern "C" __declspec(dllexport) const wchar_t * getName();
+extern "C" __declspec(dllexport) FuncItem * getFuncsArray(int *);
+extern "C" __declspec(dllexport) void beNotified(SCNotification *);
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam);
+extern "C" __declspec(dllexport) BOOL isUnicode();
+)cpp";
+    const QByteArray plugin = R"cpp(#include <Windows.h>
+#include <Shlwapi.h>
+#include <StrSafe.h>
+#include <TCHAR.h>
+#include "..\include\PluginInterface.h"
+#include "Resource.H"
+
+NppData nppData;
+FuncItem funcItem[3];
+HINSTANCE module = nullptr;
+
+static HWND currentScintilla() {
+    int which = 0;
+    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
+    return which == 0 ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
+}
+static void insertWide(const wchar_t* text) {
+    const int bytes = WideCharToMultiByte(CP_UTF8, 0, text, -1, nullptr, 0, nullptr, nullptr);
+    char* utf8 = new char[bytes];
+    WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8, bytes, nullptr, nullptr);
+    ::SendMessage(currentScintilla(), SCI_REPLACESEL, 0, (LPARAM)utf8);
+    delete[] utf8;
+}
+void insertPath() {
+    TCHAR path[MAX_PATH];
+    if (!::SendMessage(nppData._nppHandle, NPPM_GETFULLCURRENTPATH, MAX_PATH, (LPARAM)path))
+        return;
+    TCHAR line[MAX_PATH + 32];
+    swprintf(line, MAX_PATH + 32, L"[%s] %s", PathFindFileName(path), GREETING);
+    insertWide(line);
+}
+void saveOption() {
+    TCHAR ini[MAX_PATH];
+    ::SendMessage(nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, (LPARAM)ini);
+    PathAppend(ini, TEXT("UniDemo.ini"));
+    WritePrivateProfileString(TEXT("Opciones"), TEXT("saludo"), GREETING, ini);
+    ::SendMessage(nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[1]._cmdID, TRUE);
+}
+void moduleName() {
+    TCHAR path[MAX_PATH];
+    GetModuleFileName((HMODULE)module, path, MAX_PATH);
+    TCHAR name[64];
+    StringCchCopy(name, _countof(name), PathFindFileName(path));
+    insertWide(name);
+}
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD reason, LPVOID) {
+    if (reason == DLL_PROCESS_ATTACH) {
+        module = (HINSTANCE)hModule;
+        lstrcpy(funcItem[0]._itemName, TEXT("Insertar ruta"));
+        funcItem[0]._pFunc = insertPath;
+        lstrcpy(funcItem[1]._itemName, TEXT("Guardar opción"));
+        funcItem[1]._pFunc = saveOption;
+        lstrcpy(funcItem[2]._itemName, TEXT("Nombre del módulo"));
+        funcItem[2]._pFunc = moduleName;
+    }
+    return TRUE;
+}
+extern "C" __declspec(dllexport) void setInfo(NppData data) { nppData = data; }
+extern "C" __declspec(dllexport) const wchar_t* getName() { return L"Unicode Demo ñ"; }
+extern "C" __declspec(dllexport) FuncItem* getFuncsArray(int* n) { *n = 3; return funcItem; }
+extern "C" __declspec(dllexport) void beNotified(SCNotification*) {}
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT m, WPARAM w, LPARAM l) {
+    if (m == NPPM_MSGTOPLUGIN) {
+        const CommunicationInfo* info = (const CommunicationInfo*)l;
+        const bool names = lstrcmp((const wchar_t*)w, L"UniDemo.dll") == 0 && lstrcmp(info->srcModuleName, L"Otro.dll") == 0;
+        return names ? info->internalMsg : -1;
+    }
+    return TRUE;
+}
+extern "C" __declspec(dllexport) BOOL isUnicode() { return TRUE; }
+)cpp";
+    return makeZip({{"unidemo-2.0/include/PluginInterface.h", pluginInterface},
+                    {"unidemo-2.0/include/Notepad_plus_msgs.h", msgs},
+                    {"unidemo-2.0/src/plugin.cpp", plugin},
+                    {"unidemo-2.0/src/resource.h", "#pragma once\n#define GREETING L\"¡hola ñandú!\"\n"}});
+}
+
 void writeRecipe(const QString& dir, const QString& source, const QString& sha, bool withPatch = true,
                  const QString& version = QStringLiteral("1.0"))
 {
@@ -421,6 +529,92 @@ private slots:
         prompter.confirmations.enqueue(true);
         QVERIFY2(second.updateChecked(), qPrintable(prompter.warnings.join('\n')));
         QVERIFY(QFileInfo::exists(userPlugins() + "/local/Win32Demo-2.zip"));
+    }
+
+    void builderCompilesAUnicodePlugin()
+    {
+        const QByteArray source = unicodeSource();
+        const QString dir = recipesDir() + "/UniDemo";
+        writeFile(dir + "/recipe.json",
+                  QJsonDocument(QJsonObject{{"folder-name", "UniDemo"}, {"display-name", "Unicode Demo"}, {"version", "2.0"},
+                                            {"source", QJsonObject{{"url", "x"}, {"sha256", plugin_installer::sha256Hex(source)}}},
+                                            {"overlay", "overlay"}, {"build-dir", "edita"}})
+                      .toJson());
+        writeFile(dir + "/overlay/edita/CMakeLists.txt",
+                  "cmake_minimum_required(VERSION 3.20)\nproject(UniDemo CXX)\n"
+                  "include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)\n"
+                  "edita_npp_plugin(UniDemo UNICODE SOURCES ../src/plugin.cpp)\n");
+        PluginRecipe recipe;
+        QVERIFY(PluginRecipe::parse(dir + "/recipe.json", recipe));
+        QVERIFY(recipe.fixIncludes);
+        RecipeBuilder builder(recipe, findPluginSdk(), _tmp.filePath("cache/UniDemo"));
+        QSignalSpy finished(&builder, &RecipeBuilder::finished);
+        builder.start(source);
+        QVERIFY(finished.wait(180000));
+        QVERIFY2(finished.first().at(0).toBool(), qPrintable(builder.log().right(3000)));
+        // Los #include de Windows, corregidos en el código
+        QVERIFY(builder.log().contains(QStringLiteral("Fixed the Windows #include lines")));
+        const QByteArray code = readFile(_tmp.filePath("cache/UniDemo/extracted/unidemo-2.0/src/plugin.cpp"));
+        for (const char* line : {"#include <windows.h>", "#include <shlwapi.h>", "#include <strsafe.h>", "#include <tchar.h>",
+                                 "#include \"../include/PluginInterface.h\"", "#include \"resource.h\""})
+            QVERIFY2(code.contains(line), line);
+        QVERIFY(plugin_installer::installPackage(readFile(builder.packagePath()), "UniDemo", builder.packageSha256(), userPlugins(), false));
+
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        w.notifyPluginsReady();
+        const PluginManager::Plugin* plugin = nullptr;
+        for (const auto& p : w.plugins()->plugins()) {
+            if (p->path.endsWith(QLatin1String("UniDemo.so")))
+                plugin = p.get();
+        }
+        QVERIFY2(plugin, qPrintable(w.pluginWarnings().join('\n')));
+        // getName() y los nombres de las órdenes, de wchar_t a UTF-8
+        QCOMPARE(plugin->name, QStringLiteral("Unicode Demo ñ"));
+        QCOMPARE(plugin->version, QStringLiteral("2")); // PluginVersion normaliza "2.0"
+        QCOMPARE(plugin->commands.size(), std::size_t{3});
+        QCOMPARE(plugin->commands[1].name, QStringLiteral("Guardar opción"));
+
+        // NPPM_GETFULLCURRENTPATH con un búfer wchar_t, swprintf de MSVC y PathFindFileName
+        const QString file = _tmp.filePath(QStringLiteral("prueba ñ.txt"));
+        writeFile(file, "");
+        QVERIFY(w.openFile(file) != kInvalidBuffer);
+        QVERIFY(w.plugins()->runCommand(plugin->commands[0].cmdId));
+        QCOMPARE(w.documents().text(w.currentBuffer()), "[prueba ñ.txt] ¡hola ñandú!"s);
+
+        // NPPM_GETPLUGINSCONFIGDIR, PathAppend, WritePrivateProfileString y el cmdID que
+        // Edita dio a la orden (NPPM_SETMENUITEMCHECK)
+        QVERIFY(w.plugins()->runCommand(plugin->commands[1].cmdId));
+        QCOMPARE(readFile(userPlugins() + "/config/UniDemo.ini"), QByteArray("[Opciones]\nsaludo=¡hola ñandú!\n"));
+        QVERIFY(w.plugins()->command(plugin->commands[1].cmdId)->checked);
+
+        // GetModuleFileName con el HINSTANCE de DllMain: el .so del plugin
+        w.editor()->sends(SCI_SETTEXT, 0, "");
+        QVERIFY(w.plugins()->runCommand(plugin->commands[2].cmdId));
+        QCOMPARE(w.documents().text(w.currentBuffer()), "UniDemo.so"s);
+
+        // NPPM_MSGTOPLUGIN: los nombres de módulo, en wchar_t y como en N++ (.dll)
+        EditaCommunicationInfo info{7, "Otro.so", nullptr};
+        QCOMPARE(plugin->messageProc(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("UniDemo.so"), reinterpret_cast<intptr_t>(&info)),
+                 intptr_t{7});
+    }
+
+    void fixWindowsIncludes()
+    {
+        const QString root = _tmp.filePath(QStringLiteral("includes"));
+        writeFile(root + "/src/Main.cpp",
+                  "#include <Windows.h>\n#include <vector>\n#include <String.h>\n#include \"..\\Common\\Util.H\"\n"
+                  "#include \"Local.h\"\n#include \"Falta.h\"\n  #  include \"sub\\Other.h\"\n");
+        writeFile(root + "/src/Local.h", "");
+        writeFile(root + "/src/sub/other.h", "");
+        writeFile(root + "/common/util.h", "");
+        writeFile(root + "/src/Latin1.h", "#include <TCHAR.h>\n// \xE9\n");
+        QCOMPARE(edita::fixWindowsIncludes(root, {findPluginSdk().sdkDir + "/compat"}), 2);
+        QCOMPARE(readFile(root + "/src/Main.cpp"),
+                 QByteArray("#include <windows.h>\n#include <vector>\n#include <String.h>\n#include \"../common/util.h\"\n"
+                            "#include \"Local.h\"\n#include \"Falta.h\"\n  #  include \"sub/other.h\"\n"));
+        // Los bytes que no son UTF-8 se conservan
+        QCOMPARE(readFile(root + "/src/Latin1.h"), QByteArray("#include <tchar.h>\n// \xE9\n"));
     }
 
     void realNotepadPlusPlusPlugins_data()

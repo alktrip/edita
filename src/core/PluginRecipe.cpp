@@ -15,7 +15,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLibraryInfo>
+#include <QHash>
 #include <QProcess>
+#include <QRegularExpression>
+#include <QSet>
 #include <QStandardPaths>
 #include <QThread>
 
@@ -48,7 +51,122 @@ bool copyTree(const QString& from, const QString& to, QString* error)
     return true;
 }
 
+// La ruta de un #include "…" que no existe tal cual, resuelta sin distinguir mayúsculas
+// carpeta a carpeta desde la del archivo; vacía si no existe
+QString resolveCaseInsensitive(const QString& fromDir, const QString& include)
+{
+    QDir dir(fromDir);
+    QStringList parts;
+    for (const QString& part : include.split(QLatin1Char('/'))) {
+        if (part.isEmpty() || part == QLatin1String(".") || part == QLatin1String("..")) {
+            if (part == QLatin1String("..") && !dir.cdUp())
+                return {};
+            if (!part.isEmpty())
+                parts << part;
+            continue;
+        }
+        QString match;
+        for (const QString& entry : dir.entryList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+            if (entry == part) {
+                match = entry;
+                break;
+            }
+            if (match.isEmpty() && entry.compare(part, Qt::CaseInsensitive) == 0)
+                match = entry;
+        }
+        if (match.isEmpty())
+            return {};
+        parts << match;
+        if (!dir.cd(match)) {
+            // Un archivo: tiene que ser la última parte
+            if (parts.size() != include.split(QLatin1Char('/')).size())
+                return {};
+        }
+    }
+    return parts.join(QLatin1Char('/'));
+}
+
 } // namespace
+
+int fixWindowsIncludes(const QString& sourceDir, const QStringList& headerDirs)
+{
+    // Los nombres de archivo del código (con sus rutas) y los de las cabeceras del SDK
+    QHash<QString, QStringList> byLowerName;
+    QSet<QString> exactNames;
+    QStringList sources;
+    static const QStringList extensions = {QStringLiteral("c"), QStringLiteral("cc"), QStringLiteral("cpp"),
+                                           QStringLiteral("cxx"), QStringLiteral("h"), QStringLiteral("hh"),
+                                           QStringLiteral("hpp"), QStringLiteral("hxx"), QStringLiteral("inl")};
+    QDirIterator it(sourceDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString file = it.next();
+        const QString name = it.fileName();
+        byLowerName[name.toLower()] << file;
+        exactNames.insert(name);
+        if (extensions.contains(QFileInfo(file).suffix().toLower()))
+            sources << file;
+    }
+    QHash<QString, QString> sdkNames;
+    for (const QString& dir : headerDirs) {
+        for (const QString& name : QDir(dir).entryList(QDir::Files))
+            sdkNames.insert(name.toLower(), name);
+    }
+
+    static const QRegularExpression include(QStringLiteral(R"(^(\s*#\s*include\s*)([<"])([^>"\n]+)([>"]))"),
+                                            QRegularExpression::MultilineOption);
+    int changed = 0;
+    for (const QString& file : sources) {
+        QFile in(file);
+        if (!in.open(QIODevice::ReadOnly))
+            continue;
+        // Latin-1: los bytes del archivo salen tal cual, esté en la codificación que esté
+        const QString text = QString::fromLatin1(in.readAll());
+        in.close();
+        const QString here = QFileInfo(file).absolutePath();
+        QString out;
+        qsizetype last = 0;
+        bool modified = false;
+        QRegularExpressionMatchIterator matches = include.globalMatch(text);
+        while (matches.hasNext()) {
+            const QRegularExpressionMatch m = matches.next();
+            const bool quoted = m.captured(2) == QLatin1String("\"");
+            const QString original = m.captured(3);
+            QString path = original;
+            path.replace(QLatin1Char('\\'), QLatin1Char('/'));
+            const QString base = QFileInfo(path).fileName();
+            const QString lower = base.toLower();
+            QString fixed = path;
+            const bool existsAsIs = quoted ? QFileInfo::exists(QDir(here).filePath(path)) : false;
+            if (!existsAsIs && !exactNames.contains(base)) {
+                if (quoted) {
+                    const QString resolved = resolveCaseInsensitive(here, path);
+                    if (!resolved.isEmpty())
+                        fixed = resolved;
+                    else if (sdkNames.contains(lower))
+                        fixed = sdkNames.value(lower);
+                    else if (byLowerName.value(lower).size() == 1)
+                        fixed = QDir(here).relativeFilePath(byLowerName.value(lower).first());
+                } else if (sdkNames.contains(lower) && !path.contains(QLatin1Char('/'))) {
+                    fixed = sdkNames.value(lower);
+                }
+            }
+            if (fixed == original)
+                continue;
+            out += text.mid(last, m.capturedStart(3) - last) + fixed;
+            last = m.capturedEnd(3);
+            modified = true;
+        }
+        if (!modified)
+            continue;
+        out += text.mid(last);
+        QFile dst(file);
+        if (dst.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            dst.write(out.toLatin1());
+            ++changed;
+        }
+    }
+    return changed;
+}
 
 QString PluginRecipe::directory() const
 {
@@ -92,6 +210,7 @@ bool PluginRecipe::parse(const QString& path, PluginRecipe& recipe, QString* err
     recipe.overlay = o.value(QStringLiteral("overlay")).toString();
     recipe.buildDir = o.value(QStringLiteral("build-dir")).toString(QStringLiteral("."));
     recipe.requires_ = stringList(o.value(QStringLiteral("requires")));
+    recipe.fixIncludes = o.value(QStringLiteral("fix-includes")).toBool(true);
     return true;
 }
 
@@ -374,6 +493,11 @@ void RecipeBuilder::runNext()
         [[fallthrough]];
     case Configure: {
         _stage = Build;
+        if (_recipe.fixIncludes) {
+            const QStringList headerDirs = {QDir(_sdk.sdkDir).filePath(QStringLiteral("compat")), _sdk.sdkDir, _sdk.scintillaInclude};
+            if (const int fixed = fixWindowsIncludes(_sourceDir, headerDirs))
+                step(tr("Fixed the Windows #include lines (case, \\) in %n file(s)", nullptr, fixed));
+        }
         step(tr("Configuring with CMake"));
         QStringList args = {QStringLiteral("-S"), QDir(_sourceDir).filePath(_recipe.buildDir), QStringLiteral("-B"), _buildDir,
                             QStringLiteral("-DCMAKE_BUILD_TYPE=Release"),

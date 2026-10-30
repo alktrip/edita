@@ -272,6 +272,17 @@
     </message>
 </context>
 <context>
+    <name>edita::RecipeBuilder</name>
+    <message numerus="yes">
+        <location filename="../src/core/PluginRecipe.cpp" line="+499"/>
+        <source>Fixed the Windows #include lines (case, \) in %n file(s)</source>
+        <translation>
+            <numerusform>Fixed the Windows #include lines (case, \) in %n file</numerusform>
+            <numerusform>Fixed the Windows #include lines (case, \) in %n files</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::RegexTesterPanel</name>
     <message numerus="yes">
         <location filename="../src/ui/RegexTester.cpp" line="+351"/>

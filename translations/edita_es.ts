@@ -743,12 +743,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/core/PluginRecipe.cpp" line="+44"/>
+        <location filename="../src/core/PluginRecipe.cpp" line="+47"/>
         <source>Could not copy %1</source>
         <translation>No se pudo copiar %1</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+134"/>
         <source>Cannot read %1</source>
         <translation>No se puede leer %1</translation>
     </message>
@@ -758,7 +758,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>%1: receta no válida (faltan folder-name o source.url) %2</translation>
     </message>
     <message>
-        <location line="+119"/>
+        <location line="+120"/>
         <source>%1 (development library, pkg-config)</source>
         <translation>%1 (biblioteca de desarrollo, pkg-config)</translation>
     </message>
@@ -5592,8 +5592,16 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <source>Applying %1</source>
         <translation>Aplicando %1</translation>
     </message>
+    <message numerus="yes">
+        <location line="+12"/>
+        <source>Fixed the Windows #include lines (case, \) in %n file(s)</source>
+        <translation>
+            <numerusform>Se corrigieron los #include de Windows (mayúsculas, \) en %n archivo</numerusform>
+            <numerusform>Se corrigieron los #include de Windows (mayúsculas, \) en %n archivos</numerusform>
+        </translation>
+    </message>
     <message>
-        <location line="+9"/>
+        <location line="+2"/>
         <source>Configuring with CMake</source>
         <translation>Configurando con CMake</translation>
     </message>

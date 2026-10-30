@@ -6,7 +6,11 @@
 #   cmake_minimum_required(VERSION 3.20)
 #   project(MiPlugin CXX C)
 #   include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)
-#   edita_npp_plugin(MiPlugin SOURCES ../src/plugin.cpp … [INCLUDES …] [LIBRARIES …])
+#   edita_npp_plugin(MiPlugin [UNICODE] SOURCES ../src/plugin.cpp … [INCLUDES …] [LIBRARIES …])
+#
+# UNICODE compila como los plugins de N++ desde la 8.0: TCHAR es wchar_t, getName() y
+# FuncItem._itemName son wchar_t y los mensajes NPPM_* llevan cadenas wchar_t (la capa
+# las convierte). Sin UNICODE, TCHAR es char y las cadenas son UTF-8.
 #
 # Variables (las pone el administrador de plugins al compilar una receta):
 #   EDITA_PLUGIN_SDK          carpeta del SDK (edita_plugin.h y compat/)
@@ -52,8 +56,12 @@ function(_edita_link_qt name)
 endfunction()
 
 function(edita_npp_plugin name)
-    cmake_parse_arguments(ARG "" "" "SOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
-    add_library(${name} MODULE ${ARG_SOURCES} "${EDITA_PLUGIN_SDK}/compat/npp_compat.cpp")
+    cmake_parse_arguments(ARG "UNICODE" "" "SOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
+    add_library(${name} MODULE ${ARG_SOURCES}
+        "${EDITA_PLUGIN_SDK}/compat/npp_compat.cpp" "${EDITA_PLUGIN_SDK}/compat/npp_win32.cpp")
+    if(ARG_UNICODE)
+        target_compile_definitions(${name} PRIVATE UNICODE _UNICODE)
+    endif()
     set_target_properties(${name} PROPERTIES
         PREFIX ""
         CXX_STANDARD 17
@@ -72,7 +80,7 @@ function(edita_npp_plugin name)
     # El código original se escribió para MSVC: sus avisos no interesan aquí
     target_compile_options(${name} PRIVATE -w $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>)
     _edita_link_qt(${name})
-    target_link_libraries(${name} PRIVATE ${ARG_LIBRARIES})
+    target_link_libraries(${name} PRIVATE ${ARG_LIBRARIES} ${CMAKE_DL_LIBS})
 endfunction()
 
 # Un port escrito para la API de Edita (edita_plugin.h) que reutiliza partes

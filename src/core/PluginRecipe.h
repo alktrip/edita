@@ -25,7 +25,8 @@ namespace edita {
 //   "patches": [archivos]   parches (patch -p1), junto a la receta;
 //   "overlay": "carpeta"    se copia encima del código (CMakeLists.txt, el port…);
 //   "build-dir": "edita"    dónde está el CMakeLists.txt, dentro del código;
-//   "requires": ["cmake", "c++", "pkg-config:libxml-2.0", …].
+//   "requires": ["cmake", "c++", "pkg-config:libxml-2.0", …];
+//   "fix-includes": false   no corregir los #include de Windows (ver fixWindowsIncludes).
 struct PluginRecipe
 {
     PluginInfo info;          // como se lista en el administrador
@@ -38,10 +39,19 @@ struct PluginRecipe
     QString overlay;
     QString buildDir;
     QStringList requires_;
+    bool fixIncludes = true;
 
     QString directory() const;
     static bool parse(const QString& path, PluginRecipe& recipe, QString* error = nullptr);
 };
+
+// Corrige en el código los #include que solo funcionan en Windows, donde el sistema de
+// archivos no distingue mayúsculas y la barra es '\': <Windows.h>, "..\\PluginInterface.h",
+// "Resource.H". Un #include se reescribe solo si en Linux no encuentra su archivo: con la
+// ruta que existe sin distinguir mayúsculas, con el nombre de una cabecera de headerDirs
+// (las del SDK) o, si en el código hay un único archivo con ese nombre, con su ruta.
+// Devuelve cuántos archivos cambió.
+int fixWindowsIncludes(const QString& sourceDir, const QStringList& headerDirs);
 
 // Las recetas de esas carpetas (cada una con <carpeta>/recipe.json). Si dos tienen
 // la misma carpeta, gana la primera.
