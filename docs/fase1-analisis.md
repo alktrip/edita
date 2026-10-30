@@ -316,6 +316,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 40 — Git en el explorador y blame | git status --porcelain en segundo plano con estados propagados a carpetas; git blame --contents con anotación de fin de línea, margen de texto por antigüedad y git show | ✅ [fase40.md](fase40.md) |
 | 41 — Fragmentos | Sintaxis de VS Code/LSP, archivos JSON de VS Code (de Edita y del usuario), Tab con marcadores y espejos en varias selecciones, variables, lista para insertar, también para LSP | ✅ [fase41.md](fase41.md) |
 | 42 — Servidores de lenguaje (3) | codeAction con resolve y executeCommand, bombilla en el margen, workspace/symbol mientras se escribe, inlayHint en anotaciones de fin de línea compartidas con blame | ✅ [fase42.md](fase42.md) |
+| 43 — Manual de usuario (1) | Visor dentro de la aplicación (F1: índice, búsqueda sin acentos, historial, colores del tema), capítulos en Markdown en inglés y español con las órdenes y atajos reales, capítulos 1-5 | ✅ [fase43.md](fase43.md) |
 
 ---
 

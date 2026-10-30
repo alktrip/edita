@@ -156,6 +156,7 @@ add_library(edita_ui STATIC
     ui/RainbowBrackets.cpp
     ui/RegexTester.cpp
     ui/LspManager.cpp
+    ui/ManualWindow.cpp
     ui/ProblemsPanel.cpp
     ui/Terminal.cpp
     ui/TerminalPanel.cpp
@@ -220,7 +221,7 @@ add_library(edita_ui STATIC
     ui/XmlTagMatcher.h)
 target_link_libraries(edita_ui
     PUBLIC  edita_doc edita_syntax edita_search edita_lsp lexilla vterm Qt6::Widgets Qt6::PrintSupport Qt6::Network Qt6::Svg
-    PRIVATE pugixml edita_warnings $<$<PLATFORM_ID:Linux>:util>)
+    PRIVATE pugixml md4c edita_warnings $<$<PLATFORM_ID:Linux>:util>)
 target_include_directories(edita_ui PUBLIC ${PROJECT_SOURCE_DIR}/plugin-sdk)
 set_target_properties(edita_ui PROPERTIES AUTOMOC ON)
 # Logo e ícono (resources/), dentro del binario

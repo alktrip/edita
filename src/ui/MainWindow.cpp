@@ -38,6 +38,7 @@
 #include "ui/RegexTester.h"
 #include "ui/TerminalPanel.h"
 #include "ui/LspManager.h"
+#include "ui/ManualWindow.h"
 #include "ui/ProblemsPanel.h"
 #include "ui/CompareSession.h"
 #include "ui/GitBlame.h"
@@ -121,6 +122,7 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <functional>
 #include <cstring>
 #include <vector>
 
@@ -1241,6 +1243,7 @@ void MainWindow::createMenus()
 
     // Ayuda
     QMenu* help = menuBar()->addMenu(tr("&Help"));
+    addAction(help, tr("User &Manual"), "actionUserManual", QKeySequence::HelpContents, [this] { showManual(); });
     addAction(help, tr("&Welcome Page"), "actionWelcomePage", QKeySequence(), [this] { showWelcomePage(); });
     help->addSeparator();
     QAction* about = help->addAction(tr("&About %1").arg(QString::fromUtf8(kAppName)), this, [this] {
@@ -3243,6 +3246,8 @@ void MainWindow::showShortcutMapper()
 {
     ShortcutMapperDialog dialog(*this, *_prompter, this);
     dialog.exec();
+    if (_manual)
+        _manual->reload(); // los atajos que cita el manual
 }
 
 void MainWindow::showStyleConfigurator()
@@ -5107,6 +5112,36 @@ void MainWindow::showWelcomePage()
 {
     _welcomeForced = true;
     updateWelcome();
+}
+
+Manual::Commands MainWindow::manualCommands() const
+{
+    // Las órdenes que cita el manual ({{actionFind}}): su menú y su atajo, como están ahora
+    Manual::Commands commands;
+    std::function<void(QMenu*, const QString&)> walk = [&](QMenu* menu, const QString& path) {
+        for (QAction* action : menu->actions()) {
+            if (action->isSeparator())
+                continue;
+            const QString text = QString(action->text()).remove(QLatin1Char('&'));
+            const QString here = path.isEmpty() ? text : path + QStringLiteral(" › ") + text;
+            if (action->menu())
+                walk(action->menu(), here);
+            else if (!action->objectName().isEmpty())
+                commands.insert(action->objectName(), {here, action->shortcut().toString(QKeySequence::NativeText)});
+        }
+    };
+    for (QAction* top : menuBar()->actions()) {
+        if (top->menu())
+            walk(top->menu(), QString(top->text()).remove(QLatin1Char('&')));
+    }
+    return commands;
+}
+
+void MainWindow::showManual(const QString& chapter, const QString& anchor)
+{
+    if (!_manual)
+        _manual = new ManualWindow([this] { return manualCommands(); }, this);
+    _manual->open(chapter, anchor);
 }
 
 void MainWindow::hideWelcome(bool focusEditor)

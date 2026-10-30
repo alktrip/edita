@@ -1664,19 +1664,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+404"/>
-        <location line="+3268"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+406"/>
+        <location line="+3274"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3268"/>
-        <location line="+1252"/>
+        <location line="-3274"/>
+        <location line="+1256"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1161"/>
+        <location line="-1162"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2117,7 +2117,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>A&amp;yuda</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2183,12 +2183,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+779"/>
+        <location line="+781"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-755"/>
+        <location line="-757"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2360,12 +2360,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1815"/>
+        <location line="-1816"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-799"/>
+        <location line="-802"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2445,13 +2445,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+710"/>
-        <location line="+680"/>
+        <location line="+713"/>
+        <location line="+681"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-624"/>
+        <location line="-625"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2728,6 +2728,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+13"/>
+        <source>User &amp;Manual</source>
+        <translation>&amp;Manual de usuario</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>&amp;Welcome Page</source>
         <translation>Página de &amp;inicio</translation>
     </message>
@@ -3148,12 +3153,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+258"/>
         <location line="+20"/>
-        <location line="+1416"/>
+        <location line="+1418"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1690"/>
+        <location line="-1692"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3282,7 +3287,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+181"/>
+        <location line="+183"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -3610,7 +3615,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+358"/>
+        <location line="+388"/>
         <source>This line is not committed yet</source>
         <translation>Esta línea aún no está confirmada</translation>
     </message>
@@ -3876,6 +3881,39 @@ Continue?</source>
         <location line="-10"/>
         <source>session.xml was damaged; the backup copy has been used.</source>
         <translation>session.xml estaba dañado; se ha usado la copia de seguridad.</translation>
+    </message>
+</context>
+<context>
+    <name>edita::ManualWindow</name>
+    <message>
+        <location filename="../src/ui/ManualWindow.cpp" line="+602"/>
+        <source>User Manual</source>
+        <translation>Manual de usuario</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Back</source>
+        <translation>Atrás</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Forward</source>
+        <translation>Adelante</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Contents</source>
+        <translation>Índice</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Search the manual</source>
+        <translation>Buscar en el manual</translation>
+    </message>
+    <message>
+        <location line="+109"/>
+        <source>No results</source>
+        <translation>Sin resultados</translation>
     </message>
 </context>
 <context>

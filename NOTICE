@@ -28,7 +28,7 @@ Incluye código de terceros en third_party/, cada uno con su propia licencia:
       third_party/pugixml/LICENSE.md
 
   md4c 0.5.2 — Copyright Martin Mitáš y colaboradores — MIT
-      third_party/md4c/LICENSE.md (para el plugin MarkdownViewer++)
+      third_party/md4c/LICENSE.md (para el manual de usuario y el plugin MarkdownViewer++)
   libvterm 0.3.3 — Copyright 2008 Paul Evans — MIT
       third_party/libvterm/LICENSE (la emulación de la terminal integrada)
 

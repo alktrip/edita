@@ -33,6 +33,7 @@
 #include "ui/CommandPalette.h"
 #include "ui/EditCommands.h"
 #include "ui/FindReplaceDialog.h"
+#include "ui/ManualWindow.h"
 #include "ui/PluginsAdminDialog.h"
 #include "ui/Shortcuts.h"
 
@@ -386,6 +387,11 @@ public:
     WelcomePage* welcomePage() const { return _welcome; }
     bool isWelcomeVisible() const;
     void showWelcomePage();
+    // El manual de usuario en ese capítulo y apartado ("03-editing.md", "multiple-selection")
+    void showManual(const QString& chapter = {}, const QString& anchor = {});
+    ManualWindow* manualWindow() const { return _manual; }
+    // Menú y atajo de cada orden con nombre ("actionFind"), para el manual
+    Manual::Commands manualCommands() const;
     const QStringList& recentFolders() const { return _recentFolders; }
 
 protected:
@@ -586,6 +592,7 @@ private:
     NotificationBar* _notifications = nullptr;
     QStackedWidget* _centerStack = nullptr;
     WelcomePage* _welcome = nullptr;
+    ManualWindow* _manual = nullptr;
     BufferId _welcomeDismissed = kInvalidBuffer; // el documento nuevo en el que ya se empezó
     bool _welcomeForced = false;                 // pedida en Ayuda
     bool _welcomeUpdatePending = false;
