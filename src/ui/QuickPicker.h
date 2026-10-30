@@ -36,11 +36,16 @@ public:
 
     // Se abre encima de `anchor` (la barra de estado está abajo); el marcado, elegido
     void popup(QWidget* anchor, const QString& placeholder, std::vector<Item> items);
+    // Otros elementos sin cerrar ni borrar lo escrito (listas que se piden al escribir)
+    void setItems(std::vector<Item> items);
 
     // Para las pruebas
     QLineEdit* input() const { return _input; }
     QStringList visibleTexts() const;
     bool activate(const QString& text);
+
+signals:
+    void queryChanged(const QString& query);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;

@@ -43,6 +43,7 @@
 #include "ui/GitBlame.h"
 #include "ui/GitStatus.h"
 #include "ui/Snippets.h"
+#include "ui/EolAnnotations.h"
 #include "ui/RainbowBrackets.h"
 #include "ui/Breadcrumbs.h"
 #include "ui/StickyScroll.h"
@@ -92,6 +93,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPainter>
 #include <QMimeData>
 #include <QPdfWriter>
 #include <QPixmap>
@@ -335,7 +337,11 @@ MainWindow::MainWindow(QWidget* parent)
     // Servidores de lenguaje (antes de las vistas: las vistas les avisan de los cambios)
     _lsp = std::make_unique<LspManager>(_documents);
     connect(_lsp.get(), &LspManager::diagnosticsChanged, this, [this] { updateDiagnostics(); });
-    connect(_lsp.get(), &LspManager::statusChanged, this, [this] { updateProblemsField(); });
+    connect(_lsp.get(), &LspManager::statusChanged, this, [this] {
+        updateProblemsField();
+        scheduleLspDecorations(0); // un servidor que acaba de arrancar: pistas y bombilla
+        scheduleLspDecorations(1);
+    });
     connect(_lsp.get(), &LspManager::applyEditRequested, this,
             [this](const QJsonObject& edit, lsp::PositionEncoding encoding, const std::function<void(bool)>& reply) {
                 reply(applyWorkspaceEdit(edit, encoding) >= 0);
@@ -496,6 +502,19 @@ void MainWindow::connectPane(EditorPane* pane)
     _git[index] = new GitChanges(pane->editor());
     _blame[index] = new GitBlame(pane->editor());
     _snippetControllers[index] = new SnippetController(pane->editor(), *_snippets);
+    // La bombilla de las acciones de código y las pistas, un momento después de moverse o editar
+    _lspDecorationTimer[index] = new QTimer(this);
+    _lspDecorationTimer[index]->setSingleShot(true);
+    _lspDecorationTimer[index]->setInterval(400);
+    connect(_lspDecorationTimer[index], &QTimer::timeout, this, [this, index] { updateLspDecorations(index); });
+    connect(pane->editor(), &ScintillaEditBase::updateUi, this, [this, index](Scintilla::Update updated) {
+        if (static_cast<int>(updated) & (SC_UPDATE_SELECTION | SC_UPDATE_V_SCROLL))
+            scheduleLspDecorations(index);
+    });
+    connect(pane->editor(), &ScintillaEditBase::modified, this, [this, index](Scintilla::ModificationFlags type) {
+        if (static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))
+            scheduleLspDecorations(index);
+    });
     _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
     _colorPreview[index] = new ColorPreview(pane->editor());
     _rainbow[index] = new RainbowBrackets(pane->editor());
@@ -558,6 +577,8 @@ void MainWindow::connectPane(EditorPane* pane)
         _lsp->paintDiagnostics(*pane->editor(), pane->currentBuffer());
         updateProblemsField();
         updateSnippetContext(pane);
+        _lightbulbLine[index] = -1;
+        scheduleLspDecorations(index);
         scheduleWelcomeUpdate();
         updateGitDocument(pane);
         updateLanguageDecorations(index);
@@ -703,6 +724,13 @@ void MainWindow::connectPane(EditorPane* pane)
             return;
         setActivePane(pane);
         EditorView* v = pane->editor();
+        // En la línea de la bombilla: las acciones de código, no un marcador
+        const sptr_t clicked = v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(position));
+        if (v->sci(SCI_MARKERGET, static_cast<uptr_t>(clicked)) & (1 << kLightbulbMarker)) {
+            v->sci(SCI_GOTOLINE, static_cast<uptr_t>(clicked));
+            showCodeActions();
+            return;
+        }
         toggleBookmark(*v, v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(position)));
     });
     connect(view, &ScintillaEditBase::uriDropped, this, [this, pane](const QString& uri) {
@@ -1017,6 +1045,7 @@ void MainWindow::createMenus()
     addAction(edit, tr("F&ormat Document"), "actionFormatDocument", QKeySequence(Qt::ALT | Qt::SHIFT | Qt::Key_F), [this] { formatDocument(); });
     // Fragmentos de código (no existen en N++)
     addAction(edit, tr("Insert S&nippet…"), "actionInsertSnippet", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_J), [this] { showSnippetPicker(); });
+    addAction(edit, tr("Code &Actions…"), "actionCodeActions", QKeySequence(Qt::CTRL | Qt::Key_Period), [this] { showCodeActions(); });
     edit->addSeparator();
     // IDM_EDIT_COLUMNMODE: Editor de columnas (Alt+C)
     addAction(edit, tr("Colu&mn Editor…"), "actionColumnEditor", QKeySequence(Qt::ALT | Qt::Key_C), [this] {
@@ -1705,7 +1734,137 @@ QuickPicker* MainWindow::ensurePicker()
 {
     if (!_picker)
         _picker = new QuickPicker(this);
+    // La lista es de todos: lo que escuchaba la de símbolos del proyecto, fuera
+    disconnect(_symbolQuery);
+    delete _workspaceSymbolTimer;
     return _picker;
+}
+
+void MainWindow::scheduleLspDecorations(int index)
+{
+    if (_lspDecorationTimer[index])
+        _lspDecorationTimer[index]->start();
+}
+
+void MainWindow::updateLspDecorations(int index)
+{
+    EditorPane* pane = index == 0 ? _mainPane : _subPane;
+    EditorView* v = pane->editor();
+    const BufferId id = pane->currentBuffer();
+    if (!v || id == kInvalidBuffer)
+        return;
+    // La bombilla: si hay acciones de código en la línea del cursor
+    const auto caretLine = static_cast<int>(v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(v->sci(SCI_GETCURRENTPOS))));
+    QPointer<EditorView> target(v);
+    const bool asked = _lsp->codeActions(*v, id, v->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(caretLine)),
+                                         v->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(caretLine)),
+                                         [this, target, index, caretLine, id](const QJsonArray& actions, lsp::LspClient*) {
+        if (!target || (index == 0 ? _mainPane : _subPane)->currentBuffer() != id)
+            return;
+        target->sci(SCI_MARKERDELETEALL, kLightbulbMarker);
+        _lightbulbLine[index] = actions.isEmpty() ? -1 : caretLine;
+        if (actions.isEmpty())
+            return;
+        // Una bombilla amarilla (del tamaño de la línea)
+        const int size = std::max(12, static_cast<int>(target->sci(SCI_TEXTHEIGHT, 0)) - 2);
+        QImage image(size, size, QImage::Format_RGBA8888);
+        image.fill(Qt::transparent);
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(0xF2, 0xC2, 0x1B));
+        painter.drawEllipse(QRectF(size * 0.2, size * 0.05, size * 0.6, size * 0.6));
+        painter.setBrush(QColor(0x80, 0x80, 0x80));
+        painter.drawRoundedRect(QRectF(size * 0.35, size * 0.62, size * 0.3, size * 0.3), 1.5, 1.5);
+        painter.end();
+        target->sci(SCI_RGBAIMAGESETWIDTH, static_cast<uptr_t>(size));
+        target->sci(SCI_RGBAIMAGESETHEIGHT, static_cast<uptr_t>(size));
+        target->sci(SCI_MARKERDEFINERGBAIMAGE, kLightbulbMarker, reinterpret_cast<sptr_t>(image.constBits()));
+        target->sci(SCI_MARKERADD, static_cast<uptr_t>(caretLine), kLightbulbMarker);
+    });
+    if (!asked) {
+        v->sci(SCI_MARKERDELETEALL, kLightbulbMarker);
+        _lightbulbLine[index] = -1;
+    }
+    // Las pistas de las líneas a la vista (y unas cuantas más), al final de cada línea
+    EolAnnotations* eol = EolAnnotations::of(v);
+    if (!_prefs.inlayHints) {
+        eol->clear(EolAnnotations::Hints);
+        return;
+    }
+    const auto first = static_cast<int>(v->sci(SCI_DOCLINEFROMVISIBLE, static_cast<uptr_t>(v->sci(SCI_GETFIRSTVISIBLELINE))));
+    const int last = first + static_cast<int>(v->sci(SCI_LINESONSCREEN)) + 5;
+    _lsp->inlayHints(*v, id, first, last, [target](const QMap<int, QString>& hints) {
+        if (!target)
+            return;
+        EolAnnotations* annotations = EolAnnotations::of(target);
+        annotations->clear(EolAnnotations::Hints);
+        for (auto it = hints.begin(); it != hints.end(); ++it)
+            annotations->set(EolAnnotations::Hints, it.key(), it.value());
+    });
+}
+
+void MainWindow::showCodeActions()
+{
+    EditorView* v = editor();
+    sptr_t start = v->sci(SCI_GETSELECTIONSTART);
+    sptr_t end = v->sci(SCI_GETSELECTIONEND);
+    if (start == end) { // sin selección: la línea
+        const sptr_t line = v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(start));
+        start = v->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+        end = v->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line));
+    }
+    const bool asked = _lsp->codeActions(*v, currentBuffer(), start, end, [this](const QJsonArray& actions, lsp::LspClient* client) {
+        if (actions.isEmpty()) {
+            statusBar()->showMessage(tr("No code actions here"), 4000);
+            return;
+        }
+        // Las preferidas primero (y marcadas)
+        std::vector<QuickPicker::Item> items;
+        for (int pass = 0; pass < 2; ++pass) {
+            for (const QJsonValue& value : actions) {
+                const QJsonObject action = value.toObject();
+                const bool preferred = action.value(QStringLiteral("isPreferred")).toBool();
+                if (preferred != (pass == 0))
+                    continue;
+                items.push_back({action.value(QStringLiteral("title")).toString(), action.value(QStringLiteral("kind")).toString(), preferred,
+                                 [this, client, action] { _lsp->runCodeAction(client, action); }});
+            }
+        }
+        ensurePicker()->popup(editor(), tr("Code actions"), items);
+    });
+    if (!asked)
+        statusBar()->showMessage(tr("The language server of this document has no code actions"), 5000);
+}
+
+void MainWindow::showWorkspaceSymbols()
+{
+    const BufferId id = currentBuffer();
+    QuickPicker* picker = ensurePicker();
+    auto* timer = new QTimer(picker);
+    _workspaceSymbolTimer = timer;
+    timer->setSingleShot(true);
+    timer->setInterval(200);
+    auto query = [this, picker, id] {
+        const bool asked = _lsp->workspaceSymbols(id, picker->input()->text().trimmed(), [this, picker](const std::vector<LspManager::SymbolHit>& hits) {
+            if (!picker->isVisible())
+                return;
+            std::vector<QuickPicker::Item> items;
+            for (const LspManager::SymbolHit& h : hits) {
+                QString detail = QStringLiteral("%1:%2").arg(QFileInfo(h.path).fileName()).arg(h.line + 1);
+                if (!h.container.isEmpty())
+                    detail = h.container + QStringLiteral("  ·  ") + detail;
+                items.push_back({h.name, detail, false, [this, h] { goToLocation(h.path, h.line, h.character, h.encoding); }});
+            }
+            picker->setItems(std::move(items));
+        });
+        if (!asked)
+            statusBar()->showMessage(tr("No language server can search the symbols of the project"), 5000);
+    };
+    connect(timer, &QTimer::timeout, picker, query);
+    _symbolQuery = connect(picker, &QuickPicker::queryChanged, timer, [timer] { timer->start(); });
+    picker->popup(editor(), tr("Symbol in the project"), {});
+    query();
 }
 
 void MainWindow::updateSnippetContext(EditorPane* pane)
@@ -2569,6 +2728,7 @@ void MainWindow::createSearchMenu()
     // Con el servidor de lenguaje (no existen en N++)
     add(tr("Go to &Definition"), "actionGoToDefinition", QKeySequence(Qt::Key_F12), [this] { goToDefinition(); });
     add(tr("Find Re&ferences"), "actionFindReferences", QKeySequence(Qt::SHIFT | Qt::Key_F12), [this] { findReferences(); });
+    add(tr("Go to Symbol in &Project…"), "actionWorkspaceSymbol", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_O), [this] { showWorkspaceSymbols(); });
     search->addSeparator();
     add(tr("Next Search Result"), "actionNextResult", QKeySequence(Qt::Key_F4),
         [this] { _results->activateAdjacentResult(true); });
@@ -3154,6 +3314,7 @@ void MainWindow::applyPreferences()
             _blame[i]->setInlineEnabled(p.gitBlameInline);
         if (_snippetControllers[i])
             _snippetControllers[i]->setTabExpansion(p.snippetsTab);
+        scheduleLspDecorations(i);
         if (_scrollMarks[i])
             _scrollMarks[i]->setEnabled(p.scrollBarMarks);
     }

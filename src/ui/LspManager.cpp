@@ -273,6 +273,7 @@ void LspManager::receiveDiagnostics(const QString& uri, const QJsonArray& diagno
         diag.source = d.value(QStringLiteral("source")).toString();
         const QJsonValue code = d.value(QStringLiteral("code"));
         diag.code = code.isDouble() ? QString::number(code.toInt()) : code.toString();
+        diag.raw = d;
         list.push_back(diag);
     }
     std::sort(list.begin(), list.end(), [](const Diagnostic& a, const Diagnostic& b) {
@@ -884,6 +885,191 @@ bool LspManager::signatureHelp(ScintillaEditBase& view, BufferId id, int ch)
         _signatureView = target;
         _lastSignatureText = text;
         _lastSignatureHighlight = {highlightStart, highlightEnd};
+    });
+    return true;
+}
+
+// --- Acciones de código, símbolos del proyecto y pistas -----------------------------------
+
+bool LspManager::codeActions(ScintillaEditBase& view, BufferId id, sptr_t start, sptr_t end,
+                             std::function<void(const QJsonArray&, lsp::LspClient*)> done)
+{
+    if (!supports(id, QStringLiteral("codeActionProvider")))
+        return false;
+    lsp::LspClient* client = clientFor(id);
+    syncNow();
+    const lsp::PositionEncoding encoding = client->positionEncoding();
+    // Los diagnósticos de esas líneas van en el contexto: el servidor da sus arreglos
+    const auto firstLine = static_cast<int>(view.send(SCI_LINEFROMPOSITION, static_cast<uptr_t>(start)));
+    const auto lastLine = static_cast<int>(view.send(SCI_LINEFROMPOSITION, static_cast<uptr_t>(end)));
+    QJsonArray diagnostics;
+    for (const Diagnostic& d : this->diagnostics(id)) {
+        if (d.endLine >= firstLine && d.line <= lastLine)
+            diagnostics.append(d.raw);
+    }
+    const QJsonObject params{{"textDocument", QJsonObject{{"uri", _documents.at(id).uri}}},
+                             {"range", QJsonObject{{"start", lspPosition(view, encoding, start)}, {"end", lspPosition(view, encoding, end)}}},
+                             {"context", QJsonObject{{"diagnostics", diagnostics}, {"triggerKind", 1}}}};
+    client->request(QStringLiteral("textDocument/codeAction"), params,
+                    [done = std::move(done), client](const QJsonValue& result, const QJsonObject&) { done(result.toArray(), client); });
+    return true;
+}
+
+void LspManager::runCodeAction(lsp::LspClient* client, const QJsonObject& action)
+{
+    bool known = false;
+    for (const auto& [key, c] : _clients)
+        known = known || c.get() == client;
+    if (!known || client->state() != lsp::LspClient::State::Running)
+        return;
+    auto execute = [client](const QJsonObject& command) {
+        client->request(QStringLiteral("workspace/executeCommand"),
+                        QJsonObject{{"command", command.value(QStringLiteral("command"))},
+                                    {"arguments", command.value(QStringLiteral("arguments"))}},
+                        {});
+    };
+    // Un Command suelto («command» es el nombre de la orden)
+    if (action.value(QStringLiteral("command")).isString()) {
+        execute(action);
+        return;
+    }
+    QPointer<LspManager> self(this);
+    auto perform = [self, client, execute](const QJsonObject& a) {
+        if (!self)
+            return;
+        const QJsonObject edit = a.value(QStringLiteral("edit")).toObject();
+        if (!edit.isEmpty()) {
+            // Lo aplica quien atiende workspace/applyEdit (la ventana)
+            emit self->applyEditRequested(edit, client->positionEncoding(), [](bool) {});
+        }
+        const QJsonObject command = a.value(QStringLiteral("command")).toObject();
+        if (!command.isEmpty())
+            execute(command);
+    };
+    const bool resolvable = client->capabilities().value(QStringLiteral("codeActionProvider")).toObject().value(QStringLiteral("resolveProvider")).toBool();
+    if (!action.contains(QStringLiteral("edit")) && !action.contains(QStringLiteral("command")) && resolvable) {
+        client->request(QStringLiteral("codeAction/resolve"), action,
+                        [perform](const QJsonValue& result, const QJsonObject& error) {
+                            if (error.isEmpty())
+                                perform(result.toObject());
+                        });
+        return;
+    }
+    perform(action);
+}
+
+bool LspManager::workspaceSymbols(BufferId id, const QString& query, std::function<void(const std::vector<SymbolHit>&)> done)
+{
+    // El servidor del documento; si no sabe, cualquiera que sepa
+    lsp::LspClient* client = supports(id, QStringLiteral("workspaceSymbolProvider")) ? clientFor(id) : nullptr;
+    for (auto it = _clients.begin(); !client && it != _clients.end(); ++it) {
+        if (it->second->state() == lsp::LspClient::State::Running && it->second->hasCapability(QStringLiteral("workspaceSymbolProvider")))
+            client = it->second.get();
+    }
+    if (!client)
+        return false;
+    syncNow(); // que el servidor vea lo último que se escribió
+    const lsp::PositionEncoding encoding = client->positionEncoding();
+    client->request(QStringLiteral("workspace/symbol"), QJsonObject{{"query", query}},
+                    [done = std::move(done), encoding](const QJsonValue& result, const QJsonObject&) {
+        std::vector<SymbolHit> hits;
+        for (const QJsonValue& value : result.toArray()) {
+            const QJsonObject s = value.toObject();
+            const QJsonObject location = s.value(QStringLiteral("location")).toObject();
+            const QJsonObject start = location.value(QStringLiteral("range")).toObject().value(QStringLiteral("start")).toObject();
+            const QString path = lsp::pathFromUri(location.value(QStringLiteral("uri")).toString());
+            if (path.isEmpty())
+                continue;
+            hits.push_back({s.value(QStringLiteral("name")).toString(), s.value(QStringLiteral("kind")).toInt(),
+                            s.value(QStringLiteral("containerName")).toString(), path, start.value(QStringLiteral("line")).toInt(),
+                            start.value(QStringLiteral("character")).toInt(), encoding});
+        }
+        done(hits);
+    });
+    return true;
+}
+
+bool LspManager::inlayHints(ScintillaEditBase& view, BufferId id, int firstLine, int lastLine,
+                            std::function<void(const QMap<int, QString>&)> done)
+{
+    if (!supports(id, QStringLiteral("inlayHintProvider")))
+        return false;
+    lsp::LspClient* client = clientFor(id);
+    syncNow();
+    const lsp::PositionEncoding encoding = client->positionEncoding();
+    const sptr_t start = view.send(SCI_POSITIONFROMLINE, static_cast<uptr_t>(firstLine));
+    const sptr_t end = view.send(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(std::max(firstLine, lastLine)));
+    const QJsonObject params{{"textDocument", QJsonObject{{"uri", _documents.at(id).uri}}},
+                             {"range", QJsonObject{{"start", lspPosition(view, encoding, start)}, {"end", lspPosition(view, encoding, end)}}}};
+    QPointer<ScintillaEditBase> target(&view);
+    const sptr_t document = view.send(SCI_GETDOCPOINTER);
+    client->request(QStringLiteral("textDocument/inlayHint"), params,
+                    [this, target, document, encoding, done = std::move(done)](const QJsonValue& result, const QJsonObject&) {
+        if (!target || target->send(SCI_GETDOCPOINTER) != document)
+            return;
+        struct Hint
+        {
+            int line;
+            int character;
+            int kind;
+            QString label;
+        };
+        std::vector<Hint> hints;
+        for (const QJsonValue& value : result.toArray()) {
+            const QJsonObject h = value.toObject();
+            const QJsonObject pos = h.value(QStringLiteral("position")).toObject();
+            QString label;
+            const QJsonValue l = h.value(QStringLiteral("label"));
+            if (l.isArray()) { // InlayHintLabelPart[]
+                for (const QJsonValue& part : l.toArray())
+                    label += part.toObject().value(QStringLiteral("value")).toString();
+            } else {
+                label = l.toString();
+            }
+            label = label.trimmed();
+            // Los designadores («[0]=», «.x=») solo tienen sentido delante de cada valor
+            if ((label.startsWith(QLatin1Char('[')) || label.startsWith(QLatin1Char('.'))) && label.endsWith(QLatin1Char('=')))
+                continue;
+            hints.push_back({pos.value(QStringLiteral("line")).toInt(), pos.value(QStringLiteral("character")).toInt(),
+                             h.value(QStringLiteral("kind")).toInt(), label});
+        }
+        std::stable_sort(hints.begin(), hints.end(), [](const Hint& a, const Hint& b) {
+            return std::tie(a.line, a.character) < std::tie(b.line, b.character);
+        });
+        // Por línea: «x: int» (el tipo, con el nombre de delante) y «(a, b)» (los parámetros seguidos)
+        QMap<int, QStringList> parts;
+        QMap<int, QStringList> parameters;
+        auto flush = [&](int line) {
+            if (!parameters.value(line).isEmpty()) {
+                parts[line] << QStringLiteral("(%1)").arg(parameters[line].join(QStringLiteral(", ")));
+                parameters.remove(line);
+            }
+        };
+        for (const Hint& h : hints) {
+            if (h.kind == 2) {
+                QString name = h.label;
+                while (name.endsWith(QLatin1Char(':')) || name.endsWith(QLatin1Char('=')))
+                    name.chop(1);
+                parameters[h.line] << name.trimmed();
+                continue;
+            }
+            flush(h.line);
+            QString text = h.label;
+            if (text.startsWith(QLatin1Char(':'))) { // el tipo de lo que hay justo delante
+                const sptr_t pos = scintillaPosition(*target, encoding, h.line, h.character);
+                const sptr_t wordStart = target->send(SCI_WORDSTARTPOSITION, static_cast<uptr_t>(pos), 1);
+                const auto* raw = reinterpret_cast<const char*>(target->send(SCI_GETRANGEPOINTER, static_cast<uptr_t>(wordStart), pos - wordStart));
+                if (raw && pos > wordStart)
+                    text = QString::fromUtf8(raw, static_cast<qsizetype>(pos - wordStart)) + text;
+            }
+            parts[h.line] << text;
+        }
+        for (auto it = parameters.begin(); it != parameters.end(); ++it)
+            parts[it.key()] << QStringLiteral("(%1)").arg(it.value().join(QStringLiteral(", ")));
+        QMap<int, QString> lines;
+        for (auto it = parts.begin(); it != parts.end(); ++it)
+            lines.insert(it.key(), it.value().join(QStringLiteral("  ·  ")));
+        done(lines);
     });
     return true;
 }

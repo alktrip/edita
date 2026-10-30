@@ -144,6 +144,7 @@ add_library(edita_ui STATIC
     ui/ColorPreview.cpp
     ui/CompareSession.cpp
     ui/CommandPalette.cpp
+    ui/EolAnnotations.cpp
     ui/FileIcons.cpp
     ui/FindBar.cpp
     ui/GitBlame.cpp

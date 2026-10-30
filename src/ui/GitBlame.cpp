@@ -5,6 +5,7 @@
 #include "ui/GitBlame.h"
 
 #include "core/Codec.h"
+#include "ui/EolAnnotations.h"
 #include "ui/EditorView.h"
 
 #include <QFileInfo>
@@ -103,7 +104,7 @@ void GitBlame::setDocument(const QString& path, const TextEncoding& encoding)
     ++_request;
     if (_view) {
         // Lo que quedara de otra vez en este documento
-        _view->send(SCI_EOLANNOTATIONCLEARALL);
+        EolAnnotations::of(_view)->reset();
         _view->send(SCI_MARGINTEXTCLEARALL);
     }
     updateMargin();
@@ -248,20 +249,11 @@ QString GitBlame::details(const Commit& c) const
 
 void GitBlame::configureStyles()
 {
-    // Estilos propios (extendidos): uno para el texto al final de la línea y cinco para el
-    // margen, del color de acento (reciente) al gris (antiguo)
-    if (_view->send(SCI_EOLANNOTATIONGETSTYLEOFFSET) == 0)
-        _view->send(SCI_EOLANNOTATIONSETSTYLEOFFSET, static_cast<uptr_t>(_view->send(SCI_ALLOCATEEXTENDEDSTYLES, 1)));
+    // Estilos propios (extendidos) para el margen, del color de acento (reciente) al gris
+    // (antiguo). El texto al final de la línea es de EolAnnotations
     if (_view->send(SCI_MARGINGETSTYLEOFFSET) == 0)
         _view->send(SCI_MARGINSETSTYLEOFFSET, static_cast<uptr_t>(_view->send(SCI_ALLOCATEEXTENDEDSTYLES, kAgeStyles)));
-    const QColor fore = fromScintilla(_view->send(SCI_STYLEGETFORE, STYLE_DEFAULT));
-    const QColor back = fromScintilla(_view->send(SCI_STYLEGETBACK, STYLE_DEFAULT));
-    const bool dark = back.lightness() < 128;
-    const auto eol = static_cast<uptr_t>(_view->send(SCI_EOLANNOTATIONGETSTYLEOFFSET));
-    _view->send(SCI_STYLESETFORE, eol, toScintilla(mix(fore, back, 0.55)));
-    _view->send(SCI_STYLESETBACK, eol, toScintilla(back));
-    _view->send(SCI_STYLESETITALIC, eol, 1);
-    _view->send(SCI_STYLESETSIZEFRACTIONAL, eol, _view->send(SCI_STYLEGETSIZEFRACTIONAL, STYLE_DEFAULT));
+    const bool dark = fromScintilla(_view->send(SCI_STYLEGETBACK, STYLE_DEFAULT)).lightness() < 128;
     const auto margin = static_cast<uptr_t>(_view->send(SCI_MARGINGETSTYLEOFFSET));
     const QColor marginBack = fromScintilla(_view->send(SCI_STYLEGETBACK, STYLE_LINENUMBER));
     const QColor marginFore = fromScintilla(_view->send(SCI_STYLEGETFORE, STYLE_LINENUMBER));
@@ -272,7 +264,6 @@ void GitBlame::configureStyles()
         _view->send(SCI_STYLESETBACK, style, toScintilla(marginBack));
         _view->send(SCI_STYLESETSIZEFRACTIONAL, style, _view->send(SCI_STYLEGETSIZEFRACTIONAL, STYLE_LINENUMBER));
     }
-    _view->send(SCI_EOLANNOTATIONSETVISIBLE, EOLANNOTATION_STANDARD);
 }
 
 void GitBlame::apply()
@@ -294,17 +285,11 @@ void GitBlame::updateInline()
     const int line = _inline && hasData() ? caretLine : -1;
     if (line == _inlineLine)
         return;
-    if (_inlineLine >= 0 && _inlineLine < _view->send(SCI_GETLINECOUNT))
-        _view->send(SCI_EOLANNOTATIONSETTEXT, static_cast<uptr_t>(_inlineLine), reinterpret_cast<sptr_t>(""));
+    EolAnnotations* eol = EolAnnotations::of(_view);
+    eol->clear(EolAnnotations::Blame);
     _inlineLine = line;
-    if (line < 0)
-        return;
-    const QByteArray text = (QStringLiteral("    ") + inlineText(line)).toUtf8();
-    if (text.trimmed().isEmpty())
-        return;
-    configureStyles();
-    _view->send(SCI_EOLANNOTATIONSETTEXT, static_cast<uptr_t>(line), reinterpret_cast<sptr_t>(text.constData()));
-    _view->send(SCI_EOLANNOTATIONSETSTYLE, static_cast<uptr_t>(line), 0);
+    if (line >= 0)
+        eol->set(EolAnnotations::Blame, line, inlineText(line));
 }
 
 void GitBlame::updateMargin()

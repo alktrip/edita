@@ -267,6 +267,10 @@ public:
     SnippetLibrary* snippetLibrary() const { return _snippets; }
     SnippetController* snippetControllerOfCurrentView() const;
     void showSnippetPicker();
+    // LSP: acciones de código (Ctrl+.), símbolos del proyecto y pistas al final de las líneas
+    void showCodeActions();
+    void showWorkspaceSymbols();
+    void scheduleLspDecorations(int index);
     void editUserSnippets();
     // Vuelve a leer el estado de Git de las carpetas de trabajo (en un momento)
     void scheduleGitStatus();
@@ -402,6 +406,7 @@ private:
     void attachToLsp(BufferId id);
     void updateDiagnostics();
     void updateSnippetContext(EditorPane* pane);
+    void updateLspDecorations(int index);
     void updateProblemsField();
     void goToLspPosition(const QString& path, int line, int character);
     void goToLocation(const QString& path, int line, int character, lsp::PositionEncoding encoding);
@@ -562,6 +567,10 @@ private:
     QPointer<GitBlame> _blame[2];
     SnippetLibrary* _snippets = nullptr;
     QPointer<SnippetController> _snippetControllers[2];
+    QTimer* _lspDecorationTimer[2] = {nullptr, nullptr};
+    int _lightbulbLine[2] = {-1, -1};
+    QMetaObject::Connection _symbolQuery;
+    QPointer<QTimer> _workspaceSymbolTimer;
     QPointer<ScrollBarMarks> _scrollMarks[2];
     QPointer<ColorPreview> _colorPreview[2];
     QPointer<RainbowBrackets> _rainbow[2];

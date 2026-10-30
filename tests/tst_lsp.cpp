@@ -11,6 +11,8 @@
 #include "lsp/LspServers.h"
 #include "syntax/SyntaxStyler.h"
 #include "ui/DocStatusBar.h"
+#include "ui/EditCommands.h"
+#include "ui/EolAnnotations.h"
 #include "ui/EditorView.h"
 #include "ui/LspManager.h"
 #include "ui/MainWindow.h"
@@ -22,6 +24,7 @@
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
+#include <QLineEdit>
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTemporaryDir>
@@ -160,7 +163,7 @@ private slots:
         QCOMPARE(client.completionTriggers(), QStringList{"."});
         QVERIFY(client.hasCapability("hoverProvider"));
         QVERIFY(client.hasCapability("definitionProvider"));
-        QVERIFY(!client.hasCapability("codeActionProvider"));
+        QVERIFY(!client.hasCapability("callHierarchyProvider"));
         QCOMPARE(client.syncKind(), 1);
         QTRY_COMPARE(diagnostics.count(), 1);
         QCOMPARE(diagnostics.first().at(0).toString(), uri);
@@ -377,6 +380,80 @@ private slots:
         QCOMPARE(text(lib), QStringLiteral("def ayudante(n):\n    return n * 2\n"));
     }
 
+    void actionsSymbolsAndHints()
+    {
+        const QString dir = _tmp.filePath("acciones");
+        writeFile(dir + "/main.py", "x = error\nsuma(1, 2)\ndef ayudar():\n    pass\nclass Cosa:\n    pass\n");
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        Preferences p = w.preferences();
+        p.lspEnabled = true;
+        p.lspServers = "python=" + fakeServer();
+        w.setPreferences(p);
+        w.resize(900, 600);
+        w.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w));
+        QVERIFY(w.addFolderToWorkspace(dir));
+        const BufferId id = w.openFile(dir + "/main.py");
+        LspManager* lsp = w.lsp();
+        QTRY_VERIFY(lsp->supports(id, "codeActionProvider"));
+        QTRY_COMPARE(lsp->count(1), 1);
+        EditorView* v = w.editor();
+        auto text = [&] { return QString::fromStdString(w.documents().text(id)); };
+
+        // Pistas al final de las líneas: el tipo con su nombre y los parámetros juntos
+        EolAnnotations* eol = EolAnnotations::of(v);
+        QTRY_VERIFY2(eol->textAt(0).contains("x: int"), qPrintable(eol->textAt(0)));
+        QTRY_COMPARE(eol->textAt(1), QStringLiteral("(a, b)"));
+        // La bombilla en la línea del cursor (hay acciones)
+        v->sci(SCI_GOTOPOS, 2);
+        QTRY_VERIFY(v->sci(SCI_MARKERGET, 0) & (1 << kLightbulbMarker));
+
+        // Ctrl+.: la preferida primero (marcada); arregla el error
+        w.findChild<QAction*>("actionCodeActions")->trigger();
+        QTRY_VERIFY(w.statusPicker() && w.statusPicker()->isVisible());
+        const QStringList titles = w.statusPicker()->visibleTexts();
+        QCOMPARE(titles.size(), 3);
+        QVERIFY2(titles.first() == "Change error to ok", qPrintable(titles.join(QLatin1Char('|'))));
+        QVERIFY(w.statusPicker()->activate(titles.first()));
+        QTRY_VERIFY(text().startsWith("x = ok\n"));
+        // Una orden del servidor, que contesta con workspace/applyEdit
+        v->sci(SCI_GOTOLINE, 1);
+        w.findChild<QAction*>("actionCodeActions")->trigger();
+        QTRY_VERIFY(w.statusPicker()->isVisible() && w.statusPicker()->visibleTexts().size() == 2);
+        QVERIFY(w.statusPicker()->activate(w.statusPicker()->visibleTexts().filter("Uppercase").value(0)));
+        QTRY_VERIFY2(text().contains("\nSUMA(1, 2)\n"), qPrintable(text()));
+        // Una sin cambios, que se completa con codeAction/resolve; desde el margen de la bombilla
+        v->sci(SCI_GOTOLINE, 2);
+        QTRY_VERIFY(v->sci(SCI_MARKERGET, 2) & (1 << kLightbulbMarker));
+        QVERIFY(!w.statusPicker()->isVisible()); // (la lista de antes, ya cerrada)
+        emit v->marginClicked(v->sci(SCI_POSITIONFROMLINE, 2), Scintilla::KeyMod::Norm, static_cast<int>(kMarginSymbol));
+        QTRY_VERIFY(w.statusPicker()->isVisible() && w.statusPicker()->visibleTexts().size() == 2);
+        QCOMPARE(v->sci(SCI_MARKERGET, 2) & (1 << kBookmarkMarker), sptr_t{0}); // no pone un marcador
+        QVERIFY(w.statusPicker()->activate(w.statusPicker()->visibleTexts().filter("comment").value(0)));
+        QTRY_VERIFY2(text().contains("\n# comment\ndef ayudar"), qPrintable(text()));
+
+        // Símbolos del proyecto, pedidos al escribir
+        w.findChild<QAction*>("actionWorkspaceSymbol")->trigger();
+        QuickPicker* picker = w.statusPicker();
+        picker->input()->setText("ayu");
+        QTRY_VERIFY2(picker->visibleTexts().filter("ayudar").size() == 1, qPrintable(picker->visibleTexts().join('|')));
+        QVERIFY(picker->activate(picker->visibleTexts().filter("ayudar").first()));
+        QCOMPARE(w.editor()->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(w.editor()->sci(SCI_GETCURRENTPOS))), sptr_t{3});
+        // La misma lista, para otra cosa: ya no pide símbolos
+        w.findChild<QAction*>("actionInsertSnippet")->trigger();
+        picker->input()->setText("def");
+        QTest::qWait(400);
+        QVERIFY(picker->visibleTexts().filter("ayudar").isEmpty());
+        picker->hide();
+
+        // Sin pistas en las preferencias
+        p = w.preferences();
+        p.inlayHints = false;
+        w.setPreferences(p);
+        QTRY_VERIFY(eol->textAt(0).isEmpty());
+    }
+
     void clangd()
     {
         if (QStandardPaths::findExecutable("clangd").isEmpty())
@@ -385,8 +462,9 @@ private slots:
         writeFile(file, "int doble(int n) { return n * 2; }\nint main() {\n    return doble(x);\n}\n");
         MainWindow w;
         w.setPrompter(std::make_unique<FakePrompter>());
-        Preferences p = w.preferences(); // (la prueba anterior lo dejó apagado)
+        Preferences p = w.preferences(); // (las pruebas anteriores lo dejaron apagado)
         p.lspEnabled = true;
+        p.inlayHints = true;
         p.lspServers.clear();
         w.setPreferences(p);
         w.show();
@@ -409,6 +487,16 @@ private slots:
         // Formato con clang-format (el de clangd)
         w.findChild<QAction*>("actionFormatDocument")->trigger();
         QTRY_VERIFY_WITH_TIMEOUT(QString::fromStdString(w.documents().text(w.currentBuffer())).contains("int main() { return doble(x); }"), 15000); // (estilo LLVM: funciones cortas en una línea)
+        // Pistas de clangd: el tipo deducido y el nombre del parámetro
+        EditorView* e = w.editor();
+        e->sci(SCI_SETTEXT, 0, reinterpret_cast<sptr_t>("int doble(int n) { return n * 2; }\nint main() {\n    auto v = doble(3);\n    return v;\n}\n"));
+        EolAnnotations* eol = EolAnnotations::of(e);
+        QTRY_VERIFY2_WITH_TIMEOUT(eol->textAt(2).contains("v: int") && eol->textAt(2).contains("(n)"), qPrintable(eol->textAt(2)), 20000);
+        // Símbolos del proyecto (el índice de clangd de los archivos abiertos)
+        w.findChild<QAction*>("actionWorkspaceSymbol")->trigger();
+        w.statusPicker()->input()->setText("dob");
+        QTRY_VERIFY_WITH_TIMEOUT(w.statusPicker()->visibleTexts().contains("doble"), 20000);
+        w.statusPicker()->hide();
     }
 };
 

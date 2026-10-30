@@ -51,12 +51,25 @@ QJsonObject capabilitiesForClient()
         {"rename", QJsonObject{{"prepareSupport", false}}},
         {"formatting", QJsonObject{}},
         {"rangeFormatting", QJsonObject{}},
+        {"codeAction", QJsonObject{{"codeActionLiteralSupport",
+                                    QJsonObject{{"codeActionKind", QJsonObject{{"valueSet", QJsonArray{
+                                        QStringLiteral(""), QStringLiteral("quickfix"), QStringLiteral("refactor"),
+                                        QStringLiteral("refactor.extract"), QStringLiteral("refactor.inline"),
+                                        QStringLiteral("refactor.rewrite"), QStringLiteral("source"),
+                                        QStringLiteral("source.organizeImports"), QStringLiteral("source.fixAll")}}}}}},
+                                   {"isPreferredSupport", true},
+                                   {"dataSupport", true},
+                                   {"resolveSupport", QJsonObject{{"properties", QJsonArray{QStringLiteral("edit")}}}}}},
+        {"inlayHint", QJsonObject{{"dynamicRegistration", false}}},
     };
     return QJsonObject{
         {"general", QJsonObject{{"positionEncodings", QJsonArray{QStringLiteral("utf-8"), QStringLiteral("utf-16")}}}},
         {"textDocument", textDocument},
         {"workspace", QJsonObject{{"workspaceFolders", true}, {"configuration", true}, {"applyEdit", true},
-                                  {"workspaceEdit", QJsonObject{{"documentChanges", true}}}}},
+                                  {"workspaceEdit", QJsonObject{{"documentChanges", true}}},
+                                  {"symbol", QJsonObject{{"dynamicRegistration", false}}},
+                                  {"executeCommand", QJsonObject{{"dynamicRegistration", false}}},
+                                  {"inlayHint", QJsonObject{{"refreshSupport", false}}}}},
         {"window", QJsonObject{{"workDoneProgress", false}, {"showMessage", QJsonObject{}}}},
         // clangd antes de LSP 3.17
         {"offsetEncoding", QJsonArray{QStringLiteral("utf-8"), QStringLiteral("utf-16")}},

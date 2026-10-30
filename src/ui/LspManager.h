@@ -46,6 +46,19 @@ public:
         QString message;
         QString source;
         QString code;
+        QJsonObject raw; // tal cual (para pedir las acciones de código que lo arreglan)
+    };
+
+    // Un símbolo del proyecto (workspace/symbol)
+    struct SymbolHit
+    {
+        QString name;
+        int kind = 0;
+        QString container;
+        QString path;
+        int line = 0;
+        int character = 0;
+        lsp::PositionEncoding encoding = lsp::PositionEncoding::Utf16;
     };
 
     struct Location
@@ -131,6 +144,18 @@ public:
     // Para las pruebas: el último texto de la ayuda y lo resaltado (en bytes)
     QString lastSignatureText() const { return _lastSignatureText; }
     std::pair<int, int> lastSignatureHighlight() const { return _lastSignatureHighlight; }
+    // Acciones de código (arreglos, refactorizaciones…) para [start, end); false si no hay servidor
+    bool codeActions(ScintillaEditBase& view, BufferId id, sptr_t start, sptr_t end,
+                     std::function<void(const QJsonArray& actions, lsp::LspClient* client)> done);
+    // Ejecuta una acción (o un Command): su edit, su orden en el servidor o, si no trae
+    // nada, lo que diga codeAction/resolve
+    void runCodeAction(lsp::LspClient* client, const QJsonObject& action);
+    // Símbolos de todo el proyecto que contienen `query`
+    bool workspaceSymbols(BufferId id, const QString& query, std::function<void(const std::vector<SymbolHit>& hits)> done);
+    // Las pistas (tipos y nombres de parámetros) de esas líneas, ya como texto por línea
+    bool inlayHints(ScintillaEditBase& view, BufferId id, int firstLine, int lastLine,
+                    std::function<void(const QMap<int, QString>& hints)> done);
+
     // La codificación de las posiciones de los diagnósticos o del servidor de un archivo
     lsp::PositionEncoding encodingForPath(const QString& path) const;
 

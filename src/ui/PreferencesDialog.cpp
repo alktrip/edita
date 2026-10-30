@@ -543,6 +543,9 @@ void PreferencesDialog::buildLanguageServers()
     _lspEnabled = new QCheckBox(tr("Use language servers (diagnostics, completion, information on hover…)"));
     _lspEnabled->setObjectName(QStringLiteral("lspEnabled"));
     layout->addWidget(_lspEnabled);
+    _inlayHints = new QCheckBox(tr("Hints (types, parameter names) at the end of the lines"));
+    _inlayHints->setObjectName(QStringLiteral("inlayHints"));
+    layout->addWidget(_inlayHints);
     auto* hint = new QLabel(tr("Each language uses the first of its known servers that is installed. Write another "
                                "command to use it instead, or «off» to disable that language."));
     hint->setWordWrap(true);
@@ -757,6 +760,7 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     setComboValue(_fallbackCodepage, p.fallbackCodepage);
     _terminalShell->setText(p.terminalShell);
     _lspEnabled->setChecked(p.lspEnabled);
+    _inlayHints->setChecked(p.inlayHints);
     const QMap<QString, QString> overrides = lsp::parseOverrides(p.lspServers);
     for (int row = 0; row < _lspServers->rowCount(); ++row) {
         const QString id = _lspServers->item(row, 0)->data(Qt::UserRole).toString();
@@ -831,6 +835,7 @@ Preferences PreferencesDialog::preferences() const
     p.defaultDirPath = _defaultDir->text().trimmed();
     p.terminalShell = _terminalShell->text().trimmed();
     p.lspEnabled = _lspEnabled->isChecked();
+    p.inlayHints = _inlayHints->isChecked();
     QMap<QString, QString> overrides;
     for (int row = 0; row < _lspServers->rowCount(); ++row)
         overrides.insert(_lspServers->item(row, 0)->data(Qt::UserRole).toString(), _lspServers->item(row, 1)->text().trimmed());

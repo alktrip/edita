@@ -41,7 +41,10 @@ QuickPicker::QuickPicker(QWidget* parent)
     _list->setFocusPolicy(Qt::NoFocus);
     _list->setUniformItemSizes(true);
     layout->addWidget(_list);
-    connect(_input, &QLineEdit::textChanged, this, [this] { filter(); });
+    connect(_input, &QLineEdit::textChanged, this, [this](const QString& text) {
+        filter();
+        emit queryChanged(text);
+    });
     connect(_list, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) { choose(_list->row(item)); });
     _input->installEventFilter(this);
 }
@@ -68,6 +71,12 @@ void QuickPicker::popup(QWidget* anchor, const QString& placeholder, std::vector
     move(pos);
     show();
     _input->setFocus();
+}
+
+void QuickPicker::setItems(std::vector<Item> items)
+{
+    _items = std::move(items);
+    filter();
 }
 
 void QuickPicker::filter()

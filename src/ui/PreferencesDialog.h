@@ -130,6 +130,7 @@ private:
     QCheckBox* _inlineFind = nullptr;
     QLineEdit* _terminalShell = nullptr;
     QCheckBox* _lspEnabled = nullptr;
+    QCheckBox* _inlayHints = nullptr;
     QTableWidget* _lspServers = nullptr;
     QCheckBox* _scrollBarMarks = nullptr;
     QComboBox* _changeHistory = nullptr;

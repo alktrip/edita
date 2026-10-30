@@ -5,6 +5,9 @@
 #   - hover: «**fake** hover at L:C»
 #   - definición («def nombre»), referencias y renombrar (la palabra entera, en los documentos
 #     abiertos y en los .py de la carpeta del proyecto), formato («x=1» → «x = 1») y firmas
+#   - acciones de código: un arreglo preferido para «error», «Uppercase the line» (una orden que
+#     responde con workspace/applyEdit) y «Add a comment above» (con codeAction/resolve)
+#   - símbolos del proyecto («def»/«class») y pistas: «: int» tras «x = » y los parámetros a, b, c
 # Las posiciones van en UTF-16, como pide LSP por defecto.
 import json
 import os
@@ -117,6 +120,8 @@ while True:
                              "completionProvider": {"triggerCharacters": ["."]},
                              "hoverProvider": True, "definitionProvider": True, "referencesProvider": True,
                              "renameProvider": True, "documentFormattingProvider": True,
+                             "codeActionProvider": {"resolveProvider": True}, "workspaceSymbolProvider": True,
+                             "inlayHintProvider": True, "executeCommandProvider": {"commands": ["fake.upper"]},
                              "signatureHelpProvider": {"triggerCharacters": ["(", ","]}},
             "serverInfo": {"name": "fake", "version": "1.0"}}})
     elif method == "textDocument/didOpen":
@@ -199,9 +204,65 @@ while True:
                                 "parameters": [{"label": [len(name) + 1, len(name) + 2]}, {"label": "b"}]},
                                {"label": "%s(a, b, c)" % name, "parameters": [{"label": "a"}, {"label": "b"}, {"label": "c"}]}],
                 "activeSignature": 0, "activeParameter": m.group(2).count(",")}})
+    elif method == "textDocument/codeAction":
+        uri = params["textDocument"]["uri"]
+        line = params["range"]["start"]["line"]
+        actions = []
+        for d in params["context"]["diagnostics"]:
+            if d.get("code") == "ERROR":
+                actions.append({"title": "Change error to ok", "kind": "quickfix", "isPreferred": True, "diagnostics": [d],
+                                "edit": {"changes": {uri: [{"range": d["range"], "newText": "ok"}]}}})
+        actions.append({"title": "Uppercase the line", "kind": "refactor.rewrite",
+                        "command": {"title": "Uppercase", "command": "fake.upper", "arguments": [uri, line]}})
+        actions.append({"title": "Add a comment above", "kind": "refactor", "data": {"uri": uri, "line": line}})
+        send({"id": msg["id"], "result": actions})
+    elif method == "codeAction/resolve":
+        data = params["data"]
+        params["edit"] = {"changes": {data["uri"]: [{"range": {"start": {"line": data["line"], "character": 0},
+                                                              "end": {"line": data["line"], "character": 0}},
+                                                    "newText": "# comment\n"}]}}
+        send({"id": msg["id"], "result": params})
+    elif method == "workspace/executeCommand":
+        uri, line = params["arguments"]
+        text = docs[uri].split("\n")[line]
+        # El servidor pide al cliente que aplique el cambio y después contesta
+        send({"id": 9001, "method": "workspace/applyEdit", "params": {"edit": {"changes": {uri: [
+            {"range": {"start": {"line": line, "character": 0}, "end": {"line": line, "character": u16(text)}},
+             "newText": text.upper()}]}}}})
+        send({"id": msg["id"], "result": None})
+    elif method == "workspace/symbol":
+        query = params["query"].lower()
+        result = []
+        for uri, text in sorted(all_texts().items()):
+            for i, line in enumerate(text.split("\n")):
+                m = re.match(r"\s*(def|class) (\w+)", line)
+                if m and query in m.group(2).lower():
+                    col = line.index(m.group(2))
+                    result.append({"name": m.group(2), "kind": 12 if m.group(1) == "def" else 5,
+                                   "containerName": os.path.basename(uri),
+                                   "location": {"uri": uri, "range": {"start": {"line": i, "character": col},
+                                                                      "end": {"line": i, "character": col + len(m.group(2))}}}})
+        send({"id": msg["id"], "result": result})
+    elif method == "textDocument/inlayHint":
+        uri = params["textDocument"]["uri"]
+        first, last = params["range"]["start"]["line"], params["range"]["end"]["line"]
+        hints = []
+        for i, line in enumerate(docs[uri].split("\n")):
+            if i < first or i > last:
+                continue
+            m = re.match(r"(\w+) = ", line)
+            if m:
+                hints.append({"position": {"line": i, "character": u16(m.group(1))}, "label": ": int", "kind": 1})
+            for call in re.finditer(r"(\w+)\(([^()]+)\)", line):
+                col = call.start(2)
+                for n, arg in enumerate(call.group(2).split(",")):
+                    hints.append({"position": {"line": i, "character": u16(line[:col]) + (len(arg) - len(arg.lstrip()))},
+                                  "label": [{"value": "abc"[n % 3] + ":"}], "kind": 2})
+                    col += len(arg) + 1
+        send({"id": msg["id"], "result": hints})
     elif method == "shutdown":
         send({"id": msg["id"], "result": None})
     elif method == "exit":
         break
-    elif "id" in msg:
+    elif "id" in msg and method:
         send({"id": msg["id"], "error": {"code": -32601, "message": "not implemented: %s" % method}})

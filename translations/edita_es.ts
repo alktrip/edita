@@ -1524,7 +1524,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::GitBlame</name>
     <message>
-        <location filename="../src/ui/GitBlame.cpp" line="+205"/>
+        <location filename="../src/ui/GitBlame.cpp" line="+207"/>
         <source>just now</source>
         <translation>justo ahora</translation>
     </message>
@@ -1579,7 +1579,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Sin confirmar</translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+71"/>
         <source>Not committed</source>
         <translation>Sin confirmar</translation>
     </message>
@@ -1664,24 +1664,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+398"/>
-        <location line="+3113"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+404"/>
+        <location line="+3268"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3113"/>
-        <location line="+1229"/>
+        <location line="-3268"/>
+        <location line="+1252"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1138"/>
+        <location line="-1161"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+345"/>
+        <location line="+367"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1966,7 +1966,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Completar &amp;ruta</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+17"/>
         <source>Read-&amp;Only</source>
         <translation>Solo &amp;lectura</translation>
     </message>
@@ -2137,7 +2137,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1012"/>
+        <location line="+1142"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2183,12 +2183,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+778"/>
+        <location line="+779"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-754"/>
+        <location line="-755"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2310,7 +2310,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Línea (1 - %1):</translation>
     </message>
     <message>
-        <location line="+12"/>
+        <location line="+13"/>
         <source>Next Search Result</source>
         <translation>Resultado siguiente</translation>
     </message>
@@ -2360,12 +2360,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1683"/>
+        <location line="-1815"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-773"/>
+        <location line="-799"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2445,13 +2445,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+684"/>
-        <location line="+679"/>
+        <location line="+710"/>
+        <location line="+680"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-623"/>
+        <location line="-624"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2584,6 +2584,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+2"/>
         <source>Insert S&amp;nippet…</source>
         <translation>Insertar &amp;fragmento…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Code &amp;Actions…</source>
+        <translation>&amp;Acciones de código…</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -2813,7 +2818,32 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+63"/>
+        <location line="+117"/>
+        <source>No code actions here</source>
+        <translation>No hay acciones de código aquí</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Code actions</source>
+        <translation>Acciones de código</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The language server of this document has no code actions</source>
+        <translation>El servidor de lenguaje de este documento no tiene acciones de código</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>No language server can search the symbols of the project</source>
+        <translation>Ningún servidor de lenguaje puede buscar los símbolos del proyecto</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Symbol in the project</source>
+        <translation>Símbolo del proyecto</translation>
+    </message>
+    <message>
+        <location line="+29"/>
         <source>There are no snippets for this language</source>
         <translation>No hay fragmentos para este lenguaje</translation>
     </message>
@@ -2931,6 +2961,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <source>Find Re&amp;ferences</source>
         <translation>Buscar re&amp;ferencias</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Go to Symbol in &amp;Project…</source>
+        <translation>Ir a un símbolo del &amp;proyecto…</translation>
     </message>
     <message>
         <location line="+6"/>
@@ -3113,12 +3148,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+258"/>
         <location line="+20"/>
-        <location line="+1415"/>
+        <location line="+1416"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-1689"/>
+        <location line="-1690"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3247,7 +3282,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+180"/>
+        <location line="+181"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -4571,12 +4606,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+1"/>
-        <location line="+264"/>
+        <location line="+267"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-264"/>
+        <location line="-267"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -5162,6 +5197,11 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+2"/>
         <source>Use language servers (diagnostics, completion, information on hover…)</source>
         <translation>Usar servidores de lenguaje (diagnósticos, autocompletado, información al pasar el ratón…)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Hints (types, parameter names) at the end of the lines</source>
+        <translation>Pistas (tipos, nombres de parámetros) al final de las líneas</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6737,7 +6777,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>edita::lsp::LspClient</name>
     <message>
-        <location filename="../src/lsp/LspClient.cpp" line="+84"/>
+        <location filename="../src/lsp/LspClient.cpp" line="+97"/>
         <source>Could not start %1: %2</source>
         <translation>No se pudo iniciar %1: %2</translation>
     </message>
