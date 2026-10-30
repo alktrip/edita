@@ -25,8 +25,8 @@ Notepad++ for Ctrl+F and Ctrl+H, turn off **Ctrl+F and Ctrl+H open the inline fi
 
 ## The Find dialog
 
-The dialog has three tabs: **Find**, **Replace** and **Find in Files**. They share the text to
-search and these options:
+The dialog has four tabs: **Find**, **Replace**, **Find in Files** and **Mark** (see
+[The Mark tab](#the-mark-tab)). They share the text to search and these options:
 
 - **Match whole word only** and **Match case**.
 - **Wrap around**: after the last match, continue from the start of the document.
@@ -173,10 +173,38 @@ it in a long text:
   color: {{item:actionNextStyle1}}, {{item:actionNextStyle2}}, {{item:actionNextStyle3}}, {{item:actionNextStyle4}},
   {{item:actionNextStyle5}}; {{item:actionPreviousStyle1}}, {{item:actionPreviousStyle2}},
   {{item:actionPreviousStyle3}}, {{item:actionPreviousStyle4}}, {{item:actionPreviousStyle5}}.
-  {{item:actionNextFoundMark}} and {{item:actionPreviousFoundMark}} do the same with the texts marked with
-  the "Find Mark Style" (used by plugins and scripts).
+  {{item:actionNextFoundMark}} and {{item:actionPreviousFoundMark}} do the same with the texts marked by
+  the [Mark tab](#the-mark-tab).
+- **Copy Styled Text** copies to the clipboard every text of a color, in the order of the document,
+  one per line: {{item:actionCopyStyle1}}, {{item:actionCopyStyle2}}, {{item:actionCopyStyle3}},
+  {{item:actionCopyStyle4}}, {{item:actionCopyStyle5}}, all the colors with {{item:actionCopyAllStyles}},
+  and the texts marked by the Mark tab with {{item:actionCopyFoundMark}}. If a text spans several
+  lines, the texts are separated by a `----` line.
 
 The colors of the styles can be changed in {{actionStyleConfigurator}} (Global Styles).
+
+## The Mark tab
+
+{{actionMark}} opens the **Mark** tab of the Find dialog. **Mark All** colors every match of the
+text in the document (with the "Find Mark Style" color), with the same options and search modes as
+the other tabs. The matches stay marked while you edit, and the status bar says how many there are.
+
+- **Bookmark line** also puts a [bookmark](#bookmarks) on every line with a match. Combined with
+  the bookmark commands, this copies, cuts or deletes the lines that contain a text, or those that
+  don't.
+- **Purge for each search** clears the previous marks before marking; without it, each Mark All
+  adds to the marks already there.
+- **In selection** marks only inside the selected text.
+- **Clear all marks** removes the marks (of the selection, with **In selection**), and also the
+  bookmarks if **Bookmark line** is checked.
+- **Copy Marked Text** copies the marked texts to the clipboard, one per line.
+
+Enter in the search field is Mark All. {{item:actionNextFoundMark}} and
+{{item:actionPreviousFoundMark}} (in **Jump to Next Style** and **Jump to Previous Style**) go
+through the marks.
+
+For example, to keep only the lines of a log that contain `ERROR`: mark `ERROR` with **Bookmark
+line** checked, then use {{actionDeleteUnmarkedLines}}.
 
 ## Bookmarks
 

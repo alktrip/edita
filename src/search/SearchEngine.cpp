@@ -158,7 +158,9 @@ std::pair<SciPos, SciPos> rangeForOperation(RangeOperation op, const SearchOptio
         start = 0;
         end = docLength;
     }
-    if (options.inSelection && (op == RangeOperation::ReplaceAll || op == RangeOperation::FindAll) && !isEntire) {
+    // Marcar todo se limita siempre a la selección si se pide (ProcessMarkAll)
+    if (options.inSelection
+        && (op == RangeOperation::MarkAll || ((op == RangeOperation::ReplaceAll || op == RangeOperation::FindAll) && !isEntire))) {
         start = selStart;
         end = selEnd;
     }

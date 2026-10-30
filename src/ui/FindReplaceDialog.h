@@ -40,7 +40,7 @@ class FindReplaceDialog : public QDialog
     Q_OBJECT
 
 public:
-    enum class Tab { Find = 0, Replace = 1, FindInFiles = 2 };
+    enum class Tab { Find = 0, Replace = 1, FindInFiles = 2, Mark = 3 };
     // Colores de los mensajes de estado ("Find status" de stylers.xml)
     enum class StatusKind { Message, NotFound, EndReached };
 
@@ -59,6 +59,10 @@ public:
     bool recursive() const;
     bool includeHidden() const;
     bool followCurrentDocument() const;
+    // Pestaña Marcar (_doMarkLine y _doPurge de N++)
+    bool bookmarkLine() const;
+    bool purge() const;
+    void setMarkOptions(bool bookmarkLine, bool purge);
 
     void setStatus(const QString& text, StatusKind kind = StatusKind::Message);
     QString statusText() const;
@@ -88,6 +92,9 @@ signals:
     void findInFilesRequested();
     void replaceInFilesRequested();
     void cancelFileSearchRequested();
+    void markAllRequested();
+    void clearMarksRequested();
+    void copyMarkedTextRequested();
 
 private:
     void updateForTab();
@@ -111,6 +118,8 @@ private:
     QCheckBox* _recursive;
     QCheckBox* _hidden;
     QCheckBox* _followDoc;
+    QCheckBox* _bookmarkLine;
+    QCheckBox* _purge;
     QRadioButton* _normal;
     QRadioButton* _extended;
     QRadioButton* _regex;
@@ -127,6 +136,9 @@ private:
     QPushButton* _findInFiles;
     QPushButton* _replaceInFiles;
     QPushButton* _cancel;
+    QPushButton* _markAll;
+    QPushButton* _clearMarks;
+    QPushButton* _copyMarked;
     bool _running = false;
 };
 

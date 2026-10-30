@@ -25,8 +25,8 @@ Notepad++ para Ctrl+F y Ctrl+H, desactiva **Ctrl+F y Ctrl+H abren la barra de bu
 
 ## El diálogo Buscar
 
-El diálogo tiene tres pestañas: **Buscar**, **Reemplazar** y **Buscar en archivos**. Comparten el
-texto que se busca y estas opciones:
+El diálogo tiene cuatro pestañas: **Buscar**, **Reemplazar**, **Buscar en archivos** y **Marcar**
+(ver [La pestaña Marcar](#la-pestana-marcar)). Comparten el texto que se busca y estas opciones:
 
 - **Solo palabras completas** y **Coincidir mayúsculas y minúsculas**.
 - **Dar la vuelta**: después de la última coincidencia, seguir desde el principio del documento.
@@ -178,10 +178,38 @@ seguirla en un texto largo:
   {{item:actionNextStyle4}}, {{item:actionNextStyle5}}; {{item:actionPreviousStyle1}},
   {{item:actionPreviousStyle2}}, {{item:actionPreviousStyle3}}, {{item:actionPreviousStyle4}},
   {{item:actionPreviousStyle5}}. {{item:actionNextFoundMark}} y {{item:actionPreviousFoundMark}}
-  hacen lo mismo con los textos marcados con el estilo «Find Mark Style» (lo usan los plugins y
-  los scripts).
+  hacen lo mismo con los textos marcados por la [pestaña Marcar](#la-pestana-marcar).
+- **Copiar el texto con estilo** copia al portapapeles todos los textos de un color, en el orden del
+  documento, uno por línea: {{item:actionCopyStyle1}}, {{item:actionCopyStyle2}},
+  {{item:actionCopyStyle3}}, {{item:actionCopyStyle4}}, {{item:actionCopyStyle5}}, todos los colores
+  con {{item:actionCopyAllStyles}}, y los textos marcados por la pestaña Marcar con
+  {{item:actionCopyFoundMark}}. Si un texto ocupa varias líneas, se separan con una línea `----`.
 
 Los colores de los estilos se cambian en {{actionStyleConfigurator}} (Estilos globales).
+
+## La pestaña Marcar
+
+{{actionMark}} abre la pestaña **Marcar** del diálogo Buscar. **Marcar todo** colorea todas las
+coincidencias del texto en el documento (con el color de «Find Mark Style»), con las mismas
+opciones y modos de búsqueda que las otras pestañas. Las coincidencias siguen marcadas mientras
+editas, y la barra de estado dice cuántas hay.
+
+- **Poner un marcador en la línea** pone además un [marcador](#marcadores) en cada línea con una
+  coincidencia. Junto con las órdenes de los marcadores, sirve para copiar, cortar o eliminar las
+  líneas que contienen un texto, o las que no.
+- **Borrar las marcas en cada búsqueda** quita las marcas anteriores antes de marcar; sin ella,
+  cada Marcar todo se suma a las marcas que ya hay.
+- **En la selección** marca solo dentro del texto seleccionado.
+- **Borrar todas las marcas** quita las marcas (las de la selección, con **En la selección**), y
+  también los marcadores si **Poner un marcador en la línea** está activada.
+- **Copiar el texto marcado** copia los textos marcados al portapapeles, uno por línea.
+
+Intro en el campo de búsqueda es Marcar todo. {{item:actionNextFoundMark}} y
+{{item:actionPreviousFoundMark}} (en **Ir al siguiente estilo** e **Ir al anterior estilo**)
+recorren las marcas.
+
+Por ejemplo, para quedarte solo con las líneas de un registro que contienen `ERROR`: marca `ERROR`
+con **Poner un marcador en la línea** activada y usa {{actionDeleteUnmarkedLines}}.
 
 ## Marcadores
 

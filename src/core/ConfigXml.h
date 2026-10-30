@@ -44,6 +44,8 @@ struct FindHistory
     bool hidden = false;
     bool dotMatchesNewline = false;
     bool folderFollowsDoc = false;
+    bool bookmarkLine = false; // pestaña Marcar: «Poner un marcador en la línea»
+    bool purge = false;        // pestaña Marcar: «Borrar las marcas en cada búsqueda»
     int searchMode = 0; // 0 normal, 1 extendido, 2 regex (FindNormal…FindRegex)
 };
 

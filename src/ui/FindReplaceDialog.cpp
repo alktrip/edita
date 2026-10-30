@@ -96,6 +96,8 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     , _recursive(new QCheckBox(tr("In all su&b-folders"), this))
     , _hidden(new QCheckBox(tr("In &hidden folders"), this))
     , _followDoc(new QCheckBox(tr("Follow current doc."), this))
+    , _bookmarkLine(new QCheckBox(tr("Bookmark &line"), this))
+    , _purge(new QCheckBox(tr("Purge for each search"), this))
     , _normal(new QRadioButton(tr("&Normal"), this))
     , _extended(new QRadioButton(tr("&Extended (\\n, \\r, \\t, \\0, \\x…)"), this))
     , _regex(new QRadioButton(tr("Re&gular expression"), this))
@@ -109,6 +111,7 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     _tabs->addTab(tr("Find"));
     _tabs->addTab(tr("Replace"));
     _tabs->addTab(tr("Find in Files"));
+    _tabs->addTab(tr("Mark"));
     _tabs->setObjectName(QStringLiteral("findTabs"));
 
     _find->setObjectName(QStringLiteral("findCombo"));
@@ -125,6 +128,8 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     _extended->setObjectName(QStringLiteral("modeExtended"));
     _regex->setObjectName(QStringLiteral("modeRegex"));
     _dotNewline->setObjectName(QStringLiteral("dotNewlineCheck"));
+    _bookmarkLine->setObjectName(QStringLiteral("bookmarkLineCheck"));
+    _purge->setObjectName(QStringLiteral("purgeCheck"));
     _status->setObjectName(QStringLiteral("findStatus"));
     _status->setWordWrap(true);
 
@@ -147,7 +152,7 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     fields->setColumnStretch(1, 1);
 
     auto* options = new QVBoxLayout;
-    for (QWidget* w : std::initializer_list<QWidget*>{_wholeWord, _matchCase, _wrapAround, _backward, _inSelection,
+    for (QWidget* w : std::initializer_list<QWidget*>{_bookmarkLine, _purge, _wholeWord, _matchCase, _wrapAround, _backward, _inSelection,
                                                       _recursive, _hidden, _followDoc})
         options->addWidget(w);
     options->addStretch();
@@ -172,11 +177,14 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     _findInFiles = makeButton(tr("Find &All"), "findInFilesButton");
     _replaceInFiles = makeButton(tr("Replace in &Files"), "replaceInFilesButton");
     _cancel = makeButton(tr("Cancel"), "cancelButton");
+    _markAll = makeButton(tr("Mark All"), "markAllButton");
+    _clearMarks = makeButton(tr("Clear all marks"), "clearMarksButton");
+    _copyMarked = makeButton(tr("Copy Marked Text"), "copyMarkedButton");
     QPushButton* close = makeButton(tr("Close"), "closeButton");
 
     auto* buttons = new QVBoxLayout;
     for (QPushButton* b : {_findNext, _count, _findAllCurrent, _findAllOpen, _replaceOne, _replaceAll, _replaceAllOpen,
-                           _findInFiles, _replaceInFiles, _cancel})
+                           _findInFiles, _replaceInFiles, _cancel, _markAll, _clearMarks, _copyMarked})
         buttons->addWidget(b);
     buttons->addStretch();
     buttons->addWidget(close);
@@ -209,6 +217,9 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     connect(_findInFiles, &QPushButton::clicked, this, &FindReplaceDialog::findInFilesRequested);
     connect(_replaceInFiles, &QPushButton::clicked, this, &FindReplaceDialog::replaceInFilesRequested);
     connect(_cancel, &QPushButton::clicked, this, &FindReplaceDialog::cancelFileSearchRequested);
+    connect(_markAll, &QPushButton::clicked, this, &FindReplaceDialog::markAllRequested);
+    connect(_clearMarks, &QPushButton::clicked, this, &FindReplaceDialog::clearMarksRequested);
+    connect(_copyMarked, &QPushButton::clicked, this, &FindReplaceDialog::copyMarkedTextRequested);
     connect(close, &QPushButton::clicked, this, &QDialog::hide);
     connect(_browse, &QPushButton::clicked, this, [this] {
         const QString dir = QFileDialog::getExistingDirectory(this, tr("Directory"), directory());
@@ -219,6 +230,8 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     connect(_find->lineEdit(), &QLineEdit::returnPressed, this, [this] {
         if (currentTab() == Tab::FindInFiles)
             emit findInFilesRequested();
+        else if (currentTab() == Tab::Mark)
+            emit markAllRequested();
         else
             emit findNextRequested(false);
     });
@@ -257,6 +270,7 @@ void FindReplaceDialog::updateForTab()
     const Tab tab = currentTab();
     const bool replace = tab == Tab::Replace;
     const bool files = tab == Tab::FindInFiles;
+    const bool mark = tab == Tab::Mark;
     setWindowTitle(_tabs->tabText(_tabs->currentIndex()));
     _replaceLabel->setVisible(replace || files);
     _replace->setVisible(replace || files);
@@ -267,7 +281,9 @@ void FindReplaceDialog::updateForTab()
     _wrapAround->setVisible(!files);
     _backward->setVisible(!files);
     _inSelection->setVisible(!files);
-    _findNext->setVisible(!files);
+    _findNext->setVisible(!files && !mark);
+    for (QWidget* w : std::initializer_list<QWidget*>{_bookmarkLine, _purge, _markAll, _clearMarks, _copyMarked})
+        w->setVisible(mark);
     _count->setVisible(tab == Tab::Find);
     _findAllCurrent->setVisible(tab == Tab::Find);
     _findAllOpen->setVisible(tab == Tab::Find);
@@ -275,6 +291,22 @@ void FindReplaceDialog::updateForTab()
     _replaceAll->setVisible(replace);
     _replaceAllOpen->setVisible(replace);
     adjustSize();
+}
+
+bool FindReplaceDialog::bookmarkLine() const
+{
+    return _bookmarkLine->isChecked();
+}
+
+bool FindReplaceDialog::purge() const
+{
+    return _purge->isChecked();
+}
+
+void FindReplaceDialog::setMarkOptions(bool bookmarkLine, bool purge)
+{
+    _bookmarkLine->setChecked(bookmarkLine);
+    _purge->setChecked(purge);
 }
 
 void FindReplaceDialog::updateModeDependentOptions()

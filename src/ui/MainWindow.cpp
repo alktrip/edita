@@ -176,6 +176,7 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionQuit", 41011},           {"actionCompleteFunction", 50000}, {"actionCompleteWord", 50001},
         {"actionFunctionHint", 50002},   {"actionCompletePath", 50006},   {"actionReadOnly", 42028},
         {"actionFind", 43001},           {"actionFindInFiles", 43013},    {"actionReplace", 43003},
+        {"actionMark", 43054},
         {"actionGoTo", 43004},           {"actionNextResult", 43046},     {"actionPreviousResult", 43047},
         {"actionWrap", 44022},           {"actionShowWhiteSpace", 44025}, {"actionShowEol", 44026},
         {"actionShowIndentGuides", 44020}, {"actionShowWrapSymbol", 44041}, {"actionShowAll", 44019},
@@ -277,6 +278,9 @@ int nppCommandFor(const char* actionName)
         {"actionTabToSpace", 42046},  {"actionSpaceToTabLeading", 42053}, {"actionSpaceToTabAll", 42054},
         // Buscar: llaves, estilos de token, marcadores e historial de cambios
         {"actionGoToMatchingBrace", 43009}, {"actionSelectMatchingBraces", 43053},
+        {"actionCopyStyle1", 43055}, {"actionCopyStyle2", 43056}, {"actionCopyStyle3", 43057},
+        {"actionCopyStyle4", 43058}, {"actionCopyStyle5", 43059}, {"actionCopyAllStyles", 43060},
+        {"actionCopyFoundMark", 43061},
         {"actionStyleAll1", 43022},   {"actionStyleAll2", 43024}, {"actionStyleAll3", 43026},
         {"actionStyleAll4", 43028},   {"actionStyleAll5", 43030}, {"actionUnstyle1", 43023},
         {"actionUnstyle2", 43025},    {"actionUnstyle3", 43027}, {"actionUnstyle4", 43029},
@@ -2752,6 +2756,7 @@ void MainWindow::createSearchMenu()
         [this] { goToMatchingBrace(*editor(), false); });
     add(tr("Select All In-between &Braces"), "actionSelectMatchingBraces", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_B),
         [this] { goToMatchingBrace(*editor(), true); });
+    add(tr("Mar&k…"), "actionMark", QKeySequence(Qt::CTRL | Qt::Key_M), [this] { showFindDialog(FindReplaceDialog::Tab::Mark); });
 
     // Estilo de token (IDM_SEARCH_MARKALLEXT*, MARKONEEXT*, UNMARKALLEXT*, GONEXTMARKER*…)
     QMenu* styleAll = search->addMenu(tr("S&tyle All Occurrences of Token"));
@@ -2788,6 +2793,18 @@ void MainWindow::createSearchMenu()
     previousStyle->addSeparator();
     addIn(previousStyle, tr("&Mark All on Search"), "actionPreviousFoundMark", QKeySequence(),
           [this] { goToIndicator(*editor(), kIndicatorFound, false); });
+    // IDM_SEARCH_STYLE*TOCLIP, ALLSTYLESTOCLIP, MARKEDTOCLIP
+    QMenu* copyStyled = search->addMenu(tr("Cop&y Styled Text"));
+    for (int i = 0; i < 5; ++i) {
+        const int indicator = kIndicatorTokenStyles[i];
+        addIn(copyStyled, tr(kStyleNames[i]), QByteArray("actionCopyStyle" + QByteArray::number(i + 1)).constData(),
+              QKeySequence(), [this, indicator] { copyStyledText({indicator}); });
+    }
+    addIn(copyStyled, tr("All S&tyles"), "actionCopyAllStyles", QKeySequence(), [this] {
+        copyStyledText(std::vector<int>(std::begin(kIndicatorTokenStyles), std::end(kIndicatorTokenStyles)));
+    });
+    addIn(copyStyled, tr("&Mark All on Search"), "actionCopyFoundMark", QKeySequence(),
+          [this] { copyStyledText({kIndicatorFound}); });
     search->addSeparator();
 
     // Marcadores (IDM_SEARCH_*BOOKMARK*, *MARKEDLINES)
@@ -5778,6 +5795,7 @@ FindReplaceDialog* MainWindow::findDialog()
         _lastOptions.replacement = history.replaces.first().toStdString();
     _findDialog->setOptions(_lastOptions);
     _findDialog->setFindInFilesOptions(history.recursive, history.hidden, history.folderFollowsDoc);
+    _findDialog->setMarkOptions(history.bookmarkLine, history.purge);
     if (history.filters.isEmpty())
         _findDialog->setFilters(QStringLiteral("*.*"));
     auto run = [this](auto&& action) {
@@ -5791,6 +5809,12 @@ FindReplaceDialog* MainWindow::findDialog()
         findNextInCurrent(_findDialog->options());
     });
     connect(_findDialog, &FindReplaceDialog::countRequested, this, run([this](const SearchOptions& o) { countInCurrent(o); }));
+    connect(_findDialog, &FindReplaceDialog::markAllRequested, this, run([this](const SearchOptions& o) {
+        markAllInCurrent(o, _findDialog->bookmarkLine(), _findDialog->purge());
+    }));
+    connect(_findDialog, &FindReplaceDialog::clearMarksRequested, this,
+            [this] { clearMarks(_findDialog->options().inSelection, _findDialog->bookmarkLine()); });
+    connect(_findDialog, &FindReplaceDialog::copyMarkedTextRequested, this, [this] { copyStyledText({kIndicatorFound}); });
     connect(_findDialog, &FindReplaceDialog::findAllInCurrentRequested, this,
             run([this](const SearchOptions& o) { findAllInCurrent(o); }));
     connect(_findDialog, &FindReplaceDialog::findAllInOpenRequested, this,
@@ -6016,6 +6040,106 @@ int MainWindow::countInCurrent(const SearchOptions& options)
     setSearchStatus(tr("Count: %Ln match(es) %1", nullptr, r.count).arg(scopeText(options, false)),
                     r.count ? Kind::Message : Kind::NotFound);
     return r.count;
+}
+
+int MainWindow::markAllInCurrent(const SearchOptions& options, bool bookmarkLine, bool purge)
+{
+    using Kind = FindReplaceDialog::StatusKind;
+    _lastOptions = options;
+    EditorView* view = editor();
+    if (purge)
+        clearMarks(options.inSelection, bookmarkLine);
+    ViewSearchTarget target(*view);
+    const auto [start, end] = rangeForOperation(RangeOperation::MarkAll, options, view->sci(SCI_GETSELECTIONSTART),
+                                                view->sci(SCI_GETSELECTIONEND), target.length(), false);
+    const RangeResult r = processRange(target, options, RangeOperation::MarkAll, start, end, [view, bookmarkLine](SciPos from, SciPos to) {
+        // Una coincidencia vacía («^$») no se puede pintar, pero sí marca su línea
+        if (to > from) {
+            view->sci(SCI_SETINDICATORCURRENT, kIndicatorFound);
+            view->sci(SCI_INDICATORFILLRANGE, static_cast<uptr_t>(from), to - from);
+        }
+        if (bookmarkLine) {
+            const sptr_t first = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(from));
+            const sptr_t last = to > from ? view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(to - 1)) : first;
+            for (sptr_t line = first; line <= last; ++line) {
+                if (!(view->sci(SCI_MARKERGET, static_cast<uptr_t>(line)) & (1 << kBookmarkMarker)))
+                    view->sci(SCI_MARKERADD, static_cast<uptr_t>(line), kBookmarkMarker);
+            }
+        }
+    });
+    if (r.invalidRegex) {
+        setSearchStatus(tr("Mark: Invalid regular expression: %1").arg(QString::fromStdString(r.regexError)), Kind::NotFound);
+        return -1;
+    }
+    setSearchStatus(tr("Mark: %Ln match(es) %1", nullptr, r.count).arg(scopeText(options, false)),
+                    r.count ? Kind::Message : Kind::NotFound);
+    if (ScrollBarMarks* marks = scrollBarMarksOfCurrentView())
+        marks->scheduleUpdate();
+    return r.count;
+}
+
+void MainWindow::clearMarks(bool inSelection, bool bookmarkLine)
+{
+    EditorView* view = editor();
+    sptr_t start = 0;
+    sptr_t end = view->sci(SCI_GETLENGTH);
+    if (inSelection) {
+        start = view->sci(SCI_GETSELECTIONSTART);
+        end = view->sci(SCI_GETSELECTIONEND);
+    }
+    view->sci(SCI_SETINDICATORCURRENT, kIndicatorFound);
+    view->sci(SCI_INDICATORCLEARRANGE, static_cast<uptr_t>(start), end - start);
+    if (bookmarkLine) {
+        if (!inSelection) {
+            view->sci(SCI_MARKERDELETEALL, kBookmarkMarker);
+        } else if (end > start) {
+            const sptr_t last = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(end - 1));
+            for (sptr_t line = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(start)); line <= last; ++line)
+                view->sci(SCI_MARKERDELETE, static_cast<uptr_t>(line), kBookmarkMarker);
+        }
+    }
+    setSearchStatus(QString(), FindReplaceDialog::StatusKind::Message);
+    if (ScrollBarMarks* marks = scrollBarMarksOfCurrentView())
+        marks->scheduleUpdate();
+}
+
+void MainWindow::copyStyledText(const std::vector<int>& indicators)
+{
+    EditorView* view = editor();
+    const sptr_t length = view->sci(SCI_GETLENGTH);
+    std::vector<std::pair<sptr_t, QString>> pieces;
+    bool multiline = false;
+    for (const int indicator : indicators) {
+        for (sptr_t pos = 0; pos < length;) {
+            sptr_t start = pos;
+            if (!view->sci(SCI_INDICATORVALUEAT, static_cast<uptr_t>(indicator), pos))
+                start = view->sci(SCI_INDICATOREND, static_cast<uptr_t>(indicator), pos);
+            if (start >= length || start <= pos - 1)
+                break;
+            const sptr_t end = view->sci(SCI_INDICATOREND, static_cast<uptr_t>(indicator), start);
+            if (end <= start)
+                break;
+            const auto* text = reinterpret_cast<const char*>(view->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(start), end - start));
+            const QString piece = QString::fromUtf8(text, static_cast<qsizetype>(end - start));
+            multiline = multiline || piece.contains(QLatin1Char('\n')) || piece.contains(QLatin1Char('\r'));
+            pieces.emplace_back(start, piece);
+            pos = end;
+        }
+    }
+    if (pieces.empty())
+        return;
+    std::stable_sort(pieces.begin(), pieces.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
+    // Como N++: un elemento por línea, y «----» entre ellos si alguno ocupa varias líneas
+    const std::string_view eolBytes = eolSequence(static_cast<EolType>(view->sci(SCI_GETEOLMODE)));
+    const QString eol = QString::fromLatin1(eolBytes.data(), static_cast<qsizetype>(eolBytes.size()));
+    const QString delimiter = multiline && pieces.size() > 1 ? eol + QStringLiteral("----") + eol : eol;
+    QStringList texts;
+    for (const auto& [position, text] : pieces)
+        texts << text;
+    QString joined = texts.join(delimiter);
+    if (pieces.size() > 1)
+        joined += eol;
+    QGuiApplication::clipboard()->setText(joined);
 }
 
 int MainWindow::findAllInCurrent(const SearchOptions& options)
@@ -6573,6 +6697,8 @@ void MainWindow::saveWindowState()
         h.recursive = _findDialog->recursive();
         h.hidden = _findDialog->includeHidden();
         h.folderFollowsDoc = _findDialog->followCurrentDocument();
+        h.bookmarkLine = _findDialog->bookmarkLine();
+        h.purge = _findDialog->purge();
         config.setFindHistory(h);
     }
     config.save();

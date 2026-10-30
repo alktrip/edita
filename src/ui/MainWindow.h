@@ -308,6 +308,13 @@ public:
     bool replaceInCurrent(const SearchOptions& options);
     int replaceAllInCurrent(const SearchOptions& options);
     int countInCurrent(const SearchOptions& options);
+    // Pestaña Marcar (ProcessMarkAll): marca las coincidencias con el estilo «Find Mark Style»
+    // y, con `bookmarkLine`, pone un marcador en sus líneas; `purge` borra antes las marcas
+    int markAllInCurrent(const SearchOptions& options, bool bookmarkLine, bool purge);
+    // FindReplaceDlg::clearMarks: en la selección o en todo el documento
+    void clearMarks(bool inSelection, bool bookmarkLine);
+    // ScintillaEditView::markedTextToClipboard: el texto con esos estilos, en orden
+    void copyStyledText(const std::vector<int>& indicators);
     int findAllInCurrent(const SearchOptions& options);
     int findAllInOpenDocuments(const SearchOptions& options);
     int replaceAllInOpenDocuments(const SearchOptions& options);

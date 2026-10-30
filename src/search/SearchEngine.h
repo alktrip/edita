@@ -75,7 +75,7 @@ struct ReplaceOutcome
 ReplaceOutcome replaceNext(SearchTarget& target, const SearchOptions& options, SciPos selStart, SciPos selEnd);
 
 // ProcessOperation de N++ que se usan en el MVP
-enum class RangeOperation { FindAll, CountAll, ReplaceAll };
+enum class RangeOperation { FindAll, CountAll, ReplaceAll, MarkAll };
 
 // processAll: rango del documento que recorre cada operación según las opciones
 // (todo con "ciclo", desde/hasta el cursor sin él, o la selección)

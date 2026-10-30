@@ -319,6 +319,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 43 — Manual de usuario (1) | Visor dentro de la aplicación (F1: índice, búsqueda sin acentos, historial, colores del tema), capítulos en Markdown en inglés y español con las órdenes y atajos reales, capítulos 1-5 | ✅ [fase43.md](fase43.md) |
 | 44 — Manual de usuario (2) | Capítulos 6-14 y 16 en inglés y español: lenguajes y temas, autocompletado y fragmentos, servidores de lenguaje, Git, comparar, terminal, macros, plugins, preferencias y atajos, solución de problemas | ✅ [fase44.md](fase44.md) |
 | 45 — Manual de usuario (3) | Capturas automáticas en los dos idiomas, tabla de atajos generada desde los menús, prueba de que cada orden de los menús está en el manual; corrige el choque de los marcadores de comparar y la bombilla con los del historial de cambios | ✅ [fase45.md](fase45.md) |
+| 46 — Pestaña Marcar | Marcar todo con «Find Mark Style», marcador en la línea, borrar en cada búsqueda, en la selección, borrar marcas, copiar el texto marcado; Buscar › Marcar… (Ctrl+M) y Copiar el texto con estilo | ✅ [fase46.md](fase46.md) |
 
 ---
 

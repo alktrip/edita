@@ -1411,6 +1411,16 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+1"/>
+        <source>Bookmark &amp;line</source>
+        <translation>Poner un marcador en la &amp;línea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Purge for each search</source>
+        <translation>Borrar las marcas en cada búsqueda</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>&amp;Normal</source>
         <translation>&amp;Normal</translation>
     </message>
@@ -1446,7 +1456,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Buscar en archivos</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+1"/>
+        <source>Mark</source>
+        <translation>Marcar</translation>
+    </message>
+    <message>
+        <location line="+22"/>
         <source>&amp;Find what:</source>
         <translation>&amp;Buscar:</translation>
     </message>
@@ -1507,11 +1522,26 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+1"/>
+        <source>Mark All</source>
+        <translation>Marcar todo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clear all marks</source>
+        <translation>Borrar todas las marcas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy Marked Text</source>
+        <translation>Copiar el texto marcado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+42"/>
         <source>Directory</source>
         <translation>Directorio</translation>
     </message>
@@ -1677,13 +1707,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+406"/>
-        <location line="+3274"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+410"/>
+        <location line="+3287"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3274"/>
+        <location line="-3287"/>
         <location line="+1256"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
@@ -2196,12 +2226,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+781"/>
+        <location line="+794"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-757"/>
+        <location line="-770"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2348,7 +2378,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Seleccionar &amp;entre llaves</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+5"/>
         <source>S&amp;tyle All Occurrences of Token</source>
         <translation>Es&amp;tilo para todas las apariciones</translation>
     </message>
@@ -2373,12 +2403,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1816"/>
+        <location line="-1817"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-802"/>
+        <location line="-806"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2458,7 +2488,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+713"/>
+        <location line="+717"/>
         <location line="+681"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -2991,7 +3021,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Probador de rege&amp;x</translation>
     </message>
     <message>
-        <location line="+19"/>
+        <location line="+12"/>
+        <source>Mar&amp;k…</source>
+        <translation>Mar&amp;car…</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Using &amp;1st Style</source>
         <translation>Estilo &amp;1</translation>
     </message>
@@ -3023,11 +3058,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     <message>
         <location line="+5"/>
         <location line="+3"/>
+        <location line="+12"/>
         <source>&amp;Mark All on Search</source>
         <translation>Marcado al &amp;buscar</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-9"/>
+        <source>Cop&amp;y Styled Text</source>
+        <translation>Cop&amp;iar el texto con estilo</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>All S&amp;tyles</source>
+        <translation>&amp;Todos los estilos</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>&amp;Bookmark</source>
         <translation>&amp;Marcadores</translation>
     </message>
@@ -3643,7 +3689,7 @@ Continue?</source>
         <translation>abierto</translation>
     </message>
     <message>
-        <location line="+133"/>
+        <location line="+140"/>
         <source>Replace All</source>
         <translation>Reemplazar todo</translation>
     </message>
@@ -3774,7 +3820,20 @@ Continue?</source>
         </translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+31"/>
+        <source>Mark: Invalid regular expression: %1</source>
+        <translation>Marcar: expresión regular no válida: %1</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+3"/>
+        <source>Mark: %Ln match(es) %1</source>
+        <translation>
+            <numerusform>Marcar: %Ln coincidencia %1</numerusform>
+            <numerusform>Marcar: %Ln coincidencias %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location line="+86"/>
         <location line="+51"/>
         <source>Find All: Invalid regular expression: %1</source>
         <translation>Buscar todo: expresión regular no válida: %1</translation>
