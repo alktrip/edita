@@ -1703,23 +1703,23 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     <name>edita::MainWindow</name>
     <message>
         <location filename="../src/ui/MainWindow.cpp" line="+415"/>
-        <location line="+3500"/>
+        <location line="+3513"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3500"/>
-        <location line="+1303"/>
+        <location line="-3513"/>
+        <location line="+1316"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1209"/>
+        <location line="-1222"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+367"/>
+        <location line="+370"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2110,7 +2110,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Nivel &amp;%1</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+12"/>
         <source>&amp;Move to Other View</source>
         <translation>&amp;Mover a la otra vista</translation>
     </message>
@@ -2150,12 +2150,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+29"/>
-        <source>&amp;Help</source>
-        <translation>A&amp;yuda</translation>
-    </message>
-    <message>
-        <location line="+4"/>
+        <location line="+35"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2398,12 +2393,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1842"/>
+        <location line="-1852"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-834"/>
+        <location line="-837"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2483,13 +2478,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+721"/>
-        <location line="+728"/>
+        <location line="+724"/>
+        <location line="+738"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-707"/>
+        <location line="-717"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
@@ -2750,7 +2745,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Quitar la comparación</translation>
     </message>
     <message>
-        <location line="+85"/>
+        <location line="+57"/>
+        <source>&amp;Hide Lines</source>
+        <translation>&amp;Ocultar líneas</translation>
+    </message>
+    <message>
+        <location line="+36"/>
         <source>&amp;Style Configurator…</source>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
@@ -2785,7 +2785,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Este documento no tiene servidor de lenguaje</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+15"/>
+        <source>Help</source>
+        <translation>Ayuda</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>User &amp;Manual</source>
         <translation>&amp;Manual de usuario</translation>
     </message>
@@ -3399,7 +3404,7 @@ Do you want to save the file anyway?</source>
     <message>
         <location line="+9"/>
         <source>&amp;Run</source>
-        <translation>E&amp;jecutar</translation>
+        <translation>Ejecuta&amp;r</translation>
     </message>
     <message>
         <location line="+2"/>

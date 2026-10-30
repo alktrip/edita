@@ -322,6 +322,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 46 — Pestaña Marcar | Marcar todo con «Find Mark Style», marcador en la línea, borrar en cada búsqueda, en la selección, borrar marcas, copiar el texto marcado; Buscar › Marcar… (Ctrl+M) y Copiar el texto con estilo | ✅ [fase46.md](fase46.md) |
 | 47 — Sesiones con nombre | Archivo › Cargar una sesión / Guardar la sesión (con las carpetas del explorador), extensión de las sesiones y --openSession | ✅ [fase47.md](fase47.md) |
 | 48 — Menú Ejecutar | Ejecutar… (F5) con variables $(…), órdenes guardadas con nombre y atajo en shortcuts.xml (<UserDefinedCommands>), las tres de N++ y su pestaña en la Asignación de atajos | ✅ [fase48.md](fase48.md) |
+| 49 — Ocultar líneas | Ver › Ocultar líneas (Alt+H) con las marcas 18/19 de N++, unir secciones, mostrar con un clic, restaurar al cambiar de documento y al desplegar | ✅ [fase49.md](fase49.md) |
 
 ---
 

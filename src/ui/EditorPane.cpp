@@ -20,6 +20,7 @@
 
 #include "doc/DocumentManager.h"
 #include "ui/DocTabBar.h"
+#include "ui/EditCommands.h"
 #include "ui/EditorView.h"
 
 #include <QSignalBlocker>
@@ -121,6 +122,7 @@ void EditorPane::activateBuffer(BufferId id)
     if (_styler)
         _styler(*_editor, *buf);
     _editor->restorePosition(buf->position(_editor));
+    restoreHiddenLines(*_editor); // lo oculto vive en el documento; que se oculte es de la vista
     _editor->updateLineNumberWidth(true);
 
     const int index = _tabs->indexOf(id);

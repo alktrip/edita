@@ -26,6 +26,9 @@
 #include <Lexilla.h>
 
 #include <QFontDatabase>
+#include <QImage>
+#include <QPainter>
+#include <QPolygonF>
 
 #include <algorithm>
 #include <string>
@@ -59,8 +62,51 @@ void EditorView::applyBaseConfiguration()
     sci(SCI_SETMARGINSENSITIVEN, kMarginFolder, 1);
     sci(SCI_SETMARGINSENSITIVEN, kMarginSymbol, 1);
     sci(SCI_MARKERSETALPHA, kBookmarkMarker, 70);
-    // Plegar y desplegar con clic en el margen, y mostrar lo oculto al editar
-    sci(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW | SC_AUTOMATICFOLD_CLICK | SC_AUTOMATICFOLD_CHANGE);
+    // Mostrar lo plegado al editar. El clic en el margen de plegado lo hace la vista, como
+    // N++ (ScintillaEditView::marginClick), para volver a ocultar las líneas ocultas que
+    // desplegar mostraría: Scintilla no avisa cuando lo hace él
+    sci(SCI_SETAUTOMATICFOLD, SC_AUTOMATICFOLD_SHOW | SC_AUTOMATICFOLD_CHANGE);
+    sci(SCI_SETMARGINSENSITIVEN, kMarginFolder, 1);
+    connect(this, &ScintillaEditBase::marginClicked, this, [this](Scintilla::Position position, Scintilla::KeyMod modifiers, int margin) {
+        if (margin != static_cast<int>(kMarginFolder))
+            return;
+        const auto line = static_cast<uptr_t>(sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(position)));
+        const bool ctrl = (static_cast<int>(modifiers) & SCMOD_CTRL) != 0;
+        const bool shift = (static_cast<int>(modifiers) & SCMOD_SHIFT) != 0;
+        if (ctrl && shift) {
+            sci(SCI_FOLDALL, SC_FOLDACTION_TOGGLE);
+        } else if (sci(SCI_GETFOLDLEVEL, line) & SC_FOLDLEVELHEADERFLAG) {
+            if (shift)
+                sci(SCI_FOLDCHILDREN, line, SC_FOLDACTION_EXPAND);
+            else if (ctrl)
+                sci(SCI_FOLDCHILDREN, line, SC_FOLDACTION_TOGGLE);
+            else
+                sci(SCI_TOGGLEFOLD, line);
+        }
+        restoreHiddenLines(*this);
+    });
+    // Ver › Ocultar líneas: un triángulo hacia abajo encima de la sección y otro hacia arriba
+    // debajo (en el margen de los marcadores)
+    sci(SCI_SETMARGINMASKN, kMarginSymbol,
+        sci(SCI_GETMARGINMASKN, kMarginSymbol) | (1 << kHideLinesBeginMarker) | (1 << kHideLinesEndMarker));
+    for (const int marker : {kHideLinesBeginMarker, kHideLinesEndMarker}) {
+        constexpr int size = 14;
+        QImage image(size, size, QImage::Format_RGBA8888);
+        image.fill(Qt::transparent);
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(0x3D, 0x8B, 0xD4));
+        const bool down = marker == kHideLinesBeginMarker;
+        const QPolygonF triangle = down ? QPolygonF{QPointF(2, 3), QPointF(12, 3), QPointF(7, 10)}
+                                        : QPolygonF{QPointF(2, 11), QPointF(12, 11), QPointF(7, 4)};
+        painter.drawPolygon(triangle);
+        painter.fillRect(QRectF(1, down ? 12 : 1, 12, 1.5), QColor(0x3D, 0x8B, 0xD4));
+        painter.end();
+        sci(SCI_RGBAIMAGESETWIDTH, size);
+        sci(SCI_RGBAIMAGESETHEIGHT, size);
+        sci(SCI_MARKERDEFINERGBAIMAGE, static_cast<uptr_t>(marker), reinterpret_cast<sptr_t>(image.constBits()));
+    }
 
     // Fuente monoespaciada del sistema hasta que la Fase 3 aplique stylers.xml
     const QFont mono = desktopfonts::fixedFont();

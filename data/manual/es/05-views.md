@@ -104,6 +104,18 @@ el nivel 1 son los bloques exteriores, el 2 los que están dentro de ellos, y as
 | {{item:actionFoldLevel7}} | {{item:actionUnfoldLevel7}} |
 | {{item:actionFoldLevel8}} | {{item:actionUnfoldLevel8}} |
 
+## Ocultar líneas
+
+{{actionHideLines}} oculta las líneas seleccionadas (o la línea actual), para quitar de en medio una
+parte del documento que no necesitas ver, sin plegarla. Un triángulo azul en el margen de los
+marcadores, en la línea de arriba y en la de abajo, marca dónde están las líneas ocultas; pulsa
+cualquiera de los dos para volver a mostrarlas. Ocultar líneas junto a otras ocultas las une en una
+sola sección.
+
+La primera y la última línea del documento no se pueden ocultar. Las líneas ocultas siguen ocultas
+al plegar y desplegar, y al cambiar a otro documento y volver; el texto no cambia, y al buscar,
+copiar o guardar se incluyen las líneas ocultas.
+
 ## Paneles
 
 Los paneles se muestran u ocultan desde el menú Ver. Se pueden arrastrar a cualquier lado de la

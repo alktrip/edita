@@ -1075,8 +1075,10 @@ void goToMatchingBrace(View& v, bool select)
 void foldAll(View& v, bool expand)
 {
     v.send(SCI_FOLDALL, U((expand ? SC_FOLDACTION_EXPAND : SC_FOLDACTION_CONTRACT) | SC_FOLDACTION_CONTRACT_EVERY_LEVEL));
-    if (expand)
+    if (expand) {
+        restoreHiddenLines(v); // desplegar no muestra lo oculto (hideMarkedLines de N++)
         v.send(SCI_SCROLLCARET);
+    }
 }
 
 void foldLevel(View& v, int level, bool expand)
@@ -1119,6 +1121,8 @@ void foldLevel(View& v, int level, bool expand)
                 foldLine(v, line, expand);
         }
     }
+    if (expand)
+        restoreHiddenLines(v);
     if (lineCount > 0)
         v.send(SCI_SCROLLCARET);
 }
@@ -1126,6 +1130,112 @@ void foldLevel(View& v, int level, bool expand)
 void foldCurrent(View& v, bool expand)
 {
     foldLine(v, v.send(SCI_LINEFROMPOSITION, U(v.send(SCI_GETCURRENTPOS))), expand);
+    if (expand)
+        restoreHiddenLines(v);
+}
+
+// --- Ver > Ocultar líneas ------------------------------------------------------------------
+
+void hideLines(View& v)
+{
+    sptr_t startLine = v.send(SCI_LINEFROMPOSITION, U(v.send(SCI_GETSELECTIONSTART)));
+    sptr_t endLine = v.send(SCI_LINEFROMPOSITION, U(v.send(SCI_GETSELECTIONEND)));
+    const sptr_t lineCount = v.send(SCI_GETLINECOUNT);
+    if (lineCount < 3)
+        return; // no se puede ocultar nada
+    // Ni la primera ni la última línea: sus marcas tienen que estar fuera de la sección
+    if (startLine == 0)
+        ++startLine;
+    if (endLine == lineCount - 1)
+        --endLine;
+    if (startLine > endLine)
+        return;
+
+    int scope = 0;
+    bool recentMarkerWasOpen = false;
+    auto removeMarker = [&](sptr_t line, int mask) {
+        const sptr_t state = v.send(SCI_MARKERGET, U(line)) & mask;
+        if (state & (1 << kHideLinesEndMarker)) {
+            v.send(SCI_MARKERDELETE, U(line), kHideLinesEndMarker);
+            recentMarkerWasOpen = false;
+            --scope;
+        }
+        if (state & (1 << kHideLinesBeginMarker)) {
+            v.send(SCI_MARKERDELETE, U(line), kHideLinesBeginMarker);
+            recentMarkerWasOpen = true;
+            ++scope;
+        }
+    };
+    sptr_t startMarker = startLine - 1;
+    sptr_t endMarker = endLine + 1;
+    // Las marcas que había dentro se quitan
+    removeMarker(startMarker, 1 << kHideLinesBeginMarker);
+    for (sptr_t i = startLine; i <= endLine; ++i)
+        removeMarker(i, (1 << kHideLinesBeginMarker) | (1 << kHideLinesEndMarker));
+    removeMarker(endMarker, 1 << kHideLinesEndMarker);
+    // Junto a otra sección oculta: se unen en una
+    if (scope == 0 && recentMarkerWasOpen) {
+        while (scope == 0 && startMarker > 0)
+            removeMarker(--startMarker, 1 << kHideLinesBeginMarker);
+        while (scope != 0 && endMarker < lineCount - 1)
+            removeMarker(++endMarker, 1 << kHideLinesEndMarker);
+    } else {
+        while (scope < 0 && startMarker > 0)
+            removeMarker(--startMarker, 1 << kHideLinesBeginMarker);
+        while (scope > 0 && endMarker < lineCount - 1)
+            removeMarker(++endMarker, 1 << kHideLinesEndMarker);
+    }
+    v.send(SCI_MARKERADD, U(startMarker), kHideLinesBeginMarker);
+    v.send(SCI_MARKERADD, U(endMarker), kHideLinesEndMarker);
+    v.send(SCI_HIDELINES, U(startMarker + 1), endMarker - 1);
+}
+
+bool showHiddenSection(View& v, sptr_t line)
+{
+    const sptr_t state = v.send(SCI_MARKERGET, U(line));
+    sptr_t begin = -1;
+    if (state & (1 << kHideLinesBeginMarker)) {
+        begin = line; // con las dos marcas en la línea, se abre la sección de abajo
+    } else if (state & (1 << kHideLinesEndMarker)) {
+        for (sptr_t i = line - 1; i >= 0 && begin < 0; --i) {
+            if (v.send(SCI_MARKERGET, U(i)) & (1 << kHideLinesBeginMarker))
+                begin = i;
+        }
+        if (begin < 0) { // una marca de cierre sin la de apertura: se quita
+            v.send(SCI_MARKERDELETE, U(line), kHideLinesEndMarker);
+            return true;
+        }
+    } else {
+        return false;
+    }
+    const sptr_t end = v.send(SCI_MARKERNEXT, U(begin + 1), 1 << kHideLinesEndMarker);
+    v.send(SCI_MARKERDELETE, U(begin), kHideLinesBeginMarker);
+    if (end < 0)
+        return true;
+    v.send(SCI_MARKERDELETE, U(end), kHideLinesEndMarker);
+    // Se muestran, salvo lo que esté dentro de un bloque plegado
+    for (sptr_t i = begin + 1; i < end; ++i) {
+        v.send(SCI_SHOWLINES, U(i), i);
+        const sptr_t level = v.send(SCI_GETFOLDLEVEL, U(i));
+        if ((level & SC_FOLDLEVELHEADERFLAG) && !v.send(SCI_GETFOLDEXPANDED, U(i)))
+            i = std::max(i, v.send(SCI_GETLASTCHILD, U(i), -1));
+    }
+    return true;
+}
+
+void restoreHiddenLines(View& v)
+{
+    for (sptr_t line = 0;;) {
+        const sptr_t begin = v.send(SCI_MARKERNEXT, U(line), 1 << kHideLinesBeginMarker);
+        if (begin < 0)
+            return;
+        const sptr_t end = v.send(SCI_MARKERNEXT, U(begin + 1), 1 << kHideLinesEndMarker);
+        if (end < 0)
+            return;
+        if (end - 1 >= begin + 1)
+            v.send(SCI_HIDELINES, U(begin + 1), end - 1);
+        line = end; // la marca de cierre puede ser también la de apertura de la siguiente
+    }
 }
 
 // --- Editar > Editor de columnas ---------------------------------------------------------------

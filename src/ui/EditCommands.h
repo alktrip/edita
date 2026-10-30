@@ -139,6 +139,21 @@ void foldAll(ScintillaEditBase& view, bool expand);
 void foldLevel(ScintillaEditBase& view, int level, bool expand);
 void foldCurrent(ScintillaEditBase& view, bool expand);
 
+// --- Ver > Ocultar líneas ------------------------------------------------------------------
+// MARK_HIDELINESBEGIN y MARK_HIDELINESEND de N++: en la línea de antes y en la de después de
+// cada sección oculta, en el margen de símbolos
+inline constexpr int kHideLinesBeginMarker = 19;
+inline constexpr int kHideLinesEndMarker = 18;
+// ScintillaEditView::hideLines: oculta las líneas de la selección (nunca la primera ni la
+// última del documento), uniéndolas a las secciones ocultas que toquen
+void hideLines(ScintillaEditBase& view);
+// hidelineMarkerClicked + showHiddenLines: si en la línea hay una marca de sección oculta,
+// la muestra y quita sus marcas. false si no la había
+bool showHiddenSection(ScintillaEditBase& view, sptr_t line);
+// restoreHiddenLines: vuelve a ocultar todas las secciones marcadas (al cambiar de documento
+// en la vista o al desplegar, que las muestra)
+void restoreHiddenLines(ScintillaEditBase& view);
+
 // --- Editar > Editor de columnas -------------------------------------------------------------
 // ColumnEditorDlg (IDM_EDIT_COLUMNMODE): cuántos sitios recibirán texto. Con selección
 // rectangular o varias selecciones, cada una; si no, desde la línea del cursor hasta

@@ -297,7 +297,7 @@ int nppCommandFor(const char* actionName)
         {"actionInverseBookmarks", 43050}, {"actionDeleteUnmarkedLines", 43051}, {"actionNextChange", 43067},
         {"actionPreviousChange", 43068}, {"actionClearChangeHistory", 43069},
         // Ver: plegado y zoom
-        {"actionFoldAll", 44010},     {"actionUnfoldAll", 44029}, {"actionFoldCurrent", 44030},
+        {"actionHideLines", 44042}, {"actionFoldAll", 44010},     {"actionUnfoldAll", 44029}, {"actionFoldCurrent", 44030},
         {"actionUnfoldCurrent", 44031}, {"actionZoomIn", 44023}, {"actionZoomOut", 44024},
         {"actionZoomRestore", 44033},
     };
@@ -740,6 +740,9 @@ void MainWindow::connectPane(EditorPane* pane)
         EditorView* v = pane->editor();
         // En la línea de la bombilla: las acciones de código, no un marcador
         const sptr_t clicked = v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(position));
+        // En una marca de líneas ocultas: se muestran (hidelineMarkerClicked)
+        if (showHiddenSection(*v, clicked))
+            return;
         if (v->sci(SCI_MARKERGET, static_cast<uptr_t>(clicked)) & (1 << kLightbulbMarker)) {
             v->sci(SCI_GOTOLINE, static_cast<uptr_t>(clicked));
             showCodeActions();
@@ -1220,6 +1223,14 @@ void MainWindow::createMenus()
         addAction(unfoldLevels, tr("Level &%1").arg(level), QByteArray("actionUnfoldLevel" + n).constData(),
                   QKeySequence(Qt::ALT | Qt::SHIFT | key), [this, level] { foldLevel(*editor(), level - 1, true); });
     }
+    // IDM_VIEW_HIDELINES
+    addAction(view, tr("&Hide Lines"), "actionHideLines", QKeySequence(Qt::ALT | Qt::Key_H), [this] {
+        hideLines(*editor());
+        // La otra vista, si muestra el mismo documento (un clon)
+        EditorPane* other = otherPane(_activePane);
+        if (other && other->currentBuffer() == currentBuffer())
+            restoreHiddenLines(*other->editor());
+    });
     view->addSeparator();
     addAction(view, tr("&Move to Other View"), "actionMoveToOtherView", QKeySequence(), [this] { moveToOtherView(); });
     addAction(view, tr("&Clone to Other View"), "actionCloneToOtherView", QKeySequence(), [this] { cloneToOtherView(); });
@@ -1276,7 +1287,9 @@ void MainWindow::createMenus()
     loadPlugins();
 
     // Ayuda
-    QMenu* help = menuBar()->addMenu(tr("&Help"));
+    // Sin tecla de acceso en inglés: Alt+H es Ver › Ocultar líneas, como en N++ (cuyo menú
+    // de ayuda es «?»)
+    QMenu* help = menuBar()->addMenu(tr("Help"));
     addAction(help, tr("User &Manual"), "actionUserManual", QKeySequence::HelpContents, [this] { showManual(); });
     addAction(help, tr("&Welcome Page"), "actionWelcomePage", QKeySequence(), [this] { showWelcomePage(); });
     help->addSeparator();

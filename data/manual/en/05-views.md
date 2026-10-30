@@ -99,6 +99,17 @@ outermost blocks, level 2 those inside them, and so on.
 | {{item:actionFoldLevel7}} | {{item:actionUnfoldLevel7}} |
 | {{item:actionFoldLevel8}} | {{item:actionUnfoldLevel8}} |
 
+## Hiding lines
+
+{{actionHideLines}} hides the selected lines (or the current line), to take out of the way a part of
+the document you don't need to see, without folding it. A blue triangle in the bookmark margin, on
+the line above and the line below, marks where the lines are hidden; click either of them to show
+the lines again. Hiding lines next to other hidden lines joins them in one section.
+
+The first and the last line of the document cannot be hidden. The hidden lines stay hidden when you
+fold and unfold, and when you switch to another document and back; the text is not changed, and
+searching, copying or saving include the hidden lines.
+
 ## Panels
 
 The panels are shown or hidden from the View menu. They can be dragged to any side of the window,
