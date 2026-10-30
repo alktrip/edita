@@ -143,6 +143,11 @@ the previous line, and **Advanced** also indents after `{` (and after `:` in Pyt
 unindents when you type `}`. **Backspace key unindents** deletes a whole indentation level at
 once.
 
+## Completion and snippets
+
+Edita completes words and functions while you type, and inserts snippets with Tab; see
+[Autocompletion and snippets](07-completion.md).
+
 ## Brackets and quotes
 
 - With **Auto-Insert** (Auto-Completion page), typing `(`, `[`, `{`, `"` or `'` inserts the

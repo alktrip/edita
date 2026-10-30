@@ -147,6 +147,11 @@ línea anterior, y **Avanzada** además aumenta la sangría después de `{` (y d
 reduce al escribir `}`. **Retroceso quita un nivel de sangría** borra un nivel completo de una
 vez.
 
+## Autocompletado y fragmentos
+
+Edita completa palabras y funciones mientras escribes, e inserta fragmentos con Tab; ver
+[Autocompletado y fragmentos](07-completion.md).
+
 ## Paréntesis y comillas
 
 - Con **Cerrar automáticamente** (página Autocompletado), al escribir `(`, `[`, `{`, `"` o `'` se

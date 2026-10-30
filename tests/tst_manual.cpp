@@ -167,7 +167,7 @@ private slots:
                 }
             }
         }
-        QVERIFY(files.size() >= 5);
+        QVERIFY(files.size() >= 15);
     }
 
     void windowNavigatesAndSearches()

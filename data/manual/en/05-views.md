@@ -142,3 +142,4 @@ The results of **Find All** and **Find in Files**; see
 the integrated terminal and {{actionNewTerminal}} opens a new tab in it;
 {{actionRunSelectionInTerminal}} sends the selected text (or the current line) to the terminal
 and runs it.
+See [Language servers](08-language-servers.md) and [Terminal](11-terminal.md).

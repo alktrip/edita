@@ -150,3 +150,4 @@ Los resultados de **Buscar todo** y de **Buscar en archivos**; ver
 muestra la terminal integrada y {{actionNewTerminal}} abre una pestaña nueva en ella;
 {{actionRunSelectionInTerminal}} envía el texto seleccionado (o la línea actual) a la terminal y
 lo ejecuta.
+Ver [Servidores de lenguaje](08-language-servers.md) y [Terminal](11-terminal.md).
