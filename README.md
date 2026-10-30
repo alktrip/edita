@@ -94,7 +94,7 @@ Opciones de CMake:
 
 ## macOS
 
-`.github/workflows/macos.yml` compila en GitHub Actions (macOS 14, Qt 6.8.3 universal), pasa las pruebas y genera `Edita-<versión>-macos-universal.dmg` como artefacto de la ejecución. Con una etiqueta `v*`, además lo publica en Releases. En un Mac se puede generar igual con `packaging/macos/build-dmg.sh` (Qt 6, CMake y Ninja). La app va firmada ad hoc y sin notarizar: la primera vez hay que abrirla con clic derecho › Abrir (o en Ajustes › Privacidad y seguridad › «Abrir igualmente»). Por ahora no incluye el plugin Python Script.
+`.github/workflows/macos.yml` compila en GitHub Actions (macOS 15, Qt 6.8.3 universal), pasa las pruebas y genera `Edita-<versión>-macos-universal.dmg` como artefacto de la ejecución. Con una etiqueta `v*`, además lo publica en Releases. En un Mac se puede generar igual con `packaging/macos/build-dmg.sh` (Qt 6, CMake y Ninja). La app va firmada ad hoc y sin notarizar: la primera vez hay que abrirla con clic derecho › Abrir (o en Ajustes › Privacidad y seguridad › «Abrir igualmente»). Por ahora no incluye el plugin Python Script.
 
 ## Estructura
 
