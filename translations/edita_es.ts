@@ -524,6 +524,19 @@
     </message>
 </context>
 <context>
+    <name>Manual</name>
+    <message>
+        <location filename="../src/ui/ManualWindow.cpp" line="+369"/>
+        <source>Command</source>
+        <translation>Orden</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Shortcut</source>
+        <translation>Atajo</translation>
+    </message>
+</context>
+<context>
     <name>PluginCatalog</name>
     <message>
         <location filename="../src/core/PluginCatalog.cpp" line="+108"/>
@@ -3615,7 +3628,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+388"/>
+        <location line="+389"/>
         <source>This line is not committed yet</source>
         <translation>Esta línea aún no está confirmada</translation>
     </message>
@@ -3886,7 +3899,7 @@ Continue?</source>
 <context>
     <name>edita::ManualWindow</name>
     <message>
-        <location filename="../src/ui/ManualWindow.cpp" line="+602"/>
+        <location filename="../src/ui/ManualWindow.cpp" line="+251"/>
         <source>User Manual</source>
         <translation>Manual de usuario</translation>
     </message>

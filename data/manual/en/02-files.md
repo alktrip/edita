@@ -18,8 +18,8 @@ and how they are displayed are set in {{actionPreferences}} (Recent Files Histor
 and save dialogs start in the folder of the current document, in the last folder used, or in a
 fixed folder (New Document page).
 
-By default Edita uses its own file dialogs, which are shown in the language of Edita. Turn off
-**Use Edita's file dialogs** in the General page to use those of your desktop.
+By default the open and save dialogs are those of your desktop. Turn on **Use Edita's file
+dialogs** in the General page to use Edita's own, which are shown in the language of Edita.
 
 ## Saving
 

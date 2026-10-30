@@ -83,5 +83,7 @@ Edición para usar la fuente del tema.
 - **Global override** (en Estilos globales) impone una fuente, un tamaño o un color a todos los
   estilos.
 
+![El Configurador de estilos](images/styles.png)
+
 Los cambios se ven en el editor y se guardan con **Guardar y cerrar**. Un tema instalado con Edita
 se copia antes a `~/.config/edita/themes/`, y la copia lo sustituye.

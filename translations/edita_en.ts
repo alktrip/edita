@@ -120,7 +120,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+3868"/>
+        <location line="+3869"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>

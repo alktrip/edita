@@ -20,7 +20,7 @@
 #include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QImageReader>
+#include <QImage>
 #include <QKeyEvent>
 #include <QLabel>
 #include <QLineEdit>
@@ -41,8 +41,6 @@
 namespace edita {
 
 namespace {
-
-constexpr int kMaxImageWidth = 860;
 
 const QRegularExpression& headingPattern()
 {
@@ -268,22 +266,7 @@ QString Manual::html(int index) const
     }
     html.replace(QStringLiteral("<table>"),
                  QStringLiteral("<table border=\"1\" cellspacing=\"0\" cellpadding=\"5\" width=\"100%\">"));
-
-    // Las capturas grandes, a un ancho que quepa
-    static const QRegularExpression image(QStringLiteral("<img src=\"([^\"]+)\""));
-    const QDir dir(_directory);
-    QString sized;
-    qsizetype last = 0;
-    for (auto it = image.globalMatch(html); it.hasNext();) {
-        const auto m = it.next();
-        sized += QStringView(html).mid(last, m.capturedEnd() - last);
-        const QSize size = QImageReader(dir.filePath(m.captured(1))).size();
-        if (size.width() > kMaxImageWidth)
-            sized += QStringLiteral(" width=\"%1\"").arg(kMaxImageWidth);
-        last = m.capturedEnd();
-    }
-    sized += QStringView(html).mid(last);
-    return sized;
+    return html;
 }
 
 std::vector<Manual::Hit> Manual::search(const QString& query) const
@@ -363,8 +346,31 @@ QStringList Manual::commandsIn(const QString& markdown)
     QStringList names;
     for (auto it = re.globalMatch(markdown); it.hasNext();)
         names << it.next().captured(1);
+    names.removeAll(QStringLiteral("shortcuts"));
     names.removeDuplicates();
     return names;
+}
+
+QString Manual::shortcutTables(const Commands& commands)
+{
+    std::vector<const Command*> sorted;
+    for (const Command& c : commands) {
+        if (!c.shortcut.isEmpty())
+            sorted.push_back(&c);
+    }
+    std::sort(sorted.begin(), sorted.end(), [](const Command* a, const Command* b) { return a->order < b->order; });
+    const QString separator = QStringLiteral(" › ");
+    QString out;
+    QString menu;
+    for (const Command* c : sorted) {
+        const QString top = c->path.section(separator, 0, 0);
+        if (top != menu) {
+            menu = top;
+            out += QStringLiteral("\n## %1\n\n| %2 | %3 |\n|---|---|\n").arg(escapeMarkdown(top), tr("Command"), tr("Shortcut"));
+        }
+        out += QStringLiteral("| %1 | `%2` |\n").arg(escapeMarkdown(c->path.section(separator, 1)), c->shortcut);
+    }
+    return out;
 }
 
 QString Manual::expand(const QString& markdown, const Commands& commands, QStringList* unresolved)
@@ -377,6 +383,10 @@ QString Manual::expand(const QString& markdown, const Commands& commands, QStrin
         out += QStringView(markdown).mid(last, m.capturedStart() - last);
         last = m.capturedEnd();
         const QString name = m.captured(2);
+        if (name == QLatin1String("shortcuts") && !m.hasCaptured(1)) {
+            out += shortcutTables(commands);
+            continue;
+        }
         const auto found = commands.constFind(name);
         if (found == commands.cend()) {
             if (unresolved)
@@ -433,6 +443,14 @@ QVariant ManualBrowser::loadResource(int type, const QUrl& name)
     if (name.isLocalFile() && name.path().endsWith(QLatin1String(".md"))) {
         const int index = _manual.indexOf(QFileInfo(name.toLocalFile()).fileName());
         return index >= 0 ? QVariant(_manual.html(index)) : QVariant();
+    }
+    if (type == QTextDocument::ImageResource && name.isLocalFile()) {
+        // Las capturas, reducidas con suavizado al ancho de la página (Qt las reduciría sin él)
+        QImage image(name.toLocalFile());
+        const int available = std::max(320, viewport()->width() - 2 * static_cast<int>(document()->documentMargin()) - 12);
+        if (!image.isNull() && image.width() > available)
+            image = image.scaledToWidth(available, Qt::SmoothTransformation);
+        return image;
     }
     return QTextBrowser::loadResource(type, name);
 }

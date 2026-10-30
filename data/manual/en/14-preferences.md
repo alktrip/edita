@@ -5,6 +5,8 @@
 {{actionPreferences}} groups the options in pages. The changes are applied when you click OK.
 Most options are described in the chapter of their feature; this is a summary.
 
+![The Preferences dialog](images/preferences.png)
+
 | Page | Options |
 |---|---|
 | General | Language of the interface (it changes after restarting), appearance (light, dark or follow the system), instances, toolbar, Edita's file dialogs, status bar, welcome page, and the tab bar. |

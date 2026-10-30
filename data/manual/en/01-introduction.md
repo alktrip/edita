@@ -67,6 +67,8 @@ in each one and the documents that were never saved (see
 
 From top to bottom, the Edita window has these parts:
 
+![The Edita window with the Folder as Workspace panel](images/window.png)
+
 - **Menu bar**: every command is in a menu. The commands also appear in the
   [command palette](05-views.md#command-palette).
 - **Toolbar**: buttons for the most common commands (new, open, save, cut, copy, paste, undo,

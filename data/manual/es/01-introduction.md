@@ -70,6 +70,8 @@ del cursor en cada uno y los documentos que nunca se guardaron (ver
 
 De arriba abajo, la ventana de Edita tiene estas partes:
 
+![La ventana de Edita con el Explorador de carpetas](images/window.png)
+
 - **Barra de menús**: todas las órdenes están en un menú. También aparecen en la
   [paleta de órdenes](05-views.md#paleta-de-ordenes).
 - **Barra de herramientas**: botones para las órdenes más usadas (nuevo, abrir, guardar, cortar,

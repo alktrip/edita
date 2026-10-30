@@ -110,3 +110,17 @@ if(EDITA_BUILD_PLUGINS)
         target_compile_definitions(tst_pythonscript PRIVATE EDITA_PLUGIN_BUILD_DIR="${PROJECT_BINARY_DIR}/plugins")
     endif()
 endif()
+
+# Las capturas del manual de usuario (data/manual/<idioma>/images/), sin pantalla:
+# «cmake --build build --target edita_manual_images»
+add_executable(manual_screenshots manual_screenshots.cpp)
+target_link_libraries(manual_screenshots PRIVATE edita_ui edita_warnings)
+set_target_properties(manual_screenshots PROPERTIES AUTOMOC ON)
+add_custom_target(edita_manual_images
+    COMMAND ${CMAKE_COMMAND} -E env QT_QPA_PLATFORM=offscreen EDITA_LSP=0
+            $<TARGET_FILE:manual_screenshots> en ${PROJECT_SOURCE_DIR}/data/manual/en/images
+    COMMAND ${CMAKE_COMMAND} -E env QT_QPA_PLATFORM=offscreen EDITA_LSP=0
+            $<TARGET_FILE:manual_screenshots> es ${PROJECT_SOURCE_DIR}/data/manual/es/images
+    DEPENDS manual_screenshots
+    COMMENT "Capturas del manual de usuario"
+    VERBATIM)

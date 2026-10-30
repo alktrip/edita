@@ -81,5 +81,7 @@ the font of the theme.
   styles with keywords, **user-defined keywords** to add your own words.
 - **Global override** (in Global Styles) forces a font, size or color on every style.
 
+![The Style Configurator](images/styles.png)
+
 The changes are previewed in the editor and saved with **Save & Close**. A theme installed with
 Edita is copied first to `~/.config/edita/themes/`, and the copy replaces it.

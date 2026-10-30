@@ -20,6 +20,8 @@ The saved and the Git versions are opened in the other view as read-only documen
 - **Red**: lines removed (they are in the left document only).
 - **Yellow**: lines changed; inside them, the characters that differ are highlighted.
 
+![Comparing a document with its saved version](images/compare.png)
+
 Where one side has lines that the other lacks, empty space is added so that equal lines stay at
 the same height. Both views scroll together, vertically and horizontally. The differences are
 also marked in the scroll bar, and the status bar sums them up:

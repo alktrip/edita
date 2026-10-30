@@ -28,11 +28,13 @@ class CompareSession : public QObject
     Q_OBJECT
 
 public:
-    // Marcadores (fondo de línea) e indicador (caracteres distintos). N++ deja los
-    // marcadores 1-14 a los plugins y usa 18-24; Edita usa 0, 15, 16, 17 y 20
-    static constexpr int kMarkerAdded = 21;
-    static constexpr int kMarkerRemoved = 22;
-    static constexpr int kMarkerChanged = 23;
+    // Marcadores (fondo de línea) e indicador (caracteres distintos). Scintilla reserva
+    // 21-24 para el historial de cambios y 25-31 para el plegado; N++ usa 18-20 y Edita 0, 15,
+    // 16 y 17. Estos (y la bombilla, el 11) se toman del final del rango de los plugins, que
+    // queda en 1-10
+    static constexpr int kMarkerAdded = 12;
+    static constexpr int kMarkerRemoved = 13;
+    static constexpr int kMarkerChanged = 14;
     static constexpr int kIndicatorChars = 0;
 
     struct Options

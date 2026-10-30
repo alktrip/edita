@@ -5,6 +5,8 @@
 {{actionFind}} opens a bar in the top right corner of the editor. The matches are highlighted as
 you type, and the bar shows how many there are and which one is selected ("3 of 17").
 
+![The find bar](images/findbar.png)
+
 | Key or button | Action |
 |---|---|
 | Enter / Shift+Enter | Next / previous match. |
@@ -133,6 +135,8 @@ its options; inside, each file with its matching lines, and the matched text hig
 - **Quick reference** (the button next to the expression): a menu with the syntax; choose an
   element to insert it in the expression.
 - **Use in Find…** opens the Find dialog with the expression and the options.
+
+![The regex tester](images/regex.png)
 
 The tester uses the same engine as the Find dialog, so what matches here matches in the document.
 

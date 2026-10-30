@@ -20,6 +20,8 @@ La versión guardada y la de Git se abren en la otra vista como documentos de so
 - **Rojo**: líneas quitadas (solo están en el documento de la izquierda).
 - **Amarillo**: líneas cambiadas; dentro de ellas se resaltan los caracteres distintos.
 
+![Un documento comparado con su versión guardada](images/compare.png)
+
 Donde a un lado le faltan líneas que el otro tiene, se añade espacio en blanco para que las líneas
 iguales queden a la misma altura. Las dos vistas se desplazan juntas, en vertical y en horizontal.
 Las diferencias también se marcan en la barra de desplazamiento, y la barra de estado las resume:

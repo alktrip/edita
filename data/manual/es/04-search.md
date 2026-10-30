@@ -5,6 +5,8 @@
 {{actionFind}} abre una barra en la esquina superior derecha del editor. Las coincidencias se
 resaltan mientras escribes, y la barra muestra cuántas hay y cuál está seleccionada («3 de 17»).
 
+![La barra de búsqueda](images/findbar.png)
+
 | Tecla o botón | Acción |
 |---|---|
 | Intro / Mayús+Intro | Coincidencia siguiente / anterior. |
@@ -134,6 +136,8 @@ opciones; dentro, cada archivo con sus líneas, y el texto encontrado resaltado.
 - **Referencia rápida** (el botón junto a la expresión): un menú con la sintaxis; elige un
   elemento para insertarlo en la expresión.
 - **Usar en Buscar…** abre el diálogo Buscar con la expresión y las opciones.
+
+![El probador de expresiones regulares](images/regex.png)
 
 El probador usa el mismo motor que el diálogo Buscar, así que lo que coincide aquí coincide igual
 en el documento.

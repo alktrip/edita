@@ -34,8 +34,9 @@ namespace edita {
 
 // Marcador de los marcadores de línea (MARK_BOOKMARK en ScintillaEditView.h)
 inline constexpr int kBookmarkMarker = 20;
-// La bombilla de las acciones de código del servidor de lenguaje (no existe en N++)
-inline constexpr int kLightbulbMarker = 24;
+// La bombilla de las acciones de código del servidor de lenguaje (no existe en N++). No puede
+// ser 21-24: son los del historial de cambios de Scintilla
+inline constexpr int kLightbulbMarker = 11;
 
 // ScintillaEditView::getSelectionLinesRange: líneas de la selección principal; si
 // acaba al principio de una línea, esa no cuenta

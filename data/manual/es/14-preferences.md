@@ -5,6 +5,8 @@
 {{actionPreferences}} agrupa las opciones en páginas. Los cambios se aplican al pulsar Aceptar. La
 mayoría de las opciones se describen en el capítulo de su función; esto es un resumen.
 
+![El diálogo de Preferencias](images/preferences.png)
+
 | Página | Opciones |
 |---|---|
 | General | Idioma de la interfaz (cambia al reiniciar), apariencia (claro, oscuro o seguir al sistema), instancias, barra de herramientas, diálogos de archivos de Edita, barra de estado, página de inicio y barra de pestañas. |

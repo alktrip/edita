@@ -15,6 +15,7 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QRegularExpression>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QTreeWidget>
@@ -81,8 +82,70 @@ private slots:
         QVERIFY(unresolved.isEmpty());
         QCOMPARE(Manual::expand(QStringLiteral("{{actionNope}}"), commands, &unresolved), QStringLiteral("`actionNope`"));
         QCOMPARE(unresolved, QStringList{QStringLiteral("actionNope")});
-        QCOMPARE(Manual::commandsIn(QStringLiteral("{{actionA}} {{key:actionB}} {{item:actionA}}")),
+        QCOMPARE(Manual::commandsIn(QStringLiteral("{{actionA}} {{key:actionB}} {{item:actionA}} {{shortcuts}}")),
                  (QStringList{QStringLiteral("actionA"), QStringLiteral("actionB")}));
+    }
+
+    // {{shortcuts}}: un apartado por menú, en el orden de los menús, solo lo que tiene atajo
+    void shortcutTables()
+    {
+        Manual::Commands commands;
+        commands.insert(QStringLiteral("actionFind"), {QStringLiteral("Search › Find…"), QStringLiteral("Ctrl+F"), 2});
+        commands.insert(QStringLiteral("actionNew"), {QStringLiteral("File › New"), QStringLiteral("Ctrl+N"), 0});
+        commands.insert(QStringLiteral("actionReload"), {QStringLiteral("File › Reload"), QString(), 1});
+        commands.insert(QStringLiteral("actionUpper"), {QStringLiteral("Edit › Case › UPPER"), QStringLiteral("Ctrl+Shift+U"), 1});
+        const QString tables = Manual::expand(QStringLiteral("{{shortcuts}}"), commands);
+        QVERIFY(!tables.contains(QStringLiteral("Reload")));
+        QVERIFY(tables.contains(QStringLiteral("| Case › UPPER | `Ctrl+Shift+U` |")));
+        const auto file = tables.indexOf(QStringLiteral("## File"));
+        const auto edit = tables.indexOf(QStringLiteral("## Edit"));
+        const auto search = tables.indexOf(QStringLiteral("## Search"));
+        QVERIFY(file >= 0 && file < edit && edit < search);
+        QVERIFY(tables.contains(QStringLiteral("| New | `Ctrl+N` |")));
+    }
+
+    // Cada orden de los menús (salvo las familias que se crean solas, que el manual describe en
+    // grupo: un lenguaje, un juego de caracteres, una macro guardada)
+    // aparece en el manual de cada idioma
+    void everyMenuCommandIsInTheManual()
+    {
+        auto w = window();
+        static const QRegularExpression generated(QStringLiteral("^action(Lang[1-9]|Macro[1-9]|Charset)[0-9]*$"));
+        for (const QString& language : kLanguages) {
+            QSet<QString> cited;
+            const QDir dir(sourceDir(language));
+            for (const QString& name : dir.entryList({QStringLiteral("*.md")}, QDir::Files)) {
+                QFile f(dir.filePath(name));
+                QVERIFY(f.open(QIODevice::ReadOnly));
+                for (const QString& command : Manual::commandsIn(QString::fromUtf8(f.readAll())))
+                    cited.insert(command);
+            }
+            QStringList missing;
+            const Manual::Commands commands = w->manualCommands();
+            for (auto it = commands.cbegin(); it != commands.cend(); ++it) {
+                if (!it.key().startsWith(QLatin1String("action")) || generated.match(it.key()).hasMatch())
+                    continue;
+                if (!cited.contains(it.key()))
+                    missing << it.key() + QStringLiteral(" (") + it->path + QLatin1Char(')');
+            }
+            missing.sort();
+            QVERIFY2(missing.isEmpty(), qPrintable(language + QStringLiteral(": ") + missing.join(QStringLiteral(", "))));
+        }
+    }
+
+    void shortcutChapterUsesTheMenus()
+    {
+        auto w = window();
+        Manual manual;
+        QVERIFY(manual.load(sourceDir(QStringLiteral("en")), w->manualCommands()));
+        const int index = manual.indexOf(QStringLiteral("15-shortcuts.md"));
+        QVERIFY(index >= 0);
+        QStringList headings;
+        for (const Manual::Heading& h : manual.chapters()[static_cast<size_t>(index)].headings)
+            headings << h.text;
+        QVERIFY2(headings.contains(QStringLiteral("File")), qPrintable(headings.join(',')));
+        QVERIFY(headings.contains(QStringLiteral("Search")));
+        QVERIFY(manual.html(index).contains(QKeySequence(QKeySequence::Open).toString(QKeySequence::NativeText)));
     }
 
     void loadsChaptersAndHeadings()
@@ -216,6 +279,17 @@ private slots:
         QVERIFY(manual->searchField()->text().isEmpty());
         QVERIFY(manual->contents()->isVisible());
         QVERIFY(manual->browser()->extraSelections().isEmpty());
+
+        // Las capturas se reducen al ancho de la página
+        w->showManual(QStringLiteral("01-introduction.md"), QStringLiteral("the-window"));
+        const QUrl image = manual->browser()->source().resolved(QUrl(QStringLiteral("images/window.png")));
+        const QImage original(image.toLocalFile());
+        QVERIFY(!original.isNull());
+        manual->resize(700, 500);
+        const QImage shown = manual->browser()->loadResource(QTextDocument::ImageResource, image).value<QImage>();
+        QVERIFY(!shown.isNull());
+        QVERIFY(shown.width() < original.width());
+        QVERIFY(shown.width() <= manual->browser()->viewport()->width());
 
         // Un enlace a otro capítulo
         w->showManual(QStringLiteral("01-introduction.md"));

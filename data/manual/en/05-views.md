@@ -7,6 +7,8 @@ menus, the plugins and the macros. Type part of the name, in any order and with 
 (`dupl lin` finds **Duplicate Current Line**), and press Enter to run it. Each command shows its
 menu and its shortcut, so the palette is also a good way to learn them.
 
+![The command palette](images/palette.png)
+
 The same field does other things depending on the first character:
 
 | Start with | To |

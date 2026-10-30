@@ -11,12 +11,14 @@
 // como están en la aplicación («Buscar › Buscar… (Ctrl+F)»): traducidos, con los atajos
 // que el usuario haya cambiado y los de macOS. {{key:actionFind}} pone solo el atajo, y
 // {{item:actionStyleAll1}}, solo el nombre en su submenú («Estilo 1») con el atajo.
+// {{shortcuts}} pone la tabla de todos los atajos, por menús.
 //
 // La ventana: índice (capítulos y sus apartados), búsqueda en todo el manual sin
 // distinguir acentos ni mayúsculas, historial (atrás y adelante) y colores del tema.
 
 #pragma once
 
+#include <QCoreApplication>
 #include <QHash>
 #include <QTextBrowser>
 #include <QWidget>
@@ -35,6 +37,8 @@ namespace edita {
 
 class Manual
 {
+    Q_DECLARE_TR_FUNCTIONS(Manual)
+
 public:
     struct Heading
     {
@@ -61,6 +65,7 @@ public:
     {
         QString path;     // "Search › Find…"
         QString shortcut; // "Ctrl+F" (vacío si no tiene)
+        int order = 0;    // su lugar en los menús (para la tabla de atajos)
     };
     using Commands = QHash<QString, Command>; // por nombre del objeto ("actionFind")
 
@@ -85,6 +90,8 @@ public:
     // Los nombres que aparecen en {{…}}, {{key:…}} y {{item:…}}
     static QStringList commandsIn(const QString& markdown);
     static QString expand(const QString& markdown, const Commands& commands, QStringList* unresolved = nullptr);
+    // {{shortcuts}}: un apartado por menú con una tabla de sus órdenes que tienen atajo
+    static QString shortcutTables(const Commands& commands);
     // El texto sin la sintaxis de Markdown (para buscar y para los extractos)
     static QString plainText(const QString& markdown);
 

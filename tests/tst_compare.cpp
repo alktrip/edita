@@ -179,6 +179,17 @@ private slots:
         QCOMPARE(reference->displayName(), QStringLiteral("saved.txt (saved)"));
         QVERIFY(reference->isUserReadOnly());
         QCOMPARE(session->oldView(), sub->editor());
+        // Las líneas iguales no tienen color, aunque el historial de cambios marque las de la
+        // referencia como guardadas (sus marcadores son 21-24: antes coincidían con estos)
+        for (const int marker : {CompareSession::kMarkerAdded, CompareSession::kMarkerRemoved, CompareSession::kMarkerChanged}) {
+            QVERIFY(marker < SC_MARKNUM_HISTORY_REVERTED_TO_ORIGIN || marker > SC_MARKNUM_HISTORY_REVERTED_TO_MODIFIED);
+            QVERIFY(!hasMarker(sub->editor(), 0, marker));
+            QVERIFY(!hasMarker(sub->editor(), 2, marker));
+            QVERIFY(!hasMarker(v, 0, marker));
+        }
+        QVERIFY(hasMarker(v, 1, CompareSession::kMarkerAdded));
+        // La referencia no tiene historial de cambios (su texto no es un cambio)
+        QCOMPARE(sub->editor()->send(SCI_MARKERNEXT, 0, 1 << SC_MARKNUM_HISTORY_SAVED), -1);
         // Al terminar se cierra la referencia sin preguntar
         const BufferId referenceId = sub->currentBuffer();
         w.stopCompare();

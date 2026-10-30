@@ -7,6 +7,8 @@ los menús, de los plugins y de las macros. Escribe parte del nombre, en cualqui
 falten letras (`dupl lin` encuentra **Duplicar la línea**), y pulsa Intro para ejecutarla. Cada
 orden muestra su menú y su atajo, así que la paleta también sirve para aprenderlos.
 
+![La paleta de órdenes](images/palette.png)
+
 El mismo campo hace otras cosas según el primer carácter:
 
 | Empieza con | Para |

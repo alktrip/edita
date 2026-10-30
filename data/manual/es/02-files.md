@@ -19,8 +19,9 @@ guardan y cómo se muestran se elige en {{actionPreferences}} (página Archivos 
 diálogos de abrir y guardar empiezan en la carpeta del documento actual, en la última carpeta
 usada o en una carpeta fija (página Documento nuevo).
 
-Edita usa sus propios diálogos de archivos, que se muestran en el idioma de Edita. Desactiva
-**Usar los diálogos de archivos de Edita** en la página General para usar los de tu escritorio.
+De serie, los diálogos de abrir y guardar son los de tu escritorio. Activa **Usar los diálogos de
+archivos de Edita** en la página General para usar los de Edita, que se muestran en el idioma de
+Edita.
 
 ## Guardar
 

@@ -1613,8 +1613,8 @@ BufferId MainWindow::openReference(EditorPane* pane, const QString& name, const 
     _documents.setUntitledName(id, name);
     EditorView* v = pane->editor();
     v->send(SCI_SETTEXT, 0, reinterpret_cast<sptr_t>(utf8.c_str()));
-    v->sci(SCI_EMPTYUNDOBUFFER);
     v->sci(SCI_SETSAVEPOINT);
+    clearChangeHistory(*v); // el texto no es un cambio: sin marcas de «guardado» en el margen
     if (Buffer* buf = _documents.buffer(id)) {
         if (lang == LangType::User)
             buf->setUserLanguage(userLanguage);
@@ -4142,7 +4142,7 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
         // Mismos rangos que N++; se agotan como en N++ (FALSE y 0)
         int& next = message == NPPM_ALLOCATECMDID ? _nextDynamicCommand
                   : message == NPPM_ALLOCATEMARKER ? _nextMarker : _nextIndicator;
-        const int limit = message == NPPM_ALLOCATECMDID ? 25000 : message == NPPM_ALLOCATEMARKER ? 15 : 21; // marcadores 1–14 (MARKER_PLUGINS_LIMIT)
+        const int limit = message == NPPM_ALLOCATECMDID ? 25000 : message == NPPM_ALLOCATEMARKER ? 11 : 21; // marcadores 1–10 (N++: 1–14; Edita usa 11–14)
         auto* out = reinterpret_cast<int*>(lParam);
         const int requested = static_cast<int>(wParam);
         if (!out || requested <= 0 || next + requested > limit) {
@@ -5127,7 +5127,8 @@ Manual::Commands MainWindow::manualCommands() const
             if (action->menu())
                 walk(action->menu(), here);
             else if (!action->objectName().isEmpty())
-                commands.insert(action->objectName(), {here, action->shortcut().toString(QKeySequence::NativeText)});
+                commands.insert(action->objectName(),
+                                {here, action->shortcut().toString(QKeySequence::NativeText), static_cast<int>(commands.size())});
         }
     };
     for (QAction* top : menuBar()->actions()) {
