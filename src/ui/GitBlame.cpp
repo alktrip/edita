@@ -185,7 +185,8 @@ std::vector<QString> GitBlame::parsePorcelain(const QByteArray& output, QHash<QS
         Commit& c = commits[current];
         const qsizetype space = raw.indexOf(' ');
         const QByteArray key = space < 0 ? raw : raw.left(space);
-        const QString value = space < 0 ? QString() : QString::fromUtf8(raw.mid(space + 1));
+        // En NFC: en macOS, lo que pasó por la línea de órdenes puede venir descompuesto (o + ´)
+        const QString value = space < 0 ? QString() : QString::fromUtf8(raw.mid(space + 1)).normalized(QString::NormalizationForm_C);
         if (key == "author")
             c.author = value;
         else if (key == "author-mail")
