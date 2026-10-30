@@ -156,6 +156,45 @@ private slots:
         QCoreApplication::processEvents(); // lo que quedó por borrar
     }
 
+    void openingAFileHidesThePageEvenIfForced()
+    {
+        // Con la página abierta desde Ayuda (o tras tocar «Mostrar al iniciar») se quedaba
+        // encima aunque se abriera un archivo reciente; y ese archivo salía de la lista
+        const QString file = _tmp.filePath("files/forzada.txt");
+        writeFile(file);
+        {
+            auto first = window();
+            QVERIFY(first->openFile(file) != kInvalidBuffer);
+            first->findChild<QAction*>(QStringLiteral("actionClose"))->trigger();
+            first->close();
+        }
+        for (int variant = 0; variant < 2; ++variant) {
+            auto w = window();
+            w->show();
+            QVERIFY(QTest::qWaitForWindowExposed(w.get()));
+            QTRY_VERIFY(w->isWelcomeVisible());
+            if (variant == 0) {
+                w->showWelcomePage(); // Ayuda › Página de inicio
+            } else {
+                auto* box = w->welcomePage()->findChild<QCheckBox*>();
+                QVERIFY(box);
+                box->click(); // «Mostrar al iniciar» (dos veces: queda como estaba)
+                box->click();
+            }
+            QFrame* row = nullptr;
+            for (QFrame* frame : w->welcomePage()->findChildren<QFrame*>()) {
+                if (frame->property("path").toString() == file)
+                    row = frame;
+            }
+            QVERIFY2(row, qPrintable(QString::number(variant)));
+            QTest::mouseClick(row, Qt::LeftButton);
+            QTRY_VERIFY2(!w->isWelcomeVisible(), qPrintable(QString::number(variant)));
+            QCOMPARE(w->documents().buffer(w->currentBuffer())->filePath(), file);
+            w->findChild<QAction*>(QStringLiteral("actionClose"))->trigger();
+            QCoreApplication::processEvents();
+        }
+    }
+
     void switchingToDarkRestylesThePage()
     {
         // La hoja de estilo de la página no recibe PaletteChange al cambiar de modo: se

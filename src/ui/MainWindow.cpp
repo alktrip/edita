@@ -445,6 +445,9 @@ MainWindow::MainWindow(QWidget* parent)
         if (const Buffer* buf = _documents.buffer(id); buf && !buf->isUntitled()) {
             removeRecentFile(buf->filePath());
             notifyPlugins(NPPN_FILEOPENED, id);
+            // Un archivo abierto: la página de inicio deja paso al editor, aunque se hubiera
+            // abierto desde Ayuda o tras tocar «Mostrar al iniciar» (seguía encima)
+            _welcomeForced = false;
             QTimer::singleShot(0, this, [this, id] { attachToLsp(id); }); // ya con su lenguaje
         }
     });
