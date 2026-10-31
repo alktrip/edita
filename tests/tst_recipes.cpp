@@ -17,13 +17,16 @@
 #include <QAction>
 #include <QDir>
 #include <QDirIterator>
+#include <QDockWidget>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLineEdit>
 #include <QLibraryInfo>
 #include <QPlainTextEdit>
 #include <QProcess>
+#include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -230,6 +233,110 @@ extern "C" __declspec(dllexport) BOOL isUnicode() { return TRUE; }
                     {"unidemo-2.0/include/Notepad_plus_msgs.h", msgs},
                     {"unidemo-2.0/src/plugin.cpp", plugin},
                     {"unidemo-2.0/src/resource.h", "#pragma once\n#define GREETING L\"¡hola ñandú!\"\n"}});
+}
+
+// Fase 52: un plugin con un panel acoplable hecho con las clases de la plantilla oficial de
+// N++ (Window, StaticDialog, DockingDlgInterface: tests/fixtures/npp-plugintemplate, sin
+// cambios). Como los .rc todavía no se leen, el panel crea sus controles con CreateWindowEx
+QByteArray templatePanelSource()
+{
+    const QByteArray plugin = R"cpp(#include "PluginInterface.h"
+#include "DockingFeature/DockingDlgInterface.h"
+
+#define IDD_PANEL 2500
+#define IDC_TEXT 2501
+#define IDC_INSERT 2502
+
+NppData nppData;
+FuncItem funcItem[1];
+HINSTANCE module = nullptr;
+
+static HWND currentScintilla() {
+    int which = 0;
+    ::SendMessage(nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&which);
+    return which == 0 ? nppData._scintillaMainHandle : nppData._scintillaSecondHandle;
+}
+
+class PanelDlg : public DockingDlgInterface {
+public:
+    PanelDlg() : DockingDlgInterface(IDD_PANEL) {}
+protected:
+    INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override {
+        switch (message) {
+        case WM_INITDIALOG:
+            ::CreateWindowEx(0, TEXT("EDIT"), TEXT("desde el panel ñ"), WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL, 4, 4, 150, 22,
+                             _hSelf, (HMENU)IDC_TEXT, _hInst, nullptr);
+            ::CreateWindowEx(0, TEXT("BUTTON"), TEXT("&Insertar"), WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 160, 4, 70, 22,
+                             _hSelf, (HMENU)IDC_INSERT, _hInst, nullptr);
+            return TRUE;
+        case WM_SIZE:
+            ::MoveWindow(::GetDlgItem(_hSelf, IDC_TEXT), 4, 4, LOWORD(lParam) - 90, 22, TRUE);
+            ::MoveWindow(::GetDlgItem(_hSelf, IDC_INSERT), LOWORD(lParam) - 80, 4, 70, 22, TRUE);
+            return TRUE;
+        case WM_COMMAND:
+            if (LOWORD(wParam) == IDC_INSERT && HIWORD(wParam) == BN_CLICKED) {
+                wchar_t text[256];
+                ::GetDlgItemText(_hSelf, IDC_TEXT, text, 256);
+                char utf8[1024];
+                ::WideCharToMultiByte(CP_UTF8, 0, text, -1, utf8, sizeof(utf8), nullptr, nullptr);
+                ::SendMessage(currentScintilla(), SCI_REPLACESEL, 0, (LPARAM)utf8);
+                return TRUE;
+            }
+            break;
+        case WM_NOTIFY: {
+            LPNMHDR header = (LPNMHDR)lParam;
+            if (header->hwndFrom == _hParent && LOWORD(header->code) == DMN_CLOSE)
+                ::SendMessage(_hParent, NPPM_SETMENUITEMCHECK, funcItem[0]._cmdID, FALSE);
+            break;
+        }
+        default:
+            break;
+        }
+        return DockingDlgInterface::run_dlgProc(message, wParam, lParam);
+    }
+};
+
+PanelDlg panel;
+
+void showPanel() {
+    if (!panel.isCreated()) {
+        tTbData data{};
+        panel.create(&data);
+        data.uMask = DWS_DF_CONT_RIGHT;
+        data.pszModuleName = panel.getPluginFileName();
+        data.dlgID = 0;
+        ::SendMessage(nppData._nppHandle, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
+    }
+    panel.display();
+    ::SendMessage(nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[0]._cmdID, TRUE);
+}
+
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD reason, LPVOID) {
+    if (reason == DLL_PROCESS_ATTACH) {
+        module = (HINSTANCE)hModule;
+        lstrcpy(funcItem[0]._itemName, TEXT("Panel"));
+        funcItem[0]._pFunc = showPanel;
+    }
+    return TRUE;
+}
+extern "C" __declspec(dllexport) void setInfo(NppData data) {
+    nppData = data;
+    panel.init(module, nppData._nppHandle);
+}
+extern "C" __declspec(dllexport) const wchar_t* getName() { return L"Panel Demo"; }
+extern "C" __declspec(dllexport) FuncItem* getFuncsArray(int* n) { *n = 1; return funcItem; }
+extern "C" __declspec(dllexport) void beNotified(SCNotification*) {}
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT, WPARAM, LPARAM) { return TRUE; }
+extern "C" __declspec(dllexport) BOOL isUnicode() { return TRUE; }
+)cpp";
+    std::map<QString, QByteArray> files{{"paneldemo-1.0/src/PanelDemo.cpp", plugin}};
+    const QString fixture = QStringLiteral(EDITA_FIXTURES_DIR "/npp-plugintemplate/src");
+    QDirIterator it(fixture, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString path = it.next();
+        files["paneldemo-1.0/src/" + QDir(fixture).relativeFilePath(path)] = readFile(path);
+    }
+    return makeZip(files);
 }
 
 void writeRecipe(const QString& dir, const QString& source, const QString& sha, bool withPatch = true,
@@ -597,6 +704,86 @@ private slots:
         EditaCommunicationInfo info{7, "Otro.so", nullptr};
         QCOMPARE(plugin->messageProc(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("UniDemo.so"), reinterpret_cast<intptr_t>(&info)),
                  intptr_t{7});
+    }
+
+    void builderCompilesATemplateDockingPlugin()
+    {
+        const QByteArray source = templatePanelSource();
+        const QString dir = recipesDir() + "/PanelDemo";
+        writeFile(dir + "/recipe.json",
+                  QJsonDocument(QJsonObject{{"folder-name", "PanelDemo"}, {"display-name", "Panel Demo"}, {"version", "1.0"},
+                                            {"source", QJsonObject{{"url", "x"}, {"sha256", plugin_installer::sha256Hex(source)}}},
+                                            {"overlay", "overlay"}, {"build-dir", "edita"}})
+                      .toJson());
+        // La plantilla de N++ tal cual: StaticDialog.cpp se compila sin cambios
+        writeFile(dir + "/overlay/edita/CMakeLists.txt",
+                  "cmake_minimum_required(VERSION 3.20)\nproject(PanelDemo CXX)\n"
+                  "include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)\n"
+                  "edita_npp_plugin(PanelDemo UNICODE SOURCES ../src/PanelDemo.cpp ../src/DockingFeature/StaticDialog.cpp\n"
+                  "                 INCLUDES ../src)\n");
+        PluginRecipe recipe;
+        QVERIFY(PluginRecipe::parse(dir + "/recipe.json", recipe));
+        RecipeBuilder builder(recipe, findPluginSdk(), _tmp.filePath("cache/PanelDemo"));
+        QSignalSpy finished(&builder, &RecipeBuilder::finished);
+        builder.start(source);
+        QVERIFY(finished.wait(180000));
+        QVERIFY2(finished.first().at(0).toBool(), qPrintable(builder.log().right(4000)));
+        QVERIFY(plugin_installer::installPackage(readFile(builder.packagePath()), "PanelDemo", builder.packageSha256(), userPlugins(), false));
+
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        w.show();
+        w.notifyPluginsReady();
+        const PluginManager::Plugin* plugin = nullptr;
+        for (const auto& p : w.plugins()->plugins()) {
+            if (p->path.endsWith(QLatin1String("PanelDemo.so")))
+                plugin = p.get();
+        }
+        QVERIFY2(plugin, qPrintable(w.pluginWarnings().join('\n')));
+        const int panelCommand = plugin->commands[0].cmdId;
+
+        // DockingDlgInterface::create + NPPM_DMMREGASDCKDLG + NPPM_DMMSHOW: un panel de Edita
+        // a la derecha, con el nombre del plugin (el diálogo no tiene título sin su .rc)
+        QVERIFY(w.plugins()->runCommand(panelCommand));
+        QDockWidget* dock = nullptr;
+        for (QDockWidget* d : w.findChildren<QDockWidget*>()) {
+            if (d->objectName().startsWith(QLatin1String("pluginDock_PanelDemo.so")))
+                dock = d;
+        }
+        QVERIFY(dock);
+        QCOMPARE(dock->windowTitle(), QStringLiteral("Panel Demo"));
+        QCOMPARE(w.dockWidgetArea(dock), Qt::RightDockWidgetArea);
+        QVERIFY(dock->isVisible());
+        QVERIFY(w.plugins()->command(panelCommand)->checked);
+        // Los controles que creó en WM_INITDIALOG
+        auto* line = dock->findChild<QLineEdit*>();
+        auto* button = dock->findChild<QPushButton*>();
+        QVERIFY(line && button);
+        QCOMPARE(line->text(), QStringLiteral("desde el panel ñ"));
+        QCOMPARE(button->text(), QStringLiteral("&Insertar"));
+        // WM_SIZE: el panel coloca sus controles
+        dock->widget()->resize(400, 200);
+        QTRY_COMPARE(line->width(), 310);
+        QCOMPARE(button->x(), 320);
+        // BN_CLICKED → WM_COMMAND → GetDlgItemText → SCI_REPLACESEL
+        w.editor()->sends(SCI_SETTEXT, 0, "");
+        button->click();
+        QCOMPARE(w.documents().text(w.currentBuffer()), "desde el panel ñ"s);
+        // Intro en el campo: el botón por defecto
+        line->setText(QStringLiteral(" + Intro"));
+        QTest::keyClick(line, Qt::Key_Return);
+        QCOMPARE(w.documents().text(w.currentBuffer()), "desde el panel ñ + Intro"s);
+        // Cerrar el panel: DMN_CLOSE, y el plugin desmarca su orden
+        dock->close();
+        QTRY_VERIFY(!w.plugins()->command(panelCommand)->checked);
+        QVERIFY(!dock->isVisible());
+        // Volver a abrirlo: el mismo panel
+        QVERIFY(w.plugins()->runCommand(panelCommand));
+        QVERIFY(dock->isVisible());
+        int panels = 0;
+        for (QDockWidget* d : w.findChildren<QDockWidget*>())
+            panels += d->objectName().startsWith(QLatin1String("pluginDock_PanelDemo.so")) ? 1 : 0;
+        QCOMPARE(panels, 1);
     }
 
     void fixWindowsIncludes()

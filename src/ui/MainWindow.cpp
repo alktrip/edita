@@ -788,9 +788,10 @@ MainWindow::~MainWindow()
     _searchView->send(SCI_RELEASEDOCUMENT, 0, _searchViewDefaultDoc);
     _searchView.reset();
     // Los paneles de los plugins son código de los plugins: se destruyen antes de descargarlos
-    for (PluginDock& dock : _pluginDocks)
-        delete dock.dock;
+    const std::vector<PluginDock> docks = std::move(_pluginDocks);
     _pluginDocks.clear();
+    for (const PluginDock& dock : docks)
+        delete dock.dock;
     _plugins.reset();
     _mainAuto.reset();
     _subAuto.reset();
@@ -4653,6 +4654,15 @@ intptr_t MainWindow::registerPluginDock(const EditaDockData& dockData)
     addDockWidget(kAreas[container], entry.dock);
     entry.dock->setFloating((dockData.uMask & DWS_DF_FLOATING) != 0);
     entry.dock->hide(); // se muestra con NPPM_DMMSHOW, como en N++
+    // Si el plugin destruye su ventana (DestroyWindow en la capa de N++), el panel se va con ella
+    QDockWidget* dock = entry.dock;
+    connect(client, &QObject::destroyed, dock, [this, client, dock] {
+        const auto it = std::find_if(_pluginDocks.begin(), _pluginDocks.end(), [client](const PluginDock& d) { return d.client == client; });
+        if (it == _pluginDocks.end())
+            return; // Edita está cerrando sus paneles
+        _pluginDocks.erase(it);
+        dock->deleteLater();
+    });
     _pluginDocks.push_back(entry);
     return 1;
 }

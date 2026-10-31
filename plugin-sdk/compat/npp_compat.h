@@ -274,7 +274,7 @@ typedef int errno_t;
 #define MAKELONG(a, b) ((LONG)(((WORD)(((DWORD_PTR)(a)) & 0xffff)) | ((DWORD)((WORD)(((DWORD_PTR)(b)) & 0xffff))) << 16))
 #define MAKEWPARAM(l, h) ((WPARAM)(DWORD)MAKELONG(l, h))
 #define MAKELPARAM(l, h) ((LPARAM)(DWORD)MAKELONG(l, h))
-#define RGB(r, g, b) ((COLORREF)(((BYTE)(r) | ((WORD)((BYTE)(g)) << 8)) | (((DWORD)(BYTE)(b)) << 16)))
+#define RGB(r, g, b) ((COLORREF)(((DWORD)(BYTE)(r)) | (((DWORD)(BYTE)(g)) << 8) | (((DWORD)(BYTE)(b)) << 16)))
 #define GetRValue(rgb) ((BYTE)(rgb))
 #define GetGValue(rgb) ((BYTE)(((WORD)(rgb)) >> 8))
 #define GetBValue(rgb) ((BYTE)((rgb) >> 16))
@@ -590,6 +590,45 @@ typedef PWIN32_FIND_DATAA PWIN32_FIND_DATA;
 #define STRSAFE_E_INVALID_PARAMETER ((HRESULT)0x80070057L)
 #define STRSAFE_MAX_CCH 2147483647
 
+/* Idiomas */
+#define MAKELANGID(p, s) ((((WORD)(s)) << 10) | (WORD)(p))
+#define PRIMARYLANGID(l) ((WORD)(l) & 0x3ff)
+#define SUBLANGID(l) ((WORD)(l) >> 10)
+#define LANG_NEUTRAL 0x00
+#define LANG_ENGLISH 0x09
+#define LANG_SPANISH 0x0a
+#define SUBLANG_NEUTRAL 0x00
+#define SUBLANG_DEFAULT 0x01
+#define SUBLANG_SYS_DEFAULT 0x02
+#define SUBLANG_ENGLISH_US 0x01
+#define LOCALE_USER_DEFAULT 0x0400
+#define LOCALE_SYSTEM_DEFAULT 0x0800
+
+/* FormatMessage */
+#define FORMAT_MESSAGE_ALLOCATE_BUFFER 0x00000100
+#define FORMAT_MESSAGE_IGNORE_INSERTS 0x00000200
+#define FORMAT_MESSAGE_FROM_STRING 0x00000400
+#define FORMAT_MESSAGE_FROM_HMODULE 0x00000800
+#define FORMAT_MESSAGE_FROM_SYSTEM 0x00001000
+#define FORMAT_MESSAGE_ARGUMENT_ARRAY 0x00002000
+#define FORMAT_MESSAGE_MAX_WIDTH_MASK 0x000000FF
+
+/* Hilos, eventos y esperas */
+#define INFINITE 0xFFFFFFFF
+#define WAIT_OBJECT_0 0x00000000L
+#define WAIT_ABANDONED 0x00000080L
+#define WAIT_TIMEOUT 0x00000102L
+#define WAIT_FAILED ((DWORD)0xFFFFFFFF)
+#define STILL_ACTIVE 259
+#define CREATE_SUSPENDED 0x00000004
+typedef DWORD (*LPTHREAD_START_ROUTINE)(LPVOID);
+typedef struct _CRITICAL_SECTION { void* impl; } CRITICAL_SECTION, *LPCRITICAL_SECTION, *PCRITICAL_SECTION;
+#define InterlockedIncrement(p) __atomic_add_fetch((p), 1, __ATOMIC_SEQ_CST)
+#define InterlockedDecrement(p) __atomic_sub_fetch((p), 1, __ATOMIC_SEQ_CST)
+#define InterlockedExchange(p, v) __atomic_exchange_n((p), (v), __ATOMIC_SEQ_CST)
+#define InterlockedExchangeAdd(p, v) __atomic_fetch_add((p), (v), __ATOMIC_SEQ_CST)
+#define InterlockedCompareExchange(p, v, c) __sync_val_compare_and_swap((p), (c), (v))
+
 /* Memoria (kernel32: macros de winnt.h) */
 #define ZeroMemory(d, n) memset((d), 0, (n))
 #define SecureZeroMemory(d, n) memset((d), 0, (n))
@@ -603,6 +642,35 @@ typedef PWIN32_FIND_DATAA PWIN32_FIND_DATA;
 /* --- Funciones de Win32 (npp_win32.cpp) ----------------------------------------- */
 EDITA_COMPAT_BEGIN
 
+/* Hilos (std::thread), eventos, mutex y secciones críticas */
+HANDLE CreateThread(LPSECURITY_ATTRIBUTES security, SIZE_T stack, LPTHREAD_START_ROUTINE start, LPVOID param, DWORD flags,
+                    LPDWORD threadId);
+BOOL GetExitCodeThread(HANDLE thread, LPDWORD code);
+DWORD ResumeThread(HANDLE thread);
+HANDLE CreateEventA(LPSECURITY_ATTRIBUTES security, BOOL manualReset, BOOL initialState, LPCSTR name);
+HANDLE CreateEventW(LPSECURITY_ATTRIBUTES security, BOOL manualReset, BOOL initialState, LPCWSTR name);
+BOOL SetEvent(HANDLE event);
+BOOL ResetEvent(HANDLE event);
+HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES security, BOOL initialOwner, LPCSTR name);
+HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES security, BOOL initialOwner, LPCWSTR name);
+BOOL ReleaseMutex(HANDLE mutex);
+DWORD WaitForSingleObject(HANDLE handle, DWORD milliseconds);
+DWORD WaitForMultipleObjects(DWORD count, const HANDLE* handles, BOOL waitAll, DWORD milliseconds);
+void InitializeCriticalSection(LPCRITICAL_SECTION section);
+BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION section, DWORD spinCount);
+void DeleteCriticalSection(LPCRITICAL_SECTION section);
+void EnterCriticalSection(LPCRITICAL_SECTION section);
+void LeaveCriticalSection(LPCRITICAL_SECTION section);
+BOOL TryEnterCriticalSection(LPCRITICAL_SECTION section);
+
+/* FormatMessage: FROM_SYSTEM (los códigos de error de esta capa) y FROM_STRING (%1…) */
+DWORD FormatMessageA(DWORD flags, LPCVOID source, DWORD messageId, DWORD languageId, LPSTR buffer, DWORD size, va_list* args);
+DWORD FormatMessageW(DWORD flags, LPCVOID source, DWORD messageId, DWORD languageId, LPWSTR buffer, DWORD size, va_list* args);
+LANGID GetUserDefaultUILanguage(void);
+LANGID GetUserDefaultLangID(void);
+LANGID GetSystemDefaultLangID(void);
+LCID GetUserDefaultLCID(void);
+
 /* El módulo del plugin (el HINSTANCE que recibe DllMain) */
 HINSTANCE edita_compat_module(void);
 
@@ -612,6 +680,7 @@ void SetLastError(DWORD error);
 
 /* Mensajes al editor (npp_compat.cpp) */
 LRESULT edita_compat_SendMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+BOOL edita_compat_PostMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 /* Cuadros de mensaje */
 int MessageBoxA(HWND parent, LPCSTR text, LPCSTR caption, UINT type);
@@ -914,14 +983,12 @@ inline LRESULT SendMessage(HWND hwnd, UINT message, W wParam, L lParam)
 }
 inline BOOL PostMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    edita_compat_SendMessage(hwnd, message, wParam, lParam);
-    return TRUE;
+    return edita_compat_PostMessage(hwnd, message, wParam, lParam);
 }
 template<typename W, typename L>
 inline BOOL PostMessage(HWND hwnd, UINT message, W wParam, L lParam)
 {
-    edita_compat_SendMessage(hwnd, message, (WPARAM)wParam, (LPARAM)lParam);
-    return TRUE;
+    return edita_compat_PostMessage(hwnd, message, (WPARAM)wParam, (LPARAM)lParam);
 }
 template<typename N, typename P>
 inline HWND CreateDialogParam(HINSTANCE instance, N name, HWND parent, P proc, LPARAM init)
@@ -940,7 +1007,7 @@ inline INT_PTR DialogBox(HINSTANCE instance, N name, HWND parent, P proc)
 }
 #else
 #define SendMessage(h, m, w, l) edita_compat_SendMessage((HWND)(h), (UINT)(m), (WPARAM)(w), (LPARAM)(l))
-#define PostMessage(h, m, w, l) (edita_compat_SendMessage((HWND)(h), (UINT)(m), (WPARAM)(w), (LPARAM)(l)), TRUE)
+#define PostMessage(h, m, w, l) edita_compat_PostMessage((HWND)(h), (UINT)(m), (WPARAM)(w), (LPARAM)(l))
 #define CreateDialogParam(i, n, p, d, l) edita_compat_CreateDialogParam((i), (const void*)(n), (p), (void*)(d), (l))
 #define DialogBoxParam(i, n, p, d, l) edita_compat_DialogBoxParam((i), (const void*)(n), (p), (void*)(d), (l))
 #define DialogBox(i, n, p, d) edita_compat_DialogBoxParam((i), (const void*)(n), (p), (void*)(d), 0)
@@ -953,19 +1020,6 @@ inline INT_PTR DialogBox(HINSTANCE instance, N name, HWND parent, P proc)
 #define CreateDialogParamW CreateDialogParam
 #define DialogBoxParamA DialogBoxParam
 #define DialogBoxParamW DialogBoxParam
-
-/* Ventanas: los diálogos de recursos no existen; estas no hacen nada */
-static inline BOOL EndDialog(HWND w, INT_PTR r) { (void)w; (void)r; return TRUE; }
-static inline BOOL GetClientRect(HWND w, LPRECT r) { (void)w; if (r) { r->left = r->top = 0; r->right = r->bottom = 0; } return TRUE; }
-static inline BOOL GetWindowRect(HWND w, LPRECT r) { return GetClientRect(w, r); }
-static inline BOOL ClientToScreen(HWND w, LPPOINT p) { (void)w; (void)p; return TRUE; }
-static inline BOOL SetWindowPos(HWND w, HWND a, int x, int y, int cx, int cy, UINT f) { (void)w; (void)a; (void)x; (void)y; (void)cx; (void)cy; (void)f; return TRUE; }
-static inline BOOL ShowWindow(HWND w, int c) { (void)w; (void)c; return TRUE; }
-static inline BOOL DestroyWindow(HWND w) { (void)w; return TRUE; }
-static inline BOOL IsWindowVisible(HWND w) { (void)w; return FALSE; }
-static inline HWND GetDlgItem(HWND w, int id) { (void)w; (void)id; return 0; }
-static inline BOOL SetDlgItemTextA(HWND w, int id, LPCSTR t) { (void)w; (void)id; (void)t; return TRUE; }
-static inline BOOL SetDlgItemTextW(HWND w, int id, LPCWSTR t) { (void)w; (void)id; (void)t; return TRUE; }
 
 /* --- Nombres genéricos: la variante A o W según UNICODE ----------------------------- */
 #ifdef UNICODE
@@ -1011,6 +1065,9 @@ static inline BOOL SetDlgItemTextW(HWND w, int id, LPCWSTR t) { (void)w; (void)i
 #define SetEnvironmentVariable EDITA_COMPAT_AW(SetEnvironmentVariable)
 #define ExpandEnvironmentStrings EDITA_COMPAT_AW(ExpandEnvironmentStrings)
 #define OutputDebugString EDITA_COMPAT_AW(OutputDebugString)
+#define CreateEvent EDITA_COMPAT_AW(CreateEvent)
+#define CreateMutex EDITA_COMPAT_AW(CreateMutex)
+#define FormatMessage EDITA_COMPAT_AW(FormatMessage)
 #define RegisterClipboardFormat EDITA_COMPAT_AW(RegisterClipboardFormat)
 #define PathFileExists EDITA_COMPAT_AW(PathFileExists)
 #define PathIsDirectory EDITA_COMPAT_AW(PathIsDirectory)
@@ -1198,7 +1255,27 @@ static inline BOOL SetDlgItemTextW(HWND w, int id, LPCWSTR t) { (void)w; (void)i
 #define _totlower tolower
 #endif
 
+/* --- Ventanas (npp_window.cpp) -------------------------------------------------------- */
+#include "npp_compat_user.h"
+
+/* --- Lo que N++ quitó de su Scintilla.h y Scintilla todavía atiende ------------------- */
+#include "Sci_Position.h"
+#ifndef SCI_GETTEXTRANGE
+#define SCI_GETSTYLEDTEXT 2015
+#define SCI_FINDTEXT 2150
+#define SCI_FORMATRANGE 2151
+#define SCI_GETTEXTRANGE 2162
+struct Sci_CharacterRange { Sci_PositionCR cpMin; Sci_PositionCR cpMax; };
+struct Sci_TextRange { struct Sci_CharacterRange chrg; char* lpstrText; };
+struct Sci_TextToFind { struct Sci_CharacterRange chrg; const char* lpstrText; struct Sci_CharacterRange chrgText; };
+#endif
+
 #ifdef __cplusplus
+/* min y max de windows.h: como funciones (las macros romperían la biblioteca de C++) */
+#include <algorithm>
+using std::max;
+using std::min;
+
 /* std::swprintf y std::vswprintf, con las macros de arriba */
 namespace std {
 using ::edita_compat_swprintf;

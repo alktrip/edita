@@ -26,6 +26,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QLocale>
 #include <QMessageBox>
 #include <QMimeData>
 #include <QProcess>
@@ -37,6 +38,8 @@
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
 #include <climits>
 #include <cwchar>
 #include <map>
@@ -1297,6 +1300,241 @@ void toSystemTime(const QDateTime& time, LPSYSTEMTIME out)
     out->wMilliseconds = static_cast<WORD>(clock.msec());
 }
 
+// --- Hilos, eventos y mutex -------------------------------------------------------------------
+
+constexpr uint32_t kSyncMagic = 0x53594E43; // "SYNC"
+
+// Un objeto que se puede esperar (WaitForSingleObject): hilo, evento o mutex
+struct SyncHandle
+{
+    uint32_t magic = kSyncMagic;
+    enum class Kind { Thread, Event, Mutex } kind = Kind::Event;
+    std::mutex mutex;
+    std::condition_variable changed;
+    bool signaled = false;     // hilo terminado, evento activo, mutex libre
+    bool manualReset = true;   // eventos
+    std::thread::id owner;     // mutex
+    int recursion = 0;
+    DWORD exitCode = STILL_ACTIVE;
+    std::thread thread;
+    LPTHREAD_START_ROUTINE start = nullptr;
+    LPVOID param = nullptr;
+    int references = 1;        // el handle y, para los hilos, el hilo mismo
+};
+
+SyncHandle* syncHandle(HANDLE handle)
+{
+    auto* sync = static_cast<SyncHandle*>(handle);
+    if (!sync || handle == INVALID_HANDLE_VALUE || sync->magic != kSyncMagic)
+        return nullptr;
+    return sync;
+}
+
+void releaseSync(SyncHandle* sync)
+{
+    bool last = false;
+    {
+        std::lock_guard<std::mutex> lock(sync->mutex);
+        last = --sync->references == 0;
+    }
+    if (last) {
+        if (sync->thread.joinable())
+            sync->thread.detach();
+        sync->magic = 0;
+        delete sync;
+    }
+}
+
+void runThread(SyncHandle* sync)
+{
+    const DWORD code = sync->start ? sync->start(sync->param) : 0;
+    {
+        std::lock_guard<std::mutex> lock(sync->mutex);
+        sync->exitCode = code;
+        sync->signaled = true;
+    }
+    sync->changed.notify_all();
+    releaseSync(sync);
+}
+
+void startThread(SyncHandle* sync)
+{
+    {
+        std::lock_guard<std::mutex> lock(sync->mutex);
+        ++sync->references;
+    }
+    sync->thread = std::thread(runThread, sync);
+    sync->thread.detach();
+}
+
+// ¿Se puede tomar ya? Si sí, lo toma (eventos automáticos, mutex)
+bool tryAcquire(SyncHandle* sync)
+{
+    switch (sync->kind) {
+    case SyncHandle::Kind::Thread:
+        return sync->signaled;
+    case SyncHandle::Kind::Event:
+        if (!sync->signaled)
+            return false;
+        if (!sync->manualReset)
+            sync->signaled = false;
+        return true;
+    case SyncHandle::Kind::Mutex:
+        if (sync->recursion > 0 && sync->owner != std::this_thread::get_id())
+            return false;
+        sync->owner = std::this_thread::get_id();
+        ++sync->recursion;
+        return true;
+    }
+    return false;
+}
+
+DWORD waitFor(SyncHandle* sync, DWORD milliseconds)
+{
+    std::unique_lock<std::mutex> lock(sync->mutex);
+    if (milliseconds == INFINITE) {
+        sync->changed.wait(lock, [sync] { return tryAcquire(sync); });
+        return WAIT_OBJECT_0;
+    }
+    return sync->changed.wait_for(lock, std::chrono::milliseconds(milliseconds), [sync] { return tryAcquire(sync); })
+               ? WAIT_OBJECT_0
+               : WAIT_TIMEOUT;
+}
+
+HANDLE createEvent(BOOL manualReset, BOOL initialState)
+{
+    auto* sync = new SyncHandle;
+    sync->kind = SyncHandle::Kind::Event;
+    sync->manualReset = manualReset != FALSE;
+    sync->signaled = initialState != FALSE;
+    return sync;
+}
+
+HANDLE createMutex(BOOL initialOwner)
+{
+    auto* sync = new SyncHandle;
+    sync->kind = SyncHandle::Kind::Mutex;
+    if (initialOwner) {
+        sync->owner = std::this_thread::get_id();
+        sync->recursion = 1;
+    }
+    return sync;
+}
+
+// --- FormatMessage ------------------------------------------------------------------------------
+
+QString systemMessage(DWORD code)
+{
+    switch (code) {
+    case ERROR_SUCCESS: return QStringLiteral("The operation completed successfully.");
+    case ERROR_FILE_NOT_FOUND: return QStringLiteral("The system cannot find the file specified.");
+    case ERROR_PATH_NOT_FOUND: return QStringLiteral("The system cannot find the path specified.");
+    case ERROR_ACCESS_DENIED: return QStringLiteral("Access is denied.");
+    case ERROR_INVALID_HANDLE: return QStringLiteral("The handle is invalid.");
+    case ERROR_NOT_ENOUGH_MEMORY: return QStringLiteral("Not enough memory resources are available to process this command.");
+    case ERROR_NO_MORE_FILES: return QStringLiteral("There are no more files.");
+    case ERROR_FILE_EXISTS: return QStringLiteral("The file exists.");
+    case ERROR_INVALID_PARAMETER: return QStringLiteral("The parameter is incorrect.");
+    case ERROR_INSUFFICIENT_BUFFER: return QStringLiteral("The data area passed to a system call is too small.");
+    case ERROR_ALREADY_EXISTS: return QStringLiteral("Cannot create a file when that file already exists.");
+    case ERROR_NO_UNICODE_TRANSLATION: return QStringLiteral("No mapping for the Unicode character exists in the target multi-byte code page.");
+    default: return QStringLiteral("Error %1.").arg(code);
+    }
+}
+
+// %1…%99 con los argumentos (cadenas), %n salto de línea, %% un %
+QString expandInserts(const QString& format, va_list* args, bool wide, bool argumentArray)
+{
+    QString out;
+    std::vector<QString> values;
+    auto argument = [&](int index) -> QString {
+        if (!args)
+            return {};
+        while (static_cast<int>(values.size()) < index) {
+            if (argumentArray) {
+                auto* array = reinterpret_cast<const uintptr_t*>(args);
+                const uintptr_t value = array[values.size()];
+                values.push_back(wide ? fromW(reinterpret_cast<const wchar_t*>(value)) : fromA(reinterpret_cast<const char*>(value)));
+            } else {
+                const void* value = va_arg(*args, const void*);
+                values.push_back(wide ? fromW(static_cast<const wchar_t*>(value)) : fromA(static_cast<const char*>(value)));
+            }
+        }
+        return values[static_cast<std::size_t>(index - 1)];
+    };
+    for (qsizetype i = 0; i < format.size(); ++i) {
+        const QChar c = format[i];
+        if (c != QLatin1Char('%') || i + 1 >= format.size()) {
+            out += c;
+            continue;
+        }
+        const QChar next = format[i + 1];
+        if (next == QLatin1Char('n')) {
+            out += QStringLiteral("\r\n");
+            ++i;
+        } else if (next.isDigit() && next != QLatin1Char('0')) {
+            int index = next.digitValue();
+            ++i;
+            if (i + 1 < format.size() && format[i + 1].isDigit())
+                index = index * 10 + format[++i].digitValue();
+            // %1!s! y compañía: el tipo se ignora (todo son cadenas)
+            if (i + 1 < format.size() && format[i + 1] == QLatin1Char('!')) {
+                const qsizetype end = format.indexOf(QLatin1Char('!'), i + 2);
+                if (end > 0)
+                    i = end;
+            }
+            out += argument(index);
+        } else {
+            out += next;
+            ++i;
+        }
+    }
+    return out;
+}
+
+template<typename Ch>
+DWORD formatMessage(DWORD flags, LPCVOID source, DWORD messageId, Ch* buffer, DWORD size, va_list* args)
+{
+    constexpr bool wide = sizeof(Ch) != 1;
+    QString text;
+    if (flags & FORMAT_MESSAGE_FROM_STRING)
+        text = wide ? fromW(static_cast<const wchar_t*>(source)) : fromA(static_cast<const char*>(source));
+    else if (flags & FORMAT_MESSAGE_FROM_SYSTEM)
+        text = systemMessage(messageId) + QStringLiteral("\r\n");
+    else {
+        t_lastError = 317; // ERROR_MR_MID_NOT_FOUND
+        return 0;
+    }
+    if (!(flags & FORMAT_MESSAGE_IGNORE_INSERTS))
+        text = expandInserts(text, args, wide, (flags & FORMAT_MESSAGE_ARGUMENT_ARRAY) != 0);
+    const std::basic_string<Ch> converted = toT<Ch>(text);
+    if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
+        // buffer es un Ch**: la memoria se libera con LocalFree
+        auto* memory = static_cast<Ch*>(globalAlloc((converted.size() + 1) * sizeof(Ch), true));
+        if (!memory)
+            return 0;
+        std::copy_n(converted.c_str(), converted.size() + 1, memory);
+        *reinterpret_cast<Ch**>(buffer) = memory;
+        return static_cast<DWORD>(converted.size());
+    }
+    if (!buffer || size <= converted.size()) {
+        t_lastError = ERROR_INSUFFICIENT_BUFFER;
+        return 0;
+    }
+    std::copy_n(converted.c_str(), converted.size() + 1, buffer);
+    return static_cast<DWORD>(converted.size());
+}
+
+LANGID userLanguage()
+{
+    // El idioma de Edita (QLocale), como LANGID de Windows
+    switch (QLocale().language()) {
+    case QLocale::Spanish: return MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT);
+    case QLocale::English: return MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US);
+    default: return MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+    }
+}
+
 } // namespace
 
 // =============================================================================================
@@ -1951,6 +2189,10 @@ BOOL FlushFileBuffers(HANDLE handle)
 
 BOOL CloseHandle(HANDLE handle)
 {
+    if (SyncHandle* sync = syncHandle(handle)) {
+        releaseSync(sync);
+        return TRUE;
+    }
     if (FileHandle* file = fileHandle(handle)) {
         ::close(file->fd);
         file->magic = 0;
@@ -2557,5 +2799,175 @@ HRESULT StringCbPrintfW(LPWSTR dst, size_t bytes, LPCWSTR format, ...)
     va_end(args);
     return result;
 }
+
+// --- Hilos, eventos y mutex -----------------------------------------------------------------------
+
+HANDLE CreateThread(LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE start, LPVOID param, DWORD flags, LPDWORD threadId)
+{
+    auto* sync = new SyncHandle;
+    sync->kind = SyncHandle::Kind::Thread;
+    sync->start = start;
+    sync->param = param;
+    if (threadId)
+        *threadId = static_cast<DWORD>(reinterpret_cast<uintptr_t>(sync) & 0xFFFFFFFFu);
+    if (!(flags & CREATE_SUSPENDED))
+        startThread(sync);
+    return sync;
+}
+
+DWORD ResumeThread(HANDLE thread)
+{
+    SyncHandle* sync = syncHandle(thread);
+    if (!sync || sync->kind != SyncHandle::Kind::Thread)
+        return static_cast<DWORD>(-1);
+    if (sync->start && !sync->signaled && !sync->thread.joinable() && sync->references == 1) {
+        startThread(sync);
+        return 1;
+    }
+    return 0;
+}
+
+BOOL GetExitCodeThread(HANDLE thread, LPDWORD code)
+{
+    SyncHandle* sync = syncHandle(thread);
+    if (!sync || sync->kind != SyncHandle::Kind::Thread || !code)
+        return FALSE;
+    std::lock_guard<std::mutex> lock(sync->mutex);
+    *code = sync->exitCode;
+    return TRUE;
+}
+
+HANDLE CreateEventA(LPSECURITY_ATTRIBUTES, BOOL manualReset, BOOL initialState, LPCSTR) { return createEvent(manualReset, initialState); }
+HANDLE CreateEventW(LPSECURITY_ATTRIBUTES, BOOL manualReset, BOOL initialState, LPCWSTR) { return createEvent(manualReset, initialState); }
+HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES, BOOL initialOwner, LPCSTR) { return createMutex(initialOwner); }
+HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES, BOOL initialOwner, LPCWSTR) { return createMutex(initialOwner); }
+
+BOOL SetEvent(HANDLE event)
+{
+    SyncHandle* sync = syncHandle(event);
+    if (!sync || sync->kind != SyncHandle::Kind::Event)
+        return FALSE;
+    {
+        std::lock_guard<std::mutex> lock(sync->mutex);
+        sync->signaled = true;
+    }
+    sync->changed.notify_all();
+    return TRUE;
+}
+
+BOOL ResetEvent(HANDLE event)
+{
+    SyncHandle* sync = syncHandle(event);
+    if (!sync || sync->kind != SyncHandle::Kind::Event)
+        return FALSE;
+    std::lock_guard<std::mutex> lock(sync->mutex);
+    sync->signaled = false;
+    return TRUE;
+}
+
+BOOL ReleaseMutex(HANDLE mutex)
+{
+    SyncHandle* sync = syncHandle(mutex);
+    if (!sync || sync->kind != SyncHandle::Kind::Mutex)
+        return FALSE;
+    {
+        std::lock_guard<std::mutex> lock(sync->mutex);
+        if (sync->recursion == 0 || sync->owner != std::this_thread::get_id())
+            return FALSE;
+        --sync->recursion;
+    }
+    sync->changed.notify_all();
+    return TRUE;
+}
+
+DWORD WaitForSingleObject(HANDLE handle, DWORD milliseconds)
+{
+    SyncHandle* sync = syncHandle(handle);
+    if (!sync) {
+        t_lastError = ERROR_INVALID_HANDLE;
+        return WAIT_FAILED;
+    }
+    return waitFor(sync, milliseconds);
+}
+
+DWORD WaitForMultipleObjects(DWORD count, const HANDLE* handles, BOOL waitAll, DWORD milliseconds)
+{
+    // Por turnos: suficiente para esperar a varios hilos o eventos
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(milliseconds == INFINITE ? 0 : milliseconds);
+    std::vector<bool> done(count, false);
+    for (;;) {
+        DWORD finished = 0;
+        for (DWORD i = 0; i < count; ++i) {
+            SyncHandle* sync = syncHandle(handles[i]);
+            if (!sync)
+                return WAIT_FAILED;
+            if (!done[i] && waitFor(sync, 0) == WAIT_OBJECT_0) {
+                done[i] = true;
+                if (!waitAll)
+                    return static_cast<DWORD>(WAIT_OBJECT_0) + i;
+            }
+            finished += done[i] ? 1u : 0u;
+        }
+        if (finished == count)
+            return WAIT_OBJECT_0;
+        if (milliseconds != INFINITE && std::chrono::steady_clock::now() >= deadline)
+            return WAIT_TIMEOUT;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
+
+void InitializeCriticalSection(LPCRITICAL_SECTION section)
+{
+    if (section)
+        section->impl = new std::recursive_mutex;
+}
+
+BOOL InitializeCriticalSectionAndSpinCount(LPCRITICAL_SECTION section, DWORD)
+{
+    InitializeCriticalSection(section);
+    return TRUE;
+}
+
+void DeleteCriticalSection(LPCRITICAL_SECTION section)
+{
+    if (section) {
+        delete static_cast<std::recursive_mutex*>(section->impl);
+        section->impl = nullptr;
+    }
+}
+
+void EnterCriticalSection(LPCRITICAL_SECTION section)
+{
+    if (section && section->impl)
+        static_cast<std::recursive_mutex*>(section->impl)->lock();
+}
+
+void LeaveCriticalSection(LPCRITICAL_SECTION section)
+{
+    if (section && section->impl)
+        static_cast<std::recursive_mutex*>(section->impl)->unlock();
+}
+
+BOOL TryEnterCriticalSection(LPCRITICAL_SECTION section)
+{
+    return section && section->impl && static_cast<std::recursive_mutex*>(section->impl)->try_lock() ? TRUE : FALSE;
+}
+
+// --- FormatMessage e idioma --------------------------------------------------------------------------
+
+DWORD FormatMessageA(DWORD flags, LPCVOID source, DWORD messageId, DWORD, LPSTR buffer, DWORD size, va_list* args)
+{
+    return formatMessage(flags, source, messageId, buffer, size, args);
+}
+
+DWORD FormatMessageW(DWORD flags, LPCVOID source, DWORD messageId, DWORD, LPWSTR buffer, DWORD size, va_list* args)
+{
+    return formatMessage(flags, source, messageId, buffer, size, args);
+}
+
+LANGID GetUserDefaultUILanguage(void) { return userLanguage(); }
+LANGID GetUserDefaultLangID(void) { return userLanguage(); }
+LANGID GetSystemDefaultLangID(void) { return userLanguage(); }
+LCID GetUserDefaultLCID(void) { return userLanguage(); }
 
 } // extern "C"

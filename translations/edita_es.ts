@@ -1703,23 +1703,23 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     <name>edita::MainWindow</name>
     <message>
         <location filename="../src/ui/MainWindow.cpp" line="+419"/>
-        <location line="+3669"/>
+        <location line="+3670"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3669"/>
-        <location line="+1317"/>
+        <location line="-3670"/>
+        <location line="+1318"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1223"/>
+        <location line="-1224"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+370"/>
+        <location line="+371"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2398,7 +2398,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-841"/>
+        <location line="-842"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2478,7 +2478,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+728"/>
+        <location line="+729"/>
         <location line="+739"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -3232,12 +3232,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1732"/>
+        <location line="+1741"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2011"/>
+        <location line="-2020"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3615,7 +3615,7 @@ Do you want to save the file anyway?</source>
         <translation>Plugins</translation>
     </message>
     <message>
-        <location line="+458"/>
+        <location line="+467"/>
         <source>editaPluginList.json not found</source>
         <translation>no se encuentra editaPluginList.json</translation>
     </message>

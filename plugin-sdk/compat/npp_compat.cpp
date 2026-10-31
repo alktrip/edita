@@ -14,6 +14,9 @@
 //   - los mensajes NPPM_* con cadenas (rutas, nombres, sesiones…), en los dos sentidos;
 //   - NPPM_MSGTOPLUGIN, en los dos sentidos, con los nombres de módulo de N++
 //     ("Plugin.dll") y de Edita ("Plugin.so").
+// En los dos modos, los mensajes a las ventanas de la capa (npp_window.cpp) van a su
+// procedimiento, y los de Edita que llevan un HWND (paneles acoplables, editores de
+// Scintilla) llevan el QWidget* que espera Edita.
 
 #define EDITA_NPP_COMPAT_GLUE
 #include "npp_compat.h"
@@ -21,7 +24,8 @@
 #include <edita_plugin.h>
 
 #include <QApplication>
-#include <QMessageBox>
+#include <QDockWidget>
+#include <QEvent>
 #include <QString>
 
 #include <algorithm>
@@ -36,6 +40,10 @@
 #endif
 #ifndef EDITA_PLUGIN_HOMEPAGE
 #define EDITA_PLUGIN_HOMEPAGE ""
+#endif
+
+#ifndef NPPM_MODELESSDIALOG
+#define NPPM_MODELESSDIALOG (NPPMSG + 12)
 #endif
 
 namespace {
@@ -243,7 +251,6 @@ LRESULT sendWide(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case NPPM_CREATELEXER:
         return withUtf8(hwnd, message, wParam, lParam);
     case NPPM_LAUNCHFINDINFILESDLG:
-    case NPPM_DMMGETPLUGINHWNDBYNAME:
         return withUtf8Both(hwnd, message, wParam, lParam);
     case NPPM_MSGTOPLUGIN: {
         const auto* info = reinterpret_cast<const NppCommunicationInfo*>(lParam);
@@ -253,10 +260,6 @@ LRESULT sendWide(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         return sendToEdita(hwnd, message, reinterpret_cast<WPARAM>(target.c_str()),
                            info ? reinterpret_cast<LPARAM>(&converted) : 0);
     }
-    case NPPM_DMMREGASDCKDLG:
-        // Los paneles acoplables necesitan las ventanas de la plantilla de N++ (Window,
-        // DockingDlgInterface), que la capa todavía no tiene: tTbData de N++ no es EditaDockData
-        return 0;
     default:
         return sendToEdita(hwnd, message, wParam, lParam);
     }
@@ -264,16 +267,141 @@ LRESULT sendWide(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 #endif // UNICODE
 
-// Los diálogos de los recursos .rc del plugin original no existen en Linux
-void showMissingDialog()
+// --- Paneles acoplables y otras ventanas (los dos modos) -----------------------------------
+
+std::string utf8T(const TCHAR* text)
 {
-    QString text = QStringLiteral("<b>%1 %2</b><br>Plugin de Notepad++ compilado para Edita.<br><br>"
-                                  "Este diálogo del plugin original es de Windows y no está disponible en Linux.")
-                       .arg(QString::fromUtf8(EDITA_PLUGIN_DISPLAY_NAME), QString::fromUtf8(EDITA_PLUGIN_VERSION));
-    const QString homepage = QString::fromUtf8(EDITA_PLUGIN_HOMEPAGE);
-    if (!homepage.isEmpty())
-        text += QStringLiteral("<br><a href=\"%1\">%1</a>").arg(homepage);
-    QMessageBox::information(QApplication::activeWindow(), QString::fromUtf8(EDITA_PLUGIN_DISPLAY_NAME), text);
+#ifdef UNICODE
+    return text ? QString::fromWCharArray(text).toStdString() : std::string();
+#else
+    return text ? std::string(text) : std::string();
+#endif
+}
+
+std::string moduleNameToEdita(const TCHAR* name)
+{
+    QString text = QString::fromStdString(utf8T(name));
+    if (text.endsWith(QLatin1String(".dll"), Qt::CaseInsensitive))
+        text = text.left(text.size() - 4) + QStringLiteral(".so");
+    return text.toStdString();
+}
+
+struct NppTbData // tTbData (DockedWidgetData) de Docking.h
+{
+    HWND hClient;
+    const TCHAR* pszName;
+    int dlgID;
+    UINT uMask;
+    HICON hIconTab;
+    const TCHAR* pszAddInfo;
+    RECT rcFloat;
+    int iPrevCont;
+    const TCHAR* pszModuleName;
+};
+
+constexpr UINT kDmnClose = 1050 + 1; // DMN_CLOSE de dockingResource.h
+constexpr UINT kDmnDock = 1050 + 2;
+constexpr UINT kDmnFloat = 1050 + 3;
+
+void notifyDock(HWND client, UINT code)
+{
+    NMHDR header{g_data.host, 0, code};
+    edita_compat_windowSend(client, WM_NOTIFY, 0, reinterpret_cast<LPARAM>(&header));
+}
+
+// Cerrar, acoplar o soltar el panel de Edita: DMN_CLOSE, DMN_DOCK o DMN_FLOAT al diálogo,
+// como el DockingManager de N++
+class DockWatcher : public QObject
+{
+public:
+    explicit DockWatcher(HWND client, QObject* parent) : QObject(parent), _client(client) {}
+
+    bool eventFilter(QObject* object, QEvent* event) override
+    {
+        if (event->type() == QEvent::Close && edita_compat_isWindow(_client))
+            notifyDock(_client, kDmnClose);
+        return QObject::eventFilter(object, event);
+    }
+
+private:
+    HWND _client;
+};
+
+LRESULT registerDock(HWND hwnd, const NppTbData* data)
+{
+    auto* client = data ? static_cast<QWidget*>(edita_compat_widget(data->hClient)) : nullptr;
+    if (!client)
+        return 0;
+    // El título: el del tTbData, el del diálogo o el del plugin
+    std::string name = utf8T(data->pszName);
+    if (name.empty()) {
+        TCHAR title[256] = {};
+        GetWindowText(data->hClient, title, 256);
+        name = utf8T(title);
+    }
+    if (name.empty())
+        name = EDITA_PLUGIN_DISPLAY_NAME;
+    std::string module = moduleNameToEdita(data->pszModuleName);
+    if (module.empty()) {
+        TCHAR path[MAX_PATH] = {};
+        GetModuleFileName(edita_compat_module(), path, MAX_PATH);
+        module = moduleNameToEdita(PathFindFileName(path));
+    }
+    const std::string addInfo = utf8T(data->pszAddInfo);
+    EditaDockData dock{client, name.c_str(), data->dlgID, data->uMask, nullptr, data->pszAddInfo ? addInfo.c_str() : nullptr,
+                       module.c_str()};
+    const LRESULT registered = sendToEdita(hwnd, NPPM_DMMREGASDCKDLG, 0, reinterpret_cast<LPARAM>(&dock));
+    if (auto* dockWidget = qobject_cast<QDockWidget*>(client->parentWidget()); registered && dockWidget) {
+        HWND hClient = data->hClient;
+        dockWidget->installEventFilter(new DockWatcher(hClient, dockWidget));
+        QObject::connect(dockWidget, &QDockWidget::topLevelChanged, dockWidget, [hClient, dockWidget](bool floating) {
+            if (edita_compat_isWindow(hClient) && dockWidget->isVisible())
+                notifyDock(hClient, floating ? kDmnFloat : kDmnDock);
+        });
+    }
+    return registered;
+}
+
+// Los mensajes a Edita que llevan ventanas, en los dos modos
+bool sendWindowMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT* result)
+{
+    switch (message) {
+    case NPPM_DMMREGASDCKDLG:
+        *result = registerDock(hwnd, reinterpret_cast<const NppTbData*>(lParam));
+        return true;
+    case NPPM_DMMSHOW:
+    case NPPM_DMMHIDE:
+    case NPPM_DMMUPDATEDISPINFO:
+        *result = sendToEdita(hwnd, message, wParam, reinterpret_cast<LPARAM>(edita_compat_widget(reinterpret_cast<HWND>(lParam))));
+        return true;
+    case NPPM_DMMGETPLUGINHWNDBYNAME: {
+        const std::string name = utf8T(reinterpret_cast<const TCHAR*>(wParam));
+        const std::string module = moduleNameToEdita(reinterpret_cast<const TCHAR*>(lParam));
+        void* widget = reinterpret_cast<void*>(sendToEdita(hwnd, message, reinterpret_cast<WPARAM>(name.c_str()),
+                                                           lParam ? reinterpret_cast<LPARAM>(module.c_str()) : 0));
+        HWND client = widget ? edita_compat_hwndOfWidget(widget) : nullptr;
+        *result = reinterpret_cast<LRESULT>(client ? client : static_cast<HWND>(widget));
+        return true;
+    }
+    case NPPM_CREATESCINTILLAHANDLE: {
+        // El padre es una ventana de la capa: Edita espera su QWidget*
+        HWND parent = reinterpret_cast<HWND>(lParam);
+        void* editor = reinterpret_cast<void*>(sendToEdita(hwnd, message, 0, reinterpret_cast<LPARAM>(edita_compat_widget(parent))));
+        edita_compat_registerForeign(editor, parent, 0);
+        *result = reinterpret_cast<LRESULT>(editor);
+        return true;
+    }
+    case NPPM_GETMENUHANDLE:
+        // CheckMenuItem sobre él marca las órdenes del plugin (NPPM_SETMENUITEMCHECK)
+        *result = reinterpret_cast<LRESULT>(edita_compat_hostMenu());
+        return true;
+    case NPPM_MODELESSDIALOG:
+        // En N++, para IsDialogMessage; aquí cada diálogo procesa su teclado
+        *result = lParam;
+        return true;
+    default:
+        return false;
+    }
 }
 
 } // namespace
@@ -284,22 +412,39 @@ extern "C" LRESULT edita_compat_SendMessage(HWND hwnd, UINT message, WPARAM wPar
 {
 #ifdef UNICODE
     syncCommandIds();
-    if (hwnd && hwnd == g_data.host)
+#endif
+    if (edita_compat_isWindow(hwnd))
+        return edita_compat_windowSend(hwnd, message, wParam, lParam);
+    if (hwnd && hwnd == g_data.host) {
+        LRESULT result = 0;
+        if (sendWindowMessage(hwnd, message, wParam, lParam, &result))
+            return result;
+#ifdef UNICODE
         return sendWide(hwnd, message, wParam, lParam);
 #endif
+    }
     return sendToEdita(hwnd, message, wParam, lParam);
 }
 
-extern "C" HWND edita_compat_CreateDialogParam(HINSTANCE, const void*, HWND, void*, LPARAM)
+// A las ventanas de la capa, en cola (como en Windows); a Edita, en el momento
+extern "C" BOOL edita_compat_PostMessage(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    showMissingDialog();
-    return nullptr;
+    if (edita_compat_isWindow(hwnd)) {
+        edita_compat_windowPost(hwnd, message, wParam, lParam);
+        return TRUE;
+    }
+    edita_compat_SendMessage(hwnd, message, wParam, lParam);
+    return hwnd ? TRUE : FALSE;
 }
 
-extern "C" INT_PTR edita_compat_DialogBoxParam(HINSTANCE, const void*, HWND, void*, LPARAM)
+extern "C" void* edita_compat_createScintilla(void* parentWidget)
 {
-    showMissingDialog();
-    return IDCANCEL;
+    return reinterpret_cast<void*>(sendToEdita(g_data.host, NPPM_CREATESCINTILLAHANDLE, 0, reinterpret_cast<LPARAM>(parentWidget)));
+}
+
+extern "C" HWND edita_compat_hostHwnd(void)
+{
+    return g_data.host;
 }
 
 // --- Exportaciones de Edita ------------------------------------------------------------------
@@ -317,6 +462,10 @@ EDITA_PLUGIN_EXPORT const char* edita_plugin_version(void)
 EDITA_PLUGIN_EXPORT void setInfo(EditaData data)
 {
     g_data = data;
+    // Las ventanas de Edita: sirven para medir, como padre y en GetMenu
+    edita_compat_registerForeign(data.host, nullptr, 0);
+    edita_compat_registerForeign(data.mainEditor, nullptr, 0);
+    edita_compat_registerForeign(data.subEditor, nullptr, 0);
     // N++ llama a DllMain(DLL_PROCESS_ATTACH) al cargar la DLL; muchos plugins
     // rellenan ahí su tabla de órdenes y guardan el HINSTANCE del módulo
     static bool attached = false;

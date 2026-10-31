@@ -98,8 +98,10 @@ if(EDITA_BUILD_PLUGINS)
     target_compile_definitions(tst_i18n PRIVATE EDITA_PLUGIN_BUILD_DIR="${PROJECT_BINARY_DIR}/plugins")
     # La capa de compatibilidad Win32 para plugins de N++ (sin ventanas), en modo UNICODE
     edita_add_test(tst_npp_compat LIBS Qt6::Widgets ${CMAKE_DL_LIBS})
-    target_sources(tst_npp_compat PRIVATE ${PROJECT_SOURCE_DIR}/plugin-sdk/compat/npp_win32.cpp)
-    target_include_directories(tst_npp_compat PRIVATE ${PROJECT_SOURCE_DIR}/plugin-sdk/compat)
+    target_sources(tst_npp_compat PRIVATE ${PROJECT_SOURCE_DIR}/plugin-sdk/compat/npp_win32.cpp
+        ${PROJECT_SOURCE_DIR}/plugin-sdk/compat/npp_window.cpp)
+    target_include_directories(tst_npp_compat PRIVATE ${PROJECT_SOURCE_DIR}/plugin-sdk/compat
+        ${PROJECT_SOURCE_DIR}/third_party/scintilla/include)
     target_compile_definitions(tst_npp_compat PRIVATE UNICODE _UNICODE)
     if(LIBZIP_FOUND)
         edita_add_test(tst_pluginsadmin LIBS edita_ui PkgConfig::LIBZIP)

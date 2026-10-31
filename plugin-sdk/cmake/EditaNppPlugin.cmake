@@ -58,7 +58,8 @@ endfunction()
 function(edita_npp_plugin name)
     cmake_parse_arguments(ARG "UNICODE" "" "SOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
     add_library(${name} MODULE ${ARG_SOURCES}
-        "${EDITA_PLUGIN_SDK}/compat/npp_compat.cpp" "${EDITA_PLUGIN_SDK}/compat/npp_win32.cpp")
+        "${EDITA_PLUGIN_SDK}/compat/npp_compat.cpp" "${EDITA_PLUGIN_SDK}/compat/npp_win32.cpp"
+        "${EDITA_PLUGIN_SDK}/compat/npp_window.cpp")
     if(ARG_UNICODE)
         target_compile_definitions(${name} PRIVATE UNICODE _UNICODE)
     endif()
