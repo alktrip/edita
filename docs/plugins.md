@@ -63,8 +63,20 @@ El `CMakeLists.txt` del overlay compila los fuentes originales con la capa de co
 cmake_minimum_required(VERSION 3.20)
 project(MiPlugin CXX)
 include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)
-edita_npp_plugin(MiPlugin UNICODE SOURCES ../src/plugin.cpp ../src/otro.cpp)
+edita_npp_plugin(MiPlugin UNICODE
+    SOURCES ../src/plugin.cpp ../src/otro.cpp
+    RESOURCES ../src/plugin.rc
+    INCLUDES ../src)
 ```
+
+**`RESOURCES`** son los `.rc` del plugin. Al compilar, `edita_rc` (una herramienta del SDK, en `tools/`) los convierte a un `.cpp` con sus diálogos (`DIALOG`, `DIALOGEX`), menús (`MENU`, `MENUEX`) y cadenas (`STRINGTABLE`), en el formato binario de Windows. Tiene su propio preprocesador, con las reglas de `rc.exe`:
+
+- `#include`, `#define`, `#if` y compañía;
+- de los archivos incluidos que no son `.rc`, como `resource.h`, solo lee las directivas;
+- no lee las cabeceras de Windows (`windows.h`, `winres.h`, `afxres.h`): ya conoce sus estilos;
+- lee los `.rc` en UTF-16, en UTF-8 y en ANSI (Windows-1252);
+- si un recurso está en varios idiomas, se queda con el neutro o el inglés;
+- se salta los iconos, los mapas de bits y `VERSIONINFO`.
 
 **`UNICODE`** compila como los plugins de N++ desde la 8.0: `TCHAR` es `wchar_t`, y también lo son `getName()`, `FuncItem._itemName` y las cadenas de los mensajes `NPPM_*`. Es lo que necesita casi cualquier plugin actual. Sin `UNICODE`, `TCHAR` es `char` en UTF-8, como en los plugins antiguos (MIME Tools 3.1). En Linux y macOS `wchar_t` mide 4 bytes y no 2. El código que usa las funciones de Win32 (`MultiByteToWideChar`, `lstrlen`…) funciona igual. El que da por hecho UTF-16 (`sizeof(wchar_t) == 2`, pares sustitutos) necesita un parche en la receta.
 
@@ -86,12 +98,26 @@ Antes de compilar, el administrador corrige los `#include` que solo funcionan en
 
 - **Controles estándar:** `BUTTON` (botón, casilla, opción, grupo), `EDIT` (de una línea y multilínea, con `\r\n`), `STATIC`, `LISTBOX` y `COMBOBOX`, con sus mensajes (`BM_*`, `EM_*`, `LB_*`, `CB_*`). Sus notificaciones llegan al padre como `WM_COMMAND`: `BN_CLICKED`, `EN_CHANGE`, `LBN_SELCHANGE` (con `LBS_NOTIFY`), `CBN_SELCHANGE`… Como en Windows, los cambios que hace el plugin no notifican.
 - **Otras clases:** `"Scintilla"` es un editor de Edita (le llegan los `SCI_*`). Las clases registradas (`RegisterClass`) reciben el ratón, el teclado y `WM_SIZE`. El *subclassing* (`SetWindowLongPtr(GWLP_WNDPROC)`) ve también el teclado de los controles, y si no lo pasa a `CallWindowProc`, el control no lo procesa.
-- **Diálogos:** `CreateDialogParam` con `WM_INITDIALOG`, `DWLP_USER`/`DWLP_MSGRESULT`, `DefDlgProc`, Intro (el botón `BS_DEFPUSHBUTTON` o `IDOK`), Esc (`IDCANCEL`) y `EndDialog`.
+- **Diálogos:** `WM_INITDIALOG`, `DWLP_USER`/`DWLP_MSGRESULT`, `DefDlgProc`, Intro (el botón `BS_DEFPUSHBUTTON` o `IDOK`), Esc (`IDCANCEL`) y `EndDialog` (ver los recursos, abajo).
 - **Plantilla de N++:** sus clases (`Window`, `StaticDialog`, `DockingDlgInterface`) compilan y funcionan sin cambios. `NPPM_DMMREGASDCKDLG` con un `tTbData` crea un panel de Edita con el `QWidget` del diálogo. Si el diálogo no tiene título, el panel lleva el nombre del plugin. Cerrar el panel envía `WM_NOTIFY` con `DMN_CLOSE`, y soltarlo o acoplarlo, `DMN_FLOAT`/`DMN_DOCK`. `NPPM_CREATESCINTILLAHANDLE` acepta una ventana de la capa como padre.
 - **Lo demás:** geometría, visibilidad, foco, jerarquía (`GetParent`, `GetDlgItem`, `EnumChildWindows`), propiedades (`SetProp`), temporizadores (`SetTimer`), `PostMessage` en cola, menús emergentes (`CreatePopupMenu`, `TrackPopupMenu`), `CheckMenuItem` sobre `GetMenu(nppData._nppHandle)` (marca las órdenes del plugin), monitores, métricas del sistema, cursores del sistema, y una parte de GDI **sin dibujo**: fuentes (`CreateFont`, `WM_SETFONT`), medidas de texto (`GetTextExtentPoint32`), colores del sistema y DPI (siempre 96: las coordenadas son píxeles lógicos de Qt).
 - **Hilos y sistema** (`npp_win32.cpp`): `CreateThread`, eventos, mutex, `WaitForSingleObject`, secciones críticas, `Interlocked*`, `FormatMessage`, `MulDiv`, `min`/`max` (como funciones) y los `SCI_GETTEXTRANGE`/`SCI_FINDTEXT` que N++ quitó de su `Scintilla.h`.
 
-**Todavía no hay recursos `.rc`.** `FindResource` devuelve `NULL`, y un diálogo de `CreateDialogParam` se crea vacío, con un aviso que desaparece cuando el plugin le pone controles. `DialogBoxParam` muestra un aviso. Tampoco hay dibujo (`WM_PAINT`, `BeginPaint`, `FillRect`…), ni controles comunes (listas con columnas, árboles, pestañas), ni COM. Si el plugin los necesita, el overlay trae un port de su interfaz en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en `data/plugins/recipes/XMLTools`. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
+**Recursos** (`npp_window.cpp`). `FindResource`, `LoadResource`, `LockResource` y `SizeofResource` devuelven las plantillas binarias de los `.rc`.
+
+- `CreateDialogParam` y `DialogBoxParam` (modal, hasta `EndDialog`) crean el diálogo con sus controles y le mandan `WM_INITDIALOG`. `CreateDialogIndirectParam` y `DialogBoxIndirectParam` hacen lo mismo con una plantilla en memoria (`DLGTEMPLATE` o `DLGTEMPLATEEX`).
+- Las coordenadas de la plantilla son unidades de diálogo, que se convierten a píxeles con la fuente de Edita, como hace Windows con la del diálogo (`MapDialogRect`, `GetDialogBaseUnits`).
+- Un control de una clase que la capa no tiene aparece como un recuadro con su nombre (`[SysListView32]`), con su id.
+- `LoadString` y `LoadMenu` (y `LoadMenuIndirect`) usan las cadenas y los menús del `.rc`. Sin plantilla, `CreateDialogParam` crea un diálogo vacío con un aviso y `DialogBoxParam` avisa.
+
+**Más de Windows:**
+
+- `SetWindowSubclass`/`DefSubclassProc` (comctl32);
+- los diálogos comunes sobre los de Qt: `GetOpenFileName` (también con selección múltiple) y `GetSaveFileName`, `SHBrowseForFolder` con `SHGetPathFromIDList` y `ChooseColor`. Son los del sistema o los de Qt, según la preferencia de diálogos de archivos de Edita;
+- `CreateProcess` con las tuberías de `CreatePipe` (`STARTF_USESTDHANDLES`), `GetExitCodeProcess` y `TerminateProcess`. La línea de órdenes se divide con las reglas de Windows, y `cmd /c …` se ejecuta con `/bin/sh -c`;
+- `GetMenuItemInfo`/`SetMenuItemInfo`/`InsertMenuItem`.
+
+**Todavía no hay:** dibujo (`WM_PAINT`, `BeginPaint`, `FillRect`…), controles comunes (listas con columnas, árboles, pestañas), hooks ni COM más allá de `CoInitialize` y `CoTaskMemFree`. Si el plugin los necesita, el overlay trae un port de esa parte en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en `data/plugins/recipes/XMLTools`. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
 
 ## De Notepad++ a Edita
 

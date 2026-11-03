@@ -54,6 +54,9 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -301,6 +304,7 @@ struct FileHandle
 {
     uint32_t magic = kFileMagic;
     int fd = -1;
+    bool pipe = false; // ReadFile devuelve en cuanto hay datos
 };
 
 struct FindEntry
@@ -1308,7 +1312,7 @@ constexpr uint32_t kSyncMagic = 0x53594E43; // "SYNC"
 struct SyncHandle
 {
     uint32_t magic = kSyncMagic;
-    enum class Kind { Thread, Event, Mutex } kind = Kind::Event;
+    enum class Kind { Thread, Event, Mutex, Process } kind = Kind::Event;
     std::mutex mutex;
     std::condition_variable changed;
     bool signaled = false;     // hilo terminado, evento activo, mutex libre
@@ -1319,6 +1323,8 @@ struct SyncHandle
     std::thread thread;
     LPTHREAD_START_ROUTINE start = nullptr;
     LPVOID param = nullptr;
+    pid_t pid = 0;             // procesos
+    bool terminated = false;   // TerminateProcess: el código es el suyo
     int references = 1;        // el handle y, para los hilos, el hilo mismo
 };
 
@@ -1372,6 +1378,7 @@ bool tryAcquire(SyncHandle* sync)
 {
     switch (sync->kind) {
     case SyncHandle::Kind::Thread:
+    case SyncHandle::Kind::Process:
         return sync->signaled;
     case SyncHandle::Kind::Event:
         if (!sync->signaled)
@@ -1419,6 +1426,185 @@ HANDLE createMutex(BOOL initialOwner)
         sync->recursion = 1;
     }
     return sync;
+}
+
+// --- Procesos ---------------------------------------------------------------------------------
+
+// Una línea de órdenes de Windows, en argumentos (las reglas de CommandLineToArgvW)
+std::vector<std::string> splitCommandLine(const std::string& line)
+{
+    std::vector<std::string> args;
+    std::size_t i = 0;
+    const std::size_t n = line.size();
+    while (i < n) {
+        while (i < n && (line[i] == ' ' || line[i] == '\t'))
+            ++i;
+        if (i >= n)
+            break;
+        std::string arg;
+        bool quoted = false;
+        while (i < n) {
+            const char c = line[i];
+            if (c == '\\') {
+                std::size_t slashes = 0;
+                while (i < n && line[i] == '\\') {
+                    ++slashes;
+                    ++i;
+                }
+                if (i < n && line[i] == '"') {
+                    arg.append(slashes / 2, '\\');
+                    if (slashes % 2) {
+                        arg += '"';
+                        ++i;
+                    }
+                } else {
+                    arg.append(slashes, '\\');
+                }
+                continue;
+            }
+            if (c == '"') {
+                if (quoted && i + 1 < n && line[i + 1] == '"') {
+                    arg += '"';
+                    i += 2;
+                    continue;
+                }
+                quoted = !quoted;
+                ++i;
+                continue;
+            }
+            if ((c == ' ' || c == '\t') && !quoted)
+                break;
+            arg += c;
+            ++i;
+        }
+        args.push_back(arg);
+    }
+    return args;
+}
+
+void reapProcess(SyncHandle* sync, SyncHandle* thread)
+{
+    int status = 0;
+    while (::waitpid(sync->pid, &status, 0) < 0 && errno == EINTR) {
+    }
+    {
+        std::lock_guard<std::mutex> lock(sync->mutex);
+        if (!sync->terminated)
+            sync->exitCode = WIFEXITED(status) ? static_cast<DWORD>(WEXITSTATUS(status)) : 128u + static_cast<DWORD>(WTERMSIG(status));
+        sync->signaled = true;
+    }
+    sync->changed.notify_all();
+    if (thread) {
+        {
+            std::lock_guard<std::mutex> lock(thread->mutex);
+            thread->signaled = true;
+            thread->exitCode = sync->exitCode;
+        }
+        thread->changed.notify_all();
+        releaseSync(thread);
+    }
+    releaseSync(sync);
+}
+
+int fdOf(HANDLE handle)
+{
+    FileHandle* file = fileHandle(handle);
+    return file ? file->fd : -1;
+}
+
+template<typename Startup>
+BOOL createProcess(const QString& application, const QString& commandLine, const QString& directory, const Startup* startup,
+                   LPPROCESS_INFORMATION info)
+{
+    const std::string line = commandLine.toStdString();
+    std::vector<std::string> args = splitCommandLine(line);
+    std::string program = application.isEmpty() ? (args.empty() ? std::string() : args.front()) : nativePath(application).toStdString();
+    if (args.empty())
+        args.push_back(program);
+    // cmd /c …: el intérprete de órdenes de Windows; aquí, /bin/sh -c …
+    const QString first = QFileInfo(QString::fromStdString(args.front())).fileName().toLower();
+    if ((first == QLatin1String("cmd") || first == QLatin1String("cmd.exe")) && args.size() > 1
+        && (QString::fromStdString(args[1]).toLower() == QLatin1String("/c") || QString::fromStdString(args[1]).toLower() == QLatin1String("/k"))) {
+        const qsizetype at = commandLine.indexOf(QString::fromStdString(args[1]), 0, Qt::CaseInsensitive);
+        const QString rest = commandLine.mid(at + 2).trimmed();
+        program = "/bin/sh";
+        args = {"/bin/sh", "-c", rest.toStdString()};
+    } else {
+        program = nativePath(QString::fromStdString(program)).toStdString();
+    }
+    if (program.empty()) {
+        t_lastError = ERROR_FILE_NOT_FOUND;
+        return FALSE;
+    }
+    std::vector<char*> argv;
+    for (std::string& arg : args)
+        argv.push_back(arg.data());
+    argv.push_back(nullptr);
+    const QByteArray dir = directory.isEmpty() ? QByteArray() : encodedPath(directory);
+    int stdFds[3] = {-1, -1, -1};
+    if (startup && (startup->dwFlags & STARTF_USESTDHANDLES)) {
+        stdFds[0] = fdOf(startup->hStdInput);
+        stdFds[1] = fdOf(startup->hStdOutput);
+        stdFds[2] = fdOf(startup->hStdError);
+    }
+    // Una tubería para saber si exec falló (se cierra sola si exec funciona)
+    int status[2];
+    if (::pipe(status) != 0)
+        return failWithErrno();
+    ::fcntl(status[0], F_SETFD, FD_CLOEXEC);
+    ::fcntl(status[1], F_SETFD, FD_CLOEXEC);
+    const pid_t pid = ::fork();
+    if (pid < 0) {
+        ::close(status[0]);
+        ::close(status[1]);
+        return failWithErrno();
+    }
+    if (pid == 0) {
+        for (int target = 0; target < 3; ++target) {
+            if (stdFds[target] < 0)
+                continue;
+            if (stdFds[target] == target)
+                ::fcntl(target, F_SETFD, 0);
+            else
+                ::dup2(stdFds[target], target);
+        }
+        if (!dir.isEmpty() && ::chdir(dir.constData()) != 0) {
+            const int error = errno;
+            (void)!::write(status[1], &error, sizeof error);
+            ::_exit(127);
+        }
+        ::execvp(program.c_str(), argv.data());
+        const int error = errno;
+        (void)!::write(status[1], &error, sizeof error);
+        ::_exit(127);
+    }
+    ::close(status[1]);
+    int childError = 0;
+    const ssize_t got = ::read(status[0], &childError, sizeof childError);
+    ::close(status[0]);
+    if (got == static_cast<ssize_t>(sizeof childError)) {
+        ::waitpid(pid, nullptr, 0);
+        t_lastError = errnoToWin32(childError);
+        return FALSE;
+    }
+    auto* process = new SyncHandle;
+    process->kind = SyncHandle::Kind::Process;
+    process->pid = pid;
+    process->references = 2; // el handle y el que espera al proceso
+    auto* thread = new SyncHandle;
+    thread->kind = SyncHandle::Kind::Thread;
+    thread->references = 2;
+    std::thread(reapProcess, process, thread).detach();
+    if (info) {
+        info->hProcess = process;
+        info->hThread = thread;
+        info->dwProcessId = static_cast<DWORD>(pid);
+        info->dwThreadId = static_cast<DWORD>(pid);
+    } else {
+        releaseSync(process);
+        releaseSync(thread);
+    }
+    return TRUE;
 }
 
 // --- FormatMessage ------------------------------------------------------------------------------
@@ -2084,6 +2270,8 @@ BOOL ReadFile(HANDLE handle, LPVOID buffer, DWORD toRead, LPDWORD read, LPOVERLA
         if (n == 0)
             break;
         done += static_cast<std::size_t>(n);
+        if (file->pipe)
+            break;
     }
     if (read)
         *read = static_cast<DWORD>(done);
@@ -2969,5 +3157,99 @@ LANGID GetUserDefaultUILanguage(void) { return userLanguage(); }
 LANGID GetUserDefaultLangID(void) { return userLanguage(); }
 LANGID GetSystemDefaultLangID(void) { return userLanguage(); }
 LCID GetUserDefaultLCID(void) { return userLanguage(); }
+
+// --- Procesos y tuberías --------------------------------------------------------------------------
+
+BOOL CreateProcessA(LPCSTR application, LPSTR commandLine, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID,
+                    LPCSTR directory, LPSTARTUPINFOA startup, LPPROCESS_INFORMATION info)
+{
+    return createProcess(fromA(application), fromA(commandLine), fromA(directory), startup, info);
+}
+
+BOOL CreateProcessW(LPCWSTR application, LPWSTR commandLine, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID,
+                    LPCWSTR directory, LPSTARTUPINFOW startup, LPPROCESS_INFORMATION info)
+{
+    return createProcess(fromW(application), fromW(commandLine), fromW(directory), startup, info);
+}
+
+BOOL GetExitCodeProcess(HANDLE process, LPDWORD code)
+{
+    SyncHandle* sync = syncHandle(process);
+    if (!sync || sync->kind != SyncHandle::Kind::Process || !code)
+        return FALSE;
+    std::lock_guard<std::mutex> lock(sync->mutex);
+    *code = sync->exitCode;
+    return TRUE;
+}
+
+BOOL TerminateProcess(HANDLE process, UINT code)
+{
+    SyncHandle* sync = syncHandle(process);
+    if (!sync || sync->kind != SyncHandle::Kind::Process)
+        return FALSE;
+    {
+        std::lock_guard<std::mutex> lock(sync->mutex);
+        if (sync->signaled)
+            return FALSE;
+        sync->terminated = true;
+        sync->exitCode = code;
+    }
+    return ::kill(sync->pid, SIGKILL) == 0 ? TRUE : failWithErrno();
+}
+
+DWORD GetProcessId(HANDLE process)
+{
+    SyncHandle* sync = syncHandle(process);
+    return sync && sync->kind == SyncHandle::Kind::Process ? static_cast<DWORD>(sync->pid) : 0;
+}
+
+BOOL CreatePipe(PHANDLE readPipe, PHANDLE writePipe, LPSECURITY_ATTRIBUTES, DWORD)
+{
+    if (!readPipe || !writePipe)
+        return FALSE;
+    int fds[2];
+    if (::pipe(fds) != 0)
+        return failWithErrno();
+    // Los hijos no las heredan: CreateProcess las pasa con STARTF_USESTDHANDLES
+    ::fcntl(fds[0], F_SETFD, FD_CLOEXEC);
+    ::fcntl(fds[1], F_SETFD, FD_CLOEXEC);
+    auto* reader = new FileHandle;
+    reader->fd = fds[0];
+    reader->pipe = true;
+    auto* writer = new FileHandle;
+    writer->fd = fds[1];
+    writer->pipe = true;
+    *readPipe = reader;
+    *writePipe = writer;
+    return TRUE;
+}
+
+BOOL PeekNamedPipe(HANDLE pipe, LPVOID, DWORD, LPDWORD read, LPDWORD available, LPDWORD left)
+{
+    FileHandle* file = fileHandle(pipe);
+    if (!file)
+        return FALSE;
+    int bytes = 0;
+    if (::ioctl(file->fd, FIONREAD, &bytes) != 0)
+        return failWithErrno();
+    if (read)
+        *read = 0; // no se pueden mirar los datos de una tubería sin leerlos
+    if (available)
+        *available = static_cast<DWORD>(bytes);
+    if (left)
+        *left = 0;
+    return TRUE;
+}
+
+BOOL SetHandleInformation(HANDLE handle, DWORD, DWORD)
+{
+    return fileHandle(handle) || syncHandle(handle) ? TRUE : FALSE;
+}
+
+HRESULT CoInitialize(LPVOID) { return S_OK; }
+HRESULT CoInitializeEx(LPVOID, DWORD) { return S_OK; }
+void CoUninitialize(void) {}
+LPVOID CoTaskMemAlloc(SIZE_T bytes) { return std::malloc(bytes ? bytes : 1); }
+void CoTaskMemFree(LPVOID memory) { std::free(memory); }
 
 } // extern "C"

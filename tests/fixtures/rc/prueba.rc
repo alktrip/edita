@@ -1,0 +1,82 @@
+// Recursos de prueba de edita_rc (fase 53), como los escribe Visual Studio
+#include "prueba_res.h"
+#include <windows.h>
+#include "winres.h"
+
+#ifdef APSTUDIO_INVOKED
+1 TEXTINCLUDE
+BEGIN
+    "prueba_res.h\0"
+END
+#endif
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+IDD_OPCIONES DIALOGEX 0, 0, 200, 100
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Opciones ñ"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "&Nombre:",IDC_STATIC,7,9,40,8
+    EDITTEXT        IDC_NOMBRE,50,7,140,14,ES_AUTOHSCROLL
+    CONTROL         "Activar",IDC_ACTIVAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,28,80,10
+    COMBOBOX        IDC_MODO,50,44,80,60,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    LISTBOX         IDC_LISTA,7,60,60,30,LBS_NOINTEGRALHEIGHT | NOT WS_BORDER | WS_VSCROLL
+    CONTROL         "",IDC_COLUMNAS,"SysListView32",LVS_REPORT | WS_BORDER | WS_TABSTOP,80,60,50,15
+    DEFPUSHBUTTON   "Aceptar",IDOK,90,80,50,14
+    PUSHBUTTON      "Cancelar",IDCANCEL,143,80,50,14
+END
+
+IDD_PANEL DIALOGEX 0, 0, 120, 60
+STYLE DS_SETFONT | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Shell Dlg", FW_DONTCARE, FALSE, DEFAULT_CHARSET
+BEGIN
+    PUSHBUTTON      "Uno", IDC_UNO, 5, 5, 50, 14
+    PUSHBUTTON      "Dos", CONTROL_ID(DOS), 60, 5, 50, 14
+    CTEXT           CADENA(Versión VERSION_PLUGIN), IDC_VERSION, 5, 25, 100, 8
+END
+
+IDR_CONTEXTO MENU
+BEGIN
+    POPUP "Contexto"
+    BEGIN
+        MENUITEM "&Copiar\tCtrl+C",     IDM_COPIAR
+        MENUITEM SEPARATOR
+        MENUITEM "Marcado",             IDM_MARCADO, CHECKED
+        POPUP "Más"
+        BEGIN
+            MENUITEM "Gris",            IDM_GRIS, GRAYED
+        END
+    END
+END
+
+STRINGTABLE
+BEGIN
+    IDS_SALUDO              "Hola, ""Edita""\n"
+    IDS_OTRO,               "Otro"
+    IDS_LARGA               "uno
+dos"
+END
+
+IDI_ICONO               ICON                    "icono.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "FileVersion", "1.0"
+        END
+    END
+END
+
+// El mismo diálogo en otro idioma: se queda el neutro
+LANGUAGE LANG_FRENCH, SUBLANG_DEFAULT
+IDD_OPCIONES DIALOGEX 0, 0, 10, 10
+CAPTION "Options (fr)"
+BEGIN
+END

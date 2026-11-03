@@ -22,6 +22,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLabel>
 #include <QLineEdit>
 #include <QLibraryInfo>
 #include <QPlainTextEdit>
@@ -335,6 +336,60 @@ extern "C" __declspec(dllexport) BOOL isUnicode() { return TRUE; }
     while (it.hasNext()) {
         const QString path = it.next();
         files["paneldemo-1.0/src/" + QDir(fixture).relativeFilePath(path)] = readFile(path);
+    }
+    return makeZip(files);
+}
+
+// Fase 53: el panel «Go To Line #» de la plantilla oficial de N++, sin cambios
+// (GoToLineDlg.cpp, StaticDialog.cpp y el diálogo de goLine.rc), como lo usa el plugin de
+// demostración de N++; solo el archivo principal es de la prueba
+QByteArray templateGoToLineSource()
+{
+    const QByteArray plugin = R"cpp(#include "PluginDefinition.h"
+#include "DockingFeature/GoToLineDlg.h"
+
+FuncItem funcItem[nbFunc];
+NppData nppData;
+HINSTANCE module = nullptr;
+DemoDlg goToLine;
+
+void showGoToLine() {
+    goToLine.setParent(nppData._nppHandle);
+    tTbData data{};
+    if (!goToLine.isCreated()) {
+        goToLine.create(&data);
+        data.uMask = DWS_DF_CONT_RIGHT;
+        data.pszModuleName = goToLine.getPluginFileName();
+        data.dlgID = 0;
+        ::SendMessage(nppData._nppHandle, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
+    }
+    goToLine.display();
+}
+
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD reason, LPVOID) {
+    if (reason == DLL_PROCESS_ATTACH) {
+        module = (HINSTANCE)hModule;
+        lstrcpy(funcItem[0]._itemName, TEXT("Go To Line"));
+        funcItem[0]._pFunc = showGoToLine;
+    }
+    return TRUE;
+}
+extern "C" __declspec(dllexport) void setInfo(NppData data) {
+    nppData = data;
+    goToLine.init(module, nppData._nppHandle);
+}
+extern "C" __declspec(dllexport) const wchar_t* getName() { return L"Go To Line Demo"; }
+extern "C" __declspec(dllexport) FuncItem* getFuncsArray(int* n) { *n = nbFunc; return funcItem; }
+extern "C" __declspec(dllexport) void beNotified(SCNotification*) {}
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT, WPARAM, LPARAM) { return TRUE; }
+extern "C" __declspec(dllexport) BOOL isUnicode() { return TRUE; }
+)cpp";
+    std::map<QString, QByteArray> files{{"golinedemo-1.0/src/GoLineDemo.cpp", plugin}};
+    const QString fixture = QStringLiteral(EDITA_FIXTURES_DIR "/npp-plugintemplate/src");
+    QDirIterator it(fixture, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString path = it.next();
+        files["golinedemo-1.0/src/" + QDir(fixture).relativeFilePath(path)] = readFile(path);
     }
     return makeZip(files);
 }
@@ -784,6 +839,85 @@ private slots:
         for (QDockWidget* d : w.findChildren<QDockWidget*>())
             panels += d->objectName().startsWith(QLatin1String("pluginDock_PanelDemo.so")) ? 1 : 0;
         QCOMPARE(panels, 1);
+    }
+
+    void builderCompilesTheTemplateGoToLineDialog()
+    {
+        const QByteArray source = templateGoToLineSource();
+        const QString dir = recipesDir() + "/GoLineDemo";
+        writeFile(dir + "/recipe.json",
+                  QJsonDocument(QJsonObject{{"folder-name", "GoLineDemo"}, {"display-name", "Go To Line Demo"}, {"version", "1.0"},
+                                            {"source", QJsonObject{{"url", "x"}, {"sha256", plugin_installer::sha256Hex(source)}}},
+                                            {"overlay", "overlay"}, {"build-dir", "edita"}})
+                      .toJson());
+        writeFile(dir + "/overlay/edita/CMakeLists.txt",
+                  "cmake_minimum_required(VERSION 3.20)\nproject(GoLineDemo CXX)\n"
+                  "include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)\n"
+                  "edita_npp_plugin(GoLineDemo UNICODE\n"
+                  "    SOURCES ../src/GoLineDemo.cpp ../src/DockingFeature/StaticDialog.cpp ../src/DockingFeature/GoToLineDlg.cpp\n"
+                  "    RESOURCES ../src/DockingFeature/goLine.rc\n"
+                  "    INCLUDES ../src)\n");
+        PluginRecipe recipe;
+        QVERIFY(PluginRecipe::parse(dir + "/recipe.json", recipe));
+        RecipeBuilder builder(recipe, findPluginSdk(), _tmp.filePath("cache/GoLineDemo"));
+        QSignalSpy finished(&builder, &RecipeBuilder::finished);
+        builder.start(source);
+        QVERIFY(finished.wait(180000));
+        QVERIFY2(finished.first().at(0).toBool(), qPrintable(builder.log().right(4000)));
+        // edita_rc convirtió el diálogo del .rc
+        QVERIFY2(builder.log().contains(QStringLiteral("edita_rc: 1 diálogos")), qPrintable(builder.log().right(4000)));
+        QVERIFY(plugin_installer::installPackage(readFile(builder.packagePath()), "GoLineDemo", builder.packageSha256(), userPlugins(), false));
+
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        w.show();
+        w.notifyPluginsReady();
+        const PluginManager::Plugin* plugin = nullptr;
+        for (const auto& p : w.plugins()->plugins()) {
+            if (p->path.endsWith(QLatin1String("GoLineDemo.so")))
+                plugin = p.get();
+        }
+        QVERIFY2(plugin, qPrintable(w.pluginWarnings().join('\n')));
+        QVERIFY(w.plugins()->runCommand(plugin->commands[0].cmdId));
+
+        // El panel lleva el título del diálogo del .rc (CAPTION) y sus controles
+        QDockWidget* dock = nullptr;
+        for (QDockWidget* d : w.findChildren<QDockWidget*>()) {
+            if (d->objectName().startsWith(QLatin1String("pluginDock_GoLineDemo.so")))
+                dock = d;
+        }
+        QVERIFY(dock);
+        QCOMPARE(dock->windowTitle(), QStringLiteral("Go To Line #"));
+        QVERIFY(dock->isVisible());
+        QLabel* label = nullptr;
+        for (QLabel* l : dock->findChildren<QLabel*>()) {
+            if (l->text() == QLatin1String("Go to line :"))
+                label = l;
+        }
+        QVERIFY(label);
+        auto* line = dock->findChild<QLineEdit*>();
+        auto* go = dock->findChild<QPushButton*>();
+        QVERIFY(line && go);
+        QCOMPARE(go->text(), QStringLiteral("&Go"));
+        // La geometría del .rc (unidades de diálogo): el campo, a la izquierda del botón
+        QVERIFY(line->geometry().right() < go->geometry().left());
+        QVERIFY(label->geometry().left() < line->geometry().left());
+        // ES_NUMBER: solo dígitos
+        QTest::keyClicks(line, QStringLiteral("x4"));
+        QCOMPARE(line->text(), QStringLiteral("4"));
+
+        // Go: GetDlgItemInt → SCI_GOTOLINE, en el código original de la plantilla
+        w.editor()->sends(SCI_SETTEXT, 0, "uno\ndos\ntres\ncuatro\ncinco");
+        w.editor()->sci(SCI_GOTOPOS, 0);
+        go->click();
+        const auto caretLine = [&] {
+            return w.editor()->sci(SCI_LINEFROMPOSITION, static_cast<uintptr_t>(w.editor()->sci(SCI_GETCURRENTPOS)));
+        };
+        QCOMPARE(caretLine(), intptr_t{3});
+        // Intro en el campo: el DEFPUSHBUTTON (IDOK)
+        line->setText(QStringLiteral("2"));
+        QTest::keyClick(line, Qt::Key_Return);
+        QCOMPARE(caretLine(), intptr_t{1});
     }
 
     void fixWindowsIncludes()

@@ -622,6 +622,38 @@ typedef PWIN32_FIND_DATAA PWIN32_FIND_DATA;
 #define STILL_ACTIVE 259
 #define CREATE_SUSPENDED 0x00000004
 typedef DWORD (*LPTHREAD_START_ROUTINE)(LPVOID);
+
+/* Procesos y tuberías */
+#define STARTF_USESHOWWINDOW 0x00000001
+#define STARTF_USESTDHANDLES 0x00000100
+#define DEBUG_PROCESS 0x00000001
+#define DETACHED_PROCESS 0x00000008
+#define CREATE_NEW_CONSOLE 0x00000010
+#define NORMAL_PRIORITY_CLASS 0x00000020
+#define CREATE_UNICODE_ENVIRONMENT 0x00000400
+#define CREATE_NO_WINDOW 0x08000000
+#define HANDLE_FLAG_INHERIT 0x00000001
+#define STD_INPUT_HANDLE ((DWORD)-10)
+#define STD_OUTPUT_HANDLE ((DWORD)-11)
+#define STD_ERROR_HANDLE ((DWORD)-12)
+typedef struct _STARTUPINFOA {
+    DWORD cb; LPSTR lpReserved; LPSTR lpDesktop; LPSTR lpTitle; DWORD dwX; DWORD dwY; DWORD dwXSize; DWORD dwYSize;
+    DWORD dwXCountChars; DWORD dwYCountChars; DWORD dwFillAttribute; DWORD dwFlags; WORD wShowWindow; WORD cbReserved2;
+    LPBYTE lpReserved2; HANDLE hStdInput; HANDLE hStdOutput; HANDLE hStdError;
+} STARTUPINFOA, *LPSTARTUPINFOA;
+typedef struct _STARTUPINFOW {
+    DWORD cb; LPWSTR lpReserved; LPWSTR lpDesktop; LPWSTR lpTitle; DWORD dwX; DWORD dwY; DWORD dwXSize; DWORD dwYSize;
+    DWORD dwXCountChars; DWORD dwYCountChars; DWORD dwFillAttribute; DWORD dwFlags; WORD wShowWindow; WORD cbReserved2;
+    LPBYTE lpReserved2; HANDLE hStdInput; HANDLE hStdOutput; HANDLE hStdError;
+} STARTUPINFOW, *LPSTARTUPINFOW;
+typedef struct _PROCESS_INFORMATION { HANDLE hProcess; HANDLE hThread; DWORD dwProcessId; DWORD dwThreadId; } PROCESS_INFORMATION, *LPPROCESS_INFORMATION, *PPROCESS_INFORMATION;
+#ifdef UNICODE
+typedef STARTUPINFOW STARTUPINFO;
+typedef LPSTARTUPINFOW LPSTARTUPINFO;
+#else
+typedef STARTUPINFOA STARTUPINFO;
+typedef LPSTARTUPINFOA LPSTARTUPINFO;
+#endif
 typedef struct _CRITICAL_SECTION { void* impl; } CRITICAL_SECTION, *LPCRITICAL_SECTION, *PCRITICAL_SECTION;
 #define InterlockedIncrement(p) __atomic_add_fetch((p), 1, __ATOMIC_SEQ_CST)
 #define InterlockedDecrement(p) __atomic_sub_fetch((p), 1, __ATOMIC_SEQ_CST)
@@ -662,6 +694,31 @@ void DeleteCriticalSection(LPCRITICAL_SECTION section);
 void EnterCriticalSection(LPCRITICAL_SECTION section);
 void LeaveCriticalSection(LPCRITICAL_SECTION section);
 BOOL TryEnterCriticalSection(LPCRITICAL_SECTION section);
+
+/* Procesos: fork + exec, con las tuberías de STARTUPINFO (STARTF_USESTDHANDLES); la línea
+ * de órdenes se divide con las reglas de Windows y "cmd /c …" se ejecuta con /bin/sh -c */
+BOOL CreateProcessA(LPCSTR application, LPSTR commandLine, LPSECURITY_ATTRIBUTES processAttributes,
+                    LPSECURITY_ATTRIBUTES threadAttributes, BOOL inheritHandles, DWORD flags, LPVOID environment,
+                    LPCSTR directory, LPSTARTUPINFOA startup, LPPROCESS_INFORMATION info);
+BOOL CreateProcessW(LPCWSTR application, LPWSTR commandLine, LPSECURITY_ATTRIBUTES processAttributes,
+                    LPSECURITY_ATTRIBUTES threadAttributes, BOOL inheritHandles, DWORD flags, LPVOID environment,
+                    LPCWSTR directory, LPSTARTUPINFOW startup, LPPROCESS_INFORMATION info);
+BOOL GetExitCodeProcess(HANDLE process, LPDWORD code);
+BOOL TerminateProcess(HANDLE process, UINT code);
+DWORD GetProcessId(HANDLE process);
+BOOL CreatePipe(PHANDLE readPipe, PHANDLE writePipe, LPSECURITY_ATTRIBUTES security, DWORD size);
+BOOL PeekNamedPipe(HANDLE pipe, LPVOID buffer, DWORD size, LPDWORD read, LPDWORD available, LPDWORD left);
+BOOL SetHandleInformation(HANDLE handle, DWORD mask, DWORD flags);
+
+/* COM: solo la memoria (CoTaskMemFree para SHBrowseForFolder) y no hacer nada al iniciarlo */
+HRESULT CoInitialize(LPVOID reserved);
+HRESULT CoInitializeEx(LPVOID reserved, DWORD flags);
+void CoUninitialize(void);
+LPVOID CoTaskMemAlloc(SIZE_T bytes);
+void CoTaskMemFree(LPVOID memory);
+#define COINIT_APARTMENTTHREADED 0x2
+#define COINIT_MULTITHREADED 0x0
+#define COINIT_DISABLE_OLE1DDE 0x4
 
 /* FormatMessage: FROM_SYSTEM (los códigos de error de esta capa) y FROM_STRING (%1…) */
 DWORD FormatMessageA(DWORD flags, LPCVOID source, DWORD messageId, DWORD languageId, LPSTR buffer, DWORD size, va_list* args);
@@ -1068,6 +1125,7 @@ inline INT_PTR DialogBox(HINSTANCE instance, N name, HWND parent, P proc)
 #define CreateEvent EDITA_COMPAT_AW(CreateEvent)
 #define CreateMutex EDITA_COMPAT_AW(CreateMutex)
 #define FormatMessage EDITA_COMPAT_AW(FormatMessage)
+#define CreateProcess EDITA_COMPAT_AW(CreateProcess)
 #define RegisterClipboardFormat EDITA_COMPAT_AW(RegisterClipboardFormat)
 #define PathFileExists EDITA_COMPAT_AW(PathFileExists)
 #define PathIsDirectory EDITA_COMPAT_AW(PathIsDirectory)

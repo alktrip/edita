@@ -6,7 +6,12 @@
 #   cmake_minimum_required(VERSION 3.20)
 #   project(MiPlugin CXX C)
 #   include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)
-#   edita_npp_plugin(MiPlugin [UNICODE] SOURCES ../src/plugin.cpp … [INCLUDES …] [LIBRARIES …])
+#   edita_npp_plugin(MiPlugin [UNICODE] SOURCES ../src/plugin.cpp … [RESOURCES ../src/plugin.rc …]
+#                    [INCLUDES …] [LIBRARIES …])
+#
+# RESOURCES son los .rc del plugin: edita_rc (tools/) los convierte al compilar en los
+# diálogos, menús y cadenas que usan CreateDialogParam, DialogBoxParam, LoadMenu y
+# LoadString. Sus #include se buscan junto al .rc y en INCLUDES.
 #
 # UNICODE compila como los plugins de N++ desde la 8.0: TCHAR es wchar_t, getName() y
 # FuncItem._itemName son wchar_t y los mensajes NPPM_* llevan cadenas wchar_t (la capa
@@ -55,11 +60,49 @@ function(_edita_link_qt name)
     endif()
 endfunction()
 
+# edita_rc: el convertidor de .rc, compilado con el compilador del equipo
+function(_edita_rc_tool)
+    if(TARGET edita_rc)
+        return()
+    endif()
+    add_executable(edita_rc "${EDITA_PLUGIN_SDK}/tools/edita_rc.cpp" "${EDITA_PLUGIN_SDK}/tools/edita_rc_constants.cpp")
+    target_include_directories(edita_rc PRIVATE "${EDITA_PLUGIN_SDK}/tools" "${EDITA_PLUGIN_SDK}/compat" "${EDITA_SCINTILLA_INCLUDE}")
+    set_target_properties(edita_rc PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+    target_compile_options(edita_rc PRIVATE -w)
+endfunction()
+
+# Los recursos de los .rc en un .cpp generado, añadido al plugin
+function(_edita_plugin_resources name)
+    cmake_parse_arguments(ARG "" "" "RESOURCES;INCLUDES" ${ARGN})
+    if(NOT ARG_RESOURCES)
+        return()
+    endif()
+    _edita_rc_tool()
+    set(output "${CMAKE_CURRENT_BINARY_DIR}/${name}_resources.cpp")
+    set(rcFiles "")
+    set(includeArgs "")
+    foreach(rc ${ARG_RESOURCES})
+        get_filename_component(rcPath "${rc}" ABSOLUTE)
+        list(APPEND rcFiles "${rcPath}")
+    endforeach()
+    foreach(dir ${ARG_INCLUDES})
+        get_filename_component(dirPath "${dir}" ABSOLUTE)
+        list(APPEND includeArgs "-I${dirPath}")
+    endforeach()
+    add_custom_command(OUTPUT "${output}"
+        COMMAND edita_rc -o "${output}" ${includeArgs} ${rcFiles}
+        DEPENDS edita_rc ${rcFiles}
+        COMMENT "Recursos de ${name} (edita_rc)"
+        VERBATIM)
+    target_sources(${name} PRIVATE "${output}")
+endfunction()
+
 function(edita_npp_plugin name)
-    cmake_parse_arguments(ARG "UNICODE" "" "SOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
+    cmake_parse_arguments(ARG "UNICODE" "" "SOURCES;RESOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
     add_library(${name} MODULE ${ARG_SOURCES}
         "${EDITA_PLUGIN_SDK}/compat/npp_compat.cpp" "${EDITA_PLUGIN_SDK}/compat/npp_win32.cpp"
         "${EDITA_PLUGIN_SDK}/compat/npp_window.cpp")
+    _edita_plugin_resources(${name} RESOURCES ${ARG_RESOURCES} INCLUDES ${ARG_INCLUDES})
     if(ARG_UNICODE)
         target_compile_definitions(${name} PRIVATE UNICODE _UNICODE)
     endif()

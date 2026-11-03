@@ -44,7 +44,7 @@ cp -R "$SRC/data" "$CONTENTS/Resources/edita"
 mkdir -p "$CONTENTS/Resources/edita/plugin-sdk"
 cp "$SRC/plugin-sdk/edita_plugin.h" "$SRC/third_party/scintilla/include/Scintilla.h" \
    "$SRC/third_party/scintilla/include/Sci_Position.h" "$CONTENTS/Resources/edita/plugin-sdk/"
-cp -R "$SRC/plugin-sdk/compat" "$SRC/plugin-sdk/cmake" "$CONTENTS/Resources/edita/plugin-sdk/"
+cp -R "$SRC/plugin-sdk/compat" "$SRC/plugin-sdk/cmake" "$SRC/plugin-sdk/tools" "$CONTENTS/Resources/edita/plugin-sdk/"
 EXTRA=()
 for dir in "$BUILD"/plugins/*/; do
     name=$(basename "$dir")

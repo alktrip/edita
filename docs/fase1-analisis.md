@@ -326,6 +326,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 50 — Menú Ventana | Ordenar las pestañas (nombre, ruta, tipo, tamaño, fecha), la lista de documentos de la vista en el menú y el diálogo Ventanas (activar, guardar, cerrar varios, ordenar las pestañas) | ✅ [fase50.md](fase50.md) |
 | 51 — Capa de compatibilidad v2 (1) | Modo Unicode para los plugins de N++ (TCHAR = wchar_t, conversión de FuncItem, getName y NPPM_* con cadenas), Win32 sin ventanas (archivos, .ini, conversiones, printf de MSVC, CRT, shlwapi, strsafe, módulos, portapapeles, ShellExecute) y corrección de los #include de Windows en las recetas | ✅ [fase51.md](fase51.md) |
 | 52 — Capa de compatibilidad v2 (2) | Ventanas de Win32 sobre Qt: controles estándar y sus notificaciones, clases registradas, subclassing, diálogos sin .rc, paneles acoplables con tTbData y DMN_CLOSE, temporizadores, PostMessage, menús emergentes, monitores, GDI sin dibujo; hilos y eventos, FormatMessage, SCI_GETTEXTRANGE | ✅ [fase52.md](fase52.md) |
+| 53 — Capa de compatibilidad v2 (3) | edita_rc (diálogos, menús y cadenas de los .rc en el formato binario de Windows), plantillas DLGTEMPLATE(EX) con unidades de diálogo, diálogos modales, LoadMenu/LoadString, SetWindowSubclass, diálogos comunes sobre Qt, CreateProcess con tuberías, MENUITEMINFO | ✅ [fase53.md](fase53.md) |
 
 ---
 

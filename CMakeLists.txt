@@ -46,7 +46,7 @@ install(FILES plugin-sdk/edita_plugin.h
               third_party/scintilla/include/Scintilla.h
               third_party/scintilla/include/Sci_Position.h
         DESTINATION ${EDITA_SDK_DATA})
-install(DIRECTORY plugin-sdk/compat plugin-sdk/cmake DESTINATION ${EDITA_SDK_DATA})
+install(DIRECTORY plugin-sdk/compat plugin-sdk/cmake plugin-sdk/tools DESTINATION ${EDITA_SDK_DATA})
 if(EDITA_BUILD_PLUGINS)
     add_subdirectory(plugins)
 endif()

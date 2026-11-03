@@ -20,10 +20,12 @@
 #include <QAbstractButton>
 #include <QApplication>
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QCursor>
 #include <QEvent>
 #include <QEventLoop>
+#include <QFileDialog>
 #include <QFontDatabase>
 #include <QFontMetrics>
 #include <QFrame>
@@ -178,7 +180,17 @@ struct Window
     QLabel* placeholder = nullptr;  // diálogos sin plantilla
     QEventLoop* modalLoop = nullptr;
     INT_PTR modalResult = 0;
+    bool ended = false;         // EndDialog (también antes de que empiece el bucle modal)
+    QSize baseUnits{6, 13};     // unidades de diálogo de su fuente (MapDialogRect)
     bool keyReached = false;    // la cadena llegó al procedimiento de la clase
+    struct Subclass
+    {
+        SUBCLASSPROC proc;
+        UINT_PTR id;
+        DWORD_PTR refData;
+    };
+    std::vector<Subclass> subclasses; // SetWindowSubclass (el último, el primero en recibir)
+    WNDPROC subclassBase = nullptr;   // el procedimiento que había antes del primero
 };
 
 struct Foreign
@@ -197,6 +209,9 @@ struct Registry
     UINT_PTR nextTimer = 0x7F00;
     HWND capture = nullptr;
     int cursorOverrides = 0;
+    const EditaResource* resources = nullptr;  // los del .rc (edita_rc)
+    unsigned long resourceCount = 0;
+    std::map<unsigned, std::wstring> wideStrings; // LoadStringW con tamaño 0
 };
 
 // Nunca se destruye: el plugin la usa también desde sus destructores estáticos
@@ -1672,6 +1687,522 @@ HWND createDialog(HINSTANCE instance, HWND parent, DLGPROC proc, LPARAM init)
     return w->alive ? hwnd : nullptr;
 }
 
+// --- Recursos y plantillas de diálogo ----------------------------------------------------
+
+const EditaResource* findResource(unsigned type, const QString& name)
+{
+    const Registry& r = registry();
+    bool numeric = false;
+    unsigned id = 0;
+    if (name.startsWith(QLatin1Char('#'))) {
+        id = name.mid(1).toUInt(&numeric);
+    }
+    for (unsigned long i = 0; i < r.resourceCount; ++i) {
+        const EditaResource& res = r.resources[i];
+        if (res.type != type)
+            continue;
+        if (numeric ? (!res.name && res.id == id) : (res.name && name.compare(QString::fromUtf8(res.name), Qt::CaseInsensitive) == 0))
+            return &res;
+    }
+    return nullptr;
+}
+
+bool isResource(const void* handle)
+{
+    const Registry& r = registry();
+    return r.resources && handle >= static_cast<const void*>(r.resources)
+           && handle < static_cast<const void*>(r.resources + r.resourceCount);
+}
+
+// Lectura de una plantilla binaria (alineada como en Windows)
+class TemplateReader
+{
+public:
+    TemplateReader(const unsigned char* data) : _start(data), _p(data) {}
+    unsigned word()
+    {
+        uint16_t v = 0;
+        std::memcpy(&v, _p, sizeof v);
+        _p += sizeof v;
+        return v;
+    }
+    uint32_t dword()
+    {
+        uint32_t v = 0;
+        std::memcpy(&v, _p, sizeof v);
+        _p += sizeof v;
+        return v;
+    }
+    int shortValue() { return static_cast<int16_t>(word()); }
+    unsigned byte() { return *_p++; }
+    void align()
+    {
+        while ((_p - _start) % 4)
+            ++_p;
+    }
+    // Una cadena UTF-16 terminada en nulo
+    QString text()
+    {
+        std::u16string units;
+        for (unsigned unit = word(); unit; unit = word())
+            units += static_cast<char16_t>(unit);
+        return QString::fromStdU16String(units);
+    }
+    // sz_Or_Ord: nada, un número (#n) o una cadena
+    QString nameOrOrdinal()
+    {
+        uint16_t first = 0;
+        std::memcpy(&first, _p, sizeof first);
+        if (first == 0) {
+            _p += 2;
+            return {};
+        }
+        if (first == 0xFFFF) {
+            _p += 2;
+            return QStringLiteral("#%1").arg(word());
+        }
+        return text();
+    }
+    void skip(std::size_t bytes) { _p += bytes; }
+
+private:
+    const unsigned char* _start;
+    const unsigned char* _p;
+};
+
+struct TemplateItem
+{
+    DWORD style = 0;
+    DWORD exStyle = 0;
+    int x = 0, y = 0, cx = 0, cy = 0;
+    int id = 0;
+    QString className;
+    QString title;
+};
+
+struct DialogTemplate
+{
+    DWORD style = 0;
+    DWORD exStyle = 0;
+    int x = 0, y = 0, cx = 0, cy = 0;
+    QString menu;
+    QString className;
+    QString title;
+    int pointSize = 0;
+    QString face;
+    std::vector<TemplateItem> items;
+};
+
+QString standardClass(const QString& name)
+{
+    static const char* const kAtoms[] = {"BUTTON", "EDIT", "STATIC", "LISTBOX", "SCROLLBAR", "COMBOBOX"};
+    if (name.startsWith(QLatin1Char('#'))) {
+        const unsigned atom = name.mid(1).toUInt();
+        if (atom >= 0x80 && atom <= 0x85)
+            return QString::fromLatin1(kAtoms[atom - 0x80]);
+    }
+    return name;
+}
+
+// DLGTEMPLATE o DLGTEMPLATEEX (la firma 0xFFFF lo distingue)
+DialogTemplate parseTemplate(const void* data)
+{
+    DialogTemplate t;
+    TemplateReader r(static_cast<const unsigned char*>(data));
+    uint16_t version[2] = {0, 0};
+    std::memcpy(version, data, sizeof version);
+    const bool extended = version[0] == 1 && version[1] == 0xFFFF;
+    unsigned count = 0;
+    if (extended) {
+        r.word();
+        r.word();
+        r.dword(); // helpID
+        t.exStyle = r.dword();
+        t.style = r.dword();
+    } else {
+        t.style = r.dword();
+        t.exStyle = r.dword();
+    }
+    count = r.word();
+    t.x = r.shortValue();
+    t.y = r.shortValue();
+    t.cx = r.shortValue();
+    t.cy = r.shortValue();
+    t.menu = r.nameOrOrdinal();
+    t.className = r.nameOrOrdinal();
+    t.title = r.text();
+    if (t.style & (DS_SETFONT | DS_SHELLFONT)) {
+        t.pointSize = static_cast<int>(r.word());
+        if (extended) {
+            r.word(); // weight
+            r.byte(); // italic
+            r.byte(); // charset
+        }
+        t.face = r.text();
+    }
+    for (unsigned i = 0; i < count; ++i) {
+        r.align();
+        TemplateItem item;
+        if (extended) {
+            r.dword(); // helpID
+            item.exStyle = r.dword();
+            item.style = r.dword();
+        } else {
+            item.style = r.dword();
+            item.exStyle = r.dword();
+        }
+        item.x = r.shortValue();
+        item.y = r.shortValue();
+        item.cx = r.shortValue();
+        item.cy = r.shortValue();
+        item.id = extended ? static_cast<int>(static_cast<int32_t>(r.dword())) : static_cast<int>(static_cast<int16_t>(r.word()));
+        item.className = standardClass(r.nameOrOrdinal());
+        item.title = r.nameOrOrdinal();
+        if (item.title.startsWith(QLatin1Char('#')))
+            item.title.clear(); // un icono o un mapa de bits por número
+        r.skip(r.word());       // datos de creación
+        t.items.push_back(item);
+    }
+    return t;
+}
+
+// Las unidades de diálogo de una fuente: el ancho medio de las letras y el alto, como Windows
+QSize dialogBaseUnits(const QFont& font)
+{
+    const QFontMetrics metrics(font);
+    const int width = metrics.horizontalAdvance(QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"));
+    return QSize((width / 26 + 1) / 2, metrics.height());
+}
+
+QRect toPixels(const QSize& base, int x, int y, int cx, int cy)
+{
+    return QRect(MulDiv(x, base.width(), 4), MulDiv(y, base.height(), 8), MulDiv(cx, base.width(), 4), MulDiv(cy, base.height(), 8));
+}
+
+HWND createWindow(DWORD exStyle, const QString& className, const QString& windowName, DWORD style, int x, int y, int width,
+                  int height, HWND parent, HMENU menu, HINSTANCE instance, LPVOID param);
+
+// Un diálogo de una plantilla, con sus controles; WM_INITDIALOG al final
+HWND createDialogFromTemplate(HINSTANCE instance, const DialogTemplate& t, HWND parent, DLGPROC proc, LPARAM init, bool modal)
+{
+    Window* w = newWindow(Kind::Dialog, t.style, t.exStyle, parent, instance);
+    w->className = QStringLiteral("#32770");
+    w->dlgProc = proc;
+    w->proc = w->builtin = dialogProc;
+    HostWidget* widget = newHostWidget(w, parent, true);
+    w->baseUnits = dialogBaseUnits(widget->font());
+    const QRect geometry = toPixels(w->baseUnits, t.x, t.y, t.cx, t.cy);
+    widget->resize(geometry.size());
+    widget->preferred = geometry.size();
+    if (!widget->isWindow()) {
+        widget->move(geometry.topLeft());
+    } else {
+        // Centrado sobre su dueño (o en la pantalla), como DS_CENTER
+        QWidget* owner = widgetOf(parent);
+        const QRect area = owner ? owner->window()->frameGeometry()
+                                 : (QGuiApplication::primaryScreen() ? QGuiApplication::primaryScreen()->availableGeometry() : QRect());
+        if (area.isValid())
+            widget->move(area.center() - QPoint(geometry.width() / 2, geometry.height() / 2));
+        if (modal)
+            widget->setWindowModality(Qt::ApplicationModal);
+    }
+    w->text = t.title;
+    widget->setWindowTitle(t.title);
+    widget->hide();
+    HWND hwnd = hwndOf(w);
+
+    HWND firstTabStop = nullptr;
+    for (const TemplateItem& item : t.items) {
+        const QRect r = toPixels(w->baseUnits, item.x, item.y, item.cx, item.cy);
+        const DWORD style = item.style | WS_CHILD;
+        HWND control = createWindow(item.exStyle, item.className, item.title, style, r.x(), r.y(), r.width(), r.height(), hwnd,
+                                    reinterpret_cast<HMENU>(static_cast<intptr_t>(item.id)), instance, nullptr);
+        if (!control) {
+            // Una clase que la capa no tiene (lista con columnas, árbol…): un recuadro con su
+            // nombre, con el mismo id, para que el diálogo se vea completo
+            control = createWindow(0, QStringLiteral("STATIC"), QStringLiteral("[%1]").arg(item.className),
+                                   WS_CHILD | SS_CENTER | SS_CENTERIMAGE | SS_SUNKEN | (item.style & WS_VISIBLE), r.x(), r.y(),
+                                   r.width(), r.height(), hwnd, reinterpret_cast<HMENU>(static_cast<intptr_t>(item.id)), instance,
+                                   nullptr);
+            EnableWindow(control, FALSE);
+            continue;
+        }
+        if (Window* c = windowOf(control); c && c->kind == Kind::ComboBox && c->widget) {
+            // En el .rc, la altura de un combo es la de su lista desplegada
+            c->widget->resize(r.width(), c->widget->sizeHint().height());
+        }
+        if (!firstTabStop && (style & WS_TABSTOP) && !(style & WS_DISABLED))
+            firstTabStop = control;
+    }
+    if (t.style & WS_CHILD)
+        widget->setVisible(t.style & WS_VISIBLE);
+    if (send(w, WM_INITDIALOG, reinterpret_cast<WPARAM>(firstTabStop), init) && firstTabStop && w->alive)
+        SetFocus(firstTabStop);
+    if (!w->alive)
+        return nullptr;
+    w->created = true;
+    if ((t.style & WS_VISIBLE) && !modal && !w->ended)
+        widget->show();
+    return hwnd;
+}
+
+INT_PTR runModal(HWND hwnd)
+{
+    Window* w = windowOf(hwnd);
+    if (!w)
+        return -1;
+    if (!w->ended && w->widget) {
+        w->widget->show();
+        w->widget->raise();
+        w->widget->activateWindow();
+        QEventLoop loop;
+        w->modalLoop = &loop;
+        loop.exec();
+        w->modalLoop = nullptr;
+    }
+    const INT_PTR result = w->modalResult;
+    DestroyWindow(hwnd);
+    return result;
+}
+
+template<typename Ch>
+QString resourceArgument(const Ch* name)
+{
+    if (IS_INTRESOURCE(name))
+        return QStringLiteral("#%1").arg(static_cast<unsigned>(reinterpret_cast<uintptr_t>(name)));
+    if constexpr (sizeof(Ch) == 1)
+        return QString::fromUtf8(reinterpret_cast<const char*>(name));
+    else
+        return QString::fromWCharArray(reinterpret_cast<const wchar_t*>(name));
+}
+
+// LoadMenuIndirect: la plantilla clásica (versión 0)
+void buildMenu(TemplateReader& r, HMENU menu)
+{
+    for (;;) {
+        const unsigned flags = r.word();
+        const bool popup = flags & MF_POPUP;
+        const unsigned id = popup ? 0 : r.word();
+        const QString text = r.text();
+        const std::wstring wide = text.toStdWString();
+        const UINT keep = flags & (MF_CHECKED | MF_GRAYED | MF_DISABLED | MF_MENUBARBREAK | MF_MENUBREAK);
+        if (popup) {
+            HMENU sub = CreatePopupMenu();
+            buildMenu(r, sub);
+            AppendMenuW(menu, MF_POPUP | keep, reinterpret_cast<UINT_PTR>(sub), wide.c_str());
+        } else if (id == 0 && text.isEmpty() && !(flags & ~0x80u)) {
+            AppendMenuW(menu, MF_SEPARATOR, 0, nullptr);
+        } else {
+            AppendMenuW(menu, MF_STRING | keep, id, wide.c_str());
+        }
+        if (flags & 0x80) // MF_END
+            break;
+    }
+}
+
+// --- SetWindowSubclass ----------------------------------------------------------------------
+
+// En qué subclase está cada llamada (DefSubclassProc pasa a la siguiente)
+thread_local std::vector<std::pair<Window*, int>> t_subclassCalls;
+
+LRESULT callSubclass(Window* w, int level, HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (level < 0 || level >= static_cast<int>(w->subclasses.size()))
+        return CallWindowProcW(w->subclassBase, hwnd, message, wParam, lParam);
+    const Window::Subclass subclass = w->subclasses[static_cast<std::size_t>(level)];
+    t_subclassCalls.emplace_back(w, level);
+    const LRESULT result = subclass.proc(hwnd, message, wParam, lParam, subclass.id, subclass.refData);
+    t_subclassCalls.pop_back();
+    return result;
+}
+
+LRESULT CALLBACK subclassDispatch(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    Window* w = windowOf(hwnd);
+    if (!w)
+        return 0;
+    return callSubclass(w, static_cast<int>(w->subclasses.size()) - 1, hwnd, message, wParam, lParam);
+}
+
+// --- Diálogos comunes ---------------------------------------------------------------------------
+
+template<typename Ch>
+QString fromChars(const Ch* s)
+{
+    if (!s)
+        return {};
+    if constexpr (sizeof(Ch) == 1)
+        return QString::fromUtf8(reinterpret_cast<const char*>(s));
+    else
+        return QString::fromWCharArray(reinterpret_cast<const wchar_t*>(s));
+}
+
+template<typename Ch>
+std::basic_string<Ch> toChars(const QString& s)
+{
+    if constexpr (sizeof(Ch) == 1)
+        return s.toStdString();
+    else
+        return s.toStdWString();
+}
+
+// "Texto\0*.txt;*.log\0Todo\0*.*\0\0" → los filtros de Qt
+template<typename Ch>
+QStringList fileFilters(const Ch* filter)
+{
+    QStringList filters;
+    if (!filter)
+        return filters;
+    const Ch* p = filter;
+    while (*p) {
+        const QString description = fromChars(p);
+        while (*p)
+            ++p;
+        ++p;
+        if (!*p)
+            break;
+        QString patterns = fromChars(p);
+        while (*p)
+            ++p;
+        ++p;
+        patterns.replace(QLatin1Char(';'), QLatin1Char(' '));
+        if (patterns == QLatin1String("*.*"))
+            patterns = QStringLiteral("*");
+        filters << QStringLiteral("%1 (%2)").arg(description, patterns);
+    }
+    return filters;
+}
+
+DWORD g_commonDialogError = 0;
+
+template<typename Ofn>
+BOOL fileDialog(Ofn* ofn, bool save)
+{
+    using Ch = std::remove_const_t<std::remove_pointer_t<decltype(ofn->lpstrFile)>>;
+    g_commonDialogError = 0;
+    if (!ofn || !ofn->lpstrFile || ofn->nMaxFile == 0)
+        return FALSE;
+    const QStringList filters = fileFilters(ofn->lpstrFilter);
+    const int index = ofn->nFilterIndex > 0 ? static_cast<int>(ofn->nFilterIndex) - 1 : 0;
+    QString selectedFilter = index < filters.size() ? filters[index] : QString();
+    const QString initialFile = QString(fromChars(ofn->lpstrFile)).replace(QLatin1Char('\\'), QLatin1Char('/'));
+    QString start = QString(fromChars(ofn->lpstrInitialDir)).replace(QLatin1Char('\\'), QLatin1Char('/'));
+    if (!initialFile.isEmpty())
+        start = QFileInfo(initialFile).isRelative() && !start.isEmpty() ? QDir(start).filePath(initialFile) : initialFile;
+    QWidget* owner = widgetOf(ofn->hwndOwner);
+    const QString title = fromChars(ofn->lpstrTitle);
+    QFileDialog::Options options;
+    if (!save || !(ofn->Flags & OFN_OVERWRITEPROMPT))
+        options |= QFileDialog::DontConfirmOverwrite;
+    QStringList files;
+    if (save) {
+        QString file = QFileDialog::getSaveFileName(owner, title, start, filters.join(QStringLiteral(";;")), &selectedFilter, options);
+        const QString defaultExtension = fromChars(ofn->lpstrDefExt);
+        if (!file.isEmpty() && !defaultExtension.isEmpty() && QFileInfo(file).suffix().isEmpty())
+            file += QLatin1Char('.') + defaultExtension;
+        if (!file.isEmpty())
+            files << file;
+    } else if (ofn->Flags & OFN_ALLOWMULTISELECT) {
+        files = QFileDialog::getOpenFileNames(owner, title, start, filters.join(QStringLiteral(";;")), &selectedFilter, options);
+    } else {
+        const QString file = QFileDialog::getOpenFileName(owner, title, start, filters.join(QStringLiteral(";;")), &selectedFilter, options);
+        if (!file.isEmpty())
+            files << file;
+    }
+    if (files.isEmpty())
+        return FALSE;
+    // Varios: "carpeta\0nombre1\0nombre2\0\0", como el diálogo «Explorer» de Windows
+    std::basic_string<Ch> result;
+    QString first = files.first();
+    if (files.size() > 1) {
+        result = toChars<Ch>(QFileInfo(first).absolutePath());
+        result += Ch(0);
+        for (const QString& f : files) {
+            result += toChars<Ch>(QFileInfo(f).fileName());
+            result += Ch(0);
+        }
+    } else {
+        result = toChars<Ch>(first);
+        result += Ch(0);
+    }
+    result += Ch(0);
+    if (result.size() > ofn->nMaxFile) {
+        g_commonDialogError = FNERR_BUFFERTOOSMALL;
+        // Como Windows: los dos primeros bytes dicen el tamaño que hace falta
+        if (ofn->nMaxFile * sizeof(Ch) >= 2) {
+            const auto needed = static_cast<uint16_t>(std::min<std::size_t>(result.size(), 0xFFFF));
+            std::memcpy(ofn->lpstrFile, &needed, sizeof needed);
+        }
+        return FALSE;
+    }
+    std::copy_n(result.data(), result.size(), ofn->lpstrFile);
+    const std::basic_string<Ch> path = toChars<Ch>(first);
+    const std::basic_string<Ch> name = toChars<Ch>(QFileInfo(first).fileName());
+    ofn->nFileOffset = static_cast<WORD>(files.size() > 1 ? toChars<Ch>(QFileInfo(first).absolutePath()).size() + 1
+                                                           : path.size() - name.size());
+    const qsizetype dot = name.find_last_of(Ch('.')) == std::basic_string<Ch>::npos ? -1 : static_cast<qsizetype>(name.find_last_of(Ch('.')));
+    ofn->nFileExtension = static_cast<WORD>(files.size() == 1 && dot >= 0 ? path.size() - name.size() + static_cast<std::size_t>(dot) + 1 : 0);
+    if (ofn->lpstrFileTitle && ofn->nMaxFileTitle)
+        copyTo(name, ofn->lpstrFileTitle, static_cast<int>(ofn->nMaxFileTitle));
+    const qsizetype chosen = filters.indexOf(selectedFilter);
+    if (chosen >= 0)
+        ofn->nFilterIndex = static_cast<DWORD>(chosen + 1);
+    return TRUE;
+}
+
+template<typename Cc>
+BOOL chooseColor(Cc* cc)
+{
+    if (!cc)
+        return FALSE;
+    const QColor initial = (cc->Flags & CC_RGBINIT)
+                               ? QColor(GetRValue(cc->rgbResult), GetGValue(cc->rgbResult), GetBValue(cc->rgbResult))
+                               : QColor(Qt::white);
+    const QColor color = QColorDialog::getColor(initial, widgetOf(cc->hwndOwner));
+    if (!color.isValid())
+        return FALSE;
+    cc->rgbResult = RGB(color.red(), color.green(), color.blue());
+    return TRUE;
+}
+
+constexpr uint32_t kPidlMagic = 0x5049444C; // "PIDL"
+
+// El «ITEMIDLIST» de SHBrowseForFolder: la ruta en UTF-8, en memoria de CoTaskMemAlloc
+LPITEMIDLIST makePidl(const QString& path)
+{
+    const QByteArray utf8 = path.toUtf8();
+    auto* block = static_cast<char*>(CoTaskMemAlloc(sizeof(uint32_t) + static_cast<std::size_t>(utf8.size()) + 1));
+    const uint32_t magic = kPidlMagic;
+    std::memcpy(block, &magic, sizeof magic);
+    std::memcpy(block + sizeof magic, utf8.constData(), static_cast<std::size_t>(utf8.size()) + 1);
+    return reinterpret_cast<LPITEMIDLIST>(block);
+}
+
+QString pidlPath(PCIDLIST_ABSOLUTE pidl)
+{
+    if (!pidl)
+        return {};
+    uint32_t magic = 0;
+    std::memcpy(&magic, pidl, sizeof magic);
+    return magic == kPidlMagic ? QString::fromUtf8(reinterpret_cast<const char*>(pidl) + sizeof magic) : QString();
+}
+
+template<typename Bi>
+PIDLIST_ABSOLUTE browseForFolder(Bi* bi)
+{
+    if (!bi)
+        return nullptr;
+    const QString start = pidlPath(bi->pidlRoot);
+    const QString folder = QFileDialog::getExistingDirectory(widgetOf(bi->hwndOwner), fromChars(bi->lpszTitle), start);
+    if (folder.isEmpty())
+        return nullptr;
+    if (bi->pszDisplayName) {
+        using Ch = std::remove_pointer_t<decltype(bi->pszDisplayName)>;
+        copyTo(toChars<Ch>(QFileInfo(folder).fileName()), bi->pszDisplayName, MAX_PATH);
+    }
+    return makePidl(folder);
+}
+
 void showMissingDialog()
 {
     QString text = spanish() ? QStringLiteral("<b>%1 %2</b><br>Plugin de Notepad++ compilado para Edita.<br><br>"
@@ -2180,38 +2711,67 @@ HANDLE RemovePropW(HWND hwnd, LPCWSTR name) { return getProperty(hwnd, resourceN
 
 // --- Diálogos ------------------------------------------------------------------------------------
 
-HWND edita_compat_CreateDialogParam(HINSTANCE instance, const void*, HWND parent, void* proc, LPARAM init)
+// El nombre del recurso: MAKEINTRESOURCE(n) o una cadena, de la variante A o W (los
+// diálogos de la plantilla de N++ llaman a CreateDialogParam con un TCHAR*)
+HWND edita_compat_CreateDialogParam(HINSTANCE instance, const void* name, HWND parent, void* proc, LPARAM init)
 {
+    if (const EditaResource* res = findResource(5, resourceArgument(static_cast<const TCHAR*>(name))))
+        return createDialogFromTemplate(instance, parseTemplate(res->data), parent, reinterpret_cast<DLGPROC>(proc), init, false);
     return createDialog(instance, parent, reinterpret_cast<DLGPROC>(proc), init);
 }
 
-INT_PTR edita_compat_DialogBoxParam(HINSTANCE, const void*, HWND, void*, LPARAM)
+INT_PTR edita_compat_DialogBoxParam(HINSTANCE instance, const void* name, HWND parent, void* proc, LPARAM init)
 {
-    // Un diálogo modal vacío no sirve de nada: se avisa
+    if (const EditaResource* res = findResource(5, resourceArgument(static_cast<const TCHAR*>(name)))) {
+        HWND hwnd = createDialogFromTemplate(instance, parseTemplate(res->data), parent, reinterpret_cast<DLGPROC>(proc), init, true);
+        return hwnd ? runModal(hwnd) : -1;
+    }
+    // Sin plantilla, un diálogo modal vacío no sirve de nada: se avisa
     showMissingDialog();
     return IDCANCEL;
 }
 
-HWND CreateDialogIndirectParamA(HINSTANCE instance, LPCDLGTEMPLATE, HWND parent, DLGPROC proc, LPARAM init)
+HWND CreateDialogIndirectParamA(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init)
 {
-    return createDialog(instance, parent, proc, init);
+    return dialogTemplate ? createDialogFromTemplate(instance, parseTemplate(dialogTemplate), parent, proc, init, false)
+                          : createDialog(instance, parent, proc, init);
 }
 
-HWND CreateDialogIndirectParamW(HINSTANCE instance, LPCDLGTEMPLATE, HWND parent, DLGPROC proc, LPARAM init)
+HWND CreateDialogIndirectParamW(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init)
 {
-    return createDialog(instance, parent, proc, init);
+    return CreateDialogIndirectParamA(instance, dialogTemplate, parent, proc, init);
 }
 
-INT_PTR DialogBoxIndirectParamA(HINSTANCE, LPCDLGTEMPLATE, HWND, DLGPROC, LPARAM)
+INT_PTR DialogBoxIndirectParamA(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init)
 {
-    showMissingDialog();
-    return IDCANCEL;
+    if (!dialogTemplate)
+        return -1;
+    HWND hwnd = createDialogFromTemplate(instance, parseTemplate(dialogTemplate), parent, proc, init, true);
+    return hwnd ? runModal(hwnd) : -1;
 }
 
-INT_PTR DialogBoxIndirectParamW(HINSTANCE, LPCDLGTEMPLATE, HWND, DLGPROC, LPARAM)
+INT_PTR DialogBoxIndirectParamW(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init)
 {
-    showMissingDialog();
-    return IDCANCEL;
+    return DialogBoxIndirectParamA(instance, dialogTemplate, parent, proc, init);
+}
+
+BOOL MapDialogRect(HWND dialog, LPRECT rect)
+{
+    Window* w = windowOf(dialog);
+    if (!w || !rect)
+        return FALSE;
+    const QSize base = w->baseUnits;
+    rect->left = MulDiv(static_cast<int>(rect->left), base.width(), 4);
+    rect->right = MulDiv(static_cast<int>(rect->right), base.width(), 4);
+    rect->top = MulDiv(static_cast<int>(rect->top), base.height(), 8);
+    rect->bottom = MulDiv(static_cast<int>(rect->bottom), base.height(), 8);
+    return TRUE;
+}
+
+LONG GetDialogBaseUnits(void)
+{
+    const QSize base = dialogBaseUnits(QApplication::font());
+    return MAKELONG(static_cast<WORD>(base.width()), static_cast<WORD>(base.height()));
 }
 
 BOOL EndDialog(HWND hwnd, INT_PTR result)
@@ -2220,6 +2780,7 @@ BOOL EndDialog(HWND hwnd, INT_PTR result)
     if (!w)
         return FALSE;
     w->modalResult = result;
+    w->ended = true;
     if (w->modalLoop)
         w->modalLoop->quit();
     if (w->widget)
@@ -3007,35 +3568,98 @@ BOOL DestroyCursor(HCURSOR) { return TRUE; }
 
 // --- Recursos ----------------------------------------------------------------------------------------
 
-HRSRC FindResourceA(HMODULE, LPCSTR, LPCSTR)
+void edita_compat_setResources(const EditaResource* resources, unsigned long count)
 {
-    SetLastError(1814); // ERROR_RESOURCE_NAME_NOT_FOUND
-    return nullptr;
+    registry().resources = resources;
+    registry().resourceCount = count;
 }
 
-HRSRC FindResourceW(HMODULE, LPCWSTR, LPCWSTR)
+static HRSRC findResourceByName(const QString& name, const QString& type)
 {
-    SetLastError(1814);
-    return nullptr;
+    // Los tipos de serie son números (RT_DIALOG = #5); los propios, cadenas: no los hay
+    const unsigned typeId = type.startsWith(QLatin1Char('#')) ? type.mid(1).toUInt() : 0;
+    const EditaResource* res = typeId ? findResource(typeId, name) : nullptr;
+    if (!res)
+        SetLastError(1814); // ERROR_RESOURCE_NAME_NOT_FOUND
+    return const_cast<EditaResource*>(res);
 }
 
-HGLOBAL LoadResource(HMODULE, HRSRC) { return nullptr; }
-LPVOID LockResource(HGLOBAL resource) { return resource; }
-DWORD SizeofResource(HMODULE, HRSRC) { return 0; }
+HRSRC FindResourceA(HMODULE, LPCSTR name, LPCSTR type) { return findResourceByName(resourceArgument(name), resourceArgument(type)); }
+HRSRC FindResourceW(HMODULE, LPCWSTR name, LPCWSTR type) { return findResourceByName(resourceArgument(name), resourceArgument(type)); }
+
+// Como en Windows: LoadResource da un handle y LockResource, los datos (de solo lectura)
+HGLOBAL LoadResource(HMODULE, HRSRC resource) { return isResource(resource) ? resource : nullptr; }
+LPVOID LockResource(HGLOBAL resource)
+{
+    if (isResource(resource))
+        return const_cast<unsigned char*>(static_cast<const EditaResource*>(resource)->data);
+    return resource;
+}
+DWORD SizeofResource(HMODULE, HRSRC resource)
+{
+    return isResource(resource) ? static_cast<DWORD>(static_cast<const EditaResource*>(resource)->size) : 0;
+}
 BOOL FreeResource(HGLOBAL) { return FALSE; }
 
-int LoadStringA(HINSTANCE, UINT, LPSTR buffer, int size)
+int LoadStringA(HINSTANCE, UINT id, LPSTR buffer, int size)
 {
-    if (buffer && size > 0)
+    const EditaResource* res = findResource(6, QStringLiteral("#%1").arg(id));
+    if (!buffer || size <= 0)
+        return 0;
+    if (!res) {
         buffer[0] = '\0';
-    return 0;
+        return 0;
+    }
+    return copyTo(std::string(reinterpret_cast<const char*>(res->data), res->size), buffer, size);
 }
 
-int LoadStringW(HINSTANCE, UINT, LPWSTR buffer, int size)
+int LoadStringW(HINSTANCE, UINT id, LPWSTR buffer, int size)
 {
-    if (buffer && size > 0)
-        buffer[0] = L'\0';
-    return 0;
+    const EditaResource* res = findResource(6, QStringLiteral("#%1").arg(id));
+    if (!buffer)
+        return 0;
+    if (!res) {
+        if (size > 0)
+            buffer[0] = L'\0';
+        return 0;
+    }
+    std::wstring& text = registry().wideStrings[id];
+    text = QString::fromUtf8(reinterpret_cast<const char*>(res->data), static_cast<qsizetype>(res->size)).toStdWString();
+    if (size == 0) {
+        // Como Windows: un puntero (de solo lectura) a la cadena del recurso
+        *reinterpret_cast<const wchar_t**>(buffer) = text.c_str();
+        return static_cast<int>(text.size());
+    }
+    return copyTo(text, buffer, size);
+}
+
+HMENU LoadMenuIndirectW(const void* menuTemplate)
+{
+    if (!menuTemplate)
+        return nullptr;
+    TemplateReader r(static_cast<const unsigned char*>(menuTemplate));
+    const unsigned version = r.word();
+    const unsigned offset = r.word();
+    if (version != 0) // MENUEX: edita_rc escribe siempre la plantilla clásica
+        return nullptr;
+    r.skip(offset);
+    HMENU menu = CreateMenu();
+    buildMenu(r, menu);
+    return menu;
+}
+
+HMENU LoadMenuIndirectA(const void* menuTemplate) { return LoadMenuIndirectW(menuTemplate); }
+
+HMENU LoadMenuA(HINSTANCE, LPCSTR name)
+{
+    const EditaResource* res = findResource(4, resourceArgument(name));
+    return res ? LoadMenuIndirectW(res->data) : nullptr;
+}
+
+HMENU LoadMenuW(HINSTANCE, LPCWSTR name)
+{
+    const EditaResource* res = findResource(4, resourceArgument(name));
+    return res ? LoadMenuIndirectW(res->data) : nullptr;
 }
 
 // --- Menús ---------------------------------------------------------------------------------------------
@@ -3529,5 +4153,210 @@ int MulDiv(int number, int numerator, int denominator)
     const long long result = negative ? -rounded : rounded;
     return result > INT_MAX || result < INT_MIN ? -1 : static_cast<int>(result);
 }
+
+// --- comctl32 ----------------------------------------------------------------------------------------
+
+BOOL SetWindowSubclass(HWND hwnd, SUBCLASSPROC proc, UINT_PTR id, DWORD_PTR refData)
+{
+    Window* w = windowOf(hwnd);
+    if (!w || !proc)
+        return FALSE;
+    for (Window::Subclass& existing : w->subclasses) {
+        if (existing.proc == proc && existing.id == id) {
+            existing.refData = refData;
+            return TRUE;
+        }
+    }
+    if (w->subclasses.empty() || w->proc != subclassDispatch) {
+        w->subclassBase = w->proc;
+        w->proc = subclassDispatch;
+    }
+    w->subclasses.push_back({proc, id, refData});
+    return TRUE;
+}
+
+BOOL GetWindowSubclass(HWND hwnd, SUBCLASSPROC proc, UINT_PTR id, DWORD_PTR* refData)
+{
+    Window* w = windowOf(hwnd);
+    if (!w)
+        return FALSE;
+    for (const Window::Subclass& existing : w->subclasses) {
+        if (existing.proc == proc && existing.id == id) {
+            if (refData)
+                *refData = existing.refData;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+BOOL RemoveWindowSubclass(HWND hwnd, SUBCLASSPROC proc, UINT_PTR id)
+{
+    Window* w = windowOf(hwnd);
+    if (!w)
+        return FALSE;
+    auto& list = w->subclasses;
+    const auto it = std::find_if(list.begin(), list.end(), [&](const Window::Subclass& s) { return s.proc == proc && s.id == id; });
+    if (it == list.end())
+        return FALSE;
+    list.erase(it);
+    if (list.empty() && w->proc == subclassDispatch)
+        w->proc = w->subclassBase;
+    return TRUE;
+}
+
+LRESULT DefSubclassProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    Window* w = windowOf(hwnd);
+    if (!w)
+        return 0;
+    for (auto it = t_subclassCalls.rbegin(); it != t_subclassCalls.rend(); ++it) {
+        if (it->first == w)
+            return callSubclass(w, it->second - 1, hwnd, message, wParam, lParam);
+    }
+    return CallWindowProcW(w->subclassBase ? w->subclassBase : w->builtin, hwnd, message, wParam, lParam);
+}
+
+void InitCommonControls(void) {}
+BOOL InitCommonControlsEx(const INITCOMMONCONTROLSEX*) { return TRUE; }
+
+// --- Diálogos comunes ----------------------------------------------------------------------------------
+
+BOOL GetOpenFileNameA(LPOPENFILENAMEA ofn) { return fileDialog(ofn, false); }
+BOOL GetOpenFileNameW(LPOPENFILENAMEW ofn) { return fileDialog(ofn, false); }
+BOOL GetSaveFileNameA(LPOPENFILENAMEA ofn) { return fileDialog(ofn, true); }
+BOOL GetSaveFileNameW(LPOPENFILENAMEW ofn) { return fileDialog(ofn, true); }
+DWORD CommDlgExtendedError(void) { return g_commonDialogError; }
+BOOL ChooseColorA(LPCHOOSECOLORA cc) { return chooseColor(cc); }
+BOOL ChooseColorW(LPCHOOSECOLORW cc) { return chooseColor(cc); }
+PIDLIST_ABSOLUTE SHBrowseForFolderA(LPBROWSEINFOA bi) { return browseForFolder(bi); }
+PIDLIST_ABSOLUTE SHBrowseForFolderW(LPBROWSEINFOW bi) { return browseForFolder(bi); }
+
+BOOL SHGetPathFromIDListA(PCIDLIST_ABSOLUTE pidl, LPSTR path)
+{
+    const QString folder = pidlPath(pidl);
+    if (folder.isEmpty() || !path)
+        return FALSE;
+    copyTo(folder.toStdString(), path, MAX_PATH);
+    return TRUE;
+}
+
+BOOL SHGetPathFromIDListW(PCIDLIST_ABSOLUTE pidl, LPWSTR path)
+{
+    const QString folder = pidlPath(pidl);
+    if (folder.isEmpty() || !path)
+        return FALSE;
+    copyTo(folder.toStdWString(), path, MAX_PATH);
+    return TRUE;
+}
+
+void ILFree(LPITEMIDLIST pidl) { CoTaskMemFree(pidl); }
+
+// --- MENUITEMINFO ---------------------------------------------------------------------------------------
+
+} // extern "C"
+
+namespace {
+
+template<typename Info>
+BOOL getMenuItemInfo(HMENU handle, UINT item, BOOL byPosition, Info* info)
+{
+    using Ch = std::remove_pointer_t<decltype(info->dwTypeData)>;
+    Menu* m = menuOf(handle);
+    QAction* action = m && !m->host ? findAction(m->menu, item, byPosition ? MF_BYPOSITION : MF_BYCOMMAND) : nullptr;
+    if (!action || !info)
+        return FALSE;
+    if (info->fMask & (MIIM_FTYPE | MIIM_TYPE))
+        info->fType = action->isSeparator() ? MFT_SEPARATOR : MFT_STRING;
+    if (info->fMask & MIIM_STATE)
+        info->fState = (action->isChecked() ? MFS_CHECKED : 0u) | (action->isEnabled() ? 0u : static_cast<UINT>(MFS_GRAYED));
+    if (info->fMask & MIIM_ID)
+        info->wID = action->menu() ? 0 : static_cast<UINT>(action->data().toULongLong());
+    if (info->fMask & MIIM_SUBMENU) {
+        info->hSubMenu = nullptr;
+        if (action->menu()) {
+            auto* sub = new Menu;
+            sub->menu = action->menu();
+            info->hSubMenu = sub;
+        }
+    }
+    if (info->fMask & MIIM_DATA)
+        info->dwItemData = static_cast<ULONG_PTR>(action->property("edita_itemData").toULongLong());
+    if (info->fMask & (MIIM_STRING | MIIM_TYPE)) {
+        const std::basic_string<Ch> text = toChars<Ch>(action->isSeparator() ? QString() : action->text());
+        if (!info->dwTypeData || info->cch == 0) {
+            info->cch = static_cast<UINT>(text.size());
+        } else {
+            info->cch = static_cast<UINT>(copyTo(text, info->dwTypeData, static_cast<int>(info->cch) + 1));
+        }
+    }
+    return TRUE;
+}
+
+template<typename Info>
+void applyMenuItemInfo(QAction* action, const Info* info)
+{
+    if (info->fMask & (MIIM_STRING | MIIM_TYPE)) {
+        if (info->dwTypeData && !((info->fMask & MIIM_TYPE) && (info->fType & MFT_SEPARATOR)))
+            action->setText(fromChars(info->dwTypeData));
+    }
+    if (info->fMask & MIIM_STATE) {
+        if (info->fState & MFS_CHECKED)
+            action->setCheckable(true);
+        action->setChecked(info->fState & MFS_CHECKED);
+        action->setEnabled(!(info->fState & MFS_GRAYED));
+    }
+    if (info->fMask & MIIM_ID)
+        action->setData(static_cast<qulonglong>(info->wID));
+    if (info->fMask & MIIM_DATA)
+        action->setProperty("edita_itemData", static_cast<qulonglong>(info->dwItemData));
+}
+
+template<typename Info>
+BOOL setMenuItemInfo(HMENU handle, UINT item, BOOL byPosition, const Info* info)
+{
+    Menu* m = menuOf(handle);
+    QAction* action = m && !m->host ? findAction(m->menu, item, byPosition ? MF_BYPOSITION : MF_BYCOMMAND) : nullptr;
+    if (!action || !info)
+        return FALSE;
+    applyMenuItemInfo(action, info);
+    return TRUE;
+}
+
+template<typename Info>
+BOOL insertMenuItem(HMENU handle, UINT item, BOOL byPosition, const Info* info)
+{
+    Menu* m = menuOf(handle);
+    if (!m || !m->menu || !info)
+        return FALSE;
+    QAction* action = nullptr;
+    const bool separator = (info->fMask & (MIIM_FTYPE | MIIM_TYPE)) && (info->fType & MFT_SEPARATOR);
+    if (separator) {
+        action = new QAction(m->menu);
+        action->setSeparator(true);
+    } else if ((info->fMask & MIIM_SUBMENU) && menuOf(info->hSubMenu) && menuOf(info->hSubMenu)->menu) {
+        QMenu* sub = menuOf(info->hSubMenu)->menu;
+        if (info->dwTypeData)
+            sub->setTitle(fromChars(info->dwTypeData));
+        action = sub->menuAction();
+    } else {
+        action = new QAction(m->menu);
+        applyMenuItemInfo(action, info);
+    }
+    QAction* before = findAction(m->menu, item, byPosition ? MF_BYPOSITION : MF_BYCOMMAND);
+    m->menu->insertAction(before, action);
+    return TRUE;
+}
+
+} // namespace
+
+extern "C" {
+
+BOOL GetMenuItemInfoA(HMENU menu, UINT item, BOOL byPosition, LPMENUITEMINFOA info) { return getMenuItemInfo(menu, item, byPosition, info); }
+BOOL GetMenuItemInfoW(HMENU menu, UINT item, BOOL byPosition, LPMENUITEMINFOW info) { return getMenuItemInfo(menu, item, byPosition, info); }
+BOOL SetMenuItemInfoA(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOA info) { return setMenuItemInfo(menu, item, byPosition, info); }
+BOOL SetMenuItemInfoW(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOW info) { return setMenuItemInfo(menu, item, byPosition, info); }
+BOOL InsertMenuItemA(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOA info) { return insertMenuItem(menu, item, byPosition, info); }
+BOOL InsertMenuItemW(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOW info) { return insertMenuItem(menu, item, byPosition, info); }
 
 } // extern "C"

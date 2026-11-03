@@ -12,9 +12,10 @@
  *     (WM_COMMAND con BN_CLICKED, EN_CHANGE, LBN_SELCHANGE, CBN_SELCHANGE…), "Scintilla"
  *     (un editor de Edita) y clases registradas (RegisterClass), con subclassing
  *     (SetWindowLongPtr(GWLP_WNDPROC)) que también ve el teclado;
- *   - diálogos: CreateDialogParam y DialogBoxParam con WM_INITDIALOG, Intro e Esc
- *     (IDOK/IDCANCEL), EndDialog y DefDlgProc. Los diálogos de los recursos .rc todavía
- *     no se leen: un diálogo sin plantilla queda vacío, con un aviso;
+ *   - diálogos: CreateDialogParam y DialogBoxParam (modal) con las plantillas del .rc
+ *     (edita_rc) o de la memoria, WM_INITDIALOG, Intro e Esc (IDOK/IDCANCEL), EndDialog
+ *     y DefDlgProc; un diálogo sin plantilla queda vacío, con un aviso;
+ *   - recursos: FindResource/LoadResource/LockResource, LoadString y LoadMenu;
  *   - geometría, visibilidad, foco, texto, temporizadores, menús emergentes, monitores,
  *     métricas del sistema y una parte de GDI sin dibujo: fuentes, medidas de texto y DPI.
  * Las ventanas de Edita (nppData._nppHandle, los editores) también sirven donde se
@@ -785,6 +786,143 @@ typedef LPTEXTMETRICA LPTEXTMETRIC;
 typedef NONCLIENTMETRICSA NONCLIENTMETRICS;
 #endif
 
+/* --- comctl32, diálogos comunes, MENUITEMINFO ------------------------------------------ */
+typedef LRESULT (*SUBCLASSPROC)(HWND, UINT, WPARAM, LPARAM, UINT_PTR, DWORD_PTR);
+typedef struct tagINITCOMMONCONTROLSEX { DWORD dwSize; DWORD dwICC; } INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
+#define ICC_LISTVIEW_CLASSES 0x00000001
+#define ICC_TREEVIEW_CLASSES 0x00000002
+#define ICC_BAR_CLASSES 0x00000004
+#define ICC_TAB_CLASSES 0x00000008
+#define ICC_UPDOWN_CLASS 0x00000010
+#define ICC_PROGRESS_CLASS 0x00000020
+#define ICC_WIN95_CLASSES 0x000000FF
+#define ICC_STANDARD_CLASSES 0x00004000
+#define ICC_LINK_CLASS 0x00008000
+
+typedef UINT_PTR (*LPOFNHOOKPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef struct tagOFNA {
+    DWORD lStructSize; HWND hwndOwner; HINSTANCE hInstance; LPCSTR lpstrFilter; LPSTR lpstrCustomFilter; DWORD nMaxCustFilter;
+    DWORD nFilterIndex; LPSTR lpstrFile; DWORD nMaxFile; LPSTR lpstrFileTitle; DWORD nMaxFileTitle; LPCSTR lpstrInitialDir;
+    LPCSTR lpstrTitle; DWORD Flags; WORD nFileOffset; WORD nFileExtension; LPCSTR lpstrDefExt; LPARAM lCustData;
+    LPOFNHOOKPROC lpfnHook; LPCSTR lpTemplateName; void* pvReserved; DWORD dwReserved; DWORD FlagsEx;
+} OPENFILENAMEA, *LPOPENFILENAMEA;
+typedef struct tagOFNW {
+    DWORD lStructSize; HWND hwndOwner; HINSTANCE hInstance; LPCWSTR lpstrFilter; LPWSTR lpstrCustomFilter; DWORD nMaxCustFilter;
+    DWORD nFilterIndex; LPWSTR lpstrFile; DWORD nMaxFile; LPWSTR lpstrFileTitle; DWORD nMaxFileTitle; LPCWSTR lpstrInitialDir;
+    LPCWSTR lpstrTitle; DWORD Flags; WORD nFileOffset; WORD nFileExtension; LPCWSTR lpstrDefExt; LPARAM lCustData;
+    LPOFNHOOKPROC lpfnHook; LPCWSTR lpTemplateName; void* pvReserved; DWORD dwReserved; DWORD FlagsEx;
+} OPENFILENAMEW, *LPOPENFILENAMEW;
+#define OFN_READONLY 0x00000001
+#define OFN_OVERWRITEPROMPT 0x00000002
+#define OFN_HIDEREADONLY 0x00000004
+#define OFN_NOCHANGEDIR 0x00000008
+#define OFN_SHOWHELP 0x00000010
+#define OFN_ENABLEHOOK 0x00000020
+#define OFN_NOVALIDATE 0x00000100
+#define OFN_ALLOWMULTISELECT 0x00000200
+#define OFN_EXTENSIONDIFFERENT 0x00000400
+#define OFN_PATHMUSTEXIST 0x00000800
+#define OFN_FILEMUSTEXIST 0x00001000
+#define OFN_CREATEPROMPT 0x00002000
+#define OFN_NOREADONLYRETURN 0x00008000
+#define OFN_NOTESTFILECREATE 0x00010000
+#define OFN_EXPLORER 0x00080000
+#define OFN_NODEREFERENCELINKS 0x00100000
+#define OFN_LONGNAMES 0x00200000
+#define OFN_ENABLESIZING 0x00800000
+#define OFN_DONTADDTORECENT 0x02000000
+#define OFN_FORCESHOWHIDDEN 0x10000000
+#define FNERR_BUFFERTOOSMALL 0x3003
+
+typedef struct tagCHOOSECOLORA {
+    DWORD lStructSize; HWND hwndOwner; HWND hInstance; COLORREF rgbResult; COLORREF* lpCustColors; DWORD Flags;
+    LPARAM lCustData; LPOFNHOOKPROC lpfnHook; LPCSTR lpTemplateName;
+} CHOOSECOLORA, *LPCHOOSECOLORA;
+typedef struct tagCHOOSECOLORW {
+    DWORD lStructSize; HWND hwndOwner; HWND hInstance; COLORREF rgbResult; COLORREF* lpCustColors; DWORD Flags;
+    LPARAM lCustData; LPOFNHOOKPROC lpfnHook; LPCWSTR lpTemplateName;
+} CHOOSECOLORW, *LPCHOOSECOLORW;
+#define CC_RGBINIT 0x00000001
+#define CC_FULLOPEN 0x00000002
+#define CC_PREVENTFULLOPEN 0x00000004
+#define CC_ANYCOLOR 0x00000100
+
+/* SHBrowseForFolder: el «ITEMIDLIST» es la ruta (se libera con CoTaskMemFree) */
+typedef struct _ITEMIDLIST ITEMIDLIST;
+typedef ITEMIDLIST* LPITEMIDLIST;
+typedef const ITEMIDLIST* LPCITEMIDLIST;
+typedef LPITEMIDLIST PIDLIST_ABSOLUTE;
+typedef LPCITEMIDLIST PCIDLIST_ABSOLUTE;
+typedef int (*BFFCALLBACK)(HWND, UINT, LPARAM, LPARAM);
+typedef struct _browseinfoA {
+    HWND hwndOwner; PCIDLIST_ABSOLUTE pidlRoot; LPSTR pszDisplayName; LPCSTR lpszTitle; UINT ulFlags; BFFCALLBACK lpfn;
+    LPARAM lParam; int iImage;
+} BROWSEINFOA, *LPBROWSEINFOA;
+typedef struct _browseinfoW {
+    HWND hwndOwner; PCIDLIST_ABSOLUTE pidlRoot; LPWSTR pszDisplayName; LPCWSTR lpszTitle; UINT ulFlags; BFFCALLBACK lpfn;
+    LPARAM lParam; int iImage;
+} BROWSEINFOW, *LPBROWSEINFOW;
+#define BIF_RETURNONLYFSDIRS 0x00000001
+#define BIF_DONTGOBELOWDOMAIN 0x00000002
+#define BIF_EDITBOX 0x00000010
+#define BIF_VALIDATE 0x00000020
+#define BIF_NEWDIALOGSTYLE 0x00000040
+#define BIF_USENEWUI (BIF_NEWDIALOGSTYLE | BIF_EDITBOX)
+#define BIF_NONEWFOLDERBUTTON 0x00000200
+
+typedef struct tagMENUITEMINFOA {
+    UINT cbSize; UINT fMask; UINT fType; UINT fState; UINT wID; HMENU hSubMenu; HBITMAP hbmpChecked; HBITMAP hbmpUnchecked;
+    ULONG_PTR dwItemData; LPSTR dwTypeData; UINT cch; HBITMAP hbmpItem;
+} MENUITEMINFOA, *LPMENUITEMINFOA;
+typedef struct tagMENUITEMINFOW {
+    UINT cbSize; UINT fMask; UINT fType; UINT fState; UINT wID; HMENU hSubMenu; HBITMAP hbmpChecked; HBITMAP hbmpUnchecked;
+    ULONG_PTR dwItemData; LPWSTR dwTypeData; UINT cch; HBITMAP hbmpItem;
+} MENUITEMINFOW, *LPMENUITEMINFOW;
+typedef const MENUITEMINFOA* LPCMENUITEMINFOA;
+typedef const MENUITEMINFOW* LPCMENUITEMINFOW;
+#define MIIM_STATE 0x00000001
+#define MIIM_ID 0x00000002
+#define MIIM_SUBMENU 0x00000004
+#define MIIM_CHECKMARKS 0x00000008
+#define MIIM_TYPE 0x00000010
+#define MIIM_DATA 0x00000020
+#define MIIM_STRING 0x00000040
+#define MIIM_BITMAP 0x00000080
+#define MIIM_FTYPE 0x00000100
+#define MFT_STRING 0x00000000L
+#define MFT_BITMAP 0x00000004L
+#define MFT_MENUBARBREAK 0x00000020L
+#define MFT_MENUBREAK 0x00000040L
+#define MFT_OWNERDRAW 0x00000100L
+#define MFT_RADIOCHECK 0x00000200L
+#define MFT_SEPARATOR 0x00000800L
+#define MFT_RIGHTORDER 0x00002000L
+#define MFT_RIGHTJUSTIFY 0x00004000L
+#define MFS_HILITE 0x00000080L
+#define MFS_DEFAULT 0x00001000L
+
+#ifdef UNICODE
+typedef OPENFILENAMEW OPENFILENAME;
+typedef LPOPENFILENAMEW LPOPENFILENAME;
+typedef CHOOSECOLORW CHOOSECOLOR;
+typedef LPCHOOSECOLORW LPCHOOSECOLOR;
+typedef BROWSEINFOW BROWSEINFO;
+typedef LPBROWSEINFOW LPBROWSEINFO;
+typedef MENUITEMINFOW MENUITEMINFO;
+typedef LPMENUITEMINFOW LPMENUITEMINFO;
+typedef LPCMENUITEMINFOW LPCMENUITEMINFO;
+#else
+typedef OPENFILENAMEA OPENFILENAME;
+typedef LPOPENFILENAMEA LPOPENFILENAME;
+typedef CHOOSECOLORA CHOOSECOLOR;
+typedef LPCHOOSECOLORA LPCHOOSECOLOR;
+typedef BROWSEINFOA BROWSEINFO;
+typedef LPBROWSEINFOA LPBROWSEINFO;
+typedef MENUITEMINFOA MENUITEMINFO;
+typedef LPMENUITEMINFOA LPMENUITEMINFO;
+typedef LPCMENUITEMINFOA LPCMENUITEMINFO;
+#endif
+
 /* --- Funciones (npp_window.cpp) ------------------------------------------------------ */
 EDITA_COMPAT_BEGIN
 
@@ -835,7 +973,8 @@ HANDLE GetPropW(HWND hwnd, LPCWSTR name);
 HANDLE RemovePropA(HWND hwnd, LPCSTR name);
 HANDLE RemovePropW(HWND hwnd, LPCWSTR name);
 
-/* Diálogos (los de los .rc todavía no existen: el diálogo queda vacío) */
+/* Diálogos: los del .rc (FindResource) o una plantilla en memoria (DLGTEMPLATE o
+ * DLGTEMPLATEEX); sin plantilla, el diálogo queda vacío con un aviso */
 HWND CreateDialogIndirectParamA(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init);
 HWND CreateDialogIndirectParamW(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init);
 INT_PTR DialogBoxIndirectParamA(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init);
@@ -932,7 +1071,17 @@ HBITMAP LoadBitmapW(HINSTANCE instance, LPCWSTR name);
 BOOL DestroyIcon(HICON icon);
 BOOL DestroyCursor(HCURSOR cursor);
 
-/* Recursos del .rc: todavía no hay (devuelven NULL o 0) */
+/* Recursos del .rc: los que generó edita_rc al compilar el plugin (RESOURCES en
+ * edita_npp_plugin), en el formato binario de Windows */
+typedef struct EditaResource
+{
+    unsigned type;               /* 4 RT_MENU, 5 RT_DIALOG, 6 RT_STRING (una cadena por recurso, en UTF-8) */
+    unsigned id;                 /* si name es NULL */
+    const char* name;            /* nombre en mayúsculas, o NULL */
+    const unsigned char* data;
+    unsigned long size;
+} EditaResource;
+void edita_compat_setResources(const EditaResource* resources, unsigned long count);
 HRSRC FindResourceA(HMODULE module, LPCSTR name, LPCSTR type);
 HRSRC FindResourceW(HMODULE module, LPCWSTR name, LPCWSTR type);
 HGLOBAL LoadResource(HMODULE module, HRSRC resource);
@@ -941,6 +1090,12 @@ DWORD SizeofResource(HMODULE module, HRSRC resource);
 BOOL FreeResource(HGLOBAL resource);
 int LoadStringA(HINSTANCE instance, UINT id, LPSTR buffer, int size);
 int LoadStringW(HINSTANCE instance, UINT id, LPWSTR buffer, int size);
+HMENU LoadMenuA(HINSTANCE instance, LPCSTR name);
+HMENU LoadMenuW(HINSTANCE instance, LPCWSTR name);
+HMENU LoadMenuIndirectA(const void* menuTemplate);
+HMENU LoadMenuIndirectW(const void* menuTemplate);
+BOOL MapDialogRect(HWND dialog, LPRECT rect);
+LONG GetDialogBaseUnits(void);
 
 /* Menús: los emergentes (TrackPopupMenu) son de Qt; GetMenu de la ventana de Edita marca
  * las órdenes del plugin (como NPPM_SETMENUITEMCHECK) */
@@ -998,6 +1153,36 @@ BOOL GetTextMetricsA(HDC dc, LPTEXTMETRICA metrics);
 BOOL GetTextMetricsW(HDC dc, LPTEXTMETRICW metrics);
 int MulDiv(int number, int numerator, int denominator);
 
+/* comctl32: subclassing por (proc, id), sobre la cadena de procedimientos */
+BOOL SetWindowSubclass(HWND hwnd, SUBCLASSPROC proc, UINT_PTR id, DWORD_PTR refData);
+BOOL GetWindowSubclass(HWND hwnd, SUBCLASSPROC proc, UINT_PTR id, DWORD_PTR* refData);
+BOOL RemoveWindowSubclass(HWND hwnd, SUBCLASSPROC proc, UINT_PTR id);
+LRESULT DefSubclassProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+void InitCommonControls(void);
+BOOL InitCommonControlsEx(const INITCOMMONCONTROLSEX* init);
+
+/* Diálogos comunes: los de Qt */
+BOOL GetOpenFileNameA(LPOPENFILENAMEA ofn);
+BOOL GetOpenFileNameW(LPOPENFILENAMEW ofn);
+BOOL GetSaveFileNameA(LPOPENFILENAMEA ofn);
+BOOL GetSaveFileNameW(LPOPENFILENAMEW ofn);
+DWORD CommDlgExtendedError(void);
+BOOL ChooseColorA(LPCHOOSECOLORA cc);
+BOOL ChooseColorW(LPCHOOSECOLORW cc);
+PIDLIST_ABSOLUTE SHBrowseForFolderA(LPBROWSEINFOA bi);
+PIDLIST_ABSOLUTE SHBrowseForFolderW(LPBROWSEINFOW bi);
+BOOL SHGetPathFromIDListA(PCIDLIST_ABSOLUTE pidl, LPSTR path);
+BOOL SHGetPathFromIDListW(PCIDLIST_ABSOLUTE pidl, LPWSTR path);
+void ILFree(LPITEMIDLIST pidl);
+
+/* MENUITEMINFO */
+BOOL GetMenuItemInfoA(HMENU menu, UINT item, BOOL byPosition, LPMENUITEMINFOA info);
+BOOL GetMenuItemInfoW(HMENU menu, UINT item, BOOL byPosition, LPMENUITEMINFOW info);
+BOOL SetMenuItemInfoA(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOA info);
+BOOL SetMenuItemInfoW(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOW info);
+BOOL InsertMenuItemA(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOA info);
+BOOL InsertMenuItemW(HMENU menu, UINT item, BOOL byPosition, LPCMENUITEMINFOW info);
+
 /* Un editor de Scintilla de Edita para CreateWindowEx("Scintilla"): npp_compat.cpp */
 void* edita_compat_createScintilla(void* parentWidget);
 
@@ -1037,6 +1222,8 @@ EDITA_COMPAT_END
 #define LoadBitmap EDITA_COMPAT_AW(LoadBitmap)
 #define FindResource EDITA_COMPAT_AW(FindResource)
 #define LoadString EDITA_COMPAT_AW(LoadString)
+#define LoadMenu EDITA_COMPAT_AW(LoadMenu)
+#define LoadMenuIndirect EDITA_COMPAT_AW(LoadMenuIndirect)
 #define AppendMenu EDITA_COMPAT_AW(AppendMenu)
 #define InsertMenu EDITA_COMPAT_AW(InsertMenu)
 #define GetObject EDITA_COMPAT_AW(GetObject)
@@ -1044,5 +1231,13 @@ EDITA_COMPAT_END
 #define CreateFontIndirect EDITA_COMPAT_AW(CreateFontIndirect)
 #define GetTextExtentPoint32 EDITA_COMPAT_AW(GetTextExtentPoint32)
 #define GetTextMetrics EDITA_COMPAT_AW(GetTextMetrics)
+#define GetOpenFileName EDITA_COMPAT_AW(GetOpenFileName)
+#define GetSaveFileName EDITA_COMPAT_AW(GetSaveFileName)
+#define ChooseColor EDITA_COMPAT_AW(ChooseColor)
+#define SHBrowseForFolder EDITA_COMPAT_AW(SHBrowseForFolder)
+#define SHGetPathFromIDList EDITA_COMPAT_AW(SHGetPathFromIDList)
+#define GetMenuItemInfo EDITA_COMPAT_AW(GetMenuItemInfo)
+#define SetMenuItemInfo EDITA_COMPAT_AW(SetMenuItemInfo)
+#define InsertMenuItem EDITA_COMPAT_AW(InsertMenuItem)
 
 #endif /* EDITA_NPP_COMPAT_USER_H */

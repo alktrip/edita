@@ -9,15 +9,19 @@
 // Fase 52: las ventanas (npp_window.cpp): clases, controles estándar y sus notificaciones,
 // subclassing, diálogos, temporizadores, PostMessage, menús, GDI sin dibujo, sistema, y
 // los hilos, eventos y FormatMessage de npp_win32.cpp.
+// Fase 53: los recursos de un .rc (tests/fixtures/rc, convertidos por edita_rc al
+// compilar la prueba): diálogos de plantilla, modales, menús y cadenas.
 
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
+#include <QColorDialog>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMenu>
+#include <QPointer>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScreen>
@@ -25,6 +29,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileDialog>
 #include <QMimeData>
 #include <QTemporaryDir>
 #include <QTest>
@@ -117,6 +122,61 @@ LRESULT CALLBACK subclassedEdit(HWND hwnd, UINT message, WPARAM wParam, LPARAM l
     return CallWindowProc(g_originalEdit, hwnd, message, wParam, lParam);
 }
 
+// Un diálogo modal que se cierra solo (EndDialog en un mensaje en cola)
+INT_PTR CALLBACK closingDialog(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    g_messages.push_back({hwnd, message, wParam, lParam});
+    if (message == WM_INITDIALOG) {
+        PostMessage(hwnd, WM_USER + 9, 0, 0);
+        return TRUE;
+    }
+    if (message == WM_USER + 9) {
+        EndDialog(hwnd, 42);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// Dos subclases encadenadas (SetWindowSubclass): cada una anota su id y pasa a la siguiente
+std::vector<int> g_subclassOrder;
+LRESULT CALLBACK chainedSubclass(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR id, DWORD_PTR refData)
+{
+    if (message == WM_USER + 20)
+        g_subclassOrder.push_back(static_cast<int>(id * 100 + refData));
+    return DefSubclassProc(hwnd, message, wParam, lParam);
+}
+
+// Acepta el diálogo modal de Qt en cuanto se abre (fill no debe tener QVERIFY: si falla,
+// el diálogo se quedaría abierto)
+template<typename Dialog, typename Fill>
+void answerDialog(Fill fill, int attempts = 50)
+{
+    QTimer::singleShot(50, [fill, attempts] {
+        auto* dialog = qobject_cast<Dialog*>(QApplication::activeModalWidget());
+        if (!dialog) {
+            if (attempts > 0)
+                answerDialog<Dialog>(fill, attempts - 1);
+            return;
+        }
+        fill(dialog);
+        QMetaObject::invokeMethod(dialog, "accept"); // QFileDialog::accept es protegido
+        // QFileDialog carga la carpeta en segundo plano: si todavía no acepta, se reintenta
+        QPointer<Dialog> still(dialog);
+        QTimer::singleShot(100, [still, fill, attempts] {
+            if (still && still->isVisible() && attempts > 0)
+                answerDialog<Dialog>(fill, attempts - 1);
+        });
+    });
+}
+
+// Como el usuario: la carpeta y el nombre escrito en el campo del diálogo
+void typeFileName(QFileDialog* dialog, const QString& folder, const QString& name)
+{
+    dialog->setDirectory(folder);
+    if (auto* edit = dialog->findChild<QLineEdit*>(QStringLiteral("fileNameEdit")))
+        edit->setText(name);
+}
+
 int g_timerCalls = 0;
 void CALLBACK timerProc(HWND, UINT, UINT_PTR, DWORD)
 {
@@ -140,6 +200,13 @@ private:
     std::wstring tmp(const QString& name) const { return w(_tmp.filePath(name)); }
 
 private slots:
+    void initTestCase()
+    {
+        // Los diálogos de Qt (no los del sistema): los responde answerDialog. En Edita los
+        // decide la preferencia de los diálogos de archivos (el mismo atributo)
+        QCoreApplication::setAttribute(Qt::AA_DontUseNativeDialogs, true);
+    }
+
     void unicodeMode()
     {
         // Como en un plugin moderno de N++: TCHAR y TEXT() son anchos
@@ -902,6 +969,376 @@ private slots:
                       reinterpret_cast<va_list*>(inserts));
         QCOMPARE(QString::fromWCharArray(buffer), QStringLiteral("dos y uno%"));
         QCOMPARE(PRIMARYLANGID(MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT)), WORD{LANG_SPANISH});
+    }
+
+    void resourceDialogs()
+    {
+        // FindResource/LoadResource/LockResource: la plantilla DLGTEMPLATEEX del .rc
+        HRSRC res = FindResource(edita_compat_module(), MAKEINTRESOURCE(2000), RT_DIALOG);
+        QVERIFY(res);
+        const auto* data = static_cast<const unsigned char*>(LockResource(LoadResource(edita_compat_module(), res)));
+        QVERIFY(data);
+        QCOMPARE(data[0], 1);
+        QCOMPARE(data[2], 0xFF);
+        QVERIFY(SizeofResource(edita_compat_module(), res) > 100);
+        QVERIFY(!FindResource(edita_compat_module(), MAKEINTRESOURCE(2000), RT_MENU));
+        QVERIFY(!FindResource(edita_compat_module(), MAKEINTRESOURCE(1), RT_DIALOG));
+
+        // El diálogo: el neutro (no el francés), con sus controles
+        g_messages.clear();
+        HWND dialog = CreateDialogParam(edita_compat_module(), MAKEINTRESOURCE(2000), nullptr, recordingDialog, 7);
+        QVERIFY(dialog);
+        wchar_t text[64];
+        GetWindowText(dialog, text, 64);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("Opciones ñ"));
+        QVERIFY(!IsWindowVisible(dialog)); // sin WS_VISIBLE
+        auto* widget = static_cast<QWidget*>(edita_compat_widget(dialog));
+        // Con plantilla no hay aviso de «diálogo de Windows»: solo sus dos estáticos
+        for (QLabel* l : widget->findChildren<QLabel*>())
+            QVERIFY2(!l->text().contains(QLatin1String(".rc")), qPrintable(l->text()));
+        QCOMPARE(widget->findChildren<QLabel*>().size(), 2);
+        // WM_INITDIALOG: wParam es el primer control con WS_TABSTOP (el campo)
+        HWND name = GetDlgItem(dialog, 2101);
+        QVERIFY(name);
+        QCOMPARE(reinterpret_cast<HWND>(last(WM_INITDIALOG)->wParam), name);
+        QCOMPARE(last(WM_INITDIALOG)->lParam, LPARAM{7});
+        // Unidades de diálogo: MapDialogRect da la geometría de los controles
+        RECT rect{50, 7, 50 + 140, 7 + 14};
+        QVERIFY(MapDialogRect(dialog, &rect));
+        auto* line = qobject_cast<QLineEdit*>(static_cast<QWidget*>(edita_compat_widget(name)));
+        QVERIFY(line);
+        QCOMPARE(line->geometry(), QRect(QPoint(int(rect.left), int(rect.top)), QPoint(int(rect.right) - 1, int(rect.bottom) - 1)));
+        RECT client{};
+        GetClientRect(dialog, &client);
+        RECT whole{0, 0, 200, 100};
+        MapDialogRect(dialog, &whole);
+        QCOMPARE(client.right, whole.right);
+        // Estático (con &), casilla automática, combo ordenado y lista sin borde
+        HWND label = nullptr;
+        EnumChildWindows(dialog, [](HWND child, LPARAM out) {
+            wchar_t buffer[32];
+            GetClassName(child, buffer, 32);
+            if (QString::fromWCharArray(buffer) == QLatin1String("STATIC") && GetDlgCtrlID(child) == -1)
+                *reinterpret_cast<HWND*>(out) = child;
+            return TRUE;
+        }, reinterpret_cast<LPARAM>(&label));
+        QVERIFY(label);
+        GetWindowText(label, text, 64);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("&Nombre:"));
+        SendDlgItemMessage(dialog, 2102, BM_CLICK, 0, 0);
+        QCOMPARE(IsDlgButtonChecked(dialog, 2102), UINT{BST_CHECKED});
+        HWND combo = GetDlgItem(dialog, 2103);
+        SendMessage(combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"zeta"));
+        SendMessage(combo, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(L"alfa"));
+        SendMessage(combo, CB_GETLBTEXT, 0, reinterpret_cast<LPARAM>(text));
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("alfa"));
+        QVERIFY(!qobject_cast<QComboBox*>(static_cast<QWidget*>(edita_compat_widget(combo)))->isEditable());
+        QVERIFY(!(GetWindowLongPtr(GetDlgItem(dialog, 2104), GWL_STYLE) & WS_BORDER));
+        // Una clase que la capa no tiene: un recuadro con su nombre, con su id
+        HWND columns = GetDlgItem(dialog, 2105);
+        QVERIFY(columns);
+        GetWindowText(columns, text, 64);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("[SysListView32]"));
+        QVERIFY(!IsWindowEnabled(columns));
+        // Intro: el DEFPUSHBUTTON (IDOK)
+        ShowWindow(dialog, SW_SHOW);
+        g_messages.clear();
+        QTest::keyClick(line, Qt::Key_Return);
+        QCOMPARE(LOWORD(last(WM_COMMAND)->wParam), WORD{IDOK});
+        DestroyWindow(dialog);
+
+        // Un diálogo hijo (WS_CHILD | WS_VISIBLE): dentro de su padre
+        WNDCLASS wc{};
+        wc.lpfnWndProc = recordingProc;
+        wc.lpszClassName = L"Contenedor";
+        RegisterClass(&wc);
+        HWND parent = CreateWindowEx(0, L"Contenedor", nullptr, WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, nullptr, nullptr, nullptr, nullptr);
+        HWND panel = CreateDialogParam(edita_compat_module(), MAKEINTRESOURCE(2001), parent, recordingDialog, 0);
+        QVERIFY(panel);
+        QCOMPARE(static_cast<QWidget*>(edita_compat_widget(panel))->parentWidget(), static_cast<QWidget*>(edita_compat_widget(parent)));
+        QVERIFY(GetDlgItem(panel, 2106));
+        // Macros con argumentos del .rc: ## para el id, # para el texto
+        QVERIFY(GetDlgItem(panel, 2108));
+        wchar_t version[64];
+        GetDlgItemText(panel, 2107, version, 64);
+        QCOMPARE(QString::fromWCharArray(version), QStringLiteral("Versión 1.2.3"));
+        DestroyWindow(parent);
+        QVERIFY(!IsWindow(panel));
+
+        // DialogBoxParam: modal, devuelve lo que diga EndDialog
+        g_messages.clear();
+        QCOMPARE(DialogBoxParam(edita_compat_module(), MAKEINTRESOURCE(2000), nullptr, closingDialog, 0), INT_PTR{42});
+        QCOMPARE(countOf(WM_INITDIALOG), 1);
+        QCOMPARE(countOf(WM_DESTROY), 1);
+
+        // CreateDialogIndirectParam con la plantilla en memoria (la ruta RTL de StaticDialog)
+        HWND copy = CreateDialogIndirectParam(edita_compat_module(), reinterpret_cast<LPCDLGTEMPLATE>(data), nullptr, recordingDialog, 0);
+        QVERIFY(GetDlgItem(copy, 2101));
+        DestroyWindow(copy);
+    }
+
+    void resourceMenusAndStrings()
+    {
+        HMENU menu = LoadMenu(edita_compat_module(), MAKEINTRESOURCE(2200));
+        QVERIFY(menu);
+        QCOMPARE(GetMenuItemCount(menu), 1);
+        HMENU popup = GetSubMenu(menu, 0);
+        QVERIFY(popup);
+        QCOMPARE(GetMenuItemCount(popup), 4);
+        QCOMPARE(GetMenuItemID(popup, 0), UINT{2201});
+        QCOMPARE(GetMenuItemID(popup, 1), UINT{0}); // separador
+        QVERIFY(GetMenuState(popup, 1, MF_BYPOSITION) & MF_SEPARATOR);
+        QVERIFY(GetMenuState(menu, 2202, MF_BYCOMMAND) & MF_CHECKED);
+        QVERIFY(GetMenuState(menu, 2203, MF_BYCOMMAND) & MF_GRAYED);
+        QVERIFY(GetSubMenu(popup, 3));
+        QVERIFY(!LoadMenu(edita_compat_module(), MAKEINTRESOURCE(1)));
+        DestroyMenu(menu);
+
+        wchar_t text[64];
+        QCOMPARE(LoadString(edita_compat_module(), 2300, text, 64), 14);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("Hola, \"Edita\"\n"));
+        QCOMPARE(LoadString(edita_compat_module(), 2300, text, 5), 4);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("Hola"));
+        // Con tamaño 0, un puntero a la cadena del recurso
+        const wchar_t* pointer = nullptr;
+        QCOMPARE(LoadString(edita_compat_module(), 2301, reinterpret_cast<LPWSTR>(&pointer), 0), 4);
+        QCOMPARE(QString::fromWCharArray(pointer, 4), QStringLiteral("Otro"));
+        // La del .rc en UTF-16
+        LoadString(edita_compat_module(), 2302, text, 64);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("Ünïcödé 😀"));
+        char narrow[64];
+        LoadStringA(edita_compat_module(), 2302, narrow, 64);
+        QCOMPARE(QString::fromUtf8(narrow), QStringLiteral("Ünïcödé 😀"));
+        QCOMPARE(LoadString(edita_compat_module(), 9999, text, 64), 0);
+        // Una cadena que sigue en la línea siguiente, como permite rc.exe
+        LoadString(edita_compat_module(), 2303, text, 64);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("uno\ndos"));
+    }
+
+    void subclassesAndMenuItemInfo()
+    {
+        // SetWindowSubclass: el último en entrar recibe primero; DefSubclassProc sigue la cadena
+        HWND edit = CreateWindowEx(0, L"EDIT", L"", WS_POPUP, 0, 0, 100, 20, nullptr, nullptr, nullptr, nullptr);
+        QVERIFY(SetWindowSubclass(edit, chainedSubclass, 1, 7));
+        QVERIFY(SetWindowSubclass(edit, chainedSubclass, 2, 8));
+        DWORD_PTR ref = 0;
+        QVERIFY(GetWindowSubclass(edit, chainedSubclass, 1, &ref));
+        QCOMPARE(ref, DWORD_PTR{7});
+        g_subclassOrder.clear();
+        SendMessage(edit, WM_USER + 20, 0, 0);
+        QCOMPARE(g_subclassOrder, (std::vector<int>{208, 107}));
+        // Y al final el control sigue funcionando
+        SetWindowText(edit, L"sigue");
+        QCOMPARE(GetWindowTextLength(edit), 5);
+        QVERIFY(RemoveWindowSubclass(edit, chainedSubclass, 2));
+        QVERIFY(RemoveWindowSubclass(edit, chainedSubclass, 1));
+        QVERIFY(!RemoveWindowSubclass(edit, chainedSubclass, 1));
+        QCOMPARE(GetWindowLongPtr(edit, GWLP_WNDPROC) != 0, true);
+        g_subclassOrder.clear();
+        SendMessage(edit, WM_USER + 20, 0, 0);
+        QVERIFY(g_subclassOrder.empty());
+        DestroyWindow(edit);
+        INITCOMMONCONTROLSEX icc{sizeof(icc), ICC_WIN95_CLASSES};
+        QVERIFY(InitCommonControlsEx(&icc));
+
+        // MENUITEMINFO
+        HMENU menu = CreatePopupMenu();
+        AppendMenu(menu, MF_STRING, 10, L"Uno");
+        MENUITEMINFO info{};
+        info.cbSize = sizeof(info);
+        info.fMask = MIIM_STRING | MIIM_ID | MIIM_STATE | MIIM_DATA;
+        info.dwTypeData = const_cast<LPWSTR>(L"Dos");
+        info.wID = 11;
+        info.fState = MFS_CHECKED;
+        info.dwItemData = 1234;
+        QVERIFY(InsertMenuItem(menu, 0, TRUE, &info));
+        QCOMPARE(GetMenuItemID(menu, 0), UINT{11});
+        MENUITEMINFO read{};
+        read.cbSize = sizeof(read);
+        read.fMask = MIIM_STRING | MIIM_STATE | MIIM_DATA;
+        QVERIFY(GetMenuItemInfo(menu, 11, FALSE, &read));
+        QCOMPARE(read.cch, UINT{3}); // sin búfer: la longitud
+        wchar_t text[16];
+        read.dwTypeData = text;
+        read.cch = 16;
+        QVERIFY(GetMenuItemInfo(menu, 11, FALSE, &read));
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("Dos"));
+        QVERIFY(read.fState & MFS_CHECKED);
+        QCOMPARE(read.dwItemData, ULONG_PTR{1234});
+        info.fMask = MIIM_STRING | MIIM_STATE;
+        info.dwTypeData = const_cast<LPWSTR>(L"Tres");
+        info.fState = MFS_GRAYED;
+        QVERIFY(SetMenuItemInfo(menu, 1, TRUE, &info));
+        QVERIFY(GetMenuState(menu, 10, MF_BYCOMMAND) & MF_GRAYED);
+        DestroyMenu(menu);
+    }
+
+    void commonDialogs()
+    {
+        const QString first = _tmp.filePath(QStringLiteral("abrir uno.txt"));
+        const QString second = _tmp.filePath(QStringLiteral("abrir dos.txt"));
+        writeAll(first, "1");
+        writeAll(second, "2");
+        // GetOpenFileName: el filtro de Windows, la ruta y sus desplazamientos
+        wchar_t file[MAX_PATH] = L"";
+        wchar_t title[64] = L"";
+        OPENFILENAME ofn{};
+        ofn.lStructSize = sizeof(ofn);
+        ofn.lpstrFilter = L"Texto\0*.txt;*.log\0Todo\0*.*\0\0";
+        ofn.nFilterIndex = 1;
+        ofn.lpstrFile = file;
+        ofn.nMaxFile = MAX_PATH;
+        ofn.lpstrFileTitle = title;
+        ofn.nMaxFileTitle = 64;
+        ofn.Flags = OFN_FILEMUSTEXIST | OFN_EXPLORER;
+        const std::wstring initialDir = w(_tmp.path());
+        ofn.lpstrInitialDir = initialDir.c_str();
+        QStringList filters;
+        const QString tmpDir = _tmp.path();
+        answerDialog<QFileDialog>([tmpDir, &filters](QFileDialog* d) {
+            filters = d->nameFilters();
+            typeFileName(d, tmpDir, QStringLiteral("abrir uno.txt"));
+        });
+        QVERIFY(GetOpenFileName(&ofn));
+        QCOMPARE(filters, (QStringList{"Texto (*.txt *.log)", "Todo (*)"}));
+        QCOMPARE(QString::fromWCharArray(file), first);
+        QCOMPARE(QString::fromWCharArray(file + ofn.nFileOffset), QStringLiteral("abrir uno.txt"));
+        QCOMPARE(QString::fromWCharArray(file + ofn.nFileExtension), QStringLiteral("txt"));
+        QCOMPARE(QString::fromWCharArray(title), QStringLiteral("abrir uno.txt"));
+        // Varios: "carpeta\0nombre\0nombre\0\0"
+        file[0] = L'\0';
+        ofn.Flags = OFN_ALLOWMULTISELECT | OFN_EXPLORER;
+        // Los dos nombres, entre comillas, en el campo del nombre
+        answerDialog<QFileDialog>([tmpDir](QFileDialog* d) {
+            typeFileName(d, tmpDir, QStringLiteral("\"abrir uno.txt\" \"abrir dos.txt\""));
+        });
+        QVERIFY(GetOpenFileName(&ofn));
+        QCOMPARE(QString::fromWCharArray(file), _tmp.path());
+        const wchar_t* names = file + ofn.nFileOffset;
+        QStringList chosen;
+        while (*names) {
+            chosen << QString::fromWCharArray(names);
+            names += std::wcslen(names) + 1;
+        }
+        chosen.sort();
+        QCOMPARE(chosen, (QStringList{"abrir dos.txt", "abrir uno.txt"}));
+        // Un búfer corto: FALSE y FNERR_BUFFERTOOSMALL
+        wchar_t tiny[4] = L"";
+        ofn.lpstrFile = tiny;
+        ofn.nMaxFile = 4;
+        ofn.Flags = OFN_EXPLORER;
+        answerDialog<QFileDialog>([tmpDir](QFileDialog* d) { typeFileName(d, tmpDir, QStringLiteral("abrir uno.txt")); });
+        QVERIFY(!GetOpenFileName(&ofn));
+        QCOMPARE(CommDlgExtendedError(), DWORD{FNERR_BUFFERTOOSMALL});
+        // GetSaveFileName con la extensión por defecto
+        wchar_t saveFile[MAX_PATH] = L"";
+        OPENFILENAME save{};
+        save.lStructSize = sizeof(save);
+        save.lpstrFile = saveFile;
+        save.nMaxFile = MAX_PATH;
+        save.lpstrDefExt = L"ini";
+        const QString target = _tmp.filePath(QStringLiteral("guardado"));
+        answerDialog<QFileDialog>([tmpDir](QFileDialog* d) { typeFileName(d, tmpDir, QStringLiteral("guardado")); });
+        QVERIFY(GetSaveFileName(&save));
+        QCOMPARE(QString::fromWCharArray(saveFile), target + QStringLiteral(".ini"));
+
+        // SHBrowseForFolder + SHGetPathFromIDList + CoTaskMemFree
+        BROWSEINFO bi{};
+        wchar_t display[MAX_PATH];
+        bi.pszDisplayName = display;
+        bi.lpszTitle = L"Carpeta";
+        bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+        const QString folder = _tmp.path();
+        answerDialog<QFileDialog>([folder](QFileDialog* d) {
+            typeFileName(d, QFileInfo(folder).absolutePath(), QFileInfo(folder).fileName());
+        });
+        PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
+        QVERIFY(pidl);
+        wchar_t path[MAX_PATH];
+        QVERIFY(SHGetPathFromIDList(pidl, path));
+        QCOMPARE(QFileInfo(QString::fromWCharArray(path)).canonicalFilePath(), QFileInfo(folder).canonicalFilePath());
+        CoTaskMemFree(pidl);
+
+        // ChooseColor
+        COLORREF custom[16] = {};
+        CHOOSECOLOR cc{};
+        cc.lStructSize = sizeof(cc);
+        cc.rgbResult = RGB(10, 20, 30);
+        cc.lpCustColors = custom;
+        cc.Flags = CC_RGBINIT | CC_FULLOPEN;
+        QColor initial;
+        answerDialog<QColorDialog>([&initial](QColorDialog* d) {
+            initial = d->currentColor();
+            d->setCurrentColor(QColor(200, 100, 50));
+        });
+        QVERIFY(ChooseColor(&cc));
+        QCOMPARE(initial, QColor(10, 20, 30));
+        QCOMPARE(cc.rgbResult, RGB(200, 100, 50));
+    }
+
+    void processes()
+    {
+        // Una orden con su salida por una tubería (STARTF_USESTDHANDLES)
+        HANDLE readPipe = nullptr, writePipe = nullptr;
+        SECURITY_ATTRIBUTES sa{sizeof(sa), nullptr, TRUE};
+        QVERIFY(CreatePipe(&readPipe, &writePipe, &sa, 0));
+        QVERIFY(SetHandleInformation(readPipe, HANDLE_FLAG_INHERIT, 0));
+        STARTUPINFO si{};
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+        si.hStdOutput = writePipe;
+        si.hStdError = writePipe;
+        PROCESS_INFORMATION pi{};
+        // "cmd /c": con /bin/sh -c
+        wchar_t command[] = L"cmd.exe /c echo hola \"mundo\" && exit 3";
+        QVERIFY(CreateProcess(nullptr, command, nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi));
+        CloseHandle(writePipe);
+        QVERIFY(GetProcessId(pi.hProcess) > 0);
+        std::string output;
+        char buffer[256];
+        DWORD got = 0;
+        while (ReadFile(readPipe, buffer, sizeof(buffer), &got, nullptr) && got > 0)
+            output.append(buffer, got);
+        QCOMPARE(QByteArray::fromStdString(output), QByteArray("hola mundo\n"));
+        QCOMPARE(WaitForSingleObject(pi.hProcess, 5000), DWORD{WAIT_OBJECT_0});
+        DWORD code = 0;
+        QVERIFY(GetExitCodeProcess(pi.hProcess, &code));
+        QCOMPARE(code, DWORD{3});
+        QCOMPARE(WaitForSingleObject(pi.hThread, 1000), DWORD{WAIT_OBJECT_0});
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(readPipe);
+
+        // Un programa con argumentos entre comillas, en una carpeta (las reglas de Windows)
+        const QString script = _tmp.filePath(QStringLiteral("args.sh"));
+        writeAll(script, "#!/bin/sh\nprintf '%s|' \"$@\" > salida.txt\n");
+        QFile::setPermissions(script, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+        std::wstring line = L"\"" + w(script) + L"\" uno \"dos tres\" cu\\\"atro";
+        const std::wstring dir = w(_tmp.path());
+        STARTUPINFO plain{};
+        plain.cb = sizeof(plain);
+        QVERIFY(CreateProcess(nullptr, line.data(), nullptr, nullptr, FALSE, 0, nullptr, dir.c_str(), &plain, &pi));
+        QCOMPARE(WaitForSingleObject(pi.hProcess, 5000), DWORD{WAIT_OBJECT_0});
+        QCOMPARE(readAll(_tmp.filePath(QStringLiteral("salida.txt"))), QByteArray("uno|dos tres|cu\"atro|"));
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        // TerminateProcess: el código que se le da
+        wchar_t sleeper[] = L"sleep 30";
+        QVERIFY(CreateProcess(nullptr, sleeper, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &plain, &pi));
+        QVERIFY(GetExitCodeProcess(pi.hProcess, &code));
+        QCOMPARE(code, DWORD{STILL_ACTIVE});
+        QVERIFY(TerminateProcess(pi.hProcess, 9));
+        QCOMPARE(WaitForSingleObject(pi.hProcess, 5000), DWORD{WAIT_OBJECT_0});
+        GetExitCodeProcess(pi.hProcess, &code);
+        QCOMPARE(code, DWORD{9});
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        // Un programa que no existe: FALSE y ERROR_FILE_NOT_FOUND
+        wchar_t missing[] = L"no-existe-este-programa.exe /x";
+        QVERIFY(!CreateProcess(nullptr, missing, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &plain, &pi));
+        QCOMPARE(GetLastError(), DWORD{ERROR_FILE_NOT_FOUND});
     }
 };
 

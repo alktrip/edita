@@ -103,6 +103,20 @@ if(EDITA_BUILD_PLUGINS)
     target_include_directories(tst_npp_compat PRIVATE ${PROJECT_SOURCE_DIR}/plugin-sdk/compat
         ${PROJECT_SOURCE_DIR}/third_party/scintilla/include)
     target_compile_definitions(tst_npp_compat PRIVATE UNICODE _UNICODE)
+    # edita_rc (el convertidor de .rc del SDK), con los avisos del proyecto, y los recursos
+    # de prueba de tests/fixtures/rc en tst_npp_compat
+    add_executable(edita_rc ${PROJECT_SOURCE_DIR}/plugin-sdk/tools/edita_rc.cpp
+        ${PROJECT_SOURCE_DIR}/plugin-sdk/tools/edita_rc_constants.cpp)
+    target_include_directories(edita_rc PRIVATE ${PROJECT_SOURCE_DIR}/plugin-sdk/tools
+        ${PROJECT_SOURCE_DIR}/plugin-sdk/compat ${PROJECT_SOURCE_DIR}/third_party/scintilla/include)
+    target_compile_options(edita_rc PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion
+        $<$<BOOL:${EDITA_WERROR}>:-Werror>)
+    set(rcFixtures ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/rc)
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tst_npp_compat_resources.cpp
+        COMMAND edita_rc -o ${CMAKE_CURRENT_BINARY_DIR}/tst_npp_compat_resources.cpp ${rcFixtures}/prueba.rc ${rcFixtures}/utf16.rc
+        DEPENDS edita_rc ${rcFixtures}/prueba.rc ${rcFixtures}/utf16.rc ${rcFixtures}/prueba_res.h
+        VERBATIM)
+    target_sources(tst_npp_compat PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/tst_npp_compat_resources.cpp)
     if(LIBZIP_FOUND)
         edita_add_test(tst_pluginsadmin LIBS edita_ui PkgConfig::LIBZIP)
         add_dependencies(tst_pluginsadmin EditaDemo)
