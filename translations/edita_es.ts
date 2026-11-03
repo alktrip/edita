@@ -550,9 +550,28 @@
     </message>
     <message>
         <location line="+2"/>
+        <source>License: </source>
+        <translation>Licencia: </translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Built on your computer from its source code (recipe: %1).
 </source>
         <translation>Se compila en tu equipo desde su código fuente (receta: %1).
+</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Built on your computer from its source code (recipe from the Edita plugin catalog).
+</source>
+        <translation>Se compila en tu computadora desde su código fuente (receta del catálogo de plugins de Edita).
+</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Built from its original source code by the Edita plugin catalog (alktrip/edita-plugins).
+</source>
+        <translation>Compilado desde su código fuente original por el catálogo de plugins de Edita (alktrip/edita-plugins).
 </translation>
     </message>
     <message>
@@ -561,7 +580,7 @@
         <translation>Incompatible: </translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+90"/>
         <source>Information not available (it is not in the plugin list).</source>
         <translation>Información no disponible (no está en la lista de plugins).</translation>
     </message>
@@ -569,7 +588,7 @@
 <context>
     <name>PluginInstaller</name>
     <message>
-        <location filename="../src/core/PluginInstaller.cpp" line="+95"/>
+        <location filename="../src/core/PluginInstaller.cpp" line="+97"/>
         <source>Not a valid .zip file: %1</source>
         <translation>No es un archivo .zip válido: %1</translation>
     </message>
@@ -590,12 +609,12 @@
     </message>
     <message>
         <location line="+9"/>
-        <location line="+83"/>
+        <location line="+91"/>
         <source>Edita was built without .zip support (libzip)</source>
         <translation>Edita se compiló sin soporte para .zip (libzip)</translation>
     </message>
     <message>
-        <location line="-74"/>
+        <location line="-82"/>
         <source>Invalid folder name: %1</source>
         <translation>Nombre de carpeta no válido: %1</translation>
     </message>
@@ -626,17 +645,17 @@
     </message>
     <message>
         <location line="+4"/>
-        <location line="+13"/>
+        <location line="+18"/>
         <source>Could not create %1</source>
         <translation>No se pudo crear %1</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
         <source>Could not add %1 to the package</source>
         <translation>No se pudo añadir %1 al paquete</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+8"/>
         <source>Could not write %1</source>
         <translation>No se pudo escribir %1</translation>
     </message>
@@ -1707,7 +1726,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+419"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+420"/>
         <location line="+3670"/>
         <source>Macros</source>
         <translation>Macros</translation>
@@ -3237,12 +3256,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1741"/>
+        <location line="+1746"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2020"/>
+        <location line="-2025"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3625,7 +3644,7 @@ Do you want to save the file anyway?</source>
         <translation>no se encuentra editaPluginList.json</translation>
     </message>
     <message>
-        <location line="+45"/>
+        <location line="+50"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
     </message>
@@ -4180,13 +4199,13 @@ Continue?</source>
 <context>
     <name>edita::PluginsAdminDialog</name>
     <message>
-        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+70"/>
-        <location line="+264"/>
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+76"/>
+        <location line="+348"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
     </message>
     <message>
-        <location line="-253"/>
+        <location line="-252"/>
         <source>Cannot read %1</source>
         <translation>No se puede leer %1</translation>
     </message>
@@ -4266,12 +4285,12 @@ Continue?</source>
         <translation>Lista de plugins de &amp;Notepad++…</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="-92"/>
         <source>Plugin list version: %1</source>
         <translation>Versión de la lista de plugins: %1</translation>
     </message>
     <message>
-        <location line="+75"/>
+        <location line="+186"/>
         <source>Installed with Edita: %1</source>
         <translation>Instalado con Edita: %1</translation>
     </message>
@@ -4314,7 +4333,7 @@ Continue?</source>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+154"/>
+        <location line="+183"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>Se va a quitar %n plugin.</numerusform>
@@ -4338,12 +4357,52 @@ Continue?</source>
         </translation>
     </message>
     <message>
-        <location line="-198"/>
+        <location line="-227"/>
         <source>Install plugins</source>
         <translation>Instalar plugins</translation>
     </message>
     <message>
-        <location line="-107"/>
+        <location line="-374"/>
+        <source>This computer builds the plugins of the catalog: %1</source>
+        <translation>Esta computadora compila los plugins del catálogo: %1</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Updating the plugin list…</source>
+        <translation>Actualizando la lista de plugins…</translation>
+    </message>
+    <message>
+        <location line="+38"/>
+        <source>Plugin list updated (version %1).</source>
+        <translation>Lista de plugins actualizada (versión %1).</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Plugin list updated. This computer builds the plugins of the catalog: %1</source>
+        <translation>Lista de plugins actualizada. Esta computadora compila los plugins del catálogo: %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The plugin list could not be updated (%1): using the one that comes with Edita.</source>
+        <translation>No se pudo actualizar la lista de plugins (%1): se usa la que viene con Edita.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The plugin list could not be updated (%1): using version %2.</source>
+        <translation>No se pudo actualizar la lista de plugins (%1): se usa la versión %2.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>The plugin list that comes with Edita</source>
+        <translation>La lista de plugins que viene con Edita</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Signed list of the Edita plugin catalog: %1</source>
+        <translation>Lista firmada del catálogo de plugins de Edita: %1</translation>
+    </message>
+    <message>
+        <location line="+185"/>
         <source> (from source)</source>
         <translation> (se compila)</translation>
     </message>
@@ -4353,12 +4412,22 @@ Continue?</source>
         <translation>Actualizar plugins</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+25"/>
         <source>ships with Edita (there is no package to download)</source>
         <translation>se distribuye con Edita (no hay paquete que descargar)</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+13"/>
+        <source>the plugin catalog does not include its recipes</source>
+        <translation>el catálogo de plugins no incluye sus recetas</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>the recipe of %1 is not inside the recipes of the catalog</source>
+        <translation>la receta de %1 no está dentro de las recetas del catálogo</translation>
+    </message>
+    <message>
+        <location line="+30"/>
         <source>Package already built: %1
 </source>
         <translation>Paquete ya compilado: %1
@@ -5631,7 +5700,7 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Configurando con CMake</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+18"/>
         <source>Building</source>
         <translation>Compilando</translation>
     </message>
@@ -7224,6 +7293,98 @@ Do you want to save your changes before switching themes?</source>
         <location line="+157"/>
         <source>Error %1: %2</source>
         <translation>Error %1: %2</translation>
+    </message>
+</context>
+<context>
+    <name>edita::minisign</name>
+    <message>
+        <location filename="../src/core/Minisign.cpp" line="+118"/>
+        <source>the public key is not a minisign Ed25519 key</source>
+        <translation>la clave pública no es una clave Ed25519 de minisign</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>the public key is not valid</source>
+        <translation>la clave pública no es válida</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+7"/>
+        <source>the signature does not have the minisign format</source>
+        <translation>la firma no tiene el formato de minisign</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>the signature was made with another key (%1, not %2)</source>
+        <translation>la firma se hizo con otra clave (%1, no %2)</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>unknown signature algorithm</source>
+        <translation>algoritmo de firma desconocido</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>the signature does not match the file</source>
+        <translation>la firma no corresponde al archivo</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>the signature of the trusted comment is not valid</source>
+        <translation>la firma del comentario de confianza no es válida</translation>
+    </message>
+</context>
+<context>
+    <name>edita::remote_catalog</name>
+    <message>
+        <location filename="../src/core/RemoteCatalog.cpp" line="+95"/>
+        <source>the plugin list is not signed by the Edita plugin catalog: %1</source>
+        <translation>la lista de plugins no está firmada por el catálogo de plugins de Edita: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>the plugin list is not valid: %1</source>
+        <translation>la lista de plugins no es válida: %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>the plugin list %1 is older than the one already known (%2)</source>
+        <translation>la lista de plugins %1 es más antigua que la ya conocida (%2)</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>its binaries are for %1 and this computer is %2</source>
+        <translation>sus binarios son para %1 y esta computadora es %2</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>its binaries use version %1 of the plugin API and this Edita uses version %2</source>
+        <translation>sus binarios usan la versión %1 de la API de plugins y este Edita usa la versión %2</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>its binaries need Qt %1 or newer and Edita runs with Qt %2</source>
+        <translation>sus binarios necesitan Qt %1 o posterior y Edita se ejecuta con Qt %2</translation>
+    </message>
+    <message>
+        <location line="+22"/>
+        <source>there is no saved plugin list</source>
+        <translation>no hay una lista de plugins guardada</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>cannot save the plugin list in %1</source>
+        <translation>no se puede guardar la lista de plugins en %1</translation>
+    </message>
+    <message>
+        <location line="+28"/>
+        <source>the recipes of the plugin catalog do not match the signed list</source>
+        <translation>las recetas del catálogo de plugins no corresponden a la lista firmada</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>cannot save the recipes in %1</source>
+        <translation>no se pueden guardar las recetas en %1</translation>
     </message>
 </context>
 <context>

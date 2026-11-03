@@ -22,8 +22,10 @@ function(edita_add_test name)
         target_compile_options(${name} PRIVATE -Wno-restrict)
     endif()
     add_test(NAME ${name} COMMAND ${name})
-    # EDITA_LSP=0: sin servidores de lenguaje (los que haya instalados); tst_lsp los activa
-    set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;EDITA_LSP=0")
+    # EDITA_LSP=0: sin servidores de lenguaje (los que haya instalados); tst_lsp los activa.
+    # EDITA_PLUGIN_CATALOG_URL=none: el administrador de plugins no descarga el catálogo de
+    # Edita (las pruebas del catálogo ponen el suyo)
+    set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;EDITA_LSP=0;EDITA_PLUGIN_CATALOG_URL=none")
     if(ARG_LABELS)
         set_tests_properties(${name} PROPERTIES LABELS "${ARG_LABELS}")
     endif()
@@ -33,6 +35,7 @@ endfunction()
 edita_add_test(tst_encoding LIBS edita_core)
 edita_add_test(tst_textfile LIBS edita_core)
 edita_add_test(tst_paths LIBS edita_core)
+edita_add_test(tst_catalog LIBS edita_core)
 edita_add_test(tst_session LIBS edita_core)
 edita_add_test(tst_lineops LIBS edita_core)
 

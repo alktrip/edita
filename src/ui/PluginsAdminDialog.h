@@ -20,6 +20,7 @@
 
 #include "core/PluginCatalog.h"
 #include "core/PluginRecipe.h"
+#include "core/RemoteCatalog.h"
 
 #include <QDialog>
 #include <QMap>
@@ -30,6 +31,8 @@
 
 class QLabel;
 class QLineEdit;
+class QNetworkAccessManager;
+class QNetworkReply;
 class QPlainTextEdit;
 class QPushButton;
 class QTabWidget;
@@ -42,8 +45,13 @@ class Prompter;
 // Lo que el administrador necesita saber de Edita
 struct PluginsAdminContext
 {
-    PluginCatalog catalog;
+    PluginCatalog catalog;             // la que se muestra: la de Edita y la del catálogo
     QString catalogError;              // si no se pudo leer la lista
+    // El catálogo de Edita (alktrip/edita-plugins): su lista firmada (core/RemoteCatalog.h)
+    PluginCatalog bundledCatalog;      // la lista que trae Edita (editaPluginList.json)
+    remote_catalog::Settings catalogSettings;
+    QString remoteVersion;             // la última lista del catálogo aceptada (vacío: ninguna)
+    QString catalogNote;               // por qué sus binarios no sirven en este equipo
     QStringList pluginDirectories;     // donde se buscan (el primero que tenga un nombre gana)
     QString userPluginsDir;            // donde se instala (~/.config/edita/plugins)
     QMap<QString, QString> loadedVersions; // ruta del .so cargado → edita_plugin_version()
@@ -78,6 +86,16 @@ public:
     void setFetcher(Fetcher fetcher) { _fetch = std::move(fetcher); }
     static bool defaultFetch(const QUrl& url, QByteArray& data, QString* error);
 
+    // La lista del catálogo de Edita, sin esperar: la que se aceptó la última vez, o la que
+    // trae Edita, y la nueva se descarga aparte. Si es válida (firma, versión), se guarda y
+    // las pestañas se actualizan. Al abrir el diálogo se pide sola.
+    void refreshCatalog();
+    bool isRefreshingCatalog() const { return _catalogReply != nullptr; }
+
+    // La lista de Edita con la del catálogo, adaptada a este equipo (los binarios que no
+    // sirven, a compilar con su receta)
+    static void useRemoteCatalog(PluginsAdminContext& context, PluginCatalog remote);
+
     // ¿Se instaló, actualizó, quitó, activó o desactivó algo?
     bool hasChanges() const { return _changed; }
 
@@ -101,6 +119,10 @@ public:
     // El registro de la última compilación desde el código
     const QString& lastBuildLog() const { return _lastBuildLog; }
 
+signals:
+    // Terminó refreshCatalog(): con la lista nueva (ok) o sin ella (error)
+    void catalogRefreshed(bool ok, const QString& error);
+
 private:
     void buildUi();
     void rescan();
@@ -114,6 +136,11 @@ private:
     // Obtiene el paquete de un plugin: lo descarga o, si tiene receta, lo compila
     bool obtainPackage(const PluginInfo& info, QByteArray& zip, QString& expectedId, QString* error);
     bool buildFromRecipe(const PluginRecipe& recipe, QByteArray& zip, QString* error);
+    // Un plugin del catálogo sin binario para este equipo: su receta de recipes.zip
+    bool buildFromCatalogRecipe(const PluginInfo& info, QByteArray& zip, QString* error);
+    void catalogDownloaded(const QByteArray& json, const QByteArray& signature);
+    void catalogFailed(const QString& error);
+    void showListVersion();
     const PluginRecipe* recipeFor(const PluginInfo& info) const;
 
     PluginsAdminContext _context;
@@ -124,6 +151,8 @@ private:
     QMap<QString, QString> _installedVersions; // carpeta → versión instalada en esta sesión
     bool _changed = false;
     QString _lastBuildLog;
+    QNetworkAccessManager* _network = nullptr;
+    QNetworkReply* _catalogReply = nullptr;
 
     QTabWidget* _tabs = nullptr;
     QTreeWidget* _views[5] = {};

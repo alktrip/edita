@@ -25,6 +25,32 @@ Algunos plugins llevan **(se compila)**: Edita descarga su código original, lo 
 compila en tu equipo. Hace falta `cmake` y un compilador de C++, y el diálogo muestra el avance.
 El paquete compilado se guarda, así que al reinstalarlo no se vuelve a compilar.
 
+### El catálogo de plugins de Edita
+
+Al abrir el administrador, Edita descarga la lista del [catálogo de plugins de
+Edita](https://github.com/alktrip/edita-plugins) sin hacerte esperar: mientras tanto muestra la
+última lista que aceptó (o la que viene con Edita) y, cuando llega la nueva, actualiza las
+pestañas. La versión de la lista aparece abajo a la derecha.
+
+Antes de usar una lista, Edita comprueba que esté firmada por el catálogo y que no sea más antigua
+que la última que aceptó. Cada paquete se comprueba con su SHA-256, que viene en la lista firmada.
+Sin conexión, se usa la última lista aceptada.
+
+Los plugins del catálogo son plugins de Notepad++ compilados para Linux desde su código original.
+Se instalan ya compilados, salvo dos casos en que se compilan en tu computadora, como los que
+llevan **(se compila)**: si sus binarios no sirven para tu computadora (otra arquitectura u otra
+versión de Qt) o si su licencia no permite distribuir el binario.
+
+| Plugin | Qué hace |
+|---|---|
+| **Reverse Lines** | Invierte el orden de las líneas de la selección o del documento. |
+| **Simplify JSON** | Escapa, desescapa, da formato y minifica JSON. |
+| **TidyText** | Resalta y repara caracteres invisibles y texto mal codificado (mojibake). |
+| **Auto Detect Indention** | Ajusta la tecla Tab a la sangría de cada documento. |
+| **SQL Column Highlighter** | En un `INSERT`, resalta los valores de una columna o la columna de un valor. |
+| **Select 'N' Launch** | Abre la selección con la aplicación asociada a una extensión. |
+| **NppPluginOpenHost** | Abre `/etc/hosts`. |
+
 **Lista de plugins de Notepad++…** descarga la lista oficial de Notepad++, para ver si un plugin
 que usas ahí tiene versión para Edita.
 

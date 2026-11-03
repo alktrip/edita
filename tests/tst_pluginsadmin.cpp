@@ -8,7 +8,9 @@
 
 #include "FakePrompter.h"
 #include "core/PluginCatalog.h"
+#include "core/Minisign.h"
 #include "core/PluginInstaller.h"
+#include "core/RemoteCatalog.h"
 #include "ui/MainWindow.h"
 #include "ui/PluginsAdminDialog.h"
 
@@ -19,6 +21,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMenu>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QLabel>
@@ -41,6 +44,12 @@ void writeFile(const QString& path, const QByteArray& data)
     QFile f(path);
     QVERIFY(f.open(QIODevice::WriteOnly));
     f.write(data);
+}
+
+QByteArray readFile(const QString& path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
 // Un .zip con esos archivos (nombre → contenido)
@@ -380,6 +389,134 @@ private slots:
         QVERIFY(prompter.warnings.last().contains(QStringLiteral("is not installed")));
         QVERIFY(!QFileInfo::exists(userPlugins() + "/Roto"));
         qunsetenv("EDITA_NPP_PLUGIN_LIST");
+    }
+
+    // Fase 56: la lista firmada del catálogo de Edita, descargada al abrir el administrador
+    void signedCatalog()
+    {
+        const QByteArray keyId = QByteArray::fromHex("1122334455667788");
+        const QByteArray seed = QByteArray(32, '\x07');
+        qputenv("EDITA_PLUGIN_CATALOG_PUBKEY", minisign::publicKeyFromSeed(keyId, seed).toUtf8());
+        const QString server = repo() + "/servidor";
+        qputenv("EDITA_PLUGIN_CATALOG_URL", (server + "/plugins.json").toUtf8());
+        auto restore = qScopeGuard([] {
+            qputenv("EDITA_PLUGIN_CATALOG_URL", "none");
+            qunsetenv("EDITA_PLUGIN_CATALOG_PUBKEY");
+        });
+        writeCatalog(repo() + "/list.json", {}); // la que trae Edita, vacía
+
+        const QByteArray package = makeZip({{"Remoto.so", "binario"}});
+        writeFile(server + "/Remoto-1.0.zip", package);
+        QJsonObject remoto = entry("Remoto", "Remoto plugin", "1.0", QUrl::fromLocalFile(server + "/Remoto-1.0.zip").toString(),
+                                   pi::sha256Hex(package));
+        remoto["license"] = "MIT";
+        remoto["edita-build"] = "binary";
+        QJsonObject fuente = entry("Fuente", "Fuente plugin", "2.0", "", "");
+        fuente["edita-recipe"] = "recipes/Fuente/recipe.json";
+        fuente["edita-build"] = "recipe";
+        auto publish = [&](const QString& version, const QJsonArray& plugins, bool sign = true) {
+            const QByteArray json = QJsonDocument(QJsonObject{
+                {"name", "Edita plugin catalog"}, {"version", version},
+                {"arch", remote_catalog::currentRuntime(1).arch}, {"edita-plugin-api", 1}, {"edita-qt", QString::fromLatin1(qVersion())},
+                {"edita-recipes", QUrl::fromLocalFile(server + "/recipes.zip").toString()}, {"edita-recipes-sha256", QString(64, '0')},
+                {"npp-plugins", plugins}}).toJson();
+            writeFile(server + "/plugins.json", json);
+            writeFile(server + "/plugins.json.minisig",
+                      sign ? minisign::sign(json, keyId, seed, "catalog:" + version) : QByteArray("untrusted comment: x\nnada\n"));
+        };
+        publish("2026.11.03.6", {remoto, fuente});
+
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        FakePrompter prompter;
+        auto label = [](PluginsAdminDialog& d, const char* name) { return d.findChild<QLabel*>(QLatin1String(name)); };
+        {
+            // Sin lista guardada: la de Edita, y la del catálogo llega sin bloquear el diálogo
+            PluginsAdminDialog dialog(adminContext(w), prompter);
+            QSignalSpy refreshed(&dialog, &PluginsAdminDialog::catalogRefreshed);
+            QVERIFY(dialog.isRefreshingCatalog());
+            QCOMPARE(dialog.list(PluginsAdminDialog::Available)->topLevelItemCount(), 0);
+            QVERIFY(refreshed.wait(10000));
+            QVERIFY2(refreshed.first().at(0).toBool(), qPrintable(refreshed.first().at(1).toString()));
+            QCOMPARE(dialog.list(PluginsAdminDialog::Available)->topLevelItemCount(), 2);
+            QCOMPARE(label(dialog, "listVersion")->text(), QStringLiteral("Plugin list version: 2026.11.03.6"));
+            QCOMPARE(label(dialog, "status")->text(), QStringLiteral("Plugin list updated (version 2026.11.03.6)."));
+            // El que no tiene binario se compila en el equipo
+            QCOMPARE(dialog.list(PluginsAdminDialog::Available)->findItems("Fuente plugin", Qt::MatchExactly).first()->text(1),
+                     QStringLiteral("2 (from source)"));
+            QTreeWidget* available = dialog.list(PluginsAdminDialog::Available);
+            available->setCurrentItem(available->findItems("Remoto plugin", Qt::MatchExactly).first());
+            QVERIFY(dialog.descriptionText().contains(QStringLiteral("License: MIT")));
+            QVERIFY(dialog.descriptionText().contains(QStringLiteral("Edita plugin catalog")));
+            // El binario, con el SHA-256 de la lista firmada
+            QVERIFY(dialog.setChecked(PluginsAdminDialog::Available, "Remoto"));
+            prompter.confirmations.enqueue(true);
+            QVERIFY2(dialog.installChecked(), qPrintable(prompter.warnings.join('\n')));
+            QCOMPARE(readFile(userPlugins() + "/Remoto/Remoto.so"), QByteArray("binario"));
+            QVERIFY(QFileInfo::exists(userPlugins() + "/Config/catalog/plugins.json"));
+            QVERIFY(QFileInfo::exists(userPlugins() + "/Config/catalog/plugins.json.minisig"));
+        }
+        // Sin red: la última lista aceptada (vuelta a comprobar), y el aviso
+        QFile::remove(server + "/plugins.json");
+        {
+            PluginsAdminDialog dialog(adminContext(w), prompter);
+            QCOMPARE(dialog.list(PluginsAdminDialog::Available)->findItems("Fuente plugin", Qt::MatchExactly).size(), 1);
+            QCOMPARE(label(dialog, "listVersion")->text(), QStringLiteral("Plugin list version: 2026.11.03.6"));
+            QSignalSpy refreshed(&dialog, &PluginsAdminDialog::catalogRefreshed);
+            QVERIFY(refreshed.wait(10000));
+            QVERIFY(!refreshed.first().at(0).toBool());
+            QVERIFY(label(dialog, "status")->text().contains(QStringLiteral("using version 2026.11.03.6")));
+        }
+        // Una lista anterior, bien firmada (la vuelta atrás que intentaría un espejo
+        // malicioso): no; una mal firmada: tampoco
+        for (const bool older : {true, false}) {
+            publish(older ? QStringLiteral("2026.11.03.5") : QStringLiteral("2026.11.03.7"), {fuente}, older);
+            PluginsAdminDialog dialog(adminContext(w), prompter);
+            QSignalSpy refreshed(&dialog, &PluginsAdminDialog::catalogRefreshed);
+            QVERIFY(refreshed.wait(10000));
+            QVERIFY(!refreshed.first().at(0).toBool());
+            QVERIFY2(refreshed.first().at(1).toString().contains(older ? QStringLiteral("older") : QStringLiteral("not signed")),
+                     qPrintable(refreshed.first().at(1).toString()));
+            QCOMPARE(label(dialog, "listVersion")->text(), QStringLiteral("Plugin list version: 2026.11.03.6"));
+            QCOMPARE(dialog.list(PluginsAdminDialog::Available)->findItems("Fuente plugin", Qt::MatchExactly).size(), 1);
+        }
+        // Una nueva y bien firmada: se acepta y sustituye a la guardada
+        publish("2026.11.04.1", {fuente});
+        {
+            PluginsAdminDialog dialog(adminContext(w), prompter);
+            QSignalSpy refreshed(&dialog, &PluginsAdminDialog::catalogRefreshed);
+            QVERIFY(refreshed.wait(10000));
+            QVERIFY(refreshed.first().at(0).toBool());
+            QCOMPARE(label(dialog, "listVersion")->text(), QStringLiteral("Plugin list version: 2026.11.04.1"));
+        }
+        PluginCatalog cached;
+        QVERIFY(remote_catalog::loadCached(remote_catalog::settings(userPlugins()), cached));
+        QCOMPARE(cached.version, QStringLiteral("2026.11.04.1"));
+    }
+
+    // El catálogo publicado de verdad (red): solo con EDITA_NETWORK_TESTS=1
+    void publishedCatalog()
+    {
+        if (qEnvironmentVariable("EDITA_NETWORK_TESTS") != QLatin1String("1"))
+            QSKIP("Sin EDITA_NETWORK_TESTS=1 no se usa la red");
+        qunsetenv("EDITA_PLUGIN_CATALOG_URL");
+        qunsetenv("EDITA_PLUGIN_CATALOG_PUBKEY");
+        auto restore = qScopeGuard([] { qputenv("EDITA_PLUGIN_CATALOG_URL", "none"); });
+        writeCatalog(repo() + "/list.json", {});
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        FakePrompter prompter;
+        PluginsAdminDialog dialog(adminContext(w), prompter);
+        QSignalSpy refreshed(&dialog, &PluginsAdminDialog::catalogRefreshed);
+        QVERIFY(refreshed.wait(60000));
+        QVERIFY2(refreshed.first().at(0).toBool(), qPrintable(refreshed.first().at(1).toString()));
+        QVERIFY(!dialog.list(PluginsAdminDialog::Available)->findItems("Reverse Lines", Qt::MatchExactly).isEmpty());
+        // El binario de GitHub, comprobado con el SHA-256 de la lista firmada
+        QVERIFY(dialog.setChecked(PluginsAdminDialog::Available, "qkNppReverseLines"));
+        prompter.confirmations.enqueue(true);
+        QVERIFY2(dialog.installChecked(), qPrintable(prompter.warnings.join('\n')));
+        QVERIFY(QFileInfo::exists(userPlugins() + "/qkNppReverseLines/qkNppReverseLines.so"));
+        QVERIFY(QFileInfo::exists(userPlugins() + "/qkNppReverseLines/LICENSE"));
     }
 
     void restartIsOfferedAfterChanges()

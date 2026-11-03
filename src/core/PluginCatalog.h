@@ -68,6 +68,13 @@ struct PluginInfo
     bool isSystem = false; // instalado con Edita (no en la carpeta del usuario)
     QString problem;       // por qué es incompatible
     QString recipePath;    // si se compila en el equipo desde su código (recipe.json)
+    // Del catálogo de Edita (alktrip/edita-plugins)
+    QString license;       // "license" (SPDX)
+    QString catalogRecipe; // "edita-recipe": su receta dentro de recipes.zip del catálogo
+    bool fromCatalog = false; // de la lista firmada (no de la que trae Edita)
+
+    // Se instala compilando su receta en el equipo (no hay paquete que descargar)
+    bool buildsFromSource() const { return !recipePath.isEmpty() || (repository.isEmpty() && !catalogRecipe.isEmpty()); }
 
     // PluginUpdateInfo::describe
     QString describe() const;
@@ -79,6 +86,12 @@ struct PluginCatalog
     QString version;
     QString sourcePath; // de dónde se leyó (para resolver los repository relativos)
     std::vector<PluginInfo> plugins;
+    // El catálogo de Edita (fase 55): para qué se compilaron sus binarios y sus recetas
+    QString arch;          // "arch": "linux-x86_64"
+    int pluginApi = 0;     // "edita-plugin-api" (0: no lo dice)
+    QString qtVersion;     // "edita-qt": el Qt con el que se compilaron los binarios
+    QString recipesUrl;    // "edita-recipes": recipes.zip
+    QString recipesSha256; // "edita-recipes-sha256"
 
     // loadFromJson: los plugins a los que les falta un campo obligatorio se ignoran
     static bool parse(const QByteArray& json, PluginCatalog& catalog, QString* error = nullptr);

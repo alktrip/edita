@@ -25,6 +25,33 @@ Some plugins are marked **(from source)**: Edita downloads their original source
 it, and builds it on your computer. This needs `cmake` and a C++ compiler, and the dialog shows
 the progress. The built package is kept, so reinstalling it does not build it again.
 
+### The Edita plugin catalog
+
+When the dialog opens, Edita downloads the list of the [Edita plugin
+catalog](https://github.com/alktrip/edita-plugins) without making you wait: meanwhile it shows
+the last list it accepted (or the one that comes with Edita) and, when the new one arrives, it
+updates the tabs. The version of the list is shown at the bottom right.
+
+Before using a list, Edita checks that it is signed by the catalog and that it is not older than
+the last one it accepted. Each package is checked with its SHA-256, which comes in the signed
+list. Without a connection, the last accepted list is used.
+
+The plugins of the catalog are Notepad++ plugins built for Linux from their original source
+code. They are installed already built, except in two cases where they are built on your
+computer, like the ones marked **(from source)**: when their binaries do not work on your
+computer (another architecture or another version of Qt), or when their license does not allow
+distributing the binary.
+
+| Plugin | What it does |
+|---|---|
+| **Reverse Lines** | Reverses the order of the lines of the selection or of the document. |
+| **Simplify JSON** | Escapes, unescapes, pretty prints and minifies JSON. |
+| **TidyText** | Highlights and fixes invisible characters and badly encoded text (mojibake). |
+| **Auto Detect Indention** | Adapts the Tab key to the indentation of each document. |
+| **SQL Column Highlighter** | In an `INSERT`, highlights the values of a column or the column of a value. |
+| **Select 'N' Launch** | Opens the selection with the application associated with an extension. |
+| **NppPluginOpenHost** | Opens `/etc/hosts`. |
+
 **Notepad++ Plugin List…** downloads the official list of Notepad++, to see whether a plugin you
 use there has a version for Edita.
 

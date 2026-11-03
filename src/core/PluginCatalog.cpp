@@ -108,8 +108,14 @@ QString PluginInfo::describe() const
         desc += QCoreApplication::translate("PluginCatalog", "Author: ") + author + QLatin1Char('\n');
     if (!homepage.isEmpty())
         desc += QCoreApplication::translate("PluginCatalog", "Homepage: ") + homepage + QLatin1Char('\n');
+    if (!license.isEmpty())
+        desc += QCoreApplication::translate("PluginCatalog", "License: ") + license + QLatin1Char('\n');
     if (!recipePath.isEmpty())
         desc += QCoreApplication::translate("PluginCatalog", "Built on your computer from its source code (recipe: %1).\n").arg(recipePath);
+    else if (buildsFromSource())
+        desc += QCoreApplication::translate("PluginCatalog", "Built on your computer from its source code (recipe from the Edita plugin catalog).\n");
+    else if (fromCatalog)
+        desc += QCoreApplication::translate("PluginCatalog", "Built from its original source code by the Edita plugin catalog (alktrip/edita-plugins).\n");
     if (!problem.isEmpty())
         desc += QCoreApplication::translate("PluginCatalog", "Incompatible: ") + problem + QLatin1Char('\n');
     return desc;
@@ -131,6 +137,11 @@ bool PluginCatalog::parse(const QByteArray& json, PluginCatalog& catalog, QStrin
         return false;
     }
     catalog.version = root.value(QStringLiteral("version")).toString();
+    catalog.arch = root.value(QStringLiteral("arch")).toString();
+    catalog.pluginApi = root.value(QStringLiteral("edita-plugin-api")).toInt(0);
+    catalog.qtVersion = root.value(QStringLiteral("edita-qt")).toString();
+    catalog.recipesUrl = root.value(QStringLiteral("edita-recipes")).toString();
+    catalog.recipesSha256 = root.value(QStringLiteral("edita-recipes-sha256")).toString();
     catalog.plugins.clear();
     for (const QJsonValue& value : root.value(QStringLiteral("npp-plugins")).toArray()) {
         const QJsonObject o = value.toObject();
@@ -150,6 +161,8 @@ bool PluginCatalog::parse(const QByteArray& json, PluginCatalog& catalog, QStrin
         info.repository = o.value(QStringLiteral("repository")).toString();
         info.homepage = o.value(QStringLiteral("homepage")).toString();
         info.compatibleVersions = parseVersionInterval(o.value(QStringLiteral("npp-compatible-versions")).toString());
+        info.license = o.value(QStringLiteral("license")).toString();
+        info.catalogRecipe = o.value(QStringLiteral("edita-recipe")).toString();
         if (info.folderName.isEmpty())
             continue;
         catalog.plugins.push_back(std::move(info));

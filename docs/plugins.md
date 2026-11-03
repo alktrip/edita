@@ -36,6 +36,15 @@ Opcional: `EDITA_PLUGIN_EXPORT const char* edita_plugin_version(void)` devuelve 
 
 **Plugins > Administrador de plugins…** instala paquetes `.zip` desde una lista con el formato de `nppPluginList.json` de N++ (ver [fase14.md](fase14.md)). El paquete lleva `MiPlugin.so` en la raíz o dentro de `MiPlugin/`. En la lista, `id` es el `sha256sum` del `.zip` y `repository` su URL.
 
+**El catálogo de Edita.** El administrador descarga además la lista firmada del [catálogo de plugins de Edita](https://github.com/alktrip/edita-plugins) (ver [fase55.md](fase55.md) y [fase56.md](fase56.md)). Para que un plugin esté en él, basta un *pull request* con su receta en `recipes/<Carpeta>/`, con su `license` y su `check`. La CI lo compila y lo prueba, y al aceptarse lo publica. No hace falta publicar una versión de Edita.
+
+Con estas variables se puede usar otro catálogo (uno propio, o uno local para probar):
+
+- `EDITA_PLUGIN_CATALOG_URL`: la URL o la ruta de su `plugins.json`. La firma se busca en la misma URL con `.minisig`. Con `none`, Edita no usa ningún catálogo.
+- `EDITA_PLUGIN_CATALOG_PUBKEY`: la clave pública de minisign con la que se comprueba la firma.
+
+Con `catalog.py keygen` de edita-plugins se crea una clave.
+
 ## Compilar un plugin de Notepad++ desde su código (recetas)
 
 Muchos plugins de N++ tienen el código en GitHub. Una **receta** le dice al administrador de plugins cómo descargar ese código, adaptarlo y compilarlo en el equipo del usuario, sin publicar ningún binario (ver [fase15.md](fase15.md)). Se ponen en `~/.config/edita/plugins/recipes/<Carpeta>/` (o en `share/edita/plugins/recipes/`):

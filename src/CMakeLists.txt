@@ -36,6 +36,10 @@ add_library(edita_core STATIC
     core/LineDiff.cpp
     core/FuzzyMatch.cpp
     core/Macro.cpp
+    core/Minisign.cpp
+    core/Minisign.h
+    core/RemoteCatalog.cpp
+    core/RemoteCatalog.h
     core/UserCommands.cpp
     core/Macro.h
     core/Paths.cpp
@@ -60,9 +64,11 @@ target_include_directories(edita_core PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/generated)
 # iconv: en glibc va dentro de libc; en macOS es libiconv
 find_package(Iconv REQUIRED)
+# OpenSSL (libcrypto): Ed25519 y BLAKE2b para comprobar la firma del catálogo de plugins
+find_package(OpenSSL 1.1.1 REQUIRED COMPONENTS Crypto)
 target_link_libraries(edita_core
     PUBLIC  Qt6::Core Iconv::Iconv
-    PRIVATE uchardet_npp pugixml edita_warnings)
+    PRIVATE uchardet_npp pugixml edita_warnings OpenSSL::Crypto)
 # Builds de desarrollo: los datos se buscan también en el árbol de fuentes
 target_compile_definitions(edita_core PRIVATE EDITA_SOURCE_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
 # Paquetes .zip del administrador de plugins (libzip, opcional; se busca en el CMakeLists principal)

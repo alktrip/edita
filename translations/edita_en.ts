@@ -88,7 +88,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+1783"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+1784"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -120,7 +120,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+4219"/>
+        <location line="+4224"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -223,7 +223,7 @@
 <context>
     <name>edita::PluginsAdminDialog</name>
     <message numerus="yes">
-        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+349"/>
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+439"/>
         <source>%n plugin(s) will be installed.</source>
         <translation>
             <numerusform>%n plugin will be installed.</numerusform>
@@ -239,7 +239,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+154"/>
+        <location line="+183"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>%n plugin will be removed.</numerusform>

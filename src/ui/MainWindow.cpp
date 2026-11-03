@@ -56,6 +56,7 @@
 #include "ui/Indentation.h"
 #include "ui/MacroSteps.h"
 #include "ui/Panels.h"
+#include "core/RemoteCatalog.h"
 #include "ui/PluginManager.h"
 #include "ui/PreferencesDialog.h"
 #include "ui/Printer.h"
@@ -4688,6 +4689,11 @@ PluginsAdminContext MainWindow::pluginsAdminContext() const
     else if (!PluginCatalog::parse(list.readAll(), context.catalog, &context.catalogError))
         context.catalogError = QStringLiteral("%1: %2").arg(listPath, context.catalogError);
     context.catalog.sourcePath = listPath;
+    // El catálogo de Edita: la última lista firmada que se aceptó (el diálogo descarga la nueva)
+    context.bundledCatalog = context.catalog;
+    context.catalogSettings = remote_catalog::settings(context.userPluginsDir);
+    if (PluginCatalog cached; context.catalogSettings.enabled() && remote_catalog::loadCached(context.catalogSettings, cached))
+        PluginsAdminDialog::useRemoteCatalog(context, std::move(cached));
 
     // Recetas: las del usuario y las de Edita (data/plugins/recipes)
     QStringList recipeDirs{QDir(context.userPluginsDir).filePath(QStringLiteral("recipes"))};

@@ -19,6 +19,7 @@
 #include "ui/PluginsAdminDialog.h"
 
 #include "core/PluginInstaller.h"
+#include "core/RemoteCatalog.h"
 #include "syntax/DesktopFonts.h"
 #include "ui/Prompter.h"
 
@@ -36,12 +37,17 @@
 #include <QLineEdit>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QTabWidget>
 #include <QTimer>
 #include <QTreeWidget>
 #include <QVBoxLayout>
+
+#include <edita_plugin.h>
+
+#include <utility>
 
 namespace edita {
 
@@ -70,6 +76,91 @@ PluginsAdminDialog::PluginsAdminDialog(PluginsAdminContext context, Prompter& pr
     setWindowTitle(tr("Plugins Admin"));
     buildUi();
     rescan();
+    showListVersion();
+    if (!_context.catalogNote.isEmpty())
+        _status->setText(tr("This computer builds the plugins of the catalog: %1").arg(_context.catalogNote));
+    refreshCatalog();
+}
+
+void PluginsAdminDialog::useRemoteCatalog(PluginsAdminContext& context, PluginCatalog remote)
+{
+    context.remoteVersion = remote.version;
+    context.catalogNote = remote_catalog::adapt(remote, remote_catalog::currentRuntime(EDITA_PLUGIN_API_VERSION));
+    context.catalog = remote_catalog::merge(context.bundledCatalog, remote);
+    context.catalogError.clear();
+}
+
+void PluginsAdminDialog::refreshCatalog()
+{
+    const remote_catalog::Settings& settings = _context.catalogSettings;
+    if (_catalogReply || !settings.enabled())
+        return;
+    if (!_network)
+        _network = new QNetworkAccessManager(this);
+    auto get = [this](const QUrl& url) {
+        QNetworkRequest request(url);
+        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+        request.setTransferTimeout(30000);
+        return _network->get(request);
+    };
+    _status->setText(tr("Updating the plugin list…"));
+    // La lista y después su firma; las dos, sin bloquear el diálogo
+    _catalogReply = get(settings.listUrl);
+    connect(_catalogReply, &QNetworkReply::finished, this, [this, get] {
+        QNetworkReply* list = std::exchange(_catalogReply, nullptr);
+        list->deleteLater();
+        if (list->error() != QNetworkReply::NoError) {
+            catalogFailed(list->errorString());
+            return;
+        }
+        const QByteArray json = list->readAll();
+        _catalogReply = get(_context.catalogSettings.signatureUrl);
+        connect(_catalogReply, &QNetworkReply::finished, this, [this, json] {
+            QNetworkReply* signature = std::exchange(_catalogReply, nullptr);
+            signature->deleteLater();
+            if (signature->error() != QNetworkReply::NoError) {
+                catalogFailed(signature->errorString());
+                return;
+            }
+            catalogDownloaded(json, signature->readAll());
+        });
+    });
+}
+
+void PluginsAdminDialog::catalogDownloaded(const QByteArray& json, const QByteArray& signature)
+{
+    PluginCatalog remote;
+    QString error;
+    if (!remote_catalog::accept(json, signature, _context.catalogSettings.key, _context.remoteVersion, remote, &error)) {
+        catalogFailed(error);
+        return;
+    }
+    // Si no se puede guardar, sirve igual en esta sesión
+    remote_catalog::store(_context.catalogSettings, json, signature, &error);
+    useRemoteCatalog(_context, std::move(remote));
+    rescan();
+    showListVersion();
+    _status->setText(_context.catalogNote.isEmpty()
+                         ? tr("Plugin list updated (version %1).").arg(_context.remoteVersion)
+                         : tr("Plugin list updated. This computer builds the plugins of the catalog: %1").arg(_context.catalogNote));
+    emit catalogRefreshed(true, QString());
+}
+
+void PluginsAdminDialog::catalogFailed(const QString& error)
+{
+    _status->setText((_context.remoteVersion.isEmpty()
+                          ? tr("The plugin list could not be updated (%1): using the one that comes with Edita.")
+                          : tr("The plugin list could not be updated (%1): using version %2."))
+                         .arg(error, _context.remoteVersion));
+    emit catalogRefreshed(false, error);
+}
+
+void PluginsAdminDialog::showListVersion()
+{
+    _listVersion->setText(tr("Plugin list version: %1").arg(_context.catalog.version));
+    _listVersion->setToolTip(_context.remoteVersion.isEmpty()
+                                 ? tr("The plugin list that comes with Edita")
+                                 : tr("Signed list of the Edita plugin catalog: %1").arg(_context.catalogSettings.listUrl.toString()));
 }
 
 bool PluginsAdminDialog::defaultFetch(const QUrl& url, QByteArray& data, QString* error)
@@ -178,7 +269,6 @@ void PluginsAdminDialog::buildUi()
     connect(_activate, &QPushButton::clicked, this, [this] { setCheckedActive(true); });
     connect(_nppList, &QPushButton::clicked, this, &PluginsAdminDialog::loadNppCatalog);
 
-    _listVersion->setText(tr("Plugin list version: %1").arg(_context.catalog.version));
     resize(720, 520);
 }
 
@@ -254,7 +344,7 @@ void PluginsAdminDialog::fillLists()
             item->setCheckState(0, Qt::Unchecked);
             if (info.isSystem)
                 item->setToolTip(0, tr("Installed with Edita: %1").arg(info.fullFilePath));
-            if (!info.recipePath.isEmpty() && (i == Available || i == Updates)) {
+            if (info.buildsFromSource() && (i == Available || i == Updates)) {
                 item->setText(1, info.version.toString() + tr(" (from source)"));
                 item->setToolTip(0, tr("Built on your computer from its source code"));
             }
@@ -408,6 +498,10 @@ bool PluginsAdminDialog::obtainPackage(const PluginInfo& info, QByteArray& zip, 
         expectedId.clear(); // lo acaba de compilar Edita
         return buildFromRecipe(*recipe, zip, error);
     }
+    if (info.repository.isEmpty() && !info.catalogRecipe.isEmpty()) {
+        expectedId.clear();
+        return buildFromCatalogRecipe(info, zip, error);
+    }
     if (info.repository.isEmpty()) {
         *error = tr("ships with Edita (there is no package to download)");
         return false;
@@ -416,6 +510,31 @@ bool PluginsAdminDialog::obtainPackage(const PluginInfo& info, QByteArray& zip, 
     const QString source = resolveRepository(info.repository);
     const QUrl url = QUrl(source).scheme().isEmpty() ? QUrl::fromLocalFile(source) : QUrl(source);
     return _fetch(url, zip, error);
+}
+
+bool PluginsAdminDialog::buildFromCatalogRecipe(const PluginInfo& info, QByteArray& zip, QString* error)
+{
+    const PluginCatalog& catalog = _context.catalog;
+    if (catalog.recipesUrl.isEmpty() || catalog.recipesSha256.isEmpty()) {
+        *error = tr("the plugin catalog does not include its recipes");
+        return false;
+    }
+    if (info.catalogRecipe.contains(QLatin1String("..")) || QDir::isAbsolutePath(info.catalogRecipe)) {
+        *error = tr("the recipe of %1 is not inside the recipes of the catalog").arg(info.folderName);
+        return false;
+    }
+    // recipes.zip una vez por catálogo, comprobado con el SHA-256 de la lista firmada
+    const QString dir = remote_catalog::recipesDir(_context.catalogSettings, catalog);
+    if (!QFileInfo::exists(dir)) {
+        QByteArray recipes;
+        const QUrl url = QUrl(catalog.recipesUrl).scheme().isEmpty() ? QUrl::fromLocalFile(catalog.recipesUrl) : QUrl(catalog.recipesUrl);
+        if (!_fetch(url, recipes, error) || !remote_catalog::unpackRecipes(_context.catalogSettings, catalog, recipes, error))
+            return false;
+    }
+    PluginRecipe recipe;
+    if (!PluginRecipe::parse(QDir(dir).filePath(info.catalogRecipe), recipe, error))
+        return false;
+    return buildFromRecipe(recipe, zip, error);
 }
 
 bool PluginsAdminDialog::buildFromRecipe(const PluginRecipe& recipe, QByteArray& zip, QString* error)

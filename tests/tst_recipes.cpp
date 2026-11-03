@@ -6,7 +6,9 @@
 // (recetas), con la capa de compatibilidad Win32 del SDK (compat/).
 
 #include "FakePrompter.h"
+#include "core/Minisign.h"
 #include "core/PluginInstaller.h"
+#include "core/RemoteCatalog.h"
 #include "core/PluginRecipe.h"
 #include "ui/DocStatusBar.h"
 #include "ui/EditorView.h"
@@ -697,6 +699,71 @@ private slots:
         QCOMPARE(zipWithTime(before), zipWithTime(QDateTime::currentDateTime()));
         qunsetenv("SOURCE_DATE_EPOCH");
         QVERIFY(zipWithTime(before) != zipWithTime(QDateTime::currentDateTime()));
+    }
+
+    // Fase 56: un plugin del catálogo de Edita cuyo binario no sirve en este equipo (otra
+    // arquitectura) se compila con su receta, que sale de recipes.zip del catálogo
+    void pluginsAdminBuildsCatalogRecipes()
+    {
+        const QByteArray keyId = QByteArray::fromHex("8877665544332211");
+        const QByteArray seed(32, '\x2a');
+        const QString server = _tmp.filePath("servidor");
+        qputenv("EDITA_PLUGIN_CATALOG_PUBKEY", minisign::publicKeyFromSeed(keyId, seed).toUtf8());
+        qputenv("EDITA_PLUGIN_CATALOG_URL", (server + "/plugins.json").toUtf8());
+        auto restore = qScopeGuard([this, server] {
+            qputenv("EDITA_PLUGIN_CATALOG_URL", "none");
+            qunsetenv("EDITA_PLUGIN_CATALOG_PUBKEY");
+            QDir(server).removeRecursively();
+            QDir(_tmp.filePath("recetas")).removeRecursively();
+        });
+        // La receta, en recipes.zip como lo hace catalog.py (recipes/<carpeta>/…)
+        const QByteArray source = upstreamSource("Desde el catálogo");
+        writeFile(server + "/demo-src.zip", source);
+        writeRecipe(_tmp.filePath("recetas/Win32Demo"), server + "/demo-src.zip", plugin_installer::sha256Hex(source), false);
+        std::vector<std::pair<QString, QString>> files;
+        for (QDirIterator it(_tmp.filePath("recetas"), QDir::Files, QDirIterator::Subdirectories); it.hasNext();) {
+            const QString path = it.next();
+            files.emplace_back("recipes/" + QDir(_tmp.filePath("recetas")).relativeFilePath(path), path);
+        }
+        QVERIFY(plugin_installer::createZip(server + "/recipes.zip", files));
+        QJsonObject demo{{"folder-name", "Win32Demo"}, {"display-name", "Win32 Demo"}, {"version", "1.0"},
+                         {"npp-compatible-versions", "[0.0.1,]"}, {"id", QString(64, 'b')},
+                         {"repository", QUrl::fromLocalFile(server + "/no-existe.zip").toString()},
+                         {"description", "…"}, {"author", "Pruebas"}, {"homepage", ""}, {"license", "GPL-3.0-or-later"},
+                         {"edita-build", "binary"}, {"edita-recipe", "recipes/Win32Demo/recipe.json"}};
+        const QByteArray json = QJsonDocument(QJsonObject{
+            {"name", "Edita plugin catalog"}, {"version", "2026.11.03.6"}, {"arch", "linux-riscv64"}, {"edita-plugin-api", 1},
+            {"edita-qt", "6.8.3"}, {"edita-recipes", QUrl::fromLocalFile(server + "/recipes.zip").toString()},
+            {"edita-recipes-sha256", plugin_installer::sha256Hex(readFile(server + "/recipes.zip"))}, {"npp-plugins", QJsonArray{demo}}})
+                                    .toJson();
+        writeFile(server + "/plugins.json", json);
+        writeFile(server + "/plugins.json.minisig", minisign::sign(json, keyId, seed, QStringLiteral("catalog:2026.11.03.6")));
+
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        FakePrompter prompter;
+        PluginsAdminDialog dialog(context(w), prompter);
+        QSignalSpy refreshed(&dialog, &PluginsAdminDialog::catalogRefreshed);
+        QVERIFY(refreshed.wait(10000));
+        QVERIFY2(refreshed.first().at(0).toBool(), qPrintable(refreshed.first().at(1).toString()));
+        const QString status = dialog.findChild<QLabel*>(QStringLiteral("status"))->text();
+        QVERIFY2(status.contains(QStringLiteral("This computer builds the plugins of the catalog"))
+                     && status.contains(QStringLiteral("linux-riscv64")),
+                 qPrintable(status));
+        const QList<QTreeWidgetItem*> found =
+            dialog.list(PluginsAdminDialog::Available)->findItems(QStringLiteral("Win32 Demo"), Qt::MatchExactly);
+        QCOMPARE(found.size(), 1);
+        QCOMPARE(found.first()->text(1), QStringLiteral("1 (from source)"));
+        QVERIFY(dialog.setChecked(PluginsAdminDialog::Available, "Win32Demo"));
+        prompter.confirmations.enqueue(true);
+        QVERIFY2(dialog.installChecked(), qPrintable(prompter.warnings.join('\n') + dialog.lastBuildLog().right(2000)));
+        QVERIFY(QFileInfo::exists(userPlugins() + "/Win32Demo/Win32Demo.so"));
+        QVERIFY(dialog.lastBuildLog().contains(QStringLiteral("Building")));
+        // Las recetas quedan extraídas una vez por catálogo
+        PluginCatalog catalog;
+        QVERIFY(PluginCatalog::parse(json, catalog));
+        QVERIFY(QFileInfo::exists(remote_catalog::recipesDir(remote_catalog::settings(userPlugins()), catalog)
+                                  + "/recipes/Win32Demo/recipe.json"));
     }
 
     void builderUsesTheQtOfEdita()

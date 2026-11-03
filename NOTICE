@@ -71,7 +71,11 @@ resources/: el logo y los iconos de la interfaz (resources/icons/ui/) son
 obra propia de Edita, con la misma licencia (GPL v3 o posterior).
 
 Bibliotecas del sistema enlazadas dinámicamente: Qt 6 (LGPL v3), glibc (iconv, LGPL 2.1),
+OpenSSL 3 (libcrypto, licencia Apache 2.0: comprueba la firma del catálogo de plugins),
 Python 3 (licencia PSF, solo el plugin Python Script).
+
+tests/fixtures/catalog/: la lista del catálogo de plugins de Edita (alktrip/edita-plugins)
+publicada el 2026-11-03, con su firma, para comprobar la firma real en las pruebas.
 
 El AppImage portable (packaging/appimage/build-portable.sh) incluye el Qt 6.8
 oficial de The Qt Company (LGPL v3, instalado con aqtinstall), bibliotecas de
