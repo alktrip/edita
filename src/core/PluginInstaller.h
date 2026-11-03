@@ -47,7 +47,9 @@ bool extractZip(const QByteArray& zip, const QString& dir, QString* error = null
 bool installPackage(const QByteArray& zip, const QString& folderName, const QString& expectedId,
                     const QString& pluginsRoot, bool clean, QString* error = nullptr);
 
-// Crea un .zip con esos archivos (nombre dentro del .zip, archivo en disco)
+// Crea un .zip con esos archivos (nombre dentro del .zip, archivo en disco), en ese
+// orden. Con SOURCE_DATE_EPOCH (segundos desde 1970, la convención de las compilaciones
+// reproducibles), todas las entradas llevan esa fecha: el mismo contenido da el mismo .zip
 bool createZip(const QString& zipPath, const std::vector<std::pair<QString, QString>>& files, QString* error = nullptr);
 
 // -clean: borra <pluginsRoot>/<folderName>

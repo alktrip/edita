@@ -25,6 +25,11 @@
 #   EDITA_QT_INCLUDE, EDITA_QT_LIBDIR: las cabeceras y bibliotecas del Qt con el que se
 #       ejecuta Edita (en el AppImage, el Qt que trae). Sin ellas, find_package(Qt6):
 #       el Qt del sistema
+#   EDITA_PLUGIN_SOURCE_ROOT  la raíz del código del plugin (por defecto, la carpeta de
+#       arriba de este CMakeLists.txt)
+#
+# Los plugins son reproducibles: el mismo código con el mismo SDK y el mismo compilador da
+# el mismo .so, se compile en la carpeta que se compile (ver _edita_reproducible).
 #
 # El resultado es <carpeta>.so, con las exportaciones de Edita (compat/npp_compat.cpp).
 
@@ -58,6 +63,27 @@ function(_edita_link_qt name)
         find_package(Qt6 REQUIRED COMPONENTS Widgets)
         target_link_libraries(${name} PRIVATE Qt6::Widgets)
     endif()
+endfunction()
+
+# Sin las rutas de la máquina dentro del .so (__FILE__ de los assert, de Qt…): las de
+# trabajo se cambian por nombres fijos. Y sin RUNPATH: el .so lo carga Edita, que ya tiene
+# Qt cargado (y la carpeta de Qt del AppImage es temporal)
+function(_edita_reproducible name)
+    if(NOT EDITA_PLUGIN_SOURCE_ROOT)
+        get_filename_component(EDITA_PLUGIN_SOURCE_ROOT "${CMAKE_SOURCE_DIR}/.." ABSOLUTE)
+    endif()
+    set(maps "${EDITA_PLUGIN_SDK}=/edita-plugin-sdk" "${EDITA_PLUGIN_SOURCE_ROOT}=/plugin-source"
+             "${CMAKE_BINARY_DIR}=/plugin-build")
+    if(NOT EDITA_SCINTILLA_INCLUDE STREQUAL EDITA_PLUGIN_SDK)
+        list(APPEND maps "${EDITA_SCINTILLA_INCLUDE}=/edita-scintilla")
+    endif()
+    if(EDITA_QT_INCLUDE)
+        list(APPEND maps "${EDITA_QT_INCLUDE}=/edita-qt/include")
+    endif()
+    foreach(map ${maps})
+        target_compile_options(${name} PRIVATE "-ffile-prefix-map=${map}")
+    endforeach()
+    set_target_properties(${name} PROPERTIES SKIP_BUILD_RPATH ON)
 endfunction()
 
 # edita_rc: el convertidor de .rc, compilado con el compilador del equipo
@@ -124,6 +150,7 @@ function(edita_npp_plugin name)
     # El código original se escribió para MSVC: sus avisos no interesan aquí
     target_compile_options(${name} PRIVATE -w $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>)
     _edita_link_qt(${name})
+    _edita_reproducible(${name})
     target_link_libraries(${name} PRIVATE ${ARG_LIBRARIES} ${CMAKE_DL_LIBS})
 endfunction()
 
@@ -146,5 +173,6 @@ function(edita_native_plugin name)
         EDITA_PLUGIN_HOMEPAGE="${EDITA_PLUGIN_HOMEPAGE}"
         ${ARG_DEFINITIONS})
     _edita_link_qt(${name})
+    _edita_reproducible(${name})
     target_link_libraries(${name} PRIVATE ${ARG_LIBRARIES})
 endfunction()

@@ -16,6 +16,7 @@
 #include "ui/RecipeCommands.h"
 
 #include <QAction>
+#include <QDateTime>
 #include <QDir>
 #include <QDirIterator>
 #include <QDockWidget>
@@ -645,6 +646,57 @@ private slots:
                                                            : QStringLiteral("is not the recipe's")),
                      qPrintable(builder.log()));
         }
+    }
+
+    // Fase 55: con SOURCE_DATE_EPOCH, el mismo código da el mismo paquete aunque se
+    // compile en otra carpeta: así la CI del catálogo sabe si un plugin cambió y
+    // cualquiera puede comprobar un binario publicado
+    void packagesAreReproducible()
+    {
+        const QByteArray source = upstreamSource();
+        writeRecipe(recipesDir() + "/Win32Demo", "x", plugin_installer::sha256Hex(source));
+        PluginRecipe recipe;
+        QVERIFY(PluginRecipe::parse(recipesDir() + "/Win32Demo/recipe.json", recipe));
+        qputenv("SOURCE_DATE_EPOCH", "1762128000");
+        QStringList shas;
+        for (const QString& dir : {QStringLiteral("cache/uno/Win32Demo"), QStringLiteral("cache/otra-carpeta/dos/Win32Demo")}) {
+            RecipeBuilder builder(recipe, findPluginSdk(), _tmp.filePath(dir));
+            QSignalSpy finished(&builder, &RecipeBuilder::finished);
+            builder.start(source);
+            QVERIFY(finished.wait(180000));
+            QVERIFY2(finished.first().at(0).toBool(), qPrintable(builder.log().right(3000)));
+            shas << builder.packageSha256();
+            // Ni las carpetas de trabajo ni RUNPATH dentro del .so
+            const QString so = QDirIterator(_tmp.filePath(dir + "/build"), {"Win32Demo.so"}, QDir::Files,
+                                            QDirIterator::Subdirectories).next();
+            const QByteArray binary = readFile(so);
+            QVERIFY(!binary.contains(_tmp.filePath(dir).toUtf8()));
+            QVERIFY(!binary.contains(findPluginSdk().sdkDir.toUtf8()));
+            QProcess readelf;
+            readelf.start(QStringLiteral("readelf"), {QStringLiteral("-d"), so});
+            QVERIFY(readelf.waitForFinished());
+            const QByteArray dynamic = readelf.readAll();
+            QVERIFY(dynamic.contains("NEEDED"));
+            QVERIFY(!dynamic.contains("RUNPATH") && !dynamic.contains("RPATH"));
+        }
+        QCOMPARE(shas[0], shas[1]);
+
+        // createZip: la fecha de los archivos no cuenta; sin SOURCE_DATE_EPOCH, sí
+        const QString file = _tmp.filePath("cache/a.txt");
+        writeFile(file, "contenido\n");
+        auto zipWithTime = [&](const QDateTime& time) {
+            QFile f(file);
+            if (f.open(QIODevice::ReadWrite))
+                f.setFileTime(time, QFileDevice::FileModificationTime);
+            f.close();
+            const QString zip = _tmp.filePath("cache/a.zip");
+            plugin_installer::createZip(zip, {{"a.txt", file}});
+            return readFile(zip);
+        };
+        const QDateTime before = QDateTime::currentDateTime().addDays(-3);
+        QCOMPARE(zipWithTime(before), zipWithTime(QDateTime::currentDateTime()));
+        qunsetenv("SOURCE_DATE_EPOCH");
+        QVERIFY(zipWithTime(before) != zipWithTime(QDateTime::currentDateTime()));
     }
 
     void builderUsesTheQtOfEdita()

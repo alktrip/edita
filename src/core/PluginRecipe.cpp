@@ -563,7 +563,8 @@ void RecipeBuilder::runNext()
                             QStringLiteral("-DEDITA_SCINTILLA_INCLUDE=") + _sdk.scintillaInclude,
                             QStringLiteral("-DEDITA_PLUGIN_VERSION=") + _recipe.info.version.toString(),
                             QStringLiteral("-DEDITA_PLUGIN_DISPLAY_NAME=") + _recipe.info.displayName,
-                            QStringLiteral("-DEDITA_PLUGIN_HOMEPAGE=") + _recipe.info.homepage};
+                            QStringLiteral("-DEDITA_PLUGIN_HOMEPAGE=") + _recipe.info.homepage,
+                            QStringLiteral("-DEDITA_PLUGIN_SOURCE_ROOT=") + _sourceDir};
         if (!_sdk.qtInclude.isEmpty())
             args << QStringLiteral("-DEDITA_QT_INCLUDE=") + _sdk.qtInclude << QStringLiteral("-DEDITA_QT_LIBDIR=") + _sdk.qtLibDir;
         if (!QStandardPaths::findExecutable(QStringLiteral("ninja")).isEmpty())

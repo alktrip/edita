@@ -328,6 +328,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 52 — Capa de compatibilidad v2 (2) | Ventanas de Win32 sobre Qt: controles estándar y sus notificaciones, clases registradas, subclassing, diálogos sin .rc, paneles acoplables con tTbData y DMN_CLOSE, temporizadores, PostMessage, menús emergentes, monitores, GDI sin dibujo; hilos y eventos, FormatMessage, SCI_GETTEXTRANGE | ✅ [fase52.md](fase52.md) |
 | 53 — Capa de compatibilidad v2 (3) | edita_rc (diálogos, menús y cadenas de los .rc en el formato binario de Windows), plantillas DLGTEMPLATE(EX) con unidades de diálogo, diálogos modales, LoadMenu/LoadString, SetWindowSubclass, diálogos comunes sobre Qt, CreateProcess con tuberías, MENUITEMINFO | ✅ [fase53.md](fase53.md) |
 | 54 — Recetas del catálogo | Las recetas de siete plugins de N++ en edita-plugins (Reverse Lines, OpenHost, Select 'N' Launch, Simplify JSON, TidyText, Auto Detect Indention, SQL Column Highlighter), `--build-recipe` y `--check-plugin`, fuentes adicionales (submódulos), licencia del paquete y prueba declarada en la receta | ✅ [fase54.md](fase54.md) |
+| 55 — Catálogo: CI y lista firmada | Release continuo del AppImage, paquetes reproducibles (`-ffile-prefix-map`, sin RUNPATH, `SOURCE_DATE_EPOCH`), CI de edita-plugins que compila, prueba y publica los paquetes y `plugins.json` firmada (Ed25519, formato minisign), binarios solo con licencia compatible con la GPL-3 | ✅ [fase55.md](fase55.md) |
 
 ---
 

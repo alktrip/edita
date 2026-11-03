@@ -27,6 +27,8 @@
 
 #ifdef EDITA_HAVE_LIBZIP
 #include <zip.h>
+
+#include <optional>
 #endif
 
 namespace edita::plugin_installer {
@@ -199,6 +201,11 @@ bool createZip(const QString& zipPath, const std::vector<std::pair<QString, QStr
 {
 #ifdef EDITA_HAVE_LIBZIP
     QFile::remove(zipPath);
+    std::optional<qint64> fixedTime;
+    bool epochOk = false;
+    const qint64 epoch = qEnvironmentVariable("SOURCE_DATE_EPOCH").toLongLong(&epochOk);
+    if (epochOk && epoch >= 0)
+        fixedTime = epoch;
     int code = 0;
     zip_t* archive = zip_open(QFile::encodeName(zipPath).constData(), ZIP_CREATE | ZIP_TRUNCATE, &code);
     if (!archive) {
@@ -207,13 +214,16 @@ bool createZip(const QString& zipPath, const std::vector<std::pair<QString, QStr
     }
     for (const auto& [name, path] : files) {
         zip_source_t* source = zip_source_file(archive, QFile::encodeName(path).constData(), 0, kZipLengthToEnd);
-        if (!source || zip_file_add(archive, name.toUtf8().constData(), source, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8) < 0) {
+        const zip_int64_t index = source ? zip_file_add(archive, name.toUtf8().constData(), source, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8) : -1;
+        if (index < 0) {
             if (source)
                 zip_source_free(source);
             setError(error, QCoreApplication::translate("PluginInstaller", "Could not add %1 to the package").arg(path));
             zip_discard(archive);
             return false;
         }
+        if (fixedTime)
+            zip_file_set_mtime(archive, static_cast<zip_uint64_t>(index), static_cast<time_t>(*fixedTime), 0);
     }
     if (zip_close(archive) != 0) {
         setError(error, QCoreApplication::translate("PluginInstaller", "Could not write %1").arg(zipPath));
