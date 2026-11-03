@@ -1,0 +1,118 @@
+# Edita para Linux: compila con -Werror, pasa todas las pruebas y genera el AppImage.
+# Ubuntu 22.04 con GCC 12 y Qt 6.8.3, la misma base que el AppImage (glibc 2.35).
+# Se lanza al subir a main, en los pull requests, con etiquetas v* (y entonces publica el
+# AppImage en Releases) o a mano. Si una prueba falla, la corrida falla y no se empaqueta.
+name: Linux
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write # para publicar el AppImage en la release de una etiqueta
+
+env:
+  QT_VERSION: '6.8.3'
+  CC: gcc-12
+  CXX: g++-12
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Paquetes
+        run: |
+          sudo apt-get update
+          # Compilar: Ninja, libzip, Python (Python Script), OpenGL y xkbcommon (Qt Gui).
+          # Pruebas: git, patch y nm (recetas), libxml2/libxslt (receta de XML Tools),
+          # pdftotext (impresión)
+          sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 \
+            libzip-dev zlib1g-dev python3-dev libgl-dev libegl-dev libxkbcommon-dev \
+            libfontconfig1-dev libfreetype-dev \
+            git patch binutils libxml2-dev libxslt1-dev poppler-utils
+
+      - name: Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          modules: qt5compat
+          cache: true
+
+      - name: Configurar
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEDITA_WERROR=ON
+
+      - name: Compilar
+        run: cmake --build build
+
+      - name: Probar
+        # git necesita una identidad para los repositorios de prueba
+        run: |
+          git config --global user.name "Edita CI"
+          git config --global user.email "ci@example.invalid"
+          ctest --test-dir build -j4 --output-on-failure --timeout 900
+
+      - name: Resultados de las pruebas
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-linux
+          path: build/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+
+  appimage:
+    needs: pruebas
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Paquetes
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 file \
+            libzip-dev zlib1g-dev python3-dev libgl-dev libegl-dev libxkbcommon-dev libxkbcommon-x11-0 \
+            libfontconfig1-dev libfreetype-dev libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
+            libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
+            libwayland-cursor0 libwayland-egl1 libcups2
+
+      - name: Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          modules: qt5compat
+          cache: true
+
+      - name: AppImage
+        env:
+          WORK: ${{ github.workspace }}/build-appimage
+          OUT: ${{ github.workspace }}/dist
+        run: |
+          export QMAKE_BIN="$QT_ROOT_DIR/bin/qmake"
+          export CMAKE_EXTRA="-DCMAKE_PREFIX_PATH=$QT_ROOT_DIR"
+          export LD_LIBRARY_PATH="$QT_ROOT_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          packaging/appimage/build-appimage.sh
+
+      - name: Subir el AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: Edita-linux-x86_64
+          path: dist/*.AppImage
+          if-no-files-found: error
+
+      - name: Publicar en la release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.AppImage
