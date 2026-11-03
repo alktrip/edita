@@ -451,6 +451,13 @@ bool PluginsAdminDialog::buildFromRecipe(const PluginRecipe& recipe, QByteArray&
     if (!_fetch(QUrl(recipe.sourceUrl).scheme().isEmpty() ? QUrl::fromLocalFile(recipe.sourceUrl) : QUrl(recipe.sourceUrl),
                 source, error))
         return false;
+    std::vector<QByteArray> extras;
+    for (const RecipeSource& extra : recipe.extraSources) {
+        QByteArray extraZip;
+        if (!_fetch(QUrl(extra.url).scheme().isEmpty() ? QUrl::fromLocalFile(extra.url) : QUrl(extra.url), extraZip, error))
+            return false;
+        extras.push_back(extraZip);
+    }
 
     // La compilación, con su registro a la vista y la posibilidad de cancelarla
     QDialog progress(this);
@@ -488,7 +495,7 @@ bool PluginsAdminDialog::buildFromRecipe(const PluginRecipe& recipe, QByteArray&
     connect(cancel, &QPushButton::clicked, &builder, &RecipeBuilder::cancel);
     connect(&progress, &QDialog::rejected, &builder, &RecipeBuilder::cancel);
     progress.show();
-    builder.start(source);
+    builder.start(source, extras);
     if (builder.isRunning())
         loop.exec();
     _lastBuildLog = builder.log();

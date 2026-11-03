@@ -194,6 +194,7 @@ add_library(edita_ui STATIC
     ui/PluginManager.cpp
     ui/PluginManager.h
     ui/PluginsAdminDialog.cpp
+    ui/RecipeCommands.cpp
     ui/PluginsAdminDialog.h
     ui/Prompter.cpp
     ui/Prompter.h

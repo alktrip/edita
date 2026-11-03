@@ -239,7 +239,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+147"/>
+        <location line="+154"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>%n plugin will be removed.</numerusform>
@@ -274,7 +274,7 @@
 <context>
     <name>edita::RecipeBuilder</name>
     <message numerus="yes">
-        <location filename="../src/core/PluginRecipe.cpp" line="+499"/>
+        <location filename="../src/core/PluginRecipe.cpp" line="+557"/>
         <source>Fixed the Windows #include lines (case, \) in %n file(s)</source>
         <translation>
             <numerusform>Fixed the Windows #include lines (case, \) in %n file</numerusform>

@@ -13,6 +13,7 @@
 #include "ui/MainWindow.h"
 #include "ui/PluginManager.h"
 #include "ui/PluginsAdminDialog.h"
+#include "ui/RecipeCommands.h"
 
 #include <QAction>
 #include <QDir>
@@ -32,10 +33,12 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QTextStream>
 #include <QTreeWidget>
 
 #include <zip.h>
 
+#include <functional>
 #include <map>
 
 using namespace edita;
@@ -532,6 +535,116 @@ private slots:
         w.plugins()->runCommand(plugin->commands[1].cmdId);
         QCOMPARE(w.documents().text(w.currentBuffer()), "HOLA DESDE WIN32"s);
         QCOMPARE(plugin->messageProc(1, 0, 0), intptr_t{1}); // NPPN_READY llegó a su beNotified
+    }
+
+    // Fase 54: una fuente adicional (un submódulo, otro .zip fijado con su SHA-256), la
+    // prueba declarada en la receta y las dos órdenes de línea de la CI del catálogo
+    void recipeCommandsBuildAndCheck()
+    {
+        const QString dir = recipesDir() + "/Win32Demo";
+        const QByteArray source = upstreamSource();
+        const QByteArray extra = makeZip({{"template-abc123/NOTICE.txt", "La plantilla de plugins\n"},
+                                          {"template-abc123/Scintilla.h", "#error la receta la quita\n"}});
+        writeRecipe(dir, "source.zip", plugin_installer::sha256Hex(source), false);
+        writeFile(dir + "/source.zip", source);
+        writeFile(dir + "/template.zip", extra);
+        auto setRecipe = [&](const std::function<void(QJsonObject&)>& change) {
+            QJsonObject recipe = QJsonDocument::fromJson(readFile(dir + "/recipe.json")).object();
+            change(recipe);
+            writeFile(dir + "/recipe.json", QJsonDocument(recipe).toJson());
+        };
+        setRecipe([&](QJsonObject& r) {
+            r["extra-sources"] = QJsonArray{QJsonObject{{"url", "template.zip"}, {"sha256", plugin_installer::sha256Hex(extra)},
+                                                        {"strip-components", 1}, {"dest", "plantilla"}}};
+            r["remove"] = QJsonArray{"src/Scintilla.h", "plantilla/Scintilla.h"}; // después de copiar las fuentes
+            r["license"] = "GPL-3.0-or-later";
+            r["license-files"] = QJsonArray{"readme.txt", "plantilla/NOTICE.txt"};
+            r["check"] = QJsonObject{
+                {"commands", QJsonArray{"Greet", "Upper"}},
+                {"cases", QJsonArray{QJsonObject{{"command", "Upper"}, {"text", "uno\ndos"}, {"expect", "UNO\nDOS"}},
+                                     QJsonObject{{"command", "Greet"}, {"select", "none"}, {"text", "!"},
+                                                 {"expect", "Hola desde Win32!"}}}}};
+        });
+        PluginRecipe recipe;
+        QVERIFY(PluginRecipe::parse(dir + "/recipe.json", recipe));
+        QCOMPARE(recipe.extraSources.size(), std::size_t{1});
+        QCOMPARE(recipe.extraSources[0].dest, QStringLiteral("plantilla"));
+        QCOMPARE(recipe.checkCommands, (QStringList{"Greet", "Upper"}));
+        QCOMPARE(recipe.checks.size(), std::size_t{2});
+        QCOMPARE(recipe.license, QStringLiteral("GPL-3.0-or-later"));
+        QVERIFY(recipe.checks[0].selectAll);
+        QVERIFY(!recipe.checks[1].selectAll);
+
+        // --build-recipe: las rutas relativas a la receta, el paquete y su .sha256
+        const QString output = _tmp.filePath("salida");
+        QString log;
+        QTextStream out(&log);
+        QCOMPARE(runRecipeCommandLine({"edita", "--build-recipe", dir + "/recipe.json", "--output", output}, out), 0);
+        QVERIFY2(log.contains(QStringLiteral("Extra source verified and copied to plantilla/")), qPrintable(log.right(3000)));
+        QVERIFY(log.contains(QStringLiteral("Removed from the original: src/Scintilla.h, plantilla/Scintilla.h")));
+        const QString package = output + "/Win32Demo-1.zip";
+        QVERIFY(QFileInfo::exists(package));
+        QVERIFY(readFile(output + "/work/Win32Demo/extracted/demo-1.0/plantilla/NOTICE.txt").contains("plantilla"));
+        QVERIFY(!QFileInfo::exists(output + "/work/Win32Demo/extracted/demo-1.0/plantilla/Scintilla.h"));
+        // El paquete lleva los archivos de la licencia con el .so
+        QVERIFY(plugin_installer::installPackage(readFile(package), "Win32Demo", plugin_installer::sha256Hex(readFile(package)), userPlugins(), false));
+        QVERIFY(QFileInfo::exists(userPlugins() + "/Win32Demo/readme.txt"));
+        QVERIFY(QFileInfo::exists(userPlugins() + "/Win32Demo/NOTICE.txt"));
+        QDir(userPlugins()).removeRecursively();
+        QCOMPARE(readFile(package + ".sha256"), plugin_installer::sha256Hex(readFile(package)).toUtf8() + "  Win32Demo-1.zip\n");
+
+        // --check-plugin: lo instala aparte, lo carga y pasa la prueba; la configuración
+        // de quien llama queda como estaba
+        const QByteArray configHome = qgetenv("XDG_CONFIG_HOME");
+        log.clear();
+        QCOMPARE(runRecipeCommandLine({"edita", "--check-plugin", package, "--recipe", dir + "/recipe.json"}, out), 0);
+        QVERIFY2(log.contains(QStringLiteral("Plugin: Win32 Demo 1")), qPrintable(log));
+        QVERIFY(log.contains(QStringLiteral("Commands: Greet | Upper")));
+        QVERIFY(log.contains(QStringLiteral("PASS: \"Upper\"")));
+        QVERIFY(log.contains(QStringLiteral("All checks passed")));
+        QCOMPARE(qgetenv("XDG_CONFIG_HOME"), configHome);
+        QVERIFY(!QFileInfo::exists(userPlugins() + "/Win32Demo"));
+
+        // Una prueba que no pasa y una orden que no existe: código 1 y el detalle
+        setRecipe([](QJsonObject& r) {
+            r["check"] = QJsonObject{{"commands", QJsonArray{"Saludar"}},
+                                     {"cases", QJsonArray{QJsonObject{{"command", "Upper"}, {"text", "a\tb"}, {"expect", "a\tb"}}}}};
+        });
+        log.clear();
+        QCOMPARE(checkPluginCommand(package, dir + "/recipe.json", out), 1);
+        QVERIFY(log.contains(QStringLiteral("FAIL: command \"Saludar\"")));
+        QVERIFY(log.contains(QStringLiteral("expected: a\\tb")));
+        QVERIFY(log.contains(QStringLiteral("got:      A\\tB")));
+        QVERIFY(log.contains(QStringLiteral("2 check(s) failed")));
+
+        // Las órdenes sin sus argumentos, y otros argumentos
+        log.clear();
+        QCOMPARE(runRecipeCommandLine({"edita", "--build-recipe", dir + "/recipe.json"}, out), 2);
+        QVERIFY(log.startsWith(QStringLiteral("Usage: edita --build-recipe")));
+        QCOMPARE(runRecipeCommandLine({"edita", "archivo.txt"}, out), -1);
+
+        // Fuentes adicionales que no valen: una ruta que sale del código, un SHA-256 que
+        // no es el de la receta, menos .zip de los que pide
+        setRecipe([](QJsonObject& r) {
+            r["extra-sources"] = QJsonArray{QJsonObject{{"url", "template.zip"}, {"sha256", "x"}, {"dest", "../fuera"}}};
+        });
+        QString error;
+        QVERIFY(!PluginRecipe::parse(dir + "/recipe.json", recipe, &error));
+        QVERIFY2(error.contains(QStringLiteral("invalid extra source")), qPrintable(error));
+        setRecipe([](QJsonObject& r) {
+            r["extra-sources"] = QJsonArray{QJsonObject{{"url", "template.zip"}, {"sha256", QString(64, '0')}, {"dest", "plantilla"}}};
+        });
+        QVERIFY(PluginRecipe::parse(dir + "/recipe.json", recipe));
+        for (const std::vector<QByteArray>& extras : {std::vector<QByteArray>{extra}, std::vector<QByteArray>{}}) {
+            RecipeBuilder builder(recipe, findPluginSdk(), _tmp.filePath("cache/Win32Demo"));
+            QSignalSpy finished(&builder, &RecipeBuilder::finished);
+            builder.start(source, extras);
+            QVERIFY(finished.count() || finished.wait(30000));
+            QVERIFY(!finished.first().at(0).toBool());
+            QVERIFY2(builder.log().contains(extras.empty() ? QStringLiteral("the recipe has 1 extra sources and 0 were downloaded")
+                                                           : QStringLiteral("is not the recipe's")),
+                     qPrintable(builder.log()));
+        }
     }
 
     void builderUsesTheQtOfEdita()

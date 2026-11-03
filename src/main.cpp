@@ -23,6 +23,7 @@
 #include "core/Preferences.h"
 #include "syntax/DesktopFonts.h"
 #include "ui/MainWindow.h"
+#include "ui/RecipeCommands.h"
 #include "ui/SingleInstance.h"
 #include "ui/Translations.h"
 
@@ -64,6 +65,14 @@ int main(int argc, char* argv[])
     // Las fuentes de KDE guardadas por un Qt más nuevo (el AppImage trae Qt 6.8): sin
     // avisos, y con la fuente del escritorio aunque Qt no la entienda
     edita::desktopfonts::installWarningFilter();
+    // Las órdenes de las recetas (ui/RecipeCommands.h) no necesitan pantalla: la CI no la tiene
+    bool recipeCommand = false;
+    for (int i = 1; i < argc; ++i) {
+        const QByteArray arg(argv[i]);
+        recipeCommand = recipeCommand || arg == "--build-recipe" || arg == "--check-plugin";
+    }
+    if (recipeCommand && qEnvironmentVariableIsEmpty("QT_QPA_PLATFORM"))
+        qputenv("QT_QPA_PLATFORM", "offscreen");
     QApplication app(argc, argv);
     FileOpenFilter fileOpen;
     app.installEventFilter(&fileOpen);
@@ -75,6 +84,10 @@ int main(int argc, char* argv[])
     QApplication::setWindowIcon(edita::MainWindow::applicationIcon());
     QGuiApplication::setDesktopFileName(QString::fromUtf8(edita::kAppId)); // Wayland: une la ventana con su .desktop
     edita::paths::useOwnQtSettings(); // el diálogo de archivos de Qt, sin compartir QtProject.conf
+    if (recipeCommand) {
+        QTextStream out(stdout);
+        return edita::runRecipeCommandLine(QCoreApplication::arguments(), out);
+    }
     // El idioma antes de crear cualquier texto: el de config.xml o el del sistema
     edita::Preferences prefs;
     {
@@ -110,6 +123,12 @@ int main(int argc, char* argv[])
                                            QStringLiteral("file"));
     parser.addOption(multiInstOption);
     parser.addOption(sessionOption);
+    // Las recetas de plugins (se atienden antes, sin ventana: ui/RecipeCommands.h); aquí, para --help
+    parser.addOption(QCommandLineOption(QStringLiteral("build-recipe"),
+        QCoreApplication::translate("main", "Build a plugin recipe (with --output <folder>) and exit."), QStringLiteral("recipe.json")));
+    parser.addOption(QCommandLineOption(QStringLiteral("check-plugin"),
+        QCoreApplication::translate("main", "Install a plugin package in a temporary configuration and run the checks of its recipe (with --recipe <recipe.json>), then exit."),
+        QStringLiteral("package.zip")));
     parser.addPositionalArgument(QCoreApplication::translate("main", "files"), QCoreApplication::translate("main", "Files to open."),
                                  QCoreApplication::translate("main", "[files…]"));
     parser.process(app);

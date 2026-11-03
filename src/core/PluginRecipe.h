@@ -26,7 +26,33 @@ namespace edita {
 //   "overlay": "carpeta"    se copia encima del código (CMakeLists.txt, el port…);
 //   "build-dir": "edita"    dónde está el CMakeLists.txt, dentro del código;
 //   "requires": ["cmake", "c++", "pkg-config:libxml-2.0", …];
-//   "fix-includes": false   no corregir los #include de Windows (ver fixWindowsIncludes).
+//   "fix-includes": false   no corregir los #include de Windows (ver fixWindowsIncludes);
+//   "extra-sources": [{"url": …, "sha256": …, "strip-components": 1, "dest": "carpeta"}]
+//                           más código, dentro del del autor (sus submódulos de git);
+//   "check": {"commands": [nombres], "cases": [{"text": …, "select": "all"|"none",
+//             "command": …, "expect": …} o {"command": …, "expect-file": ruta}]}
+//                           la prueba del paquete (edita --check-plugin);
+//   "license": "GPL-2.0-or-later"   la licencia del plugin (SPDX), para el catálogo;
+//   "license-files": [rutas]  archivos del código que van en el paquete con el .so
+//                           (la licencia, sus avisos): al distribuirlo, van con él.
+struct RecipeSource
+{
+    QString url;
+    QString sha256;
+    int stripComponents = 1;
+    QString dest;               // relativa a la carpeta del código
+};
+
+struct RecipeCheck
+{
+    QString text;               // el documento antes de la orden
+    bool selectAll = true;      // "select": "all" (por defecto) o "none" (el cursor al principio)
+    QString command;            // el nombre de la orden en el menú del plugin
+    QString expect;             // el documento después
+    bool hasExpect = false;
+    QString expectFile;         // o: el archivo que queda abierto
+};
+
 struct PluginRecipe
 {
     PluginInfo info;          // como se lista en el administrador
@@ -40,6 +66,11 @@ struct PluginRecipe
     QString buildDir;
     QStringList requires_;
     bool fixIncludes = true;
+    std::vector<RecipeSource> extraSources;
+    QStringList checkCommands;
+    std::vector<RecipeCheck> checks;
+    QString license;
+    QStringList licenseFiles;
 
     QString directory() const;
     static bool parse(const QString& path, PluginRecipe& recipe, QString* error = nullptr);
@@ -91,8 +122,9 @@ public:
     RecipeBuilder(PluginRecipe recipe, PluginSdk sdk, QString workDir, QObject* parent = nullptr);
     ~RecipeBuilder() override;
 
-    // Empieza con el .zip del código ya descargado. Termina con finished().
-    void start(const QByteArray& sourceZip);
+    // Empieza con el .zip del código ya descargado (y los de extraSources, en su orden).
+    // Termina con finished().
+    void start(const QByteArray& sourceZip, const std::vector<QByteArray>& extraZips = {});
     void cancel();
     bool isRunning() const { return _running; }
 
@@ -110,7 +142,7 @@ private:
     void fail(const QString& error);
     void runNext();
     void runProcess(const QString& program, const QStringList& arguments, const QString& workingDir);
-    bool prepareSources(const QByteArray& sourceZip, QString* error);
+    bool prepareSources(const QByteArray& sourceZip, const std::vector<QByteArray>& extraZips, QString* error);
     bool package(QString* error);
 
     PluginRecipe _recipe;

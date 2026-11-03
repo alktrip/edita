@@ -211,6 +211,35 @@ bool PluginRecipe::parse(const QString& path, PluginRecipe& recipe, QString* err
     recipe.buildDir = o.value(QStringLiteral("build-dir")).toString(QStringLiteral("."));
     recipe.requires_ = stringList(o.value(QStringLiteral("requires")));
     recipe.fixIncludes = o.value(QStringLiteral("fix-includes")).toBool(true);
+    for (const QJsonValue& v : o.value(QStringLiteral("extra-sources")).toArray()) {
+        const QJsonObject extra = v.toObject();
+        RecipeSource extraSource;
+        extraSource.url = extra.value(QStringLiteral("url")).toString();
+        extraSource.sha256 = extra.value(QStringLiteral("sha256")).toString();
+        extraSource.stripComponents = extra.value(QStringLiteral("strip-components")).toInt(1);
+        extraSource.dest = extra.value(QStringLiteral("dest")).toString();
+        if (extraSource.url.isEmpty() || extraSource.dest.isEmpty() || extraSource.dest.contains(QLatin1String(".."))) {
+            if (error)
+                *error = QObject::tr("%1: invalid extra source (url and dest are required)").arg(path);
+            return false;
+        }
+        recipe.extraSources.push_back(extraSource);
+    }
+    recipe.license = o.value(QStringLiteral("license")).toString();
+    recipe.licenseFiles = stringList(o.value(QStringLiteral("license-files")));
+    const QJsonObject check = o.value(QStringLiteral("check")).toObject();
+    recipe.checkCommands = stringList(check.value(QStringLiteral("commands")));
+    for (const QJsonValue& v : check.value(QStringLiteral("cases")).toArray()) {
+        const QJsonObject c = v.toObject();
+        RecipeCheck item;
+        item.text = c.value(QStringLiteral("text")).toString();
+        item.selectAll = c.value(QStringLiteral("select")).toString(QStringLiteral("all")) != QLatin1String("none");
+        item.command = c.value(QStringLiteral("command")).toString();
+        item.hasExpect = c.contains(QStringLiteral("expect"));
+        item.expect = c.value(QStringLiteral("expect")).toString();
+        item.expectFile = c.value(QStringLiteral("expect-file")).toString();
+        recipe.checks.push_back(item);
+    }
     return true;
 }
 
@@ -372,7 +401,7 @@ void RecipeBuilder::cancel()
         fail(tr("canceled"));
 }
 
-void RecipeBuilder::start(const QByteArray& sourceZip)
+void RecipeBuilder::start(const QByteArray& sourceZip, const std::vector<QByteArray>& extraZips)
 {
     _running = true;
     _cancelled = false;
@@ -396,7 +425,7 @@ void RecipeBuilder::start(const QByteArray& sourceZip)
         return;
     }
     QString error;
-    if (!prepareSources(sourceZip, &error)) {
+    if (!prepareSources(sourceZip, extraZips, &error)) {
         fail(error);
         return;
     }
@@ -404,7 +433,7 @@ void RecipeBuilder::start(const QByteArray& sourceZip)
     runNext();
 }
 
-bool RecipeBuilder::prepareSources(const QByteArray& sourceZip, QString* error)
+bool RecipeBuilder::prepareSources(const QByteArray& sourceZip, const std::vector<QByteArray>& extraZips, QString* error)
 {
     // El .zip del autor, comprobado como un paquete de la lista
     const QString sha = plugin_installer::sha256Hex(sourceZip);
@@ -427,6 +456,35 @@ bool RecipeBuilder::prepareSources(const QByteArray& sourceZip, QString* error)
             return false;
         }
         _sourceDir = QDir(_sourceDir).filePath(entries.first());
+    }
+    // El código adicional (submódulos de git del original), comprobado igual
+    if (extraZips.size() != _recipe.extraSources.size()) {
+        *error = tr("the recipe has %1 extra sources and %2 were downloaded").arg(_recipe.extraSources.size()).arg(extraZips.size());
+        return false;
+    }
+    for (std::size_t i = 0; i < extraZips.size(); ++i) {
+        const RecipeSource& extra = _recipe.extraSources[i];
+        const QString extraSha = plugin_installer::sha256Hex(extraZips[i]);
+        if (!extra.sha256.isEmpty() && extraSha.compare(extra.sha256, Qt::CaseInsensitive) != 0) {
+            *error = tr("the SHA-256 of %1 (%2) is not the recipe's").arg(extra.url, extraSha);
+            return false;
+        }
+        const QString unpacked = QDir(_workDir).filePath(QStringLiteral("extra%1").arg(i));
+        QDir().mkpath(unpacked);
+        if (!plugin_installer::extractZip(extraZips[i], unpacked, error))
+            return false;
+        QString root = unpacked;
+        for (int level = 0; level < extra.stripComponents; ++level) {
+            const QStringList entries = QDir(root).entryList(QDir::AllEntries | QDir::NoDotAndDotDot);
+            if (entries.size() != 1 || !QFileInfo(QDir(root).filePath(entries.first())).isDir()) {
+                *error = tr("%1 does not have the root folder the recipe expects").arg(extra.url);
+                return false;
+            }
+            root = QDir(root).filePath(entries.first());
+        }
+        if (!copyTree(root, QDir(_sourceDir).filePath(extra.dest), error))
+            return false;
+        step(tr("Extra source verified and copied to %1/ (SHA-256 %2)").arg(extra.dest, extraSha.left(16)));
     }
     for (const QString& path : _recipe.remove) {
         const QString target = QDir(_sourceDir).filePath(path);
@@ -549,7 +607,17 @@ bool RecipeBuilder::package(QString* error)
         return false;
     }
     _package = QDir(_workDir).filePath(QStringLiteral("%1-%2.zip").arg(_recipe.info.folderName, _recipe.info.version.toString()));
-    if (!plugin_installer::createZip(_package, {{library, built}}, error))
+    // Con el .so, la licencia del plugin y sus avisos, del código del autor
+    std::vector<std::pair<QString, QString>> files{{library, built}};
+    for (const QString& name : _recipe.licenseFiles) {
+        const QString path = QDir(_sourceDir).filePath(name);
+        if (name.contains(QLatin1String("..")) || !QFileInfo(path).isFile()) {
+            *error = tr("the license file %1 is not in the source code").arg(name);
+            return false;
+        }
+        files.emplace_back(QFileInfo(name).fileName(), path);
+    }
+    if (!plugin_installer::createZip(_package, files, error))
         return false;
     QFile zip(_package);
     if (!zip.open(QIODevice::ReadOnly)) {

@@ -57,6 +57,30 @@ MiPlugin/
   "requires": ["cmake", "c++"] }
 ```
 
+Campos opcionales:
+
+- **`"extra-sources"`**: más código, que se copia dentro del del autor antes de `remove` y de los parches. Son, por ejemplo, los submódulos de git, que GitHub no incluye en el `.zip` de una etiqueta. Cada fuente tiene `url`, `sha256`, `strip-components` y `dest` (una carpeta dentro del código, sin `..`):
+  ```json
+  "extra-sources": [{ "url": "https://github.com/npp-plugins/plugintemplate/archive/<commit>.zip",
+                      "sha256": "…", "strip-components": 1, "dest": "plugintemplate" }]
+  ```
+- **`"license"`** y **`"license-files"`**: la licencia del plugin (identificador SPDX, para el catálogo) y los archivos del código que van en el paquete junto al `.so`. Si un archivo no está, la compilación falla.
+- **`"check"`**: la prueba del paquete, que ejecuta `edita --check-plugin` (abajo). `commands` son órdenes que tienen que estar en el menú del plugin. Cada caso de `cases` pone un texto en un documento nuevo, lo selecciona entero (o deja el cursor al principio con `"select": "none"`), ejecuta la orden y compara el documento con `expect`, o el archivo abierto con `expect-file`:
+  ```json
+  "check": { "commands": ["Selection", "Document"],
+             "cases": [{ "command": "Selection", "text": "a\nb\nc", "expect": "c\nb\na" },
+                       { "command": "Open", "expect-file": "/etc/hosts" }] }
+  ```
+
+**Desde la línea de órdenes**, sin abrir la interfaz:
+
+```sh
+edita --build-recipe recipes/MiPlugin/recipe.json --output paquetes/
+edita --check-plugin paquetes/MiPlugin-1.2.zip --recipe recipes/MiPlugin/recipe.json
+```
+
+`--build-recipe` descarga el código y sus fuentes adicionales, comprueba sus SHA-256 y compila la receta. Las rutas locales de `url` son relativas a la receta. Deja `<carpeta>-<versión>.zip` y su `.sha256` en la carpeta de salida, y la compilación en `work/`. `--check-plugin` instala el paquete en una configuración temporal (no toca la del usuario), abre Edita sin ventana visible, carga el plugin y ejecuta la prueba de la receta. Los diálogos modales que abra el plugin se aceptan solos, y su texto sale en la salida (`dialog: …`). Las dos terminan con código 0 si todo va bien. Las recetas del catálogo de plugins de Edita están en [alktrip/edita-plugins](https://github.com/alktrip/edita-plugins).
+
 El `CMakeLists.txt` del overlay compila los fuentes originales con la capa de compatibilidad Win32 del SDK:
 
 ```cmake

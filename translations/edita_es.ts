@@ -758,7 +758,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>%1: receta no válida (faltan folder-name o source.url) %2</translation>
     </message>
     <message>
-        <location line="+120"/>
+        <location line="+32"/>
+        <source>%1: invalid extra source (url and dest are required)</source>
+        <translation>%1: fuente adicional no válida (se requieren url y dest)</translation>
+    </message>
+    <message>
+        <location line="+117"/>
         <source>%1 (development library, pkg-config)</source>
         <translation>%1 (biblioteca de desarrollo, pkg-config)</translation>
     </message>
@@ -4309,7 +4314,7 @@ Continue?</source>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+147"/>
+        <location line="+154"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>Se va a quitar %n plugin.</numerusform>
@@ -4333,7 +4338,7 @@ Continue?</source>
         </translation>
     </message>
     <message>
-        <location line="-191"/>
+        <location line="-198"/>
         <source>Install plugins</source>
         <translation>Instalar plugins</translation>
     </message>
@@ -4370,7 +4375,7 @@ Continue?</source>
         <translation>no se encuentra el SDK de plugins de Edita</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+18"/>
         <source>Building %1</source>
         <translation>Compilando %1</translation>
     </message>
@@ -5528,12 +5533,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+14"/>
-        <location line="+91"/>
+        <location line="+120"/>
         <source>canceled</source>
         <translation>cancelado</translation>
     </message>
     <message>
-        <location line="-82"/>
+        <location line="-111"/>
         <source>%1 %2 from source code</source>
         <translation>%1 %2 desde el código fuente</translation>
     </message>
@@ -5568,7 +5573,27 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>el código no tiene la carpeta raíz que espera la receta</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+7"/>
+        <source>the recipe has %1 extra sources and %2 were downloaded</source>
+        <translation>la receta tiene %1 fuentes adicionales y se descargaron %2</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>the SHA-256 of %1 (%2) is not the recipe&apos;s</source>
+        <translation>el SHA-256 de %1 (%2) no es el de la receta</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>%1 does not have the root folder the recipe expects</source>
+        <translation>%1 no tiene la carpeta raíz que espera la receta</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Extra source verified and copied to %1/ (SHA-256 %2)</source>
+        <translation>Fuente adicional verificada y copiada en %1/ (SHA-256 %2)</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Removed from the original: %1</source>
         <translation>Quitados del original: %1</translation>
     </message>
@@ -5621,7 +5646,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>la compilación no produjo %1</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+9"/>
+        <source>the license file %1 is not in the source code</source>
+        <translation>el archivo de licencia %1 no está en el código fuente</translation>
+    </message>
+    <message>
+        <location line="+9"/>
         <source>cannot read %1</source>
         <translation>no se puede leer %1</translation>
     </message>
@@ -7207,7 +7237,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="+90"/>
+        <location filename="../src/main.cpp" line="+103"/>
         <source>Text editor inspired by Notepad++</source>
         <translation>Editor de texto inspirado en Notepad++</translation>
     </message>
@@ -7237,7 +7267,17 @@ Do you want to save your changes before switching themes?</source>
         <translation>Abre los archivos de un archivo de sesión.</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+6"/>
+        <source>Build a plugin recipe (with --output &lt;folder&gt;) and exit.</source>
+        <translation>Compila una receta de plugin (con --output &lt;carpeta&gt;) y termina.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Install a plugin package in a temporary configuration and run the checks of its recipe (with --recipe &lt;recipe.json&gt;), then exit.</source>
+        <translation>Instala un paquete de plugin en una configuración temporal, ejecuta las pruebas de su receta (con --recipe &lt;receta.json&gt;) y termina.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>files</source>
         <translation>archivos</translation>
     </message>
