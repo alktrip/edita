@@ -99,6 +99,11 @@ jobs:
           WORK: ${{ github.workspace }}/build-appimage
           OUT: ${{ github.workspace }}/dist
         run: |
+          # La acción de Qt deja otro Python antes en el PATH; Python Script se compila con
+          # el del sistema, y su biblioteca estándar es la que va en el AppImage
+          mkdir -p "$RUNNER_TEMP/python-sistema"
+          ln -sf /usr/bin/python3 "$RUNNER_TEMP/python-sistema/python3"
+          export PATH="$RUNNER_TEMP/python-sistema:$PATH"
           export QMAKE_BIN="$QT_ROOT_DIR/bin/qmake"
           export CMAKE_EXTRA="-DCMAKE_PREFIX_PATH=$QT_ROOT_DIR"
           export LD_LIBRARY_PATH="$QT_ROOT_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"

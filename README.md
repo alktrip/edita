@@ -43,7 +43,7 @@ Después del MVP:
 - Fase 35: **terminal integrada** (libvterm: colores, ratón, historial y pestañas, con la fuente y los colores del editor; Ctrl+` o Ctrl+Ñ).
 - Fase 36: **servidores de lenguaje (LSP)**: diagnósticos subrayados y panel Problemas, autocompletado del servidor e información al pasar el ratón (clangd, pyright, rust-analyzer, gopls… los que estén instalados).
 - Fase 37: LSP, parte 2: **ir a la definición** (F12), **referencias** (Mayús+F12), **renombrar**, **dar formato** (Alt+Mayús+F) y **ayuda de parámetros**.
-- Fase 38: **versión para macOS**: un `.dmg` universal (Apple Silicon e Intel) que compila GitHub Actions (`.github/workflows/macos.yml`), con el código adaptado (terminal, paquete `.app`, abrir desde Finder).
+- Fase 38: **versión para macOS**: un `.dmg` universal (Apple Silicon e Intel) que compila GitHub Actions (`.github/workflows/macos.yml`), con el código adaptado (terminal, paquete `.app`, abrir desde Finder). *En pausa desde la fase 54: el desarrollo se centra en Linux; el workflow solo se lanza a mano.*
 - Fase 39: **comparar documentos** lado a lado (con la otra vista, con lo guardado o con Git), alineados, con los caracteres distintos resaltados.
 - Fase 40: **Git en el explorador** (archivos modificados, nuevos e ignorados con color y letra) y **Git blame** (autor y fecha al final de la línea del cursor y en un margen).
 - Fase 41: **fragmentos de código** con el formato de VS Code (prefijo + Tab, marcadores y espejos, variables), con los de 15 lenguajes y los del usuario.
@@ -60,6 +60,7 @@ Después del MVP:
 - Fase 52: **ventanas de Win32 para los plugins de N++**: controles estándar, diálogos, subclassing, temporizadores, menús emergentes y GDI sin dibujo; las clases de la plantilla de N++ (`StaticDialog`, `DockingDlgInterface`) funcionan sin cambios y sus paneles se acoplan en Edita.
 - Fase 53: **los `.rc` de los plugins de N++**: `edita_rc` convierte sus diálogos, menús y cadenas al formato de Windows y la capa los crea (también modales); además `SetWindowSubclass`, los diálogos de abrir, guardar, carpeta y color, y `CreateProcess` con tuberías.
 - Fase 54: **las primeras recetas del catálogo**: siete plugins de N++ en [edita-plugins](https://github.com/alktrip/edita-plugins), fijados a su etiqueta original; `edita --build-recipe` y `edita --check-plugin` los compilan y los prueban sin la interfaz, y las recetas admiten submódulos, la licencia del paquete y su prueba.
+- **CI de Linux** (`.github/workflows/linux.yml`): en cada push compila en Ubuntu 22.04 con GCC 12 y Qt 6.8.3 (`-Werror`), pasa todas las pruebas y genera el AppImage; con una etiqueta `v*` lo publica en Releases.
 
 Plan en [docs/fase1-analisis.md](docs/fase1-analisis.md);
 registro de cada fase: [0](docs/fase0.md), [1](docs/fase1.md), [2](docs/fase2.md),
