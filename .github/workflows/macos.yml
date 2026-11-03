@@ -1,12 +1,12 @@
 # Edita para macOS: un .dmg universal (Apple Silicon e Intel), firmado ad hoc.
-# Se lanza al subir a main, con etiquetas v* (y entonces se publica en Releases) o a mano.
+# En pausa desde 2026-11-03: el desarrollo se centra en Linux y macOS se retoma cuando la
+# aplicación esté completa en Linux. Mientras tanto, solo se lanza a mano (Actions → macOS →
+# Run workflow). Para reactivarlo, vuelve a poner los disparadores:
+#   push: {branches: [main], tags: ['v*']}   (con una etiqueta v*, publica en Releases)
+#   pull_request:
 name: macOS
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
   workflow_dispatch:
 
 permissions:
