@@ -28,8 +28,12 @@
 #include <QFileDialog>
 #include <QFontDatabase>
 #include <QFontMetrics>
+#include <QThread>
+#include <QElapsedTimer>
 #include <QFrame>
 #include <QGroupBox>
+#include <QHeaderView>
+#include <QImage>
 #include <QGuiApplication>
 #include <QKeyEvent>
 #include <QLabel>
@@ -38,22 +42,30 @@
 #include <QLocale>
 #include <QMenu>
 #include <QMessageBox>
+#include <QPainter>
+#include <QPaintEvent>
 #include <QPlainTextEdit>
+#include <QProgressBar>
 #include <QPointer>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollBar>
+#include <QSlider>
 #include <QStyle>
+#include <QTabBar>
+#include <QTabWidget>
 #include <QTextBlock>
 #include <QTimer>
+#include <QTreeWidget>
 #include <QWidget>
 
 #include <algorithm>
 #include <climits>
 #include <cstddef>
 #include <cstring>
+#include <deque>
 #include <memory>
 #include <type_traits>
 #include <map>
@@ -141,7 +153,7 @@ bool spanish()
 
 constexpr uint32_t kWindowMagic = 0x48574E44; // "HWND"
 
-enum class Kind { Generic, Dialog, Button, Edit, Static, ListBox, ComboBox, Custom };
+enum class Kind { Generic, Dialog, Button, Edit, Static, ListBox, ComboBox, Custom, Tab, ListView, TreeView, Progress, Trackbar, Tooltip };
 
 struct WindowClass
 {
@@ -150,7 +162,10 @@ struct WindowClass
     int extraBytes = 0;
     UINT style = 0;
     ATOM atom = 0;
+    HBRUSH background = nullptr; // hbrBackground: WM_ERASEBKGND de DefWindowProc
 };
+
+struct DeviceContext;
 
 struct Window
 {
@@ -191,6 +206,22 @@ struct Window
     };
     std::vector<Subclass> subclasses; // SetWindowSubclass (el último, el primero en recibir)
     WNDPROC subclassBase = nullptr;   // el procedimiento que había antes del primero
+    // Controles comunes (fase 58)
+    bool quiet = false;               // cambios del propio control: sin notificaciones
+    int tabCurrent = -1;              // la pestaña elegida que ve el plugin (TCN_SELCHANGING: la anterior)
+    int listColumns = 0;              // columnas insertadas (LVM_INSERTCOLUMN)
+    std::vector<int> columnFormats;   // LVCFMT_* de cada columna
+    DWORD listExStyle = 0;            // LVS_EX_*
+    int selectionMark = -1;
+    std::set<void*> treeItems;        // los HTREEITEM vivos (QTreeWidgetItem*)
+    void* caretOverride = nullptr;    // TVN_SELCHANGING: la selección anterior
+    bool caretOverridden = false;
+    UINT treeAction = 0;              // TVC_BYMOUSE, TVC_BYKEYBOARD o TVC_UNKNOWN
+    int progressStep = 10;
+    std::vector<std::pair<HWND, QString>> tools; // tooltips: la ventana y su texto
+    // Dibujo: el DC de WM_PAINT mientras dura (BeginPaint lo devuelve)
+    DeviceContext* paintDc = nullptr;
+    QRect paintRect;
 };
 
 struct Foreign
@@ -387,13 +418,20 @@ constexpr uint32_t kGdiMagic = 0x47444930; // "GDI0"
 struct GdiObject
 {
     uint32_t magic = kGdiMagic;
-    enum class Type { Font, Brush, Pen } type = Type::Font;
+    enum class Type { Font, Brush, Pen, Bitmap } type = Type::Font;
     bool stock = false;
+    int stockIndex = -1;          // GetStockObject (NULL_BRUSH, DC_PEN…)
     QFont font;
     COLORREF color = 0;
+    int penStyle = PS_SOLID;
+    int penWidth = 0;
+    bool hollow = false;          // pincel o pluma que no pinta (NULL_BRUSH, BS_NULL, PS_NULL)
+    QImage image;                 // mapas de bits (CreateCompatibleBitmap)
     LOGFONTW logFont{};
 };
 
+// Un HDC: el de una ventana (con su QPainter durante WM_PAINT; fuera, sin dibujo) o uno en
+// memoria (CreateCompatibleDC), que dibuja en el mapa de bits que tenga seleccionado
 struct DeviceContext
 {
     uint32_t magic = 0x48444330; // "HDC0"
@@ -402,6 +440,17 @@ struct DeviceContext
     COLORREF textColor = 0;
     COLORREF backgroundColor = 0xFFFFFF;
     int backgroundMode = OPAQUE;
+    QPainter* painter = nullptr;
+    bool ownsPainter = false;     // el de un DC en memoria (sobre su mapa de bits)
+    bool memory = false;
+    HGDIOBJ pen = nullptr;        // nullptr: BLACK_PEN
+    HGDIOBJ brush = nullptr;      // nullptr: WHITE_BRUSH
+    HGDIOBJ bitmap = nullptr;
+    QPoint position;              // MoveToEx / LineTo
+    UINT textAlign = 0;           // TA_*
+    COLORREF dcBrushColor = 0xFFFFFF;
+    COLORREF dcPenColor = 0;
+    int saved = 0;                // SaveDC
 };
 
 GdiObject* gdiObject(HGDIOBJ object)
@@ -410,10 +459,17 @@ GdiObject* gdiObject(HGDIOBJ object)
     return o && o->magic == kGdiMagic ? o : nullptr;
 }
 
+// Los DC vivos: uno liberado (o el de un WM_PAINT que ya terminó) no se usa
+std::set<DeviceContext*>& liveDcs()
+{
+    static auto* dcs = new std::set<DeviceContext*>;
+    return *dcs;
+}
+
 DeviceContext* deviceContext(HDC dc)
 {
     auto* d = static_cast<DeviceContext*>(dc);
-    return d && d->magic == 0x48444330 ? d : nullptr;
+    return d && liveDcs().count(d) && d->magic == 0x48444330 ? d : nullptr;
 }
 
 QFont fontOf(HGDIOBJ object)
@@ -495,6 +551,7 @@ public:
 protected:
     bool event(QEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
+    void paintEvent(QPaintEvent* event) override; // WM_ERASEBKGND y WM_PAINT
 };
 
 DWORD virtualKey(const QKeyEvent* key)
@@ -1256,11 +1313,1579 @@ LRESULT buttonMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 // El procedimiento de los controles estándar
+// --- Controles comunes (fase 58) ------------------------------------------------------------
+//
+// Pestañas sobre QTabWidget (con páginas vacías: las páginas de verdad son las ventanas del
+// plugin, que se colocan con TCM_ADJUSTRECT), listas con columnas y árboles sobre QTreeWidget,
+// barras de progreso sobre QProgressBar, deslizadores sobre QSlider y tooltips sobre el
+// toolTip de cada widget. Las notificaciones llegan al padre como WM_NOTIFY, con las mismas
+// estructuras que en Windows (las A o las W, según UNICODE).
+
+COLORREF colorRef(const QColor& c);
+QColor systemColor(int index);
+
+constexpr int kParamRole = Qt::UserRole + 1; // el lParam de cada elemento
+constexpr int kCheckRole = Qt::UserRole + 2; // la casilla antes del cambio (LVN_ITEMCHANGED)
+
+QString itemText(const char* text) { return text == reinterpret_cast<const char*>(-1) ? QString() : fromA(text); }
+QString itemText(const wchar_t* text) { return text == reinterpret_cast<const wchar_t*>(-1) ? QString() : fromW(text); }
+int copyItemText(const QString& text, char* buffer, int size) { return copyTo(text.toStdString(), buffer, size); }
+int copyItemText(const QString& text, wchar_t* buffer, int size) { return copyTo(text.toStdWString(), buffer, size); }
+
+// WM_NOTIFY al padre, con el NMHDR (primer miembro de `data`) relleno
+template<typename T>
+LRESULT notifyNM(Window* w, T& data, UINT code)
+{
+    auto* header = reinterpret_cast<NMHDR*>(&data);
+    header->hwndFrom = hwndOf(w);
+    header->idFrom = static_cast<UINT_PTR>(w->id);
+    header->code = code;
+    Window* parent = windowOf(w->parent);
+    if (!parent || w->quiet)
+        return 0;
+    return send(parent, WM_NOTIFY, static_cast<WPARAM>(w->id), reinterpret_cast<LPARAM>(&data));
+}
+
+LRESULT notifyCode(Window* w, UINT code)
+{
+    NMHDR header{};
+    return notifyNM(w, header, code);
+}
+
+class QuietScope
+{
+public:
+    explicit QuietScope(Window* w) : _w(w), _was(w->quiet) { w->quiet = true; }
+    ~QuietScope() { _w->quiet = _was; }
+    QuietScope(const QuietScope&) = delete;
+    QuietScope& operator=(const QuietScope&) = delete;
+
+private:
+    Window* _w;
+    bool _was;
+};
+
+QPoint clientPoint(QAbstractScrollArea* view, const QPoint& viewportPoint)
+{
+    return view->viewport()->mapTo(view, viewportPoint);
+}
+
+// El ratón y el teclado de las listas y los árboles: NM_CLICK, NM_DBLCLK, NM_RCLICK,
+// NM_RETURN, LVN_KEYDOWN/TVN_KEYDOWN y LVN_ITEMACTIVATE
+class ComctlFilter : public QObject
+{
+public:
+    explicit ComctlFilter(Window* w, QObject* parent) : QObject(parent), _w(w) {}
+    bool eventFilter(QObject* object, QEvent* event) override;
+
+private:
+    Window* _w;
+};
+
+// --- Pestañas -------------------------------------------------------------------------------
+
+QTabWidget* tabWidget(Window* w) { return qobject_cast<QTabWidget*>(w->widget); }
+
+template<typename Item>
+void applyTabItem(QTabWidget* tabs, int index, const Item* item)
+{
+    if (item->mask & TCIF_TEXT)
+        tabs->setTabText(index, itemText(item->pszText).replace(QLatin1String("&&"), QLatin1String("\x01")).remove(QLatin1Char('&')).replace(QLatin1Char('\x01'), QLatin1Char('&')));
+    if (item->mask & TCIF_PARAM)
+        tabs->tabBar()->setTabData(index, QVariant::fromValue(static_cast<qlonglong>(item->lParam)));
+}
+
+template<typename Item>
+BOOL tabGetItem(QTabWidget* tabs, int index, Item* item)
+{
+    if (!item || index < 0 || index >= tabs->count())
+        return FALSE;
+    if (item->mask & TCIF_TEXT)
+        copyItemText(tabs->tabText(index), item->pszText, item->cchTextMax);
+    if (item->mask & TCIF_PARAM)
+        item->lParam = static_cast<LPARAM>(tabs->tabBar()->tabData(index).toLongLong());
+    if (item->mask & TCIF_STATE)
+        item->dwState = 0;
+    return TRUE;
+}
+
+// Lo que ocupan las pestañas arriba (o abajo, TCS_BOTTOM) y el marco de la página
+QMargins tabMargins(Window* w, QTabWidget* tabs)
+{
+    const int frame = tabs->style()->pixelMetric(QStyle::PM_DefaultFrameWidth, nullptr, tabs);
+    const int bar = std::max(tabs->tabBar()->sizeHint().height(), QFontMetrics(tabs->font()).height() + 8);
+    return (w->style & TCS_BOTTOM) ? QMargins(frame, frame, frame, bar + frame) : QMargins(frame, bar + frame, frame, frame);
+}
+
+LRESULT tabMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    QTabWidget* tabs = tabWidget(w);
+    if (!tabs)
+        return 0;
+    const int index = static_cast<int>(wParam);
+    switch (message) {
+    case TCM_GETITEMCOUNT:
+        return tabs->count();
+    case TCM_INSERTITEMA:
+    case TCM_INSERTITEMW: {
+        if (!lParam)
+            return -1;
+        QuietScope quiet(w);
+        const int at = tabs->insertTab(std::clamp(index, 0, tabs->count()), new QWidget, QString());
+        if (message == TCM_INSERTITEMW)
+            applyTabItem(tabs, at, reinterpret_cast<const TCITEMW*>(lParam));
+        else
+            applyTabItem(tabs, at, reinterpret_cast<const TCITEMA*>(lParam));
+        if (w->tabCurrent < 0 || tabs->count() == 1)
+            w->tabCurrent = tabs->currentIndex();
+        else if (at <= w->tabCurrent)
+            ++w->tabCurrent;
+        return at;
+    }
+    case TCM_SETITEMA:
+    case TCM_SETITEMW:
+        if (!lParam || index < 0 || index >= tabs->count())
+            return FALSE;
+        if (message == TCM_SETITEMW)
+            applyTabItem(tabs, index, reinterpret_cast<const TCITEMW*>(lParam));
+        else
+            applyTabItem(tabs, index, reinterpret_cast<const TCITEMA*>(lParam));
+        return TRUE;
+    case TCM_GETITEMA:
+        return tabGetItem(tabs, index, reinterpret_cast<TCITEMA*>(lParam));
+    case TCM_GETITEMW:
+        return tabGetItem(tabs, index, reinterpret_cast<TCITEMW*>(lParam));
+    case TCM_DELETEITEM: {
+        if (index < 0 || index >= tabs->count())
+            return FALSE;
+        QuietScope quiet(w);
+        QWidget* page = tabs->widget(index);
+        tabs->removeTab(index);
+        delete page;
+        if (index == w->tabCurrent)
+            w->tabCurrent = -1;
+        else if (index < w->tabCurrent)
+            --w->tabCurrent;
+        return TRUE;
+    }
+    case TCM_DELETEALLITEMS: {
+        QuietScope quiet(w);
+        while (tabs->count()) {
+            QWidget* page = tabs->widget(0);
+            tabs->removeTab(0);
+            delete page;
+        }
+        w->tabCurrent = -1;
+        return TRUE;
+    }
+    case TCM_GETCURSEL:
+    case TCM_GETCURFOCUS:
+        return w->tabCurrent;
+    case TCM_SETCURSEL: {
+        // Sin notificaciones, como en Windows
+        const int previous = w->tabCurrent;
+        if (index < 0 || index >= tabs->count())
+            return -1;
+        QuietScope quiet(w);
+        tabs->setCurrentIndex(index);
+        w->tabCurrent = index;
+        return previous;
+    }
+    case TCM_SETCURFOCUS:
+        // Como si la eligiera el usuario: con TCN_SELCHANGING y TCN_SELCHANGE
+        if (index >= 0 && index < tabs->count())
+            tabs->setCurrentIndex(index);
+        return 0;
+    case TCM_GETITEMRECT: {
+        auto* rect = reinterpret_cast<RECT*>(lParam);
+        if (!rect || index < 0 || index >= tabs->count())
+            return FALSE;
+        const QRect r = tabs->tabBar()->tabRect(index).translated(tabs->tabBar()->mapTo(tabs, QPoint(0, 0)));
+        *rect = RECT{r.left(), r.top(), r.right() + 1, r.bottom() + 1};
+        return TRUE;
+    }
+    case TCM_ADJUSTRECT: {
+        // FALSE: del rectángulo de la ventana al de la página; TRUE: al revés
+        auto* rect = reinterpret_cast<RECT*>(lParam);
+        if (!rect)
+            return 0;
+        const QMargins m = tabMargins(w, tabs);
+        const int sign = wParam ? -1 : 1;
+        rect->left += sign * m.left();
+        rect->top += sign * m.top();
+        rect->right -= sign * m.right();
+        rect->bottom -= sign * m.bottom();
+        return 0;
+    }
+    default:
+        return 0;
+    }
+}
+
+QWidget* createTabControl(Window* w, QWidget* parent)
+{
+    w->kind = Kind::Tab;
+    auto* tabs = new QTabWidget(parent);
+    tabs->setUsesScrollButtons(true);
+    if (w->style & TCS_BOTTOM)
+        tabs->setTabPosition(QTabWidget::South);
+    if (w->style & TCS_FOCUSNEVER)
+        tabs->tabBar()->setFocusPolicy(Qt::NoFocus);
+    // El usuario elige: TCN_SELCHANGING (con la anterior aún elegida) y TCN_SELCHANGE
+    QObject::connect(tabs, &QTabWidget::currentChanged, tabs, [w, tabs](int index) {
+        if (w->quiet || index == w->tabCurrent)
+            return;
+        const int previous = w->tabCurrent;
+        if (notifyCode(w, TCN_SELCHANGING)) {
+            QuietScope quiet(w);
+            tabs->setCurrentIndex(previous);
+            return;
+        }
+        w->tabCurrent = index;
+        notifyCode(w, TCN_SELCHANGE);
+    });
+    return tabs;
+}
+
+// --- Listas con columnas ---------------------------------------------------------------------
+
+QTreeWidget* listView(Window* w) { return w->kind == Kind::ListView ? qobject_cast<QTreeWidget*>(w->widget) : nullptr; }
+
+QTreeWidgetItem* listItem(Window* w, int index)
+{
+    QTreeWidget* list = listView(w);
+    return list && index >= 0 && index < list->topLevelItemCount() ? list->topLevelItem(index) : nullptr;
+}
+
+Qt::Alignment columnAlignment(int format)
+{
+    switch (format & 3) {
+    case LVCFMT_RIGHT: return Qt::AlignRight | Qt::AlignVCenter;
+    case LVCFMT_CENTER: return Qt::AlignHCenter | Qt::AlignVCenter;
+    default: return Qt::AlignLeft | Qt::AlignVCenter;
+    }
+}
+
+bool listCheckable(Window* w) { return w->listExStyle & LVS_EX_CHECKBOXES; }
+
+UINT listItemState(Window* w, QTreeWidgetItem* item, UINT mask)
+{
+    QTreeWidget* list = listView(w);
+    UINT state = 0;
+    if ((mask & LVIS_SELECTED) && item->isSelected())
+        state |= LVIS_SELECTED;
+    if ((mask & LVIS_FOCUSED) && list->currentItem() == item)
+        state |= LVIS_FOCUSED;
+    if ((mask & LVIS_STATEIMAGEMASK) && listCheckable(w))
+        state |= INDEXTOSTATEIMAGEMASK(item->checkState(0) == Qt::Checked ? 2u : 1u);
+    return state;
+}
+
+void setListItemState(Window* w, QTreeWidgetItem* item, UINT state, UINT mask)
+{
+    QTreeWidget* list = listView(w);
+    if (mask & LVIS_SELECTED)
+        item->setSelected(state & LVIS_SELECTED);
+    if ((mask & LVIS_FOCUSED) && (state & LVIS_FOCUSED))
+        list->setCurrentItem(item, 0, QItemSelectionModel::NoUpdate);
+    if ((mask & LVIS_STATEIMAGEMASK) && listCheckable(w)) {
+        const UINT image = (state & LVIS_STATEIMAGEMASK) >> 12;
+        if (image == 1 || image == 2)
+            item->setCheckState(0, image == 2 ? Qt::Checked : Qt::Unchecked);
+    }
+}
+
+NMLISTVIEW listNotification(Window* w, int index, int subItem = 0)
+{
+    NMLISTVIEW nm{};
+    nm.iItem = index;
+    nm.iSubItem = subItem;
+    if (QTreeWidgetItem* item = listItem(w, index))
+        nm.lParam = static_cast<LPARAM>(item->data(0, kParamRole).toLongLong());
+    return nm;
+}
+
+void notifyItemChanged(Window* w, int index, UINT oldState, UINT newState)
+{
+    if (w->quiet || oldState == newState)
+        return;
+    NMLISTVIEW nm = listNotification(w, index);
+    nm.uChanged = LVIF_STATE;
+    nm.uOldState = oldState;
+    nm.uNewState = newState;
+    notifyNM(w, nm, LVN_ITEMCHANGED);
+}
+
+void setListText(Window* w, QTreeWidgetItem* item, int column, const QString& text)
+{
+    if (column < 0 || column >= std::max(1, w->listColumns))
+        return;
+    item->setText(column, text);
+    if (column < static_cast<int>(w->columnFormats.size()))
+        item->setTextAlignment(column, columnAlignment(w->columnFormats[static_cast<std::size_t>(column)]));
+}
+
+template<typename Item>
+void applyListItem(Window* w, QTreeWidgetItem* item, const Item* lv)
+{
+    if (lv->mask & LVIF_TEXT)
+        setListText(w, item, lv->iSubItem, itemText(lv->pszText));
+    if (lv->iSubItem != 0)
+        return;
+    if (lv->mask & LVIF_PARAM)
+        item->setData(0, kParamRole, QVariant::fromValue(static_cast<qlonglong>(lv->lParam)));
+    if (lv->mask & LVIF_STATE)
+        setListItemState(w, item, lv->state, lv->stateMask);
+}
+
+template<typename Item>
+LRESULT listInsertItem(Window* w, const Item* lv)
+{
+    QTreeWidget* list = listView(w);
+    if (!lv)
+        return -1;
+    auto* item = new QTreeWidgetItem;
+    item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemNeverHasChildren
+                   | (listCheckable(w) ? Qt::ItemIsUserCheckable : Qt::ItemFlags()));
+    int index = std::clamp(lv->iItem, 0, list->topLevelItemCount());
+    // LVS_SORTASCENDING / LVS_SORTDESCENDING: por el texto, sin distinguir mayúsculas
+    const QString text = (lv->mask & LVIF_TEXT) ? itemText(lv->pszText) : QString();
+    if (w->style & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) {
+        const bool descending = w->style & LVS_SORTDESCENDING;
+        index = 0;
+        while (index < list->topLevelItemCount()) {
+            const int order = list->topLevelItem(index)->text(0).compare(text, Qt::CaseInsensitive);
+            if (descending ? order < 0 : order > 0)
+                break;
+            ++index;
+        }
+    }
+    {
+        QuietScope quiet(w);
+        list->insertTopLevelItem(index, item);
+        if (listCheckable(w)) {
+            item->setCheckState(0, Qt::Unchecked);
+            item->setData(0, kCheckRole, false);
+        }
+        Item first = *lv;
+        first.iSubItem = 0;
+        applyListItem(w, item, &first);
+        if (lv->mask & LVIF_STATE)
+            item->setData(0, kCheckRole, item->checkState(0) == Qt::Checked);
+    }
+    if (w->selectionMark >= index)
+        ++w->selectionMark;
+    NMLISTVIEW nm = listNotification(w, index);
+    notifyNM(w, nm, LVN_INSERTITEM);
+    return index;
+}
+
+template<typename Item>
+BOOL listGetItem(Window* w, Item* lv)
+{
+    QTreeWidgetItem* item = lv ? listItem(w, lv->iItem) : nullptr;
+    if (!item)
+        return FALSE;
+    if (lv->mask & LVIF_TEXT)
+        copyItemText(item->text(lv->iSubItem), lv->pszText, lv->cchTextMax);
+    if (lv->mask & LVIF_PARAM)
+        lv->lParam = static_cast<LPARAM>(item->data(0, kParamRole).toLongLong());
+    if (lv->mask & LVIF_STATE)
+        lv->state = listItemState(w, item, lv->stateMask);
+    if (lv->mask & LVIF_IMAGE)
+        lv->iImage = -1;
+    return TRUE;
+}
+
+template<typename Column>
+LRESULT listInsertColumn(Window* w, int at, const Column* column)
+{
+    QTreeWidget* list = listView(w);
+    if (!column)
+        return -1;
+    const int index = std::clamp(at, 0, w->listColumns);
+    const QString title = (column->mask & LVCF_TEXT) ? itemText(column->pszText) : QString();
+    const int format = (column->mask & LVCF_FMT) ? column->fmt : LVCFMT_LEFT;
+    if (w->listColumns > 0) {
+        // Las de la derecha se desplazan una: también sus textos en cada elemento
+        list->setColumnCount(w->listColumns + 1);
+        QTreeWidgetItem* header = list->headerItem();
+        for (int c = w->listColumns; c > index; --c) {
+            header->setText(c, header->text(c - 1));
+            header->setTextAlignment(c, Qt::Alignment(header->textAlignment(c - 1)));
+            list->setColumnWidth(c, list->columnWidth(c - 1));
+            for (int i = 0; i < list->topLevelItemCount(); ++i) {
+                QTreeWidgetItem* item = list->topLevelItem(i);
+                item->setText(c, item->text(c - 1));
+                item->setTextAlignment(c, Qt::Alignment(item->textAlignment(c - 1)));
+            }
+        }
+        for (int i = 0; i < list->topLevelItemCount(); ++i)
+            list->topLevelItem(i)->setText(index, QString());
+    }
+    w->columnFormats.insert(w->columnFormats.begin() + index, format);
+    ++w->listColumns;
+    list->headerItem()->setText(index, title);
+    list->headerItem()->setTextAlignment(index, columnAlignment(format));
+    if (column->mask & LVCF_WIDTH)
+        list->setColumnWidth(index, column->cx);
+    return index;
+}
+
+template<typename Column>
+BOOL listGetColumn(Window* w, int index, Column* column)
+{
+    QTreeWidget* list = listView(w);
+    if (!column || index < 0 || index >= w->listColumns)
+        return FALSE;
+    if (column->mask & LVCF_TEXT)
+        copyItemText(list->headerItem()->text(index), column->pszText, column->cchTextMax);
+    if (column->mask & LVCF_WIDTH)
+        column->cx = list->columnWidth(index);
+    if (column->mask & LVCF_FMT)
+        column->fmt = w->columnFormats[static_cast<std::size_t>(index)];
+    if (column->mask & LVCF_SUBITEM)
+        column->iSubItem = index;
+    return TRUE;
+}
+
+template<typename Column>
+BOOL listSetColumn(Window* w, int index, const Column* column)
+{
+    QTreeWidget* list = listView(w);
+    if (!column || index < 0 || index >= w->listColumns)
+        return FALSE;
+    if (column->mask & LVCF_TEXT)
+        list->headerItem()->setText(index, itemText(column->pszText));
+    if (column->mask & LVCF_WIDTH)
+        list->setColumnWidth(index, column->cx);
+    if (column->mask & LVCF_FMT) {
+        w->columnFormats[static_cast<std::size_t>(index)] = column->fmt;
+        list->headerItem()->setTextAlignment(index, columnAlignment(column->fmt));
+    }
+    return TRUE;
+}
+
+template<typename Find>
+LRESULT listFindItem(Window* w, int start, const Find* find)
+{
+    QTreeWidget* list = listView(w);
+    if (!find)
+        return -1;
+    const QString text = itemText(find->psz);
+    const int count = list->topLevelItemCount();
+    for (int i = std::max(0, start + 1); i < count; ++i) {
+        QTreeWidgetItem* item = list->topLevelItem(i);
+        if ((find->flags & LVFI_PARAM) && item->data(0, kParamRole).toLongLong() == static_cast<qlonglong>(find->lParam))
+            return i;
+        if (find->flags & (LVFI_STRING | LVFI_PARTIAL)) {
+            const bool match = (find->flags & LVFI_PARTIAL) ? item->text(0).startsWith(text, Qt::CaseInsensitive)
+                                                             : item->text(0).compare(text, Qt::CaseInsensitive) == 0;
+            if (match)
+                return i;
+        }
+    }
+    return -1;
+}
+
+void listDeleteItem(Window* w, int index)
+{
+    QTreeWidget* list = listView(w);
+    QTreeWidgetItem* item = listItem(w, index);
+    if (!item)
+        return;
+    // LVN_DELETEITEM antes: el plugin suele liberar ahí lo que apunta su lParam
+    NMLISTVIEW nm = listNotification(w, index);
+    notifyNM(w, nm, LVN_DELETEITEM);
+    QuietScope quiet(w);
+    delete list->takeTopLevelItem(index);
+    if (w->selectionMark == index)
+        w->selectionMark = -1;
+    else if (w->selectionMark > index)
+        --w->selectionMark;
+}
+
+LRESULT listViewMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    QTreeWidget* list = listView(w);
+    if (!list)
+        return 0;
+    const int index = static_cast<int>(static_cast<intptr_t>(wParam));
+    switch (message) {
+    case LVM_GETITEMCOUNT:
+        return list->topLevelItemCount();
+    case LVM_INSERTITEMA:
+        return listInsertItem(w, reinterpret_cast<const LVITEMA*>(lParam));
+    case LVM_INSERTITEMW:
+        return listInsertItem(w, reinterpret_cast<const LVITEMW*>(lParam));
+    case LVM_SETITEMA:
+    case LVM_SETITEMW: {
+        if (!lParam)
+            return FALSE;
+        const int item = message == LVM_SETITEMW ? reinterpret_cast<const LVITEMW*>(lParam)->iItem
+                                                 : reinterpret_cast<const LVITEMA*>(lParam)->iItem;
+        QTreeWidgetItem* target = listItem(w, item);
+        if (!target)
+            return FALSE;
+        if (message == LVM_SETITEMW)
+            applyListItem(w, target, reinterpret_cast<const LVITEMW*>(lParam));
+        else
+            applyListItem(w, target, reinterpret_cast<const LVITEMA*>(lParam));
+        return TRUE;
+    }
+    case LVM_GETITEMA:
+        return listGetItem(w, reinterpret_cast<LVITEMA*>(lParam));
+    case LVM_GETITEMW:
+        return listGetItem(w, reinterpret_cast<LVITEMW*>(lParam));
+    case LVM_SETITEMTEXTA:
+    case LVM_SETITEMTEXTW: {
+        QTreeWidgetItem* item = listItem(w, index);
+        if (!item || !lParam)
+            return FALSE;
+        if (message == LVM_SETITEMTEXTW) {
+            const auto* lv = reinterpret_cast<const LVITEMW*>(lParam);
+            setListText(w, item, lv->iSubItem, itemText(lv->pszText));
+        } else {
+            const auto* lv = reinterpret_cast<const LVITEMA*>(lParam);
+            setListText(w, item, lv->iSubItem, itemText(lv->pszText));
+        }
+        return TRUE;
+    }
+    case LVM_GETITEMTEXTA:
+    case LVM_GETITEMTEXTW: {
+        QTreeWidgetItem* item = listItem(w, index);
+        if (!lParam)
+            return 0;
+        if (message == LVM_GETITEMTEXTW) {
+            auto* lv = reinterpret_cast<LVITEMW*>(lParam);
+            return copyItemText(item ? item->text(lv->iSubItem) : QString(), lv->pszText, lv->cchTextMax);
+        }
+        auto* lv = reinterpret_cast<LVITEMA*>(lParam);
+        return copyItemText(item ? item->text(lv->iSubItem) : QString(), lv->pszText, lv->cchTextMax);
+    }
+    case LVM_SETITEMSTATE: {
+        // wParam -1: todos los elementos
+        const auto* lv = reinterpret_cast<const LVITEMW*>(lParam);
+        if (!lv)
+            return FALSE;
+        if (index == -1) {
+            for (int i = 0; i < list->topLevelItemCount(); ++i)
+                setListItemState(w, list->topLevelItem(i), lv->state, lv->stateMask);
+            return TRUE;
+        }
+        QTreeWidgetItem* item = listItem(w, index);
+        if (!item)
+            return FALSE;
+        setListItemState(w, item, lv->state, lv->stateMask);
+        return TRUE;
+    }
+    case LVM_GETITEMSTATE: {
+        QTreeWidgetItem* item = listItem(w, index);
+        return item ? listItemState(w, item, static_cast<UINT>(lParam)) : 0;
+    }
+    case LVM_GETNEXTITEM: {
+        const UINT flags = LOWORD(lParam);
+        for (int i = index + 1; i < list->topLevelItemCount(); ++i) {
+            QTreeWidgetItem* item = list->topLevelItem(i);
+            if ((flags & LVNI_SELECTED) && !item->isSelected())
+                continue;
+            if ((flags & LVNI_FOCUSED) && list->currentItem() != item)
+                continue;
+            return i;
+        }
+        return -1;
+    }
+    case LVM_GETSELECTEDCOUNT: {
+        int count = 0;
+        for (int i = 0; i < list->topLevelItemCount(); ++i)
+            count += list->topLevelItem(i)->isSelected() ? 1 : 0;
+        return count;
+    }
+    case LVM_DELETEITEM:
+        if (!listItem(w, index))
+            return FALSE;
+        listDeleteItem(w, index);
+        return TRUE;
+    case LVM_DELETEALLITEMS: {
+        // LVN_DELETEALLITEMS; si el plugin no devuelve TRUE, LVN_DELETEITEM de cada uno
+        NMLISTVIEW nm = listNotification(w, -1);
+        const bool skipEach = notifyNM(w, nm, LVN_DELETEALLITEMS);
+        while (list->topLevelItemCount()) {
+            if (skipEach) {
+                QuietScope quiet(w);
+                delete list->takeTopLevelItem(list->topLevelItemCount() - 1);
+            } else {
+                listDeleteItem(w, list->topLevelItemCount() - 1);
+            }
+        }
+        w->selectionMark = -1;
+        return TRUE;
+    }
+    case LVM_INSERTCOLUMNA:
+        return listInsertColumn(w, index, reinterpret_cast<const LVCOLUMNA*>(lParam));
+    case LVM_INSERTCOLUMNW:
+        return listInsertColumn(w, index, reinterpret_cast<const LVCOLUMNW*>(lParam));
+    case LVM_GETCOLUMNA:
+        return listGetColumn(w, index, reinterpret_cast<LVCOLUMNA*>(lParam));
+    case LVM_GETCOLUMNW:
+        return listGetColumn(w, index, reinterpret_cast<LVCOLUMNW*>(lParam));
+    case LVM_SETCOLUMNA:
+        return listSetColumn(w, index, reinterpret_cast<const LVCOLUMNA*>(lParam));
+    case LVM_SETCOLUMNW:
+        return listSetColumn(w, index, reinterpret_cast<const LVCOLUMNW*>(lParam));
+    case LVM_DELETECOLUMN: {
+        if (index < 0 || index >= w->listColumns)
+            return FALSE;
+        QTreeWidgetItem* header = list->headerItem();
+        for (int c = index; c + 1 < w->listColumns; ++c) {
+            header->setText(c, header->text(c + 1));
+            list->setColumnWidth(c, list->columnWidth(c + 1));
+            for (int i = 0; i < list->topLevelItemCount(); ++i)
+                list->topLevelItem(i)->setText(c, list->topLevelItem(i)->text(c + 1));
+        }
+        w->columnFormats.erase(w->columnFormats.begin() + index);
+        --w->listColumns;
+        list->setColumnCount(std::max(1, w->listColumns));
+        return TRUE;
+    }
+    case LVM_GETCOLUMNWIDTH:
+        return index >= 0 && index < std::max(1, w->listColumns) ? list->columnWidth(index) : 0;
+    case LVM_SETCOLUMNWIDTH: {
+        const int width = static_cast<short>(LOWORD(lParam));
+        if (index < 0 || index >= std::max(1, w->listColumns))
+            return FALSE;
+        if (width == LVSCW_AUTOSIZE || width == LVSCW_AUTOSIZE_USEHEADER) {
+            list->resizeColumnToContents(index);
+            if (width == LVSCW_AUTOSIZE_USEHEADER) {
+                // La última columna llega hasta el borde, como en Windows
+                const int header = QFontMetrics(list->header()->font()).horizontalAdvance(list->headerItem()->text(index)) + 20;
+                int widthNeeded = std::max(list->columnWidth(index), header);
+                if (index == std::max(1, w->listColumns) - 1) {
+                    int used = 0;
+                    for (int c = 0; c < index; ++c)
+                        used += list->columnWidth(c);
+                    widthNeeded = std::max(widthNeeded, list->viewport()->width() - used);
+                }
+                list->setColumnWidth(index, widthNeeded);
+            }
+        } else {
+            list->setColumnWidth(index, width);
+        }
+        return TRUE;
+    }
+    case LVM_GETHEADER:
+        return 0;
+    case LVM_SETEXTENDEDLISTVIEWSTYLE: {
+        const DWORD previous = w->listExStyle;
+        const DWORD mask = wParam ? static_cast<DWORD>(wParam) : 0xFFFFFFFF;
+        w->listExStyle = (w->listExStyle & ~mask) | (static_cast<DWORD>(lParam) & mask);
+        if ((previous ^ w->listExStyle) & LVS_EX_CHECKBOXES) {
+            QuietScope quiet(w);
+            for (int i = 0; i < list->topLevelItemCount(); ++i) {
+                QTreeWidgetItem* item = list->topLevelItem(i);
+                if (listCheckable(w)) {
+                    item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+                    item->setCheckState(0, Qt::Unchecked);
+                    item->setData(0, kCheckRole, false);
+                } else {
+                    item->setFlags(item->flags() & ~Qt::ItemIsUserCheckable);
+                    item->setData(0, Qt::CheckStateRole, QVariant());
+                }
+            }
+        }
+        list->setMouseTracking(w->listExStyle & LVS_EX_TRACKSELECT);
+        return static_cast<LRESULT>(previous);
+    }
+    case LVM_GETEXTENDEDLISTVIEWSTYLE:
+        return static_cast<LRESULT>(w->listExStyle);
+    case LVM_FINDITEMA:
+        return listFindItem(w, index, reinterpret_cast<const LVFINDINFOA*>(lParam));
+    case LVM_FINDITEMW:
+        return listFindItem(w, index, reinterpret_cast<const LVFINDINFOW*>(lParam));
+    case LVM_GETITEMRECT: {
+        auto* rect = reinterpret_cast<RECT*>(lParam);
+        QTreeWidgetItem* item = listItem(w, index);
+        if (!rect || !item)
+            return FALSE;
+        QRect r = list->visualItemRect(item);
+        if (rect->left == LVIR_LABEL) {
+            r.setLeft(list->header()->sectionViewportPosition(0));
+            r.setWidth(list->columnWidth(0));
+        }
+        const QPoint offset = clientPoint(list, QPoint(0, 0));
+        r.translate(offset);
+        *rect = RECT{r.left(), r.top(), r.right() + 1, r.bottom() + 1};
+        return TRUE;
+    }
+    case LVM_HITTEST: {
+        auto* info = reinterpret_cast<LVHITTESTINFO*>(lParam);
+        if (!info)
+            return -1;
+        const QPoint point = list->viewport()->mapFrom(list, QPoint(static_cast<int>(info->pt.x), static_cast<int>(info->pt.y)));
+        QTreeWidgetItem* item = list->itemAt(point);
+        info->iItem = item ? list->indexOfTopLevelItem(item) : -1;
+        info->iSubItem = item ? std::max(0, list->columnAt(point.x())) : 0;
+        info->flags = item ? LVHT_ONITEMLABEL : LVHT_NOWHERE;
+        return info->iItem;
+    }
+    case LVM_ENSUREVISIBLE:
+        if (QTreeWidgetItem* item = listItem(w, index))
+            list->scrollToItem(item);
+        return TRUE;
+    case LVM_GETTOPINDEX: {
+        QTreeWidgetItem* top = list->itemAt(QPoint(1, 1));
+        return top ? list->indexOfTopLevelItem(top) : 0;
+    }
+    case LVM_GETCOUNTPERPAGE: {
+        const int row = list->topLevelItemCount() ? std::max(1, list->visualItemRect(list->topLevelItem(0)).height())
+                                                  : QFontMetrics(list->font()).height() + 4;
+        return std::max(1, list->viewport()->height() / row);
+    }
+    case LVM_SORTITEMS: {
+        auto compare = reinterpret_cast<PFNLVCOMPARE>(lParam);
+        if (!compare)
+            return FALSE;
+        QuietScope quiet(w);
+        QList<QTreeWidgetItem*> items;
+        while (list->topLevelItemCount())
+            items << list->takeTopLevelItem(0);
+        std::stable_sort(items.begin(), items.end(), [compare, wParam](QTreeWidgetItem* a, QTreeWidgetItem* b) {
+            return compare(static_cast<LPARAM>(a->data(0, kParamRole).toLongLong()),
+                           static_cast<LPARAM>(b->data(0, kParamRole).toLongLong()), static_cast<LPARAM>(wParam))
+                < 0;
+        });
+        list->addTopLevelItems(items);
+        return TRUE;
+    }
+    case LVM_GETSELECTIONMARK:
+        return w->selectionMark;
+    case LVM_SETSELECTIONMARK: {
+        const int previous = w->selectionMark;
+        w->selectionMark = static_cast<int>(lParam);
+        return previous;
+    }
+    case LVM_SETBKCOLOR:
+    case LVM_SETTEXTBKCOLOR: {
+        if (static_cast<COLORREF>(lParam) == CLR_NONE)
+            return TRUE;
+        QPalette palette = list->palette();
+        const COLORREF c = static_cast<COLORREF>(lParam);
+        palette.setColor(QPalette::Base, QColor(GetRValue(c), GetGValue(c), GetBValue(c)));
+        list->setPalette(palette);
+        return TRUE;
+    }
+    case LVM_SETTEXTCOLOR: {
+        QPalette palette = list->palette();
+        const COLORREF c = static_cast<COLORREF>(lParam);
+        palette.setColor(QPalette::Text, QColor(GetRValue(c), GetGValue(c), GetBValue(c)));
+        list->setPalette(palette);
+        return TRUE;
+    }
+    case LVM_GETBKCOLOR:
+        return static_cast<LRESULT>(colorRef(list->palette().color(QPalette::Base)));
+    case LVM_SETITEMCOUNT:   // reserva (las listas virtuales, LVS_OWNERDATA, no están)
+    case LVM_REDRAWITEMS:
+    case LVM_UPDATE:
+        list->viewport()->update();
+        return TRUE;
+    case LVM_SCROLL:
+        list->horizontalScrollBar()->setValue(list->horizontalScrollBar()->value() + static_cast<int>(wParam));
+        list->verticalScrollBar()->setValue(list->verticalScrollBar()->value() + static_cast<int>(lParam) / 16);
+        return TRUE;
+    case LVM_SETIMAGELIST:
+        return 0;
+    default:
+        return 0;
+    }
+}
+
+QWidget* createListView(Window* w, QWidget* parent)
+{
+    w->kind = Kind::ListView;
+    auto* list = new QTreeWidget(parent);
+    list->setRootIsDecorated(false);
+    list->setItemsExpandable(false);
+    list->setUniformRowHeights(true);
+    list->setAllColumnsShowFocus(true);
+    list->setColumnCount(1);
+    list->setSelectionMode((w->style & LVS_SINGLESEL) ? QAbstractItemView::SingleSelection : QAbstractItemView::ExtendedSelection);
+    list->setSelectionBehavior(QAbstractItemView::SelectRows);
+    list->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    const bool report = (w->style & LVS_TYPEMASK) == LVS_REPORT;
+    list->setHeaderHidden(!report || (w->style & LVS_NOCOLUMNHEADER));
+    list->header()->setSectionsClickable(!(w->style & LVS_NOSORTHEADER));
+    list->header()->setStretchLastSection(false);
+    list->header()->setSectionsMovable(false);
+    list->headerItem()->setText(0, QString());
+    // La selección y el foco: LVN_ITEMCHANGED de cada elemento que cambia (también si lo
+    // cambia el plugin, como en Windows)
+    QObject::connect(list->selectionModel(), &QItemSelectionModel::selectionChanged, list,
+                     [w, list](const QItemSelection& selected, const QItemSelection& deselected) {
+                         if (w->quiet)
+                             return;
+                         auto rows = [](const QItemSelection& selection) {
+                             std::set<int> out;
+                             for (const QModelIndex& i : selection.indexes())
+                                 out.insert(i.row());
+                             return out;
+                         };
+                         for (int row : rows(deselected)) {
+                             if (QTreeWidgetItem* item = list->topLevelItem(row)) {
+                                 const UINT now = listItemState(w, item, LVIS_SELECTED | LVIS_FOCUSED);
+                                 notifyItemChanged(w, row, now | LVIS_SELECTED, now);
+                             }
+                         }
+                         for (int row : rows(selected)) {
+                             if (QTreeWidgetItem* item = list->topLevelItem(row)) {
+                                 const UINT now = listItemState(w, item, LVIS_SELECTED | LVIS_FOCUSED);
+                                 notifyItemChanged(w, row, now & ~static_cast<UINT>(LVIS_SELECTED), now);
+                                 w->selectionMark = row;
+                             }
+                         }
+                     });
+    QObject::connect(list, &QTreeWidget::currentItemChanged, list, [w, list](QTreeWidgetItem* current, QTreeWidgetItem* previous) {
+        if (w->quiet)
+            return;
+        if (previous) {
+            const UINT now = listItemState(w, previous, LVIS_SELECTED);
+            notifyItemChanged(w, list->indexOfTopLevelItem(previous), now | LVIS_FOCUSED, now);
+        }
+        if (current) {
+            const UINT now = listItemState(w, current, LVIS_SELECTED);
+            notifyItemChanged(w, list->indexOfTopLevelItem(current), now, now | LVIS_FOCUSED);
+        }
+    });
+    // Las casillas (LVS_EX_CHECKBOXES): el cambio de la imagen de estado
+    QObject::connect(list, &QTreeWidget::itemChanged, list, [w, list](QTreeWidgetItem* item, int column) {
+        if (column != 0 || !listCheckable(w))
+            return;
+        const bool checked = item->checkState(0) == Qt::Checked;
+        const bool before = item->data(0, kCheckRole).toBool();
+        if (checked == before)
+            return;
+        item->setData(0, kCheckRole, checked);
+        if (w->quiet)
+            return;
+        const UINT mask = LVIS_SELECTED | LVIS_FOCUSED;
+        const UINT other = listItemState(w, item, mask);
+        notifyItemChanged(w, list->indexOfTopLevelItem(item), other | INDEXTOSTATEIMAGEMASK(before ? 2u : 1u),
+                          other | INDEXTOSTATEIMAGEMASK(checked ? 2u : 1u));
+    });
+    QObject::connect(list->header(), &QHeaderView::sectionClicked, list, [w](int column) {
+        NMLISTVIEW nm = listNotification(w, -1, column);
+        notifyNM(w, nm, LVN_COLUMNCLICK);
+    });
+    auto* filter = new ComctlFilter(w, list);
+    list->viewport()->installEventFilter(filter);
+    list->installEventFilter(filter);
+    return list;
+}
+
+// --- Árboles -----------------------------------------------------------------------------------
+
+QTreeWidget* treeView(Window* w) { return w->kind == Kind::TreeView ? qobject_cast<QTreeWidget*>(w->widget) : nullptr; }
+
+QTreeWidgetItem* treeItem(Window* w, HTREEITEM handle)
+{
+    return handle && w->treeItems.count(handle) ? static_cast<QTreeWidgetItem*>(handle) : nullptr;
+}
+
+HTREEITEM treeHandle(QTreeWidgetItem* item) { return item; }
+
+UINT treeItemState(Window* w, QTreeWidgetItem* item)
+{
+    QTreeWidget* tree = treeView(w);
+    UINT state = 0;
+    if (item->isSelected() || tree->currentItem() == item)
+        state |= TVIS_SELECTED;
+    if (item->isExpanded())
+        state |= TVIS_EXPANDED;
+    if (item->font(0).bold())
+        state |= TVIS_BOLD;
+    if (w->style & TVS_CHECKBOXES)
+        state |= INDEXTOSTATEIMAGEMASK(item->checkState(0) == Qt::Checked ? 2u : 1u);
+    return state;
+}
+
+template<typename Item>
+void applyTreeItem(Window* w, QTreeWidgetItem* item, const Item* tv)
+{
+    if (tv->mask & TVIF_TEXT)
+        item->setText(0, itemText(tv->pszText));
+    if (tv->mask & TVIF_PARAM)
+        item->setData(0, kParamRole, QVariant::fromValue(static_cast<qlonglong>(tv->lParam)));
+    if (tv->mask & TVIF_CHILDREN)
+        item->setChildIndicatorPolicy(tv->cChildren ? QTreeWidgetItem::ShowIndicator
+                                                    : QTreeWidgetItem::DontShowIndicatorWhenChildless);
+    if (tv->mask & TVIF_STATE) {
+        QuietScope quiet(w);
+        if (tv->stateMask & TVIS_BOLD) {
+            QFont font = item->font(0);
+            font.setBold(tv->state & TVIS_BOLD);
+            item->setFont(0, font);
+        }
+        if (tv->stateMask & TVIS_EXPANDED)
+            item->setExpanded(tv->state & TVIS_EXPANDED);
+        if ((tv->stateMask & TVIS_SELECTED) && (tv->state & TVIS_SELECTED))
+            item->setSelected(true);
+        if ((tv->stateMask & TVIS_STATEIMAGEMASK) && (w->style & TVS_CHECKBOXES)) {
+            const UINT image = (tv->state & TVIS_STATEIMAGEMASK) >> 12;
+            if (image == 1 || image == 2)
+                item->setCheckState(0, image == 2 ? Qt::Checked : Qt::Unchecked);
+        }
+    }
+}
+
+template<typename Item>
+BOOL treeGetItem(Window* w, Item* tv)
+{
+    QTreeWidgetItem* item = tv ? treeItem(w, tv->hItem) : nullptr;
+    if (!item)
+        return FALSE;
+    if (tv->mask & TVIF_TEXT)
+        copyItemText(item->text(0), tv->pszText, tv->cchTextMax);
+    if (tv->mask & TVIF_PARAM)
+        tv->lParam = static_cast<LPARAM>(item->data(0, kParamRole).toLongLong());
+    if (tv->mask & TVIF_STATE)
+        tv->state = treeItemState(w, item) & (tv->stateMask ? tv->stateMask : 0xFFFFFFFF);
+    if (tv->mask & TVIF_CHILDREN)
+        tv->cChildren = item->childCount() > 0 || item->childIndicatorPolicy() == QTreeWidgetItem::ShowIndicator ? 1 : 0;
+    if (tv->mask & TVIF_IMAGE)
+        tv->iImage = 0;
+    if (tv->mask & TVIF_SELECTEDIMAGE)
+        tv->iSelectedImage = 0;
+    return TRUE;
+}
+
+template<typename Insert>
+HTREEITEM treeInsertItem(Window* w, const Insert* is)
+{
+    QTreeWidget* tree = treeView(w);
+    if (!is)
+        return nullptr;
+    QTreeWidgetItem* parent = (is->hParent == TVI_ROOT || !is->hParent) ? tree->invisibleRootItem() : treeItem(w, is->hParent);
+    if (!parent)
+        return nullptr;
+    const QString text = (is->item.mask & TVIF_TEXT) ? itemText(is->item.pszText) : QString();
+    int position = parent->childCount();
+    if (is->hInsertAfter == TVI_FIRST) {
+        position = 0;
+    } else if (is->hInsertAfter == TVI_SORT) {
+        position = 0;
+        while (position < parent->childCount() && parent->child(position)->text(0).compare(text, Qt::CaseInsensitive) <= 0)
+            ++position;
+    } else if (is->hInsertAfter && is->hInsertAfter != TVI_LAST) {
+        if (QTreeWidgetItem* after = treeItem(w, is->hInsertAfter); after && after->parent() == (parent == tree->invisibleRootItem() ? nullptr : parent))
+            position = parent->indexOfChild(after) + 1;
+    }
+    auto* item = new QTreeWidgetItem;
+    item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | ((w->style & TVS_CHECKBOXES) ? Qt::ItemIsUserCheckable : Qt::ItemFlags()));
+    {
+        QuietScope quiet(w);
+        parent->insertChild(position, item);
+        w->treeItems.insert(item);
+        if (w->style & TVS_CHECKBOXES)
+            item->setCheckState(0, Qt::Unchecked);
+    }
+    applyTreeItem(w, item, &is->item);
+    return treeHandle(item);
+}
+
+NMTREEVIEW treeNotification(Window* w, QTreeWidgetItem* oldItem, QTreeWidgetItem* newItem, UINT action)
+{
+    NMTREEVIEW nm{};
+    nm.action = action;
+    auto fill = [w](TVITEM& tv, QTreeWidgetItem* item) {
+        tv.mask = TVIF_HANDLE | TVIF_PARAM | TVIF_STATE;
+        if (!item)
+            return;
+        tv.hItem = treeHandle(item);
+        tv.lParam = static_cast<LPARAM>(item->data(0, kParamRole).toLongLong());
+        tv.state = treeItemState(w, item);
+    };
+    fill(nm.itemOld, oldItem);
+    fill(nm.itemNew, newItem);
+    return nm;
+}
+
+void treeDeleteItem(Window* w, QTreeWidgetItem* item)
+{
+    // Los hijos primero; TVN_DELETEITEM de cada uno (el plugin libera ahí su lParam)
+    while (item->childCount())
+        treeDeleteItem(w, item->child(item->childCount() - 1));
+    NMTREEVIEW nm = treeNotification(w, item, nullptr, 0);
+    notifyNM(w, nm, TVN_DELETEITEM);
+    w->treeItems.erase(item);
+    if (w->caretOverride == item)
+        w->caretOverride = nullptr;
+    QuietScope quiet(w);
+    delete item;
+}
+
+QTreeWidgetItem* treeNext(QTreeWidgetItem* item, int step)
+{
+    QTreeWidgetItem* parent = item->parent() ? item->parent() : item->treeWidget()->invisibleRootItem();
+    const int index = parent->indexOfChild(item) + step;
+    return index >= 0 && index < parent->childCount() ? parent->child(index) : nullptr;
+}
+
+int treeCount(QTreeWidgetItem* item)
+{
+    int count = item->childCount();
+    for (int i = 0; i < item->childCount(); ++i)
+        count += treeCount(item->child(i));
+    return count;
+}
+
+LRESULT treeViewMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    QTreeWidget* tree = treeView(w);
+    if (!tree)
+        return 0;
+    auto handleArg = [lParam] { return reinterpret_cast<HTREEITEM>(lParam); };
+    switch (message) {
+    case TVM_INSERTITEMA:
+        return reinterpret_cast<LRESULT>(treeInsertItem(w, reinterpret_cast<const TVINSERTSTRUCTA*>(lParam)));
+    case TVM_INSERTITEMW:
+        return reinterpret_cast<LRESULT>(treeInsertItem(w, reinterpret_cast<const TVINSERTSTRUCTW*>(lParam)));
+    case TVM_DELETEITEM: {
+        if (handleArg() == TVI_ROOT || !handleArg()) {
+            while (tree->topLevelItemCount())
+                treeDeleteItem(w, tree->topLevelItem(tree->topLevelItemCount() - 1));
+            return TRUE;
+        }
+        QTreeWidgetItem* item = treeItem(w, handleArg());
+        if (!item)
+            return FALSE;
+        treeDeleteItem(w, item);
+        return TRUE;
+    }
+    case TVM_EXPAND: {
+        // Sin TVN_ITEMEXPANDING ni TVN_ITEMEXPANDED, como en Windows
+        QTreeWidgetItem* item = treeItem(w, handleArg());
+        if (!item)
+            return FALSE;
+        QuietScope quiet(w);
+        const UINT code = static_cast<UINT>(wParam) & 3;
+        item->setExpanded(code == TVE_EXPAND ? true : code == TVE_COLLAPSE ? false : !item->isExpanded());
+        return TRUE;
+    }
+    case TVM_GETCOUNT:
+        return treeCount(tree->invisibleRootItem());
+    case TVM_GETVISIBLECOUNT: {
+        const int row = QFontMetrics(tree->font()).height() + 4;
+        return std::max(1, tree->viewport()->height() / row);
+    }
+    case TVM_GETNEXTITEM: {
+        QTreeWidgetItem* item = treeItem(w, handleArg());
+        QTreeWidgetItem* result = nullptr;
+        switch (static_cast<UINT>(wParam)) {
+        case TVGN_ROOT: result = tree->topLevelItem(0); break;
+        case TVGN_NEXT: result = item ? treeNext(item, 1) : nullptr; break;
+        case TVGN_PREVIOUS: result = item ? treeNext(item, -1) : nullptr; break;
+        case TVGN_PARENT: result = item ? item->parent() : nullptr; break;
+        case TVGN_CHILD: result = item ? item->child(0) : tree->topLevelItem(0); break;
+        case TVGN_CARET:
+            result = w->caretOverridden ? static_cast<QTreeWidgetItem*>(w->caretOverride) : tree->currentItem();
+            break;
+        case TVGN_FIRSTVISIBLE: result = tree->itemAt(QPoint(1, 1)); break;
+        case TVGN_NEXTVISIBLE: result = item ? tree->itemBelow(item) : nullptr; break;
+        case TVGN_PREVIOUSVISIBLE: result = item ? tree->itemAbove(item) : nullptr; break;
+        case TVGN_LASTVISIBLE: {
+            result = tree->topLevelItem(tree->topLevelItemCount() - 1);
+            while (result && result->isExpanded() && result->childCount())
+                result = result->child(result->childCount() - 1);
+            break;
+        }
+        default: break;
+        }
+        return reinterpret_cast<LRESULT>(result ? treeHandle(result) : nullptr);
+    }
+    case TVM_SELECTITEM: {
+        QTreeWidgetItem* item = treeItem(w, handleArg());
+        switch (static_cast<UINT>(wParam)) {
+        case TVGN_CARET:
+            w->treeAction = TVC_UNKNOWN;
+            if (item) {
+                for (QTreeWidgetItem* p = item->parent(); p; p = p->parent()) {
+                    QuietScope quiet(w);
+                    p->setExpanded(true);
+                }
+                tree->setCurrentItem(item);
+                tree->scrollToItem(item);
+            } else {
+                tree->setCurrentItem(nullptr);
+                tree->clearSelection();
+            }
+            return TRUE;
+        case TVGN_FIRSTVISIBLE:
+            if (item)
+                tree->scrollToItem(item, QAbstractItemView::PositionAtTop);
+            return item ? TRUE : FALSE;
+        default:
+            return TRUE; // TVGN_DROPHILITE: sin resaltado de arrastrar
+        }
+    }
+    case TVM_GETITEMA:
+        return treeGetItem(w, reinterpret_cast<TVITEMA*>(lParam));
+    case TVM_GETITEMW:
+        return treeGetItem(w, reinterpret_cast<TVITEMW*>(lParam));
+    case TVM_SETITEMA:
+    case TVM_SETITEMW: {
+        if (!lParam)
+            return FALSE;
+        if (message == TVM_SETITEMW) {
+            const auto* tv = reinterpret_cast<const TVITEMW*>(lParam);
+            QTreeWidgetItem* item = treeItem(w, tv->hItem);
+            if (!item)
+                return FALSE;
+            applyTreeItem(w, item, tv);
+        } else {
+            const auto* tv = reinterpret_cast<const TVITEMA*>(lParam);
+            QTreeWidgetItem* item = treeItem(w, tv->hItem);
+            if (!item)
+                return FALSE;
+            applyTreeItem(w, item, tv);
+        }
+        return TRUE;
+    }
+    case TVM_GETITEMSTATE: {
+        QTreeWidgetItem* item = treeItem(w, reinterpret_cast<HTREEITEM>(wParam));
+        return item ? (treeItemState(w, item) & static_cast<UINT>(lParam)) : 0;
+    }
+    case TVM_ENSUREVISIBLE: {
+        QTreeWidgetItem* item = treeItem(w, handleArg());
+        if (!item)
+            return FALSE;
+        QuietScope quiet(w);
+        for (QTreeWidgetItem* p = item->parent(); p; p = p->parent())
+            p->setExpanded(true);
+        tree->scrollToItem(item);
+        return TRUE;
+    }
+    case TVM_SORTCHILDREN: {
+        QTreeWidgetItem* item = handleArg() == TVI_ROOT || !handleArg() ? tree->invisibleRootItem() : treeItem(w, handleArg());
+        if (!item)
+            return FALSE;
+        QuietScope quiet(w);
+        item->sortChildren(0, Qt::AscendingOrder);
+        return TRUE;
+    }
+    case TVM_GETITEMRECT: {
+        auto* rect = reinterpret_cast<RECT*>(lParam);
+        HTREEITEM handle = nullptr;
+        if (rect)
+            std::memcpy(&handle, rect, sizeof(handle)); // el HTREEITEM, en los primeros bytes del RECT
+        QTreeWidgetItem* item = treeItem(w, handle);
+        if (!item)
+            return FALSE;
+        QRect r = tree->visualItemRect(item);
+        if (!r.isValid())
+            return FALSE;
+        if (wParam) // solo el texto
+            r.setWidth(std::min(r.width(), QFontMetrics(item->font(0)).horizontalAdvance(item->text(0)) + 6));
+        r.translate(clientPoint(tree, QPoint(0, 0)));
+        *rect = RECT{r.left(), r.top(), r.right() + 1, r.bottom() + 1};
+        return TRUE;
+    }
+    case TVM_HITTEST: {
+        auto* info = reinterpret_cast<TVHITTESTINFO*>(lParam);
+        if (!info)
+            return 0;
+        QTreeWidgetItem* item = tree->itemAt(tree->viewport()->mapFrom(tree, QPoint(static_cast<int>(info->pt.x), static_cast<int>(info->pt.y))));
+        info->hItem = item ? treeHandle(item) : nullptr;
+        info->flags = item ? TVHT_ONITEMLABEL : TVHT_NOWHERE;
+        return reinterpret_cast<LRESULT>(info->hItem);
+    }
+    case TVM_SETBKCOLOR:
+    case TVM_SETTEXTCOLOR: {
+        const COLORREF c = static_cast<COLORREF>(lParam);
+        if (c == CLR_INVALID)
+            return static_cast<LRESULT>(CLR_INVALID);
+        QPalette palette = tree->palette();
+        const QPalette::ColorRole role = message == TVM_SETBKCOLOR ? QPalette::Base : QPalette::Text;
+        const COLORREF previous = colorRef(palette.color(role));
+        palette.setColor(role, QColor(GetRValue(c), GetGValue(c), GetBValue(c)));
+        tree->setPalette(palette);
+        return static_cast<LRESULT>(previous);
+    }
+    case TVM_SETIMAGELIST:
+        return 0;
+    default:
+        return 0;
+    }
+}
+
+QWidget* createTreeView(Window* w, QWidget* parent)
+{
+    w->kind = Kind::TreeView;
+    auto* tree = new QTreeWidget(parent);
+    tree->setHeaderHidden(true);
+    tree->setColumnCount(1);
+    tree->setRootIsDecorated(w->style & TVS_LINESATROOT);
+    tree->setSelectionMode(QAbstractItemView::SingleSelection);
+    tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tree->setExpandsOnDoubleClick(true);
+    tree->setAllColumnsShowFocus(w->style & TVS_FULLROWSELECT);
+    // La selección: TVN_SELCHANGING (TreeView_GetSelection aún da la anterior; con TRUE no
+    // cambia) y TVN_SELCHANGED
+    QObject::connect(tree, &QTreeWidget::currentItemChanged, tree, [w, tree](QTreeWidgetItem* current, QTreeWidgetItem* previous) {
+        if (w->quiet)
+            return;
+        const UINT action = w->treeAction;
+        w->treeAction = TVC_UNKNOWN;
+        NMTREEVIEW nm = treeNotification(w, previous, current, action);
+        w->caretOverride = previous;
+        w->caretOverridden = true;
+        const LRESULT refused = notifyNM(w, nm, TVN_SELCHANGING);
+        w->caretOverridden = false;
+        if (refused) {
+            QuietScope quiet(w);
+            tree->setCurrentItem(previous);
+            return;
+        }
+        nm = treeNotification(w, previous, current, action);
+        notifyNM(w, nm, TVN_SELCHANGED);
+    });
+    // Expandir (también para rellenar los hijos al vuelo): TVN_ITEMEXPANDING, con TRUE no
+    // se expande, y TVN_ITEMEXPANDED
+    auto expansion = [w, tree](QTreeWidgetItem* item, bool expanded) {
+        if (w->quiet)
+            return;
+        NMTREEVIEW nm = treeNotification(w, nullptr, item, expanded ? TVE_EXPAND : TVE_COLLAPSE);
+        if (notifyNM(w, nm, TVN_ITEMEXPANDING)) {
+            QuietScope quiet(w);
+            item->setExpanded(!expanded);
+            return;
+        }
+        if (expanded && item->childCount() == 0)
+            item->setChildIndicatorPolicy(QTreeWidgetItem::DontShowIndicatorWhenChildless);
+        nm = treeNotification(w, nullptr, item, expanded ? TVE_EXPAND : TVE_COLLAPSE);
+        notifyNM(w, nm, TVN_ITEMEXPANDED);
+        tree->viewport()->update();
+    };
+    QObject::connect(tree, &QTreeWidget::itemExpanded, tree, [expansion](QTreeWidgetItem* item) { expansion(item, true); });
+    QObject::connect(tree, &QTreeWidget::itemCollapsed, tree, [expansion](QTreeWidgetItem* item) { expansion(item, false); });
+    auto* filter = new ComctlFilter(w, tree);
+    tree->viewport()->installEventFilter(filter);
+    tree->installEventFilter(filter);
+    return tree;
+}
+
+bool ComctlFilter::eventFilter(QObject* object, QEvent* event)
+{
+    Window* w = _w;
+    auto* view = qobject_cast<QTreeWidget*>(w->widget);
+    if (!view || !w->alive || w->quiet)
+        return false;
+    const bool onViewport = object == view->viewport();
+    const bool list = w->kind == Kind::ListView;
+    switch (event->type()) {
+    case QEvent::MouseButtonPress:
+        if (onViewport && !list)
+            w->treeAction = TVC_BYMOUSE;
+        break;
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseButtonDblClick: {
+        if (!onViewport)
+            break;
+        auto* mouse = static_cast<QMouseEvent*>(event);
+        const bool right = mouse->button() == Qt::RightButton;
+        if (mouse->button() != Qt::LeftButton && !right)
+            break;
+        const bool doubleClick = event->type() == QEvent::MouseButtonDblClick;
+        const UINT code = doubleClick ? (right ? NM_RDBLCLK : NM_DBLCLK) : (right ? NM_RCLICK : NM_CLICK);
+        const QPoint point = mouse->position().toPoint();
+        if (list) {
+            QTreeWidgetItem* item = view->itemAt(point);
+            NMITEMACTIVATE nm{};
+            nm.iItem = item ? view->indexOfTopLevelItem(item) : -1;
+            nm.iSubItem = item ? std::max(0, view->columnAt(point.x())) : 0;
+            const QPoint client = clientPoint(view, point);
+            nm.ptAction = POINT{client.x(), client.y()};
+            if (item)
+                nm.lParam = static_cast<LPARAM>(item->data(0, kParamRole).toLongLong());
+            notifyNM(w, nm, code);
+            if (doubleClick && !right && item) {
+                NMITEMACTIVATE activate = nm;
+                notifyNM(w, activate, LVN_ITEMACTIVATE);
+            }
+        } else {
+            notifyCode(w, code);
+        }
+        break;
+    }
+    case QEvent::KeyPress: {
+        if (onViewport)
+            break;
+        auto* key = static_cast<QKeyEvent*>(event);
+        const WORD vk = static_cast<WORD>(virtualKey(key));
+        if (list) {
+            NMLVKEYDOWN nm{};
+            nm.wVKey = vk;
+            notifyNM(w, nm, LVN_KEYDOWN);
+        } else {
+            w->treeAction = TVC_BYKEYBOARD;
+            NMTVKEYDOWN nm{};
+            nm.wVKey = vk;
+            notifyNM(w, nm, TVN_KEYDOWN);
+        }
+        if (vk == VK_RETURN) {
+            notifyCode(w, NM_RETURN);
+            if (list && view->currentItem()) {
+                NMITEMACTIVATE nm{};
+                nm.iItem = view->indexOfTopLevelItem(view->currentItem());
+                notifyNM(w, nm, LVN_ITEMACTIVATE);
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return false;
+}
+
+// --- Barras de progreso, deslizadores y tooltips ----------------------------------------------------
+
+LRESULT progressMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    auto* bar = qobject_cast<QProgressBar*>(w->widget);
+    if (!bar)
+        return 0;
+    const int value = bar->value() < bar->minimum() ? bar->minimum() : bar->value();
+    switch (message) {
+    case PBM_SETRANGE: {
+        const LRESULT previous = MAKELPARAM(bar->minimum(), bar->maximum());
+        bar->setRange(LOWORD(lParam), HIWORD(lParam));
+        return previous;
+    }
+    case PBM_SETRANGE32: {
+        const LRESULT previous = MAKELPARAM(bar->minimum(), bar->maximum());
+        bar->setRange(static_cast<int>(wParam), static_cast<int>(lParam));
+        return previous;
+    }
+    case PBM_GETRANGE: {
+        struct Range { int low; int high; };
+        if (auto* range = reinterpret_cast<Range*>(lParam)) {
+            range->low = bar->minimum();
+            range->high = bar->maximum();
+        }
+        return wParam ? bar->minimum() : bar->maximum();
+    }
+    case PBM_SETPOS:
+        bar->setValue(std::clamp(static_cast<int>(wParam), bar->minimum(), bar->maximum()));
+        return value;
+    case PBM_DELTAPOS:
+        bar->setValue(std::clamp(value + static_cast<int>(wParam), bar->minimum(), bar->maximum()));
+        return value;
+    case PBM_SETSTEP: {
+        const int previous = w->progressStep;
+        w->progressStep = static_cast<int>(wParam);
+        return previous;
+    }
+    case PBM_STEPIT: {
+        int next = value + w->progressStep;
+        if (next > bar->maximum())
+            next = bar->minimum() + (next - bar->maximum()); // da la vuelta, como en Windows
+        bar->setValue(std::clamp(next, bar->minimum(), bar->maximum()));
+        return value;
+    }
+    case PBM_GETPOS:
+        return value;
+    case PBM_SETMARQUEE:
+        if (wParam)
+            bar->setRange(0, 0);
+        else
+            bar->setRange(0, 100);
+        return TRUE;
+    default:
+        return 0;
+    }
+}
+
+LRESULT trackbarMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    auto* slider = qobject_cast<QSlider*>(w->widget);
+    if (!slider)
+        return 0;
+    QuietScope quiet(w);
+    switch (message) {
+    case TBM_GETPOS: return slider->sliderPosition();
+    case TBM_GETRANGEMIN: return slider->minimum();
+    case TBM_GETRANGEMAX: return slider->maximum();
+    case TBM_SETPOS: slider->setValue(static_cast<int>(lParam)); return 0;
+    case TBM_SETRANGE: slider->setRange(LOWORD(lParam), HIWORD(lParam)); return 0;
+    case TBM_SETRANGEMIN: slider->setMinimum(static_cast<int>(lParam)); return 0;
+    case TBM_SETRANGEMAX: slider->setMaximum(static_cast<int>(lParam)); return 0;
+    case TBM_SETTICFREQ: slider->setTickInterval(static_cast<int>(wParam)); return 0;
+    case TBM_SETPAGESIZE: {
+        const int previous = slider->pageStep();
+        slider->setPageStep(static_cast<int>(lParam));
+        return previous;
+    }
+    case TBM_SETLINESIZE: {
+        const int previous = slider->singleStep();
+        slider->setSingleStep(static_cast<int>(lParam));
+        return previous;
+    }
+    default: return 0;
+    }
+}
+
+template<typename Info>
+LRESULT tooltipMessage(Window* w, const Info* info, bool remove)
+{
+    if (!info)
+        return FALSE;
+    HWND target = (info->uFlags & TTF_IDISHWND) ? reinterpret_cast<HWND>(info->uId) : info->hwnd;
+    QWidget* widget = widgetOf(target);
+    if (!widget)
+        return FALSE;
+    QString text;
+    if (!remove && info->lpszText) {
+        if (IS_INTRESOURCE(info->lpszText)) {
+            TCHAR buffer[1024] = {};
+            LoadString(info->hinst, static_cast<UINT>(reinterpret_cast<uintptr_t>(info->lpszText)), buffer, 1024);
+            text = fromT(buffer);
+        } else {
+            text = itemText(info->lpszText);
+        }
+    }
+    auto& tools = w->tools;
+    tools.erase(std::remove_if(tools.begin(), tools.end(), [target](const auto& t) { return t.first == target; }), tools.end());
+    if (!remove)
+        tools.emplace_back(target, text);
+    widget->setToolTip(remove ? QString() : text);
+    return TRUE;
+}
+
+QWidget* createSmallControl(Window* w, const QString& name, QWidget* parent)
+{
+    if (name == QLatin1String("MSCTLS_PROGRESS32")) {
+        w->kind = Kind::Progress;
+        auto* bar = new QProgressBar(parent);
+        bar->setRange(0, 100);
+        bar->setValue(0);
+        bar->setTextVisible(false);
+        if (w->style & PBS_VERTICAL)
+            bar->setOrientation(Qt::Vertical);
+        if (w->style & PBS_MARQUEE)
+            bar->setRange(0, 0);
+        return bar;
+    }
+    if (name == QLatin1String("MSCTLS_TRACKBAR32")) {
+        w->kind = Kind::Trackbar;
+        auto* slider = new QSlider((w->style & TBS_VERT) ? Qt::Vertical : Qt::Horizontal, parent);
+        slider->setRange(0, 100);
+        slider->setTickPosition((w->style & TBS_NOTICKS) ? QSlider::NoTicks : QSlider::TicksBelow);
+        // WM_HSCROLL / WM_VSCROLL al padre, con el código y la posición
+        auto scroll = [w, slider](int code) {
+            Window* parentWindow = windowOf(w->parent);
+            if (!parentWindow || w->quiet)
+                return;
+            const UINT message = slider->orientation() == Qt::Horizontal ? WM_HSCROLL : WM_VSCROLL;
+            send(parentWindow, message, MAKEWPARAM(static_cast<WORD>(code), static_cast<WORD>(slider->sliderPosition())),
+                 reinterpret_cast<LPARAM>(hwndOf(w)));
+        };
+        QObject::connect(slider, &QSlider::actionTriggered, slider, [scroll](int action) {
+            switch (action) {
+            case QAbstractSlider::SliderSingleStepAdd: scroll(TB_LINEDOWN); scroll(TB_ENDTRACK); break;
+            case QAbstractSlider::SliderSingleStepSub: scroll(TB_LINEUP); scroll(TB_ENDTRACK); break;
+            case QAbstractSlider::SliderPageStepAdd: scroll(TB_PAGEDOWN); scroll(TB_ENDTRACK); break;
+            case QAbstractSlider::SliderPageStepSub: scroll(TB_PAGEUP); scroll(TB_ENDTRACK); break;
+            case QAbstractSlider::SliderToMinimum: scroll(TB_TOP); scroll(TB_ENDTRACK); break;
+            case QAbstractSlider::SliderToMaximum: scroll(TB_BOTTOM); scroll(TB_ENDTRACK); break;
+            case QAbstractSlider::SliderMove: scroll(TB_THUMBTRACK); break;
+            default: break;
+            }
+        });
+        QObject::connect(slider, &QSlider::sliderReleased, slider, [scroll] {
+            scroll(TB_THUMBPOSITION);
+            scroll(TB_ENDTRACK);
+        });
+        return slider;
+    }
+    if (name == QLatin1String("TOOLTIPS_CLASS32")) {
+        // No se ve: sus herramientas son el toolTip de cada ventana
+        w->kind = Kind::Tooltip;
+        auto* hidden = new QWidget(nullptr);
+        hidden->setAttribute(Qt::WA_DontShowOnScreen);
+        return hidden;
+    }
+    return nullptr;
+}
+
+LRESULT commonControlMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam, bool* handled)
+{
+    *handled = true;
+    switch (w->kind) {
+    case Kind::Tab:
+        if (message >= TCM_FIRST && message < TCM_FIRST + 0x100)
+            return tabMessage(w, message, wParam, lParam);
+        break;
+    case Kind::ListView:
+        if (message >= LVM_FIRST && message < LVM_FIRST + 0x100)
+            return listViewMessage(w, message, wParam, lParam);
+        break;
+    case Kind::TreeView:
+        if (message >= TV_FIRST && message < TV_FIRST + 0x100)
+            return treeViewMessage(w, message, wParam, lParam);
+        break;
+    case Kind::Progress:
+        if (message > WM_USER && message <= WM_USER + 10)
+            return progressMessage(w, message, wParam, lParam);
+        break;
+    case Kind::Trackbar:
+        if (message >= WM_USER && message <= WM_USER + 30)
+            return trackbarMessage(w, message, wParam, lParam);
+        break;
+    case Kind::Tooltip:
+        switch (message) {
+        case TTM_ADDTOOLA:
+        case TTM_UPDATETIPTEXTA:
+            return tooltipMessage(w, reinterpret_cast<const TTTOOLINFOA*>(lParam), false);
+        case TTM_ADDTOOLW:
+        case TTM_UPDATETIPTEXTW:
+            return tooltipMessage(w, reinterpret_cast<const TTTOOLINFOW*>(lParam), false);
+        case TTM_DELTOOLA:
+            return tooltipMessage(w, reinterpret_cast<const TTTOOLINFOA*>(lParam), true);
+        case TTM_DELTOOLW:
+            return tooltipMessage(w, reinterpret_cast<const TTTOOLINFOW*>(lParam), true);
+        case TTM_ACTIVATE:
+        case TTM_SETMAXTIPWIDTH:
+            return 0;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+    *handled = false;
+    return 0;
+}
+
+QWidget* createCommonControl(Window* w, const QString& name, QWidget* parent)
+{
+    if (name == QLatin1String("SYSTABCONTROL32"))
+        return createTabControl(w, parent);
+    if (name == QLatin1String("SYSLISTVIEW32"))
+        return createListView(w, parent);
+    if (name == QLatin1String("SYSTREEVIEW32"))
+        return createTreeView(w, parent);
+    return createSmallControl(w, name, parent);
+}
+
 LRESULT CALLBACK controlProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     Window* w = windowOf(hwnd);
     if (!w)
         return 0;
+    bool common = false;
+    const LRESULT commonResult = commonControlMessage(w, message, wParam, lParam, &common);
+    if (common)
+        return commonResult;
     switch (w->kind) {
     case Kind::Button:
         if (message >= BM_GETCHECK && message <= BM_SETIMAGE)
@@ -1479,6 +3104,8 @@ QWidget* createControl(Window* w, const QString& className, QWidget* parent)
         });
         widget = combo;
     }
+    if (!widget)
+        widget = createCommonControl(w, name, parent);
     if (widget) {
         widget->setContextMenuPolicy(Qt::DefaultContextMenu);
         widget->installEventFilter(forwarder());
@@ -2396,6 +4023,285 @@ void destroyWindow(Window* w)
     }
 }
 
+// --- Dibujo (fase 58) ----------------------------------------------------------------------------
+//
+// Un HDC de ventana dibuja con el QPainter de su WM_PAINT (fuera de WM_PAINT no dibuja); uno
+// en memoria, con un QPainter sobre el QImage del mapa de bits que tenga seleccionado. Las
+// coordenadas son las de GDI: los rectángulos excluyen el borde derecho y el de abajo.
+
+QColor qcolor(COLORREF c)
+{
+    return QColor(GetRValue(c), GetGValue(c), GetBValue(c));
+}
+
+// Un HBRUSH: un objeto de la capa o (HBRUSH)(COLOR_xxx + 1), el atajo de Windows
+bool brushColor(DeviceContext* dc, HGDIOBJ handle, QColor* color)
+{
+    const auto value = reinterpret_cast<uintptr_t>(handle);
+    if (value > 0 && value <= 64) {
+        *color = systemColor(static_cast<int>(value) - 1);
+        return true;
+    }
+    GdiObject* o = gdiObject(handle);
+    if (!o || o->type != GdiObject::Type::Brush || o->hollow)
+        return false;
+    *color = qcolor(o->stockIndex == DC_BRUSH && dc ? dc->dcBrushColor : o->color);
+    return true;
+}
+
+QPen currentPen(DeviceContext* dc)
+{
+    GdiObject* o = gdiObject(dc->pen ? dc->pen : GetStockObject(BLACK_PEN));
+    if (!o || o->type != GdiObject::Type::Pen || o->hollow || o->penStyle == PS_NULL)
+        return QPen(Qt::NoPen);
+    QPen pen(qcolor(o->stockIndex == DC_PEN ? dc->dcPenColor : o->color));
+    pen.setWidth(std::max(1, o->penWidth));
+    pen.setCapStyle(Qt::FlatCap);
+    pen.setJoinStyle(Qt::MiterJoin);
+    switch (o->penStyle) {
+    case PS_DASH: pen.setStyle(Qt::DashLine); break;
+    case PS_DOT: pen.setStyle(Qt::DotLine); break;
+    case PS_DASHDOT: pen.setStyle(Qt::DashDotLine); break;
+    case PS_DASHDOTDOT: pen.setStyle(Qt::DashDotDotLine); break;
+    default: break;
+    }
+    return pen;
+}
+
+QBrush currentBrush(DeviceContext* dc)
+{
+    QColor color;
+    return brushColor(dc, dc->brush ? dc->brush : GetStockObject(WHITE_BRUSH), &color) ? QBrush(color) : QBrush(Qt::NoBrush);
+}
+
+QRect fromRect(const RECT& r)
+{
+    return QRect(static_cast<int>(r.left), static_cast<int>(r.top), static_cast<int>(r.right - r.left),
+                 static_cast<int>(r.bottom - r.top));
+}
+
+QFont dcFont(DeviceContext* dc)
+{
+    if (dc->font)
+        return fontOf(dc->font);
+    return dc->widget ? dc->widget->font() : QApplication::font();
+}
+
+// Una figura con la pluma y el pincel del DC: el contorno queda dentro de [left, right)
+template<typename Draw>
+BOOL drawShape(HDC handle, int left, int top, int right, int bottom, Draw draw)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return FALSE;
+    if (QPainter* p = dc->painter) {
+        p->setBrush(currentBrush(dc));
+        p->setPen(currentPen(dc));
+        // Con una pluma de 1 px, drawRect(x, y, w - 1, h - 1) pinta de x a x + w - 1, como
+        // Rectangle(x, y, x + w, y + h) de GDI; sin pluma rellena un píxel menos, como GDI
+        draw(p, QRect(left, top, right - left - 1, bottom - top - 1));
+    }
+    return TRUE;
+}
+
+void drawTextAt(DeviceContext* dc, int x, int y, const QString& text)
+{
+    QPainter* p = dc->painter;
+    if (!p)
+        return;
+    const QFont font = dcFont(dc);
+    const QFontMetrics metrics(font);
+    const int width = metrics.horizontalAdvance(text);
+    int left = x;
+    if ((dc->textAlign & TA_CENTER) == TA_CENTER)
+        left = x - width / 2;
+    else if (dc->textAlign & TA_RIGHT)
+        left = x - width;
+    int top = y;
+    if ((dc->textAlign & TA_BASELINE) == TA_BASELINE)
+        top = y - metrics.ascent();
+    else if (dc->textAlign & TA_BOTTOM)
+        top = y - metrics.height();
+    if (dc->backgroundMode == OPAQUE)
+        p->fillRect(QRect(left, top, width, metrics.height()), qcolor(dc->backgroundColor));
+    p->setFont(font);
+    p->setPen(qcolor(dc->textColor));
+    p->drawText(QPoint(left, top + metrics.ascent()), text);
+}
+
+int drawTextIn(DeviceContext* dc, QString text, RECT* rect, UINT format)
+{
+    if (!rect)
+        return 0;
+    const QFont font = dcFont(dc);
+    const QFontMetrics metrics(font);
+    int flags = 0;
+    if (format & DT_CENTER)
+        flags |= Qt::AlignHCenter;
+    else if (format & DT_RIGHT)
+        flags |= Qt::AlignRight;
+    else
+        flags |= Qt::AlignLeft;
+    if (format & DT_SINGLELINE) {
+        flags |= Qt::TextSingleLine;
+        flags |= (format & DT_VCENTER) ? Qt::AlignVCenter : (format & DT_BOTTOM) ? Qt::AlignBottom : Qt::AlignTop;
+    } else {
+        flags |= Qt::AlignTop;
+    }
+    const bool wrap = format & DT_WORDBREAK;
+    if (wrap)
+        flags |= Qt::TextWordWrap;
+    if (format & DT_EXPANDTABS)
+        flags |= Qt::TextExpandTabs;
+    if (!(format & DT_NOPREFIX))
+        flags |= (format & DT_HIDEPREFIX) ? Qt::TextHideMnemonic : Qt::TextShowMnemonic;
+    const QRect box = fromRect(*rect);
+    if (format & (DT_END_ELLIPSIS | DT_PATH_ELLIPSIS | DT_WORD_ELLIPSIS)) {
+        const Qt::TextElideMode mode = (format & DT_PATH_ELLIPSIS) ? Qt::ElideMiddle : Qt::ElideRight;
+        text = metrics.elidedText(text, mode, std::max(0, box.width()), flags & Qt::TextShowMnemonic);
+    }
+    const QRect needed = metrics.boundingRect(QRect(box.left(), box.top(), wrap ? std::max(1, box.width()) : 100000, 100000),
+                                              flags & ~(static_cast<int>(Qt::AlignHCenter) | static_cast<int>(Qt::AlignRight)
+                                                        | static_cast<int>(Qt::AlignVCenter) | static_cast<int>(Qt::AlignBottom)),
+                                              text);
+    if (format & DT_CALCRECT) {
+        rect->right = rect->left + needed.width();
+        rect->bottom = rect->top + needed.height();
+        return needed.height();
+    }
+    if (QPainter* p = dc->painter) {
+        p->save();
+        if (!(format & DT_NOCLIP))
+            p->setClipRect(box, Qt::IntersectClip);
+        if (dc->backgroundMode == OPAQUE)
+            p->fillRect(metrics.boundingRect(box, flags, text), qcolor(dc->backgroundColor));
+        p->setFont(font);
+        p->setPen(qcolor(dc->textColor));
+        p->drawText(box, flags, text);
+        p->restore();
+    }
+    return needed.height();
+}
+
+QString textArg(LPCSTR text, int length) { return text ? QString::fromUtf8(text, length < 0 ? -1 : length) : QString(); }
+QString textArg(LPCWSTR text, int length)
+{
+    if (!text)
+        return {};
+    return length < 0 ? QString::fromWCharArray(text) : QString::fromWCharArray(text, length);
+}
+
+template<typename Ch>
+BOOL extTextOut(HDC handle, int x, int y, UINT options, const RECT* rect, const Ch* text, UINT length)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return FALSE;
+    QPainter* p = dc->painter;
+    if (p && rect && (options & ETO_OPAQUE))
+        p->fillRect(fromRect(*rect), qcolor(dc->backgroundColor));
+    if (p && text && length) {
+        p->save();
+        if (rect && (options & ETO_CLIPPED))
+            p->setClipRect(fromRect(*rect), Qt::IntersectClip);
+        const int mode = dc->backgroundMode;
+        if (rect && (options & ETO_OPAQUE))
+            dc->backgroundMode = TRANSPARENT; // el fondo ya está
+        drawTextAt(dc, x, y, textArg(text, static_cast<int>(length)));
+        dc->backgroundMode = mode;
+        p->restore();
+    }
+    return TRUE;
+}
+
+// La ventana con el WM_PAINT en curso (BeginPaint) y su DC
+DeviceContext* paintContext(HWND hwnd)
+{
+    Window* w = windowOf(hwnd);
+    return w ? w->paintDc : nullptr;
+}
+
+// --- La cola de mensajes del hilo (fase 58) ------------------------------------------------------
+
+std::deque<MSG>& threadQueue()
+{
+    static auto* queue = new std::deque<MSG>;
+    return *queue;
+}
+
+void postThreadMessage(UINT message, WPARAM wParam, LPARAM lParam)
+{
+    MSG msg{};
+    msg.message = message;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    msg.time = GetTickCount();
+    threadQueue().push_back(msg);
+    // Despierta a quien espera en GetMessage o WaitMessage
+    if (qApp)
+        QMetaObject::invokeMethod(qApp, [] {}, Qt::QueuedConnection);
+}
+
+bool matchesFilter(const MSG& msg, HWND hwnd, UINT filterMin, UINT filterMax)
+{
+    if (msg.message == WM_QUIT)
+        return true;
+    if (hwnd && hwnd != reinterpret_cast<HWND>(-1) && msg.hwnd != hwnd)
+        return false;
+    if (hwnd == reinterpret_cast<HWND>(-1) && msg.hwnd)
+        return false;
+    return (filterMin == 0 && filterMax == 0) || (msg.message >= filterMin && msg.message <= filterMax);
+}
+
+bool takeMessage(LPMSG out, HWND hwnd, UINT filterMin, UINT filterMax, bool remove)
+{
+    auto& queue = threadQueue();
+    for (auto it = queue.begin(); it != queue.end(); ++it) {
+        if (!matchesFilter(*it, hwnd, filterMin, filterMax))
+            continue;
+        if (out)
+            *out = *it;
+        if (remove)
+            queue.erase(it);
+        return true;
+    }
+    return false;
+}
+
+
+// El repintado de Qt es el WM_PAINT de Windows: primero WM_ERASEBKGND (DefWindowProc rellena
+// con el pincel de la clase) y después WM_PAINT, con el QPainter del widget en el DC que
+// devuelve BeginPaint
+void HostWidget::paintEvent(QPaintEvent* event)
+{
+    Window* w = window;
+    if (!w || !w->alive || !w->created) {
+        QWidget::paintEvent(event);
+        return;
+    }
+    QPainter painter(this);
+    auto* dc = new DeviceContext;
+    dc->widget = this;
+    dc->painter = &painter;
+    dc->font = w->font;
+    liveDcs().insert(dc);
+    DeviceContext* previous = w->paintDc;
+    const QRect previousRect = w->paintRect;
+    w->paintDc = dc;
+    w->paintRect = event->rect();
+    const HWND hwnd = hwndOf(w);
+    send(w, WM_ERASEBKGND, reinterpret_cast<WPARAM>(dc), 0);
+    if (windowOf(hwnd))
+        send(w, WM_PAINT, 0, 0);
+    liveDcs().erase(dc);
+    dc->magic = 0;
+    delete dc;
+    if (windowOf(hwnd)) {
+        w->paintDc = previous;
+        w->paintRect = previousRect;
+    }
+}
+
 } // namespace
 
 // =============================================================================================
@@ -2472,7 +4378,7 @@ __attribute__((weak)) HWND edita_compat_hostHwnd(void)
 
 // --- Clases -------------------------------------------------------------------------------------
 
-static ATOM registerClass(const QString& name, WNDPROC proc, int extraBytes, UINT style)
+static ATOM registerClass(const QString& name, WNDPROC proc, int extraBytes, UINT style, HBRUSH background = nullptr)
 {
     if (name.isEmpty() || !proc || findClass(name)) {
         SetLastError(1410); // ERROR_CLASS_ALREADY_EXISTS
@@ -2484,15 +4390,16 @@ static ATOM registerClass(const QString& name, WNDPROC proc, int extraBytes, UIN
     c.proc = proc;
     c.extraBytes = extraBytes;
     c.style = style;
+    c.background = background;
     c.atom = static_cast<ATOM>(0xC000 + classes.size());
     classes.push_back(c);
     return c.atom;
 }
 
-ATOM RegisterClassA(const WNDCLASSA* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromA), wc->lpfnWndProc, wc->cbWndExtra, wc->style) : 0; }
-ATOM RegisterClassW(const WNDCLASSW* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromW), wc->lpfnWndProc, wc->cbWndExtra, wc->style) : 0; }
-ATOM RegisterClassExA(const WNDCLASSEXA* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromA), wc->lpfnWndProc, wc->cbWndExtra, wc->style) : 0; }
-ATOM RegisterClassExW(const WNDCLASSEXW* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromW), wc->lpfnWndProc, wc->cbWndExtra, wc->style) : 0; }
+ATOM RegisterClassA(const WNDCLASSA* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromA), wc->lpfnWndProc, wc->cbWndExtra, wc->style, wc->hbrBackground) : 0; }
+ATOM RegisterClassW(const WNDCLASSW* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromW), wc->lpfnWndProc, wc->cbWndExtra, wc->style, wc->hbrBackground) : 0; }
+ATOM RegisterClassExA(const WNDCLASSEXA* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromA), wc->lpfnWndProc, wc->cbWndExtra, wc->style, wc->hbrBackground) : 0; }
+ATOM RegisterClassExW(const WNDCLASSEXW* wc) { return wc ? registerClass(resourceName(wc->lpszClassName, fromW), wc->lpfnWndProc, wc->cbWndExtra, wc->style, wc->hbrBackground) : 0; }
 
 static BOOL unregisterClass(const QString& name)
 {
@@ -2565,6 +4472,21 @@ LRESULT DefWindowProcW(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
         return 0;
     case WM_GETFONT:
         return reinterpret_cast<LRESULT>(w->font);
+    case WM_ERASEBKGND: {
+        // El pincel de la clase (hbrBackground); sin él, se ve el fondo del widget
+        const WindowClass* c = findClass(w->className);
+        if (!c || !c->background || !w->widget)
+            return 0;
+        RECT rc{0, 0, w->widget->width(), w->widget->height()};
+        FillRect(reinterpret_cast<HDC>(wParam), &rc, c->background);
+        return 1;
+    }
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        BeginPaint(hwnd, &ps);
+        EndPaint(hwnd, &ps);
+        return 0;
+    }
     case WM_CLOSE:
         DestroyWindow(hwnd);
         return 0;
@@ -2935,22 +4857,38 @@ BOOL ShowWindow(HWND hwnd, int command)
     return wasVisible;
 }
 
+// WM_PAINT ya: el repintado pendiente, si la ventana se ve y no está en su propio WM_PAINT
 BOOL UpdateWindow(HWND hwnd)
 {
     QWidget* widget = widgetOf(hwnd);
-    if (widget)
+    if (!widget)
+        return FALSE;
+    Window* w = windowOf(hwnd);
+    if (widget->isVisible() && !(w && w->paintDc))
+        widget->repaint();
+    else
         widget->update();
-    return widget ? TRUE : FALSE;
+    return TRUE;
 }
 
-BOOL InvalidateRect(HWND hwnd, const RECT*, BOOL)
+BOOL InvalidateRect(HWND hwnd, const RECT* rect, BOOL)
 {
-    return UpdateWindow(hwnd);
+    QWidget* widget = widgetOf(hwnd);
+    if (!widget)
+        return hwnd ? FALSE : TRUE;
+    if (rect)
+        widget->update(fromRect(*rect));
+    else
+        widget->update();
+    return TRUE;
 }
 
-BOOL RedrawWindow(HWND hwnd, const RECT*, void*, UINT)
+BOOL RedrawWindow(HWND hwnd, const RECT* rect, void*, UINT flags)
 {
-    return UpdateWindow(hwnd);
+    InvalidateRect(hwnd, rect, TRUE);
+    if (flags & 0x0100) // RDW_UPDATENOW
+        UpdateWindow(hwnd);
+    return TRUE;
 }
 
 BOOL MoveWindow(HWND hwnd, int x, int y, int width, int height, BOOL)
@@ -3859,6 +5797,7 @@ HDC GetDC(HWND hwnd)
 {
     auto* dc = new DeviceContext;
     dc->widget = widgetOf(hwnd);
+    liveDcs().insert(dc);
     return dc;
 }
 
@@ -3867,8 +5806,13 @@ HDC GetWindowDC(HWND hwnd) { return GetDC(hwnd); }
 int ReleaseDC(HWND, HDC handle)
 {
     DeviceContext* dc = deviceContext(handle);
-    if (!dc)
+    if (!dc || (dc->painter && !dc->ownsPainter && !dc->memory)) // el de WM_PAINT es de EndPaint
         return 0;
+    liveDcs().erase(dc);
+    if (dc->ownsPainter) {
+        dc->painter->end();
+        delete dc->painter;
+    }
     dc->magic = 0;
     delete dc;
     return 1;
@@ -3882,10 +5826,38 @@ HGDIOBJ SelectObject(HDC handle, HGDIOBJ object)
     GdiObject* o = gdiObject(object);
     if (!dc || !o)
         return nullptr;
-    if (o->type != GdiObject::Type::Font)
-        return GetStockObject(o->type == GdiObject::Type::Brush ? WHITE_BRUSH : BLACK_PEN);
-    HGDIOBJ previous = dc->font ? dc->font : GetStockObject(SYSTEM_FONT);
-    dc->font = object;
+    HGDIOBJ previous = nullptr;
+    switch (o->type) {
+    case GdiObject::Type::Font:
+        previous = dc->font ? dc->font : GetStockObject(SYSTEM_FONT);
+        dc->font = object;
+        break;
+    case GdiObject::Type::Brush:
+        previous = dc->brush ? dc->brush : GetStockObject(WHITE_BRUSH);
+        dc->brush = object;
+        break;
+    case GdiObject::Type::Pen:
+        previous = dc->pen ? dc->pen : GetStockObject(BLACK_PEN);
+        dc->pen = object;
+        break;
+    case GdiObject::Type::Bitmap:
+        // En un DC en memoria: se dibuja en su imagen
+        if (!dc->memory)
+            return nullptr;
+        previous = dc->bitmap;
+        if (dc->ownsPainter) {
+            dc->painter->end();
+            delete dc->painter;
+            dc->painter = nullptr;
+            dc->ownsPainter = false;
+        }
+        dc->bitmap = object;
+        if (!o->stock) {
+            dc->painter = new QPainter(&o->image);
+            dc->ownsPainter = true;
+        }
+        break;
+    }
     return previous;
 }
 
@@ -3894,6 +5866,13 @@ BOOL DeleteObject(HGDIOBJ object)
     GdiObject* o = gdiObject(object);
     if (!o)
         return FALSE;
+    // Un mapa de bits seleccionado en un DC no se borra (como en Windows)
+    if (o->type == GdiObject::Type::Bitmap) {
+        for (DeviceContext* dc : liveDcs()) {
+            if (dc->bitmap == object)
+                return FALSE;
+        }
+    }
     if (!o->stock) {
         o->magic = 0;
         delete o;
@@ -3908,6 +5887,8 @@ HGDIOBJ GetStockObject(int index)
     if (!o) {
         o = new GdiObject;
         o->stock = true;
+        o->stockIndex = index;
+        o->hollow = index == NULL_BRUSH || index == NULL_PEN;
         if (index == OEM_FIXED_FONT || index == ANSI_FIXED_FONT || index == SYSTEM_FIXED_FONT) {
             o->type = GdiObject::Type::Font;
             o->font = QFontDatabase::systemFont(QFontDatabase::FixedFont);
@@ -3944,6 +5925,21 @@ static int getObject(HANDLE object, int size, LPVOID buffer, bool wide)
             fillLogFont(o->font, static_cast<LOGFONTA*>(buffer));
         // La altura con la que se creó (fillLogFont la deduce de la fuente)
         static_cast<LOGFONTW*>(buffer)->lfHeight = o->logFont.lfHeight;
+        return needed;
+    }
+    if (o->type == GdiObject::Type::Bitmap) {
+        const int needed = static_cast<int>(sizeof(BITMAP));
+        if (!buffer)
+            return needed;
+        if (size < needed)
+            return 0;
+        auto* bm = static_cast<BITMAP*>(buffer);
+        *bm = BITMAP{};
+        bm->bmWidth = o->image.width();
+        bm->bmHeight = o->image.height();
+        bm->bmWidthBytes = static_cast<LONG>(o->image.bytesPerLine());
+        bm->bmPlanes = 1;
+        bm->bmBitsPixel = 32;
         return needed;
     }
     return 0;
@@ -3997,11 +5993,14 @@ HBRUSH CreateSolidBrush(COLORREF color)
     return o;
 }
 
-HPEN CreatePen(int, int, COLORREF color)
+HPEN CreatePen(int style, int width, COLORREF color)
 {
     auto* o = new GdiObject;
     o->type = GdiObject::Type::Pen;
     o->color = color;
+    o->penStyle = style & 0xF;
+    o->penWidth = width;
+    o->hollow = (style & 0xF) == PS_NULL;
     return o;
 }
 
@@ -4253,6 +6252,663 @@ BOOL SHGetPathFromIDListW(PCIDLIST_ABSOLUTE pidl, LPWSTR path)
 void ILFree(LPITEMIDLIST pidl) { CoTaskMemFree(pidl); }
 
 // --- MENUITEMINFO ---------------------------------------------------------------------------------------
+
+// --- Bucles de mensajes (fase 58) -------------------------------------------------------------------
+//
+// Lo que llega a una ventana por PostMessage se entrega mientras el plugin espera aquí (el
+// bucle de eventos de Qt sigue funcionando). GetMessage devuelve los mensajes de la cola del
+// hilo (PostQuitMessage, PostThreadMessage) y, cada vez que Qt atiende algo, un WM_NULL: así
+// un bucle que espera a que el plugin cambie una variable («while (!done && GetMessage…)»)
+// la vuelve a mirar.
+
+static BOOL getMessage(LPMSG msg, HWND hwnd, UINT filterMin, UINT filterMax)
+{
+    if (!msg)
+        return -1;
+    if (takeMessage(msg, hwnd, filterMin, filterMax, true))
+        return msg->message != WM_QUIT;
+    if (!qApp) {
+        *msg = MSG{};
+        msg->message = WM_QUIT;
+        return FALSE;
+    }
+    QCoreApplication::processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+    if (takeMessage(msg, hwnd, filterMin, filterMax, true))
+        return msg->message != WM_QUIT;
+    *msg = MSG{};
+    msg->message = WM_NULL;
+    msg->time = GetTickCount();
+    return TRUE;
+}
+
+BOOL GetMessageA(LPMSG msg, HWND hwnd, UINT filterMin, UINT filterMax) { return getMessage(msg, hwnd, filterMin, filterMax); }
+BOOL GetMessageW(LPMSG msg, HWND hwnd, UINT filterMin, UINT filterMax) { return getMessage(msg, hwnd, filterMin, filterMax); }
+
+static BOOL peekMessage(LPMSG msg, HWND hwnd, UINT filterMin, UINT filterMax, UINT remove)
+{
+    if (qApp)
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+    return takeMessage(msg, hwnd, filterMin, filterMax, remove & PM_REMOVE) ? TRUE : FALSE;
+}
+
+BOOL PeekMessageA(LPMSG msg, HWND hwnd, UINT filterMin, UINT filterMax, UINT remove) { return peekMessage(msg, hwnd, filterMin, filterMax, remove); }
+BOOL PeekMessageW(LPMSG msg, HWND hwnd, UINT filterMin, UINT filterMax, UINT remove) { return peekMessage(msg, hwnd, filterMin, filterMax, remove); }
+
+LRESULT DispatchMessageW(const MSG* msg)
+{
+    if (!msg || !msg->hwnd || msg->message == WM_NULL)
+        return 0;
+    if (msg->message == WM_TIMER && msg->lParam) {
+        reinterpret_cast<TIMERPROC>(msg->lParam)(msg->hwnd, WM_TIMER, msg->wParam, msg->time);
+        return 0;
+    }
+    return SendMessage(msg->hwnd, msg->message, msg->wParam, msg->lParam);
+}
+
+LRESULT DispatchMessageA(const MSG* msg) { return DispatchMessageW(msg); }
+
+// El teclado llega ya traducido (WM_CHAR) a los procedimientos de la capa
+BOOL TranslateMessage(const MSG*) { return FALSE; }
+
+void PostQuitMessage(int exitCode)
+{
+    postThreadMessage(WM_QUIT, static_cast<WPARAM>(exitCode), 0);
+}
+
+static BOOL postThread(DWORD threadId, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (threadId != 0 && threadId != GetCurrentThreadId() && !qApp)
+        return FALSE;
+    // Desde otro hilo, a la cola del hilo de la interfaz
+    QMetaObject::invokeMethod(qApp, [message, wParam, lParam] { postThreadMessage(message, wParam, lParam); },
+                              Qt::QueuedConnection);
+    return TRUE;
+}
+
+BOOL PostThreadMessageA(DWORD threadId, UINT message, WPARAM wParam, LPARAM lParam) { return postThread(threadId, message, wParam, lParam); }
+BOOL PostThreadMessageW(DWORD threadId, UINT message, WPARAM wParam, LPARAM lParam) { return postThread(threadId, message, wParam, lParam); }
+
+BOOL WaitMessage(void)
+{
+    if (qApp && threadQueue().empty())
+        QCoreApplication::processEvents(QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents);
+    return TRUE;
+}
+
+DWORD GetQueueStatus(UINT)
+{
+    return threadQueue().empty() ? 0 : MAKELONG(0x0008, 0x0008); // QS_POSTMESSAGE
+}
+
+DWORD MsgWaitForMultipleObjects(DWORD count, const HANDLE* handles, BOOL waitAll, DWORD milliseconds, DWORD)
+{
+    // Los objetos o un mensaje en la cola, atendiendo la interfaz mientras tanto
+    QElapsedTimer timer;
+    timer.start();
+    for (;;) {
+        if (count > 0) {
+            const DWORD result = WaitForMultipleObjects(count, handles, waitAll, 0);
+            if (result != WAIT_TIMEOUT)
+                return result;
+        }
+        if (!threadQueue().empty())
+            return WAIT_OBJECT_0 + count;
+        if (milliseconds != INFINITE && timer.elapsed() >= static_cast<qint64>(milliseconds))
+            return WAIT_TIMEOUT;
+        if (qApp)
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 10);
+        QThread::msleep(1);
+    }
+}
+
+// --- Dibujo (fase 58) ---------------------------------------------------------------------------------
+
+HDC BeginPaint(HWND hwnd, LPPAINTSTRUCT paint)
+{
+    Window* w = windowOf(hwnd);
+    if (!w)
+        return nullptr;
+    DeviceContext* dc = paintContext(hwnd);
+    if (!dc) {
+        // Fuera de un WM_PAINT: un DC que no dibuja, y se pide repintar
+        dc = static_cast<DeviceContext*>(GetDC(hwnd));
+        if (w->widget)
+            w->widget->update();
+    }
+    if (paint) {
+        *paint = PAINTSTRUCT{};
+        paint->hdc = dc;
+        const QRect r = w->paintDc ? w->paintRect : (w->widget ? w->widget->rect() : QRect());
+        paint->rcPaint = RECT{r.left(), r.top(), r.right() + 1, r.bottom() + 1};
+    }
+    return dc;
+}
+
+BOOL EndPaint(HWND hwnd, const PAINTSTRUCT* paint)
+{
+    // El DC de WM_PAINT es de la capa; el que dio BeginPaint fuera de él, se libera
+    if (paint && paint->hdc && paint->hdc != paintContext(hwnd))
+        ReleaseDC(hwnd, paint->hdc);
+    return TRUE;
+}
+
+BOOL ValidateRect(HWND, const RECT*) { return TRUE; }
+
+BOOL GetUpdateRect(HWND hwnd, LPRECT rect, BOOL)
+{
+    Window* w = windowOf(hwnd);
+    if (!w || !w->paintDc) {
+        if (rect)
+            *rect = RECT{};
+        return FALSE;
+    }
+    if (rect)
+        *rect = RECT{w->paintRect.left(), w->paintRect.top(), w->paintRect.right() + 1, w->paintRect.bottom() + 1};
+    return TRUE;
+}
+
+int FillRect(HDC handle, const RECT* rect, HBRUSH brush)
+{
+    DeviceContext* dc = deviceContext(handle);
+    QColor color;
+    if (!dc || !rect || !brushColor(dc, brush, &color))
+        return 0;
+    if (dc->painter)
+        dc->painter->fillRect(fromRect(*rect), color);
+    return 1;
+}
+
+int FrameRect(HDC handle, const RECT* rect, HBRUSH brush)
+{
+    DeviceContext* dc = deviceContext(handle);
+    QColor color;
+    if (!dc || !rect || !brushColor(dc, brush, &color))
+        return 0;
+    if (QPainter* p = dc->painter) {
+        const QRect r = fromRect(*rect);
+        p->fillRect(QRect(r.left(), r.top(), r.width(), 1), color);
+        p->fillRect(QRect(r.left(), r.bottom(), r.width(), 1), color);
+        p->fillRect(QRect(r.left(), r.top(), 1, r.height()), color);
+        p->fillRect(QRect(r.right(), r.top(), 1, r.height()), color);
+    }
+    return 1;
+}
+
+BOOL InvertRect(HDC handle, const RECT* rect)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc || !rect)
+        return FALSE;
+    if (QPainter* p = dc->painter) {
+        p->save();
+        p->setCompositionMode(QPainter::RasterOp_NotDestination);
+        p->fillRect(fromRect(*rect), Qt::black);
+        p->restore();
+    }
+    return TRUE;
+}
+
+BOOL DrawFocusRect(HDC handle, const RECT* rect)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc || !rect)
+        return FALSE;
+    if (QPainter* p = dc->painter) {
+        p->save();
+        QPen pen(qcolor(dc->textColor), 1, Qt::DotLine);
+        p->setPen(pen);
+        p->setBrush(Qt::NoBrush);
+        p->drawRect(fromRect(*rect).adjusted(0, 0, -1, -1));
+        p->restore();
+    }
+    return TRUE;
+}
+
+BOOL DrawEdge(HDC handle, LPRECT rect, UINT edge, UINT flags)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc || !rect)
+        return FALSE;
+    const QPalette palette = dc->widget ? dc->widget->palette() : QApplication::palette();
+    const bool raised = edge & (BDR_RAISEDOUTER | BDR_RAISEDINNER);
+    const int depth = ((edge & (BDR_RAISEDOUTER | BDR_SUNKENOUTER)) ? 1 : 0) + ((edge & (BDR_RAISEDINNER | BDR_SUNKENINNER)) ? 1 : 0);
+    if (QPainter* p = dc->painter) {
+        QRect r = fromRect(*rect);
+        for (int i = 0; i < depth; ++i) {
+            const QColor topLeft = raised ? palette.color(QPalette::Light) : palette.color(QPalette::Dark);
+            const QColor bottomRight = raised ? palette.color(QPalette::Dark) : palette.color(QPalette::Light);
+            if (flags & BF_TOP)
+                p->fillRect(QRect(r.left(), r.top(), r.width(), 1), topLeft);
+            if (flags & BF_LEFT)
+                p->fillRect(QRect(r.left(), r.top(), 1, r.height()), topLeft);
+            if (flags & BF_BOTTOM)
+                p->fillRect(QRect(r.left(), r.bottom(), r.width(), 1), bottomRight);
+            if (flags & BF_RIGHT)
+                p->fillRect(QRect(r.right(), r.top(), 1, r.height()), bottomRight);
+            r.adjust(1, 1, -1, -1);
+        }
+    }
+    if (flags & BF_ADJUST) {
+        if (flags & BF_LEFT)
+            rect->left += depth;
+        if (flags & BF_TOP)
+            rect->top += depth;
+        if (flags & BF_RIGHT)
+            rect->right -= depth;
+        if (flags & BF_BOTTOM)
+            rect->bottom -= depth;
+    }
+    return TRUE;
+}
+
+BOOL Rectangle(HDC dc, int left, int top, int right, int bottom)
+{
+    return drawShape(dc, left, top, right, bottom, [](QPainter* p, const QRect& r) { p->drawRect(r); });
+}
+
+BOOL RoundRect(HDC dc, int left, int top, int right, int bottom, int width, int height)
+{
+    return drawShape(dc, left, top, right, bottom,
+                     [width, height](QPainter* p, const QRect& r) { p->drawRoundedRect(r, width / 2.0, height / 2.0); });
+}
+
+BOOL Ellipse(HDC dc, int left, int top, int right, int bottom)
+{
+    return drawShape(dc, left, top, right, bottom, [](QPainter* p, const QRect& r) { p->drawEllipse(r); });
+}
+
+BOOL MoveToEx(HDC handle, int x, int y, LPPOINT previous)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return FALSE;
+    if (previous)
+        *previous = POINT{dc->position.x(), dc->position.y()};
+    dc->position = QPoint(x, y);
+    return TRUE;
+}
+
+BOOL LineTo(HDC handle, int x, int y)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return FALSE;
+    if (QPainter* p = dc->painter) {
+        // GDI no pinta el último punto; con FlatCap, Qt tampoco (currentPen)
+        p->setPen(currentPen(dc));
+        if (QPoint(x, y) != dc->position)
+            p->drawLine(dc->position, QPoint(x, y));
+    }
+    dc->position = QPoint(x, y);
+    return TRUE;
+}
+
+static QPolygon polygonOf(const POINT* points, int count)
+{
+    QPolygon polygon;
+    for (int i = 0; i < count; ++i)
+        polygon << QPoint(static_cast<int>(points[i].x), static_cast<int>(points[i].y));
+    return polygon;
+}
+
+BOOL Polyline(HDC handle, const POINT* points, int count)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc || !points || count < 2)
+        return FALSE;
+    if (QPainter* p = dc->painter) {
+        p->setPen(currentPen(dc));
+        p->drawPolyline(polygonOf(points, count));
+    }
+    return TRUE;
+}
+
+BOOL Polygon(HDC handle, const POINT* points, int count)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc || !points || count < 2)
+        return FALSE;
+    if (QPainter* p = dc->painter) {
+        p->setPen(currentPen(dc));
+        p->setBrush(currentBrush(dc));
+        p->drawPolygon(polygonOf(points, count));
+    }
+    return TRUE;
+}
+
+COLORREF SetPixel(HDC handle, int x, int y, COLORREF color)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return CLR_INVALID;
+    if (dc->painter)
+        dc->painter->fillRect(QRect(x, y, 1, 1), qcolor(color));
+    return color;
+}
+
+
+BOOL TextOutA(HDC handle, int x, int y, LPCSTR text, int length)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return FALSE;
+    drawTextAt(dc, x, y, textArg(text, length));
+    return TRUE;
+}
+
+BOOL TextOutW(HDC handle, int x, int y, LPCWSTR text, int length)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return FALSE;
+    drawTextAt(dc, x, y, textArg(text, length));
+    return TRUE;
+}
+
+BOOL ExtTextOutA(HDC dc, int x, int y, UINT options, const RECT* rect, LPCSTR text, UINT length, const INT*)
+{
+    return extTextOut(dc, x, y, options, rect, text, length);
+}
+
+BOOL ExtTextOutW(HDC dc, int x, int y, UINT options, const RECT* rect, LPCWSTR text, UINT length, const INT*)
+{
+    return extTextOut(dc, x, y, options, rect, text, length);
+}
+
+int DrawTextA(HDC handle, LPCSTR text, int length, LPRECT rect, UINT format)
+{
+    DeviceContext* dc = deviceContext(handle);
+    return dc ? drawTextIn(dc, textArg(text, length), rect, format) : 0;
+}
+
+int DrawTextW(HDC handle, LPCWSTR text, int length, LPRECT rect, UINT format)
+{
+    DeviceContext* dc = deviceContext(handle);
+    return dc ? drawTextIn(dc, textArg(text, length), rect, format) : 0;
+}
+
+UINT SetTextAlign(HDC handle, UINT align)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return GDI_ERROR;
+    const UINT previous = dc->textAlign;
+    dc->textAlign = align;
+    return previous;
+}
+
+HDC CreateCompatibleDC(HDC)
+{
+    // Como en Windows, con un mapa de bits de 1 × 1 seleccionado: es el que devuelve el
+    // primer SelectObject, y volver a seleccionarlo suelta el del plugin
+    static GdiObject* defaultBitmap = [] {
+        auto* o = new GdiObject;
+        o->type = GdiObject::Type::Bitmap;
+        o->stock = true;
+        o->image = QImage(1, 1, QImage::Format_ARGB32_Premultiplied);
+        o->image.fill(Qt::black);
+        return o;
+    }();
+    auto* dc = new DeviceContext;
+    dc->memory = true;
+    dc->bitmap = defaultBitmap;
+    liveDcs().insert(dc);
+    return dc;
+}
+
+static HBITMAP newBitmap(int width, int height)
+{
+    auto* o = new GdiObject;
+    o->type = GdiObject::Type::Bitmap;
+    o->image = QImage(std::max(1, width), std::max(1, height), QImage::Format_ARGB32_Premultiplied);
+    o->image.fill(Qt::black);
+    return reinterpret_cast<HBITMAP>(o);
+}
+
+HBITMAP CreateCompatibleBitmap(HDC, int width, int height)
+{
+    return newBitmap(width, height);
+}
+
+HBITMAP CreateBitmap(int width, int height, UINT, UINT bitsPerPixel, const void* bits)
+{
+    HBITMAP bitmap = newBitmap(width, height);
+    if (bits && bitsPerPixel == 32) {
+        GdiObject* o = gdiObject(bitmap);
+        for (int y = 0; y < o->image.height(); ++y)
+            std::memcpy(o->image.scanLine(y), static_cast<const uchar*>(bits) + static_cast<std::size_t>(y) * static_cast<std::size_t>(width) * 4,
+                        static_cast<std::size_t>(width) * 4);
+    }
+    return bitmap;
+}
+
+static QPainter::CompositionMode compositionOf(DWORD rop)
+{
+    switch (rop) {
+    case SRCPAINT: return QPainter::RasterOp_SourceOrDestination;
+    case SRCAND: return QPainter::RasterOp_SourceAndDestination;
+    case SRCINVERT: return QPainter::RasterOp_SourceXorDestination;
+    default: return QPainter::CompositionMode_SourceOver;
+    }
+}
+
+BOOL StretchBlt(HDC destHandle, int x, int y, int width, int height, HDC sourceHandle, int sx, int sy, int sw, int sh, DWORD rop)
+{
+    DeviceContext* dest = deviceContext(destHandle);
+    if (!dest)
+        return FALSE;
+    QPainter* p = dest->painter;
+    if (!p)
+        return TRUE;
+    const QRect target(x, y, width, height);
+    if (rop == BLACKNESS || rop == WHITENESS || rop == PATCOPY) {
+        QColor color = rop == BLACKNESS ? QColor(Qt::black) : rop == WHITENESS ? QColor(Qt::white) : QColor();
+        if (rop == PATCOPY && !brushColor(dest, dest->brush ? dest->brush : GetStockObject(WHITE_BRUSH), &color))
+            return TRUE;
+        p->fillRect(target, color);
+        return TRUE;
+    }
+    DeviceContext* source = deviceContext(sourceHandle);
+    GdiObject* bitmap = source ? gdiObject(source->bitmap) : nullptr;
+    if (!bitmap || bitmap->type != GdiObject::Type::Bitmap)
+        return FALSE;
+    p->save();
+    p->setCompositionMode(compositionOf(rop));
+    p->drawImage(target, bitmap->image, QRect(sx, sy, sw, sh));
+    p->restore();
+    return TRUE;
+}
+
+BOOL BitBlt(HDC dest, int x, int y, int width, int height, HDC source, int sx, int sy, DWORD rop)
+{
+    return StretchBlt(dest, x, y, width, height, source, sx, sy, width, height, rop);
+}
+
+BOOL PatBlt(HDC dc, int x, int y, int width, int height, DWORD rop)
+{
+    return StretchBlt(dc, x, y, width, height, nullptr, 0, 0, 0, 0, rop == SRCCOPY ? PATCOPY : rop);
+}
+
+int SaveDC(HDC handle)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return 0;
+    if (dc->painter)
+        dc->painter->save();
+    return ++dc->saved;
+}
+
+BOOL RestoreDC(HDC handle, int saved)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc || dc->saved == 0)
+        return FALSE;
+    const int target = saved < 0 ? dc->saved + saved : saved - 1;
+    while (dc->saved > std::max(0, target)) {
+        if (dc->painter)
+            dc->painter->restore();
+        --dc->saved;
+    }
+    return TRUE;
+}
+
+int IntersectClipRect(HDC handle, int left, int top, int right, int bottom)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return 0; // ERROR
+    if (dc->painter)
+        dc->painter->setClipRect(QRect(left, top, right - left, bottom - top), Qt::IntersectClip);
+    return 2; // SIMPLEREGION
+}
+
+HBRUSH CreateBrushIndirect(const LOGBRUSH* brush)
+{
+    if (!brush)
+        return nullptr;
+    HBRUSH result = CreateSolidBrush(brush->lbColor);
+    if (brush->lbStyle == BS_NULL)
+        gdiObject(result)->hollow = true;
+    return result;
+}
+
+COLORREF SetDCBrushColor(HDC handle, COLORREF color)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return CLR_INVALID;
+    const COLORREF previous = dc->dcBrushColor;
+    dc->dcBrushColor = color;
+    return previous;
+}
+
+COLORREF SetDCPenColor(HDC handle, COLORREF color)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return CLR_INVALID;
+    const COLORREF previous = dc->dcPenColor;
+    dc->dcPenColor = color;
+    return previous;
+}
+
+HGDIOBJ GetCurrentObject(HDC handle, UINT type)
+{
+    DeviceContext* dc = deviceContext(handle);
+    if (!dc)
+        return nullptr;
+    switch (type) {
+    case OBJ_PEN: return dc->pen ? dc->pen : GetStockObject(BLACK_PEN);
+    case OBJ_BRUSH: return dc->brush ? dc->brush : GetStockObject(WHITE_BRUSH);
+    case OBJ_FONT: return dc->font ? dc->font : GetStockObject(SYSTEM_FONT);
+    case OBJ_BITMAP: return dc->bitmap;
+    default: return nullptr;
+    }
+}
+
+// --- RECT ------------------------------------------------------------------------------------------------
+
+BOOL SetRect(LPRECT rect, int left, int top, int right, int bottom)
+{
+    if (!rect)
+        return FALSE;
+    *rect = RECT{left, top, right, bottom};
+    return TRUE;
+}
+
+BOOL SetRectEmpty(LPRECT rect) { return SetRect(rect, 0, 0, 0, 0); }
+
+BOOL CopyRect(LPRECT dest, const RECT* source)
+{
+    if (!dest || !source)
+        return FALSE;
+    *dest = *source;
+    return TRUE;
+}
+
+BOOL IsRectEmpty(const RECT* rect) { return !rect || rect->right <= rect->left || rect->bottom <= rect->top; }
+
+BOOL PtInRect(const RECT* rect, POINT point)
+{
+    return rect && point.x >= rect->left && point.x < rect->right && point.y >= rect->top && point.y < rect->bottom;
+}
+
+BOOL InflateRect(LPRECT rect, int dx, int dy)
+{
+    if (!rect)
+        return FALSE;
+    rect->left -= dx;
+    rect->top -= dy;
+    rect->right += dx;
+    rect->bottom += dy;
+    return TRUE;
+}
+
+BOOL OffsetRect(LPRECT rect, int dx, int dy)
+{
+    if (!rect)
+        return FALSE;
+    rect->left += dx;
+    rect->right += dx;
+    rect->top += dy;
+    rect->bottom += dy;
+    return TRUE;
+}
+
+BOOL IntersectRect(LPRECT dest, const RECT* a, const RECT* b)
+{
+    if (!dest || !a || !b)
+        return FALSE;
+    RECT r{std::max(a->left, b->left), std::max(a->top, b->top), std::min(a->right, b->right), std::min(a->bottom, b->bottom)};
+    if (IsRectEmpty(&r)) {
+        *dest = RECT{};
+        return FALSE;
+    }
+    *dest = r;
+    return TRUE;
+}
+
+BOOL UnionRect(LPRECT dest, const RECT* a, const RECT* b)
+{
+    if (!dest || !a || !b)
+        return FALSE;
+    if (IsRectEmpty(a)) {
+        *dest = *b;
+    } else if (IsRectEmpty(b)) {
+        *dest = *a;
+    } else {
+        *dest = RECT{std::min(a->left, b->left), std::min(a->top, b->top), std::max(a->right, b->right), std::max(a->bottom, b->bottom)};
+    }
+    return !IsRectEmpty(dest);
+}
+
+BOOL SubtractRect(LPRECT dest, const RECT* a, const RECT* b)
+{
+    // Como en Windows: solo si b cubre a de lado a lado (si no, queda a)
+    if (!dest || !a || !b)
+        return FALSE;
+    *dest = *a;
+    if (b->top <= a->top && b->bottom >= a->bottom) {
+        if (b->left <= a->left && b->right > a->left && b->right < a->right)
+            dest->left = b->right;
+        else if (b->right >= a->right && b->left > a->left && b->left < a->right)
+            dest->right = b->left;
+        else if (b->left <= a->left && b->right >= a->right)
+            *dest = RECT{};
+    } else if (b->left <= a->left && b->right >= a->right) {
+        if (b->top <= a->top && b->bottom > a->top && b->bottom < a->bottom)
+            dest->top = b->bottom;
+        else if (b->bottom >= a->bottom && b->top > a->top && b->top < a->bottom)
+            dest->bottom = b->top;
+    }
+    return !IsRectEmpty(dest);
+}
+
+BOOL EqualRect(const RECT* a, const RECT* b)
+{
+    return a && b && a->left == b->left && a->top == b->top && a->right == b->right && a->bottom == b->bottom;
+}
 
 } // extern "C"
 

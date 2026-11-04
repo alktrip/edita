@@ -331,6 +331,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 55 — Catálogo: CI y lista firmada | Release continuo del AppImage, paquetes reproducibles (`-ffile-prefix-map`, sin RUNPATH, `SOURCE_DATE_EPOCH`), CI de edita-plugins que compila, prueba y publica los paquetes y `plugins.json` firmada (Ed25519, formato minisign), binarios solo con licencia compatible con la GPL-3 | ✅ [fase55.md](fase55.md) |
 | 56 — El administrador usa el catálogo | core/Minisign (Ed25519 y BLAKE2b con OpenSSL), core/RemoteCatalog (firma, sin volver a listas anteriores, binarios según arquitectura, API y Qt, caché comprobada), descarga sin bloquear el diálogo, recetas de `recipes.zip` | ✅ [fase56.md](fase56.md) |
 | 57 — Pruebas intermitentes | `tst_pythonscript` (esperar a que no haya script antes de cada envío asíncrono: el aviso modal) y `tst_terminal` (lo pegado con `dash`), reproducidas bajo carga; Stop Script solo lanza el `KeyboardInterrupt` dentro del script (`_npp.run_job`) | ✅ [fase57.md](fase57.md) |
+| 58 — Capa de compatibilidad v2 (4) | Controles comunes (`SysTabControl32`, `SysListView32`, `SysTreeView32`, progreso, deslizador, tooltips) con sus mensajes, macros y notificaciones; bucles de mensajes propios; `WM_PAINT` y GDI de dibujo sobre `QPainter` con DC en memoria y `BitBlt`; `RECT`; macros de `windowsx.h`. Auditoría: A 10, B1 4, B2 93 | ✅ [fase58.md](fase58.md) |
 
 ---
 

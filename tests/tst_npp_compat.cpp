@@ -26,6 +26,12 @@
 #include <QPushButton>
 #include <QScreen>
 #include <QTimer>
+#include <QTabBar>
+#include <QTabWidget>
+#include <QSlider>
+#include <QProgressBar>
+#include <QHeaderView>
+#include <QTreeWidget>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
@@ -34,6 +40,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -189,6 +196,175 @@ DWORD WINAPI threadMain(LPVOID param)
     return 42;
 }
 
+
+// Fase 58: las notificaciones de los controles comunes (WM_NOTIFY), con lo que el plugin
+// vería en ese momento
+struct Notification
+{
+    UINT code = 0;
+    UINT_PTR id = 0;
+    int item = -1;
+    int subItem = 0;
+    UINT oldState = 0;
+    UINT newState = 0;
+    LPARAM param = 0;
+    HTREEITEM oldItem = nullptr;
+    HTREEITEM newItem = nullptr;
+    UINT action = 0;
+    WORD key = 0;
+    int curSel = -2;           // TabCtrl_GetCurSel durante la notificación
+    HTREEITEM caret = nullptr; // TreeView_GetSelection durante la notificación
+};
+std::vector<Notification> g_notifications;
+UINT g_refuse = 0;              // la notificación a la que se contesta TRUE
+std::vector<UINT> g_scrolls;    // WM_HSCROLL: los códigos (TB_*)
+int g_scrollPos = 0;
+std::vector<LPARAM> g_deleted;  // LVN_DELETEITEM / TVN_DELETEITEM: los lParam
+
+int countNotifications(UINT code)
+{
+    int n = 0;
+    for (const Notification& x : g_notifications)
+        n += x.code == code ? 1 : 0;
+    return n;
+}
+
+const Notification* lastNotification(UINT code)
+{
+    for (auto it = g_notifications.rbegin(); it != g_notifications.rend(); ++it) {
+        if (it->code == code)
+            return &*it;
+    }
+    return nullptr;
+}
+
+LRESULT CALLBACK notifyProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_HSCROLL) {
+        g_scrolls.push_back(LOWORD(wParam));
+        g_scrollPos = static_cast<int>(SendMessage(reinterpret_cast<HWND>(lParam), TBM_GETPOS, 0, 0));
+        return 0;
+    }
+    if (message != WM_NOTIFY)
+        return DefWindowProc(hwnd, message, wParam, lParam);
+    const auto* header = reinterpret_cast<const NMHDR*>(lParam);
+    Notification n;
+    n.code = header->code;
+    n.id = header->idFrom;
+    wchar_t buffer[8];
+    GetClassName(header->hwndFrom, buffer, 8);
+    const QString klass = QString::fromWCharArray(buffer);
+    if (klass.startsWith(QLatin1String("SysTab")))
+        n.curSel = TabCtrl_GetCurSel(header->hwndFrom);
+    if (klass.startsWith(QLatin1String("SysList"))) {
+        if (header->code == LVN_KEYDOWN) {
+            n.key = reinterpret_cast<const NMLVKEYDOWN*>(lParam)->wVKey;
+        } else if (header->code == NM_CLICK || header->code == NM_DBLCLK || header->code == NM_RCLICK || header->code == LVN_ITEMACTIVATE) {
+            const auto* nm = reinterpret_cast<const NMITEMACTIVATE*>(lParam);
+            n.item = nm->iItem;
+            n.subItem = nm->iSubItem;
+            n.param = nm->lParam;
+        } else if (header->code != NM_RETURN) {
+            const auto* nm = reinterpret_cast<const NMLISTVIEW*>(lParam);
+            n.item = nm->iItem;
+            n.subItem = nm->iSubItem;
+            n.oldState = nm->uOldState;
+            n.newState = nm->uNewState;
+            n.param = nm->lParam;
+            if (header->code == LVN_DELETEITEM)
+                g_deleted.push_back(nm->lParam);
+        }
+    }
+    if (klass.startsWith(QLatin1String("SysTree"))) {
+        if (header->code == TVN_KEYDOWN) {
+            n.key = reinterpret_cast<const NMTVKEYDOWN*>(lParam)->wVKey;
+        } else if (header->code != NM_CLICK && header->code != NM_DBLCLK && header->code != NM_RETURN && header->code != NM_RCLICK) {
+            const auto* nm = reinterpret_cast<const NMTREEVIEW*>(lParam);
+            n.oldItem = nm->itemOld.hItem;
+            n.newItem = nm->itemNew.hItem;
+            n.param = header->code == TVN_DELETEITEM ? nm->itemOld.lParam : nm->itemNew.lParam;
+            n.action = nm->action;
+            if (header->code == TVN_DELETEITEM)
+                g_deleted.push_back(nm->itemOld.lParam);
+        }
+        n.caret = TreeView_GetSelection(header->hwndFrom);
+    }
+    g_notifications.push_back(n);
+    return header->code == g_refuse ? TRUE : 0;
+}
+
+// Una clase que dibuja en WM_PAINT con GDI: fondo, rectángulo con pluma, línea, texto y
+// un recuadro pintado antes en un DC en memoria (BitBlt)
+int g_paints = 0;
+LRESULT CALLBACK paintProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message != WM_PAINT)
+        return DefWindowProc(hwnd, message, wParam, lParam);
+    ++g_paints;
+    PAINTSTRUCT ps;
+    HDC dc = BeginPaint(hwnd, &ps);
+    RECT all{0, 0, 100, 60};
+    HBRUSH red = CreateSolidBrush(RGB(255, 0, 0));
+    FillRect(dc, &all, red);
+    DeleteObject(red);
+    // Rectángulo azul por fuera (1 px), relleno verde: de (10,10) a (29,29) incluido
+    HPEN blue = CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
+    HBRUSH green = CreateSolidBrush(RGB(0, 255, 0));
+    HGDIOBJ oldPen = SelectObject(dc, blue);
+    HGDIOBJ oldBrush = SelectObject(dc, green);
+    Rectangle(dc, 10, 10, 30, 30);
+    SelectObject(dc, oldPen);
+    SelectObject(dc, oldBrush);
+    DeleteObject(blue);
+    DeleteObject(green);
+    // Una línea negra horizontal en y = 40, de x = 0 a 49 (GDI no pinta el último punto)
+    MoveToEx(dc, 0, 40, nullptr);
+    LineTo(dc, 50, 40);
+    // Doble búfer: amarillo en memoria, copiado a (60,10)-(79,29)
+    HDC memory = CreateCompatibleDC(dc);
+    HBITMAP bitmap = CreateCompatibleBitmap(dc, 20, 20);
+    HGDIOBJ oldBitmap = SelectObject(memory, bitmap);
+    RECT square{0, 0, 20, 20};
+    HBRUSH yellow = CreateSolidBrush(RGB(255, 255, 0));
+    FillRect(memory, &square, yellow);
+    DeleteObject(yellow);
+    BitBlt(dc, 60, 10, 20, 20, memory, 0, 0, SRCCOPY);
+    SelectObject(memory, oldBitmap);
+    DeleteObject(bitmap);
+    DeleteDC(memory);
+    // Texto blanco sin fondo
+    SetBkMode(dc, TRANSPARENT);
+    SetTextColor(dc, RGB(255, 255, 255));
+    RECT textBox{0, 44, 100, 60};
+    DrawText(dc, L"Hola", -1, &textBox, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+    EndPaint(hwnd, &ps);
+    return 0;
+}
+
+int CALLBACK compareParamsDescending(LPARAM a, LPARAM b, LPARAM)
+{
+    return a < b ? 1 : a > b ? -1 : 0;
+}
+
+bool g_loopDone = false;
+LRESULT CALLBACK loopProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == WM_USER + 30) {
+        g_loopDone = true;
+        return 0;
+    }
+    if (message == WM_USER + 31)
+        return 31;
+    return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
+DWORD WINAPI signalLater(LPVOID event)
+{
+    Sleep(50);
+    SetEvent(static_cast<HANDLE>(event));
+    return 0;
+}
+
 } // namespace
 
 class TestNppCompat : public QObject
@@ -198,6 +374,23 @@ class TestNppCompat : public QObject
 private:
     QTemporaryDir _tmp;
     std::wstring tmp(const QString& name) const { return w(_tmp.filePath(name)); }
+
+    HWND notifyParent()
+    {
+        static bool registered = false;
+        if (!registered) {
+            WNDCLASSEX wc{};
+            wc.cbSize = sizeof(wc);
+            wc.lpfnWndProc = notifyProc;
+            wc.lpszClassName = L"PruebaNotificaciones";
+            registered = RegisterClassEx(&wc) != 0;
+        }
+        HWND parent = CreateWindowEx(0, L"PruebaNotificaciones", L"Controles", WS_OVERLAPPEDWINDOW, 0, 0, 420, 320, nullptr,
+                                     nullptr, edita_compat_module(), nullptr);
+        ShowWindow(parent, SW_SHOW);
+        return parent;
+    }
+
 
 private slots:
     void initTestCase()
@@ -714,8 +907,8 @@ private slots:
         QCOMPARE(qobject_cast<QLabel*>(static_cast<QWidget*>(edita_compat_widget(label)))->text(), QStringLiteral("Nombre:"));
         GetWindowText(label, text, 64);
         QCOMPARE(QString::fromWCharArray(text), QStringLiteral("&Nombre:"));
-        // Una clase que no existe
-        QVERIFY(!CreateWindowEx(0, L"SysListView32", nullptr, WS_CHILD, 0, 0, 1, 1, parent, nullptr, nullptr, nullptr));
+        // Una clase que no existe (la del control de direcciones IP, que la capa no tiene)
+        QVERIFY(!CreateWindowEx(0, L"SysIPAddress32", nullptr, WS_CHILD, 0, 0, 1, 1, parent, nullptr, nullptr, nullptr));
 
         // Subclassing: el plugin ve el teclado del control y puede comérselo
         g_originalEdit = reinterpret_cast<WNDPROC>(SetWindowLongPtr(edit, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(subclassedEdit)));
@@ -1038,8 +1231,14 @@ private slots:
         HWND columns = GetDlgItem(dialog, 2105);
         QVERIFY(columns);
         GetWindowText(columns, text, 64);
-        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("[SysListView32]"));
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("[SysIPAddress32]"));
         QVERIFY(!IsWindowEnabled(columns));
+        // Un control común del .rc: el de verdad (fase 58)
+        HWND tree = GetDlgItem(dialog, 2106);
+        QVERIFY(tree);
+        QVERIFY(qobject_cast<QTreeWidget*>(static_cast<QWidget*>(edita_compat_widget(tree))));
+        GetClassName(tree, text, 64);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("SysTreeView32"));
         // Intro: el DEFPUSHBUTTON (IDOK)
         ShowWindow(dialog, SW_SHOW);
         g_messages.clear();
@@ -1274,6 +1473,509 @@ private slots:
         QVERIFY(ChooseColor(&cc));
         QCOMPARE(initial, QColor(10, 20, 30));
         QCOMPARE(cc.rgbResult, RGB(200, 100, 50));
+    }
+
+    // --- Fase 58: controles comunes, bucles de mensajes y dibujo --------------------------
+
+    void tabControl()
+    {
+        g_notifications.clear();
+        g_refuse = 0;
+        HWND parent = notifyParent();
+        QVERIFY(QTest::qWaitForWindowExposed(static_cast<QWidget*>(edita_compat_widget(parent))));
+        HWND tabs = CreateWindowEx(0, WC_TABCONTROL, nullptr, WS_CHILD | WS_VISIBLE, 0, 0, 300, 200, parent,
+                                   reinterpret_cast<HMENU>(300), nullptr, nullptr);
+        QVERIFY(tabs);
+        auto* widget = qobject_cast<QTabWidget*>(static_cast<QWidget*>(edita_compat_widget(tabs)));
+        QVERIFY(widget);
+        TCITEM item{};
+        item.mask = TCIF_TEXT | TCIF_PARAM;
+        item.pszText = const_cast<LPWSTR>(L"&Uno");
+        item.lParam = 11;
+        QCOMPARE(TabCtrl_InsertItem(tabs, 0, &item), 0);
+        item.pszText = const_cast<LPWSTR>(L"Dos");
+        item.lParam = 22;
+        QCOMPARE(TabCtrl_InsertItem(tabs, 1, &item), 1);
+        item.pszText = const_cast<LPWSTR>(L"Cero");
+        item.lParam = 0;
+        QCOMPARE(TabCtrl_InsertItem(tabs, 0, &item), 0);
+        QCOMPARE(TabCtrl_GetItemCount(tabs), 3);
+        QCOMPARE(widget->tabText(1), QStringLiteral("Uno")); // sin el '&'
+        QCOMPARE(TabCtrl_GetCurSel(tabs), 1);                // «Uno» sigue elegida, ahora en la 1
+        wchar_t text[32];
+        TCITEM get{};
+        get.mask = TCIF_TEXT | TCIF_PARAM;
+        get.pszText = text;
+        get.cchTextMax = 32;
+        QVERIFY(TabCtrl_GetItem(tabs, 2, &get));
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("Dos"));
+        QCOMPARE(get.lParam, LPARAM{22});
+        // TCM_SETCURSEL: sin notificaciones; devuelve la anterior
+        QCOMPARE(TabCtrl_SetCurSel(tabs, 2), 1);
+        QCOMPARE(TabCtrl_GetCurSel(tabs), 2);
+        QVERIFY(g_notifications.empty());
+        // El usuario: TCN_SELCHANGING aún ve la anterior; TCN_SELCHANGE, la nueva
+        QTest::mouseClick(widget->tabBar(), Qt::LeftButton, {}, widget->tabBar()->tabRect(0).center());
+        QCOMPARE(countNotifications(TCN_SELCHANGING), 1);
+        QCOMPARE(lastNotification(TCN_SELCHANGING)->curSel, 2);
+        QCOMPARE(lastNotification(TCN_SELCHANGE)->curSel, 0);
+        QCOMPARE(lastNotification(TCN_SELCHANGE)->id, UINT_PTR{300});
+        // TRUE en TCN_SELCHANGING: no cambia
+        g_refuse = TCN_SELCHANGING;
+        QTest::mouseClick(widget->tabBar(), Qt::LeftButton, {}, widget->tabBar()->tabRect(1).center());
+        g_refuse = 0;
+        QCOMPARE(TabCtrl_GetCurSel(tabs), 0);
+        QCOMPARE(widget->currentIndex(), 0);
+        QCOMPARE(countNotifications(TCN_SELCHANGE), 1);
+        // TCM_ADJUSTRECT: la página, sin las pestañas; y de vuelta
+        RECT rc{0, 0, 300, 200};
+        (void)TabCtrl_AdjustRect(tabs, FALSE, &rc);
+        QVERIFY2(rc.top > 10 && rc.left >= 0 && rc.left < 6 && rc.bottom > 150, qPrintable(QString::number(rc.top)));
+        (void)TabCtrl_AdjustRect(tabs, TRUE, &rc);
+        QCOMPARE(rc.top, LONG{0});
+        QCOMPARE(rc.right, LONG{300});
+        RECT tab{};
+        QVERIFY(TabCtrl_GetItemRect(tabs, 0, &tab));
+        QVERIFY(tab.right > tab.left && tab.bottom > tab.top);
+        QVERIFY(TabCtrl_DeleteItem(tabs, 0));
+        QCOMPARE(TabCtrl_GetItemCount(tabs), 2);
+        QVERIFY(TabCtrl_DeleteAllItems(tabs));
+        QCOMPARE(TabCtrl_GetItemCount(tabs), 0);
+        QCOMPARE(TabCtrl_GetCurSel(tabs), -1);
+        DestroyWindow(parent);
+    }
+
+    void listView()
+    {
+        g_notifications.clear();
+        g_refuse = 0;
+        HWND parent = notifyParent();
+        QVERIFY(QTest::qWaitForWindowExposed(static_cast<QWidget*>(edita_compat_widget(parent))));
+        HWND list = CreateWindowEx(0, WC_LISTVIEW, nullptr, WS_CHILD | WS_VISIBLE | LVS_REPORT, 0, 0, 380, 260, parent,
+                                   reinterpret_cast<HMENU>(301), nullptr, nullptr);
+        QVERIFY(list);
+        auto* view = qobject_cast<QTreeWidget*>(static_cast<QWidget*>(edita_compat_widget(list)));
+        QVERIFY(view);
+        // Columnas; una en medio desplaza las demás
+        LVCOLUMN column{};
+        column.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_FMT;
+        column.pszText = const_cast<LPWSTR>(L"Nombre");
+        column.cx = 120;
+        QCOMPARE(ListView_InsertColumn(list, 0, &column), 0);
+        column.pszText = const_cast<LPWSTR>(L"Tamaño");
+        column.cx = 60;
+        column.fmt = LVCFMT_RIGHT;
+        QCOMPARE(ListView_InsertColumn(list, 1, &column), 1);
+        column.pszText = const_cast<LPWSTR>(L"Tipo");
+        column.cx = 80;
+        column.fmt = LVCFMT_LEFT;
+        QCOMPARE(ListView_InsertColumn(list, 1, &column), 1);
+        QCOMPARE(view->headerItem()->text(1), QStringLiteral("Tipo"));
+        QCOMPARE(view->headerItem()->text(2), QStringLiteral("Tamaño"));
+        QCOMPARE(ListView_GetColumnWidth(list, 2), 60);
+        ListView_SetExtendedListViewStyle(list, LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES);
+        QCOMPARE(ListView_GetExtendedListViewStyle(list), DWORD{LVS_EX_FULLROWSELECT | LVS_EX_CHECKBOXES});
+        // Elementos y subelementos
+        LVITEM item{};
+        item.mask = LVIF_TEXT | LVIF_PARAM;
+        item.pszText = const_cast<LPWSTR>(L"b.txt");
+        item.lParam = 100;
+        QCOMPARE(ListView_InsertItem(list, &item), 0);
+        item.iItem = 1;
+        item.pszText = const_cast<LPWSTR>(L"a.txt");
+        item.lParam = 200;
+        QCOMPARE(ListView_InsertItem(list, &item), 1);
+        QCOMPARE(countNotifications(LVN_INSERTITEM), 2);
+        ListView_SetItemText(list, 0, 2, const_cast<LPWSTR>(L"12"));
+        ListView_SetItemText(list, 1, 2, const_cast<LPWSTR>(L"5"));
+        QCOMPARE(view->topLevelItem(0)->text(2), QStringLiteral("12"));
+        QVERIFY(view->topLevelItem(0)->textAlignment(2) & Qt::AlignRight); // LVCFMT_RIGHT
+        wchar_t text[32] = {};
+        ListView_GetItemText(list, 1, 0, text, 32);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("a.txt"));
+        QCOMPARE(ListView_GetItemCount(list), 2);
+        LVITEM get{};
+        get.mask = LVIF_PARAM;
+        get.iItem = 0;
+        QVERIFY(ListView_GetItem(list, &get));
+        QCOMPARE(get.lParam, LPARAM{100});
+        LVFINDINFO find{};
+        find.flags = LVFI_PARAM;
+        find.lParam = 200;
+        QCOMPARE(ListView_FindItem(list, -1, &find), 1);
+        find.flags = LVFI_STRING;
+        find.psz = L"B.TXT";
+        QCOMPARE(ListView_FindItem(list, -1, &find), 0);
+        // LVM_SETITEMSTATE: LVN_ITEMCHANGED, como si lo hiciera el usuario
+        g_notifications.clear();
+        ListView_SetItemState(list, 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+        QCOMPARE(ListView_GetNextItem(list, -1, LVNI_SELECTED), 1);
+        QCOMPARE(ListView_GetSelectedCount(list), 1u);
+        QCOMPARE(ListView_GetItemState(list, 1, LVIS_SELECTED | LVIS_FOCUSED), UINT{LVIS_SELECTED | LVIS_FOCUSED});
+        bool selected = false;
+        for (const Notification& n : g_notifications) {
+            if (n.code == LVN_ITEMCHANGED && n.item == 1 && (n.newState & LVIS_SELECTED) && !(n.oldState & LVIS_SELECTED))
+                selected = n.param == 200;
+        }
+        QVERIFY(selected);
+        // Casillas: la imagen de estado (1 sin marcar, 2 marcada)
+        ListView_SetCheckState(list, 0, TRUE);
+        QCOMPARE(ListView_GetCheckState(list, 0), 1u);
+        QCOMPARE(view->topLevelItem(0)->checkState(0), Qt::Checked);
+        QCOMPARE(lastNotification(LVN_ITEMCHANGED)->newState & LVIS_STATEIMAGEMASK, UINT{INDEXTOSTATEIMAGEMASK(2)});
+        // El ratón y el teclado: NM_CLICK, NM_DBLCLK + LVN_ITEMACTIVATE, LVN_KEYDOWN + NM_RETURN
+        const QRect first = view->visualItemRect(view->topLevelItem(0));
+        QTest::mouseClick(view->viewport(), Qt::LeftButton, {}, first.center());
+        QCOMPARE(lastNotification(NM_CLICK)->item, 0);
+        QCOMPARE(lastNotification(NM_CLICK)->param, LPARAM{100});
+        QCOMPARE(ListView_GetNextItem(list, -1, LVNI_SELECTED), 0);
+        QTest::mouseDClick(view->viewport(), Qt::LeftButton, {}, first.center());
+        QVERIFY(lastNotification(NM_DBLCLK));
+        QCOMPARE(lastNotification(LVN_ITEMACTIVATE)->item, 0);
+        QTest::keyClick(view, Qt::Key_Return);
+        QCOMPARE(lastNotification(LVN_KEYDOWN)->key, WORD{VK_RETURN});
+        QVERIFY(lastNotification(NM_RETURN));
+        // Clic en la cabecera: LVN_COLUMNCLICK con la columna
+        QTest::mouseClick(view->header()->viewport(), Qt::LeftButton, {},
+                          QPoint(view->header()->sectionViewportPosition(1) + 5, view->header()->height() / 2));
+        QCOMPARE(lastNotification(LVN_COLUMNCLICK)->subItem, 1);
+        // LVM_HITTEST y LVM_GETITEMRECT, en coordenadas de la lista
+        RECT rect{};
+        QVERIFY(ListView_GetItemRect(list, 1, &rect, LVIR_BOUNDS));
+        LVHITTESTINFO hit{};
+        hit.pt = POINT{(rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2};
+        QCOMPARE(ListView_HitTest(list, &hit), 1);
+        // Ordenar con la función del plugin (por lParam, de mayor a menor)
+        QVERIFY(ListView_SortItems(list, compareParamsDescending, 0));
+        QCOMPARE(view->topLevelItem(0)->text(0), QStringLiteral("a.txt"));
+        // Borrar: LVN_DELETEITEM de cada uno (el plugin libera su lParam)
+        g_deleted.clear();
+        QVERIFY(ListView_DeleteAllItems(list));
+        QCOMPARE(g_deleted.size(), std::size_t{2});
+        QCOMPARE(ListView_GetItemCount(list), 0);
+        QVERIFY(ListView_DeleteColumn(list, 1));
+        QCOMPARE(view->headerItem()->text(1), QStringLiteral("Tamaño"));
+        DestroyWindow(parent);
+    }
+
+    void treeView()
+    {
+        g_notifications.clear();
+        g_refuse = 0;
+        HWND parent = notifyParent();
+        QVERIFY(QTest::qWaitForWindowExposed(static_cast<QWidget*>(edita_compat_widget(parent))));
+        HWND tree = CreateWindowEx(0, WC_TREEVIEW, nullptr, WS_CHILD | WS_VISIBLE | TVS_HASBUTTONS | TVS_LINESATROOT, 0, 0, 380, 260,
+                                   parent, reinterpret_cast<HMENU>(302), nullptr, nullptr);
+        QVERIFY(tree);
+        auto* view = qobject_cast<QTreeWidget*>(static_cast<QWidget*>(edita_compat_widget(tree)));
+        QVERIFY(view);
+        TVINSERTSTRUCT is{};
+        is.hParent = TVI_ROOT;
+        is.hInsertAfter = TVI_LAST;
+        is.item.mask = TVIF_TEXT | TVIF_PARAM;
+        is.item.pszText = const_cast<LPWSTR>(L"Raíz");
+        is.item.lParam = 1;
+        HTREEITEM root = TreeView_InsertItem(tree, &is);
+        QVERIFY(root);
+        is.hParent = root;
+        is.item.pszText = const_cast<LPWSTR>(L"b");
+        is.item.lParam = 2;
+        HTREEITEM b = TreeView_InsertItem(tree, &is);
+        is.hInsertAfter = TVI_SORT;
+        is.item.pszText = const_cast<LPWSTR>(L"a");
+        is.item.lParam = 3;
+        HTREEITEM a = TreeView_InsertItem(tree, &is);
+        QCOMPARE(TreeView_GetChild(tree, root), a); // TVI_SORT: antes de «b»
+        QCOMPARE(TreeView_GetNextSibling(tree, a), b);
+        QCOMPARE(TreeView_GetPrevSibling(tree, b), a);
+        QCOMPARE(TreeView_GetParent(tree, b), root);
+        QCOMPARE(TreeView_GetRoot(tree), root);
+        QCOMPARE(TreeView_GetCount(tree), 3u);
+        wchar_t text[32] = {};
+        TVITEM get{};
+        get.mask = TVIF_TEXT | TVIF_PARAM;
+        get.hItem = b;
+        get.pszText = text;
+        get.cchTextMax = 32;
+        QVERIFY(TreeView_GetItem(tree, &get));
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("b"));
+        QCOMPARE(get.lParam, LPARAM{2});
+        // Un elemento con hijos por cargar (cChildren = 1): se rellenan en TVN_ITEMEXPANDING
+        is.hParent = TVI_ROOT;
+        is.hInsertAfter = TVI_LAST;
+        is.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
+        is.item.pszText = const_cast<LPWSTR>(L"Perezoso");
+        is.item.lParam = 4;
+        is.item.cChildren = 1;
+        HTREEITEM lazy = TreeView_InsertItem(tree, &is);
+        get.mask = TVIF_CHILDREN;
+        get.hItem = lazy;
+        QVERIFY(TreeView_GetItem(tree, &get));
+        QCOMPARE(get.cChildren, 1);
+        // TVM_EXPAND: sin notificaciones
+        g_notifications.clear();
+        QVERIFY(TreeView_Expand(tree, root, TVE_EXPAND));
+        QVERIFY(g_notifications.empty());
+        QVERIFY(TreeView_GetItemState(tree, root, TVIS_EXPANDED) & TVIS_EXPANDED);
+        // El usuario expande: TVN_ITEMEXPANDING y TVN_ITEMEXPANDED
+        view->expandItem(static_cast<QTreeWidgetItem*>(lazy));
+        QCOMPARE(lastNotification(TVN_ITEMEXPANDING)->newItem, lazy);
+        QCOMPARE(lastNotification(TVN_ITEMEXPANDING)->param, LPARAM{4});
+        QCOMPARE(lastNotification(TVN_ITEMEXPANDING)->action, UINT{TVE_EXPAND});
+        QVERIFY(lastNotification(TVN_ITEMEXPANDED));
+        // TRUE en TVN_ITEMEXPANDING: no se pliega
+        g_refuse = TVN_ITEMEXPANDING;
+        view->collapseItem(static_cast<QTreeWidgetItem*>(root));
+        g_refuse = 0;
+        QVERIFY(TreeView_GetItemState(tree, root, TVIS_EXPANDED) & TVIS_EXPANDED);
+        // Selección desde el plugin: TVN_SELCHANGING (aún con la anterior) y TVN_SELCHANGED
+        g_notifications.clear();
+        QVERIFY(TreeView_SelectItem(tree, b));
+        QCOMPARE(TreeView_GetSelection(tree), b);
+        QCOMPARE(lastNotification(TVN_SELCHANGING)->caret, HTREEITEM{nullptr});
+        QCOMPARE(lastNotification(TVN_SELCHANGED)->newItem, b);
+        QCOMPARE(lastNotification(TVN_SELCHANGED)->param, LPARAM{2});
+        QCOMPARE(lastNotification(TVN_SELCHANGED)->action, UINT{TVC_UNKNOWN});
+        g_refuse = TVN_SELCHANGING;
+        (void)TreeView_SelectItem(tree, a);
+        g_refuse = 0;
+        QCOMPARE(TreeView_GetSelection(tree), b);
+        // El ratón y el teclado: NM_CLICK, TVC_BYMOUSE; TVN_KEYDOWN, TVC_BYKEYBOARD
+        const QRect rectA = view->visualItemRect(static_cast<QTreeWidgetItem*>(a));
+        QTest::mouseClick(view->viewport(), Qt::LeftButton, {}, rectA.center());
+        QVERIFY(lastNotification(NM_CLICK));
+        QCOMPARE(lastNotification(TVN_SELCHANGED)->newItem, a);
+        QCOMPARE(lastNotification(TVN_SELCHANGED)->action, UINT{TVC_BYMOUSE});
+        QTest::keyClick(view, Qt::Key_Down);
+        QCOMPARE(lastNotification(TVN_KEYDOWN)->key, WORD{VK_DOWN});
+        QCOMPARE(lastNotification(TVN_SELCHANGED)->newItem, b);
+        QCOMPARE(lastNotification(TVN_SELCHANGED)->action, UINT{TVC_BYKEYBOARD});
+        // TVM_GETITEMRECT y TVM_HITTEST
+        RECT rect{};
+        QVERIFY(TreeView_GetItemRect(tree, b, &rect, TRUE));
+        TVHITTESTINFO hit{};
+        hit.pt = POINT{rect.left + 2, (rect.top + rect.bottom) / 2};
+        QCOMPARE(TreeView_HitTest(tree, &hit), b);
+        // Borrar: TVN_DELETEITEM de cada uno, los hijos primero
+        g_deleted.clear();
+        QVERIFY(TreeView_DeleteItem(tree, root));
+        QCOMPARE(g_deleted, (std::vector<LPARAM>{2, 3, 1}));
+        QCOMPARE(TreeView_GetCount(tree), 1u);
+        get.mask = TVIF_PARAM;
+        get.hItem = b; // ya no existe
+        QVERIFY(!TreeView_GetItem(tree, &get));
+        QVERIFY(TreeView_DeleteAllItems(tree));
+        QCOMPARE(TreeView_GetCount(tree), 0u);
+        DestroyWindow(parent);
+    }
+
+    void progressTrackbarAndTooltips()
+    {
+        g_scrolls.clear();
+        HWND parent = notifyParent();
+        QVERIFY(QTest::qWaitForWindowExposed(static_cast<QWidget*>(edita_compat_widget(parent))));
+        HWND bar = CreateWindowEx(0, PROGRESS_CLASS, nullptr, WS_CHILD | WS_VISIBLE, 0, 0, 200, 20, parent, nullptr, nullptr, nullptr);
+        QVERIFY(bar);
+        auto* progress = qobject_cast<QProgressBar*>(static_cast<QWidget*>(edita_compat_widget(bar)));
+        QVERIFY(progress);
+        SendMessage(bar, PBM_SETRANGE32, 0, 200);
+        QCOMPARE(SendMessage(bar, PBM_SETPOS, 50, 0), LRESULT{0});
+        QCOMPARE(SendMessage(bar, PBM_GETPOS, 0, 0), LRESULT{50});
+        SendMessage(bar, PBM_SETSTEP, 30, 0);
+        SendMessage(bar, PBM_STEPIT, 0, 0);
+        QCOMPARE(SendMessage(bar, PBM_DELTAPOS, static_cast<WPARAM>(-10), 0), LRESULT{80});
+        QCOMPARE(progress->value(), 70);
+        QCOMPARE(progress->maximum(), 200);
+        // Deslizador: lo que hace el plugin no notifica; el usuario, WM_HSCROLL
+        HWND track = CreateWindowEx(0, TRACKBAR_CLASS, nullptr, WS_CHILD | WS_VISIBLE, 0, 30, 200, 30, parent, nullptr, nullptr, nullptr);
+        QVERIFY(track);
+        auto* slider = qobject_cast<QSlider*>(static_cast<QWidget*>(edita_compat_widget(track)));
+        QVERIFY(slider);
+        SendMessage(track, TBM_SETRANGE, TRUE, MAKELPARAM(0, 10));
+        SendMessage(track, TBM_SETPOS, TRUE, 3);
+        QCOMPARE(SendMessage(track, TBM_GETPOS, 0, 0), LRESULT{3});
+        QCOMPARE(SendMessage(track, TBM_GETRANGEMAX, 0, 0), LRESULT{10});
+        QVERIFY(g_scrolls.empty());
+        slider->setFocus();
+        QTest::keyClick(slider, Qt::Key_Right);
+        QCOMPARE(g_scrolls, (std::vector<UINT>{TB_LINEDOWN, TB_ENDTRACK}));
+        QCOMPARE(g_scrollPos, 4);
+        // Tooltips: el de la ventana de la herramienta
+        HWND tip = CreateWindowEx(0, TOOLTIPS_CLASS, nullptr, WS_POPUP, 0, 0, 0, 0, parent, nullptr, nullptr, nullptr);
+        QVERIFY(tip);
+        TTTOOLINFO info{};
+        info.cbSize = sizeof(info);
+        info.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+        info.hwnd = parent;
+        info.uId = reinterpret_cast<UINT_PTR>(bar);
+        info.lpszText = const_cast<LPWSTR>(L"Avance");
+        QVERIFY(SendMessage(tip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&info)));
+        QCOMPARE(progress->toolTip(), QStringLiteral("Avance"));
+        info.lpszText = const_cast<LPWSTR>(L"Otro");
+        SendMessage(tip, TTM_UPDATETIPTEXT, 0, reinterpret_cast<LPARAM>(&info));
+        QCOMPARE(progress->toolTip(), QStringLiteral("Otro"));
+        SendMessage(tip, TTM_DELTOOL, 0, reinterpret_cast<LPARAM>(&info));
+        QVERIFY(progress->toolTip().isEmpty());
+        // Las macros de windowsx.h
+        HWND combo = CreateWindowEx(0, L"COMBOBOX", nullptr, WS_CHILD | CBS_DROPDOWNLIST, 0, 70, 100, 100, parent, nullptr, nullptr, nullptr);
+        QCOMPARE(ComboBox_AddString(combo, L"uno"), 0);
+        QCOMPARE(ComboBox_AddString(combo, L"dos"), 1);
+        QCOMPARE(ComboBox_SetCurSel(combo, 1), 1);
+        QCOMPARE(ComboBox_GetCurSel(combo), 1);
+        HWND edit = CreateWindowEx(0, L"EDIT", nullptr, WS_CHILD, 0, 100, 100, 20, parent, nullptr, nullptr, nullptr);
+        Edit_SetText(edit, L"hola");
+        QCOMPARE(Edit_GetTextLength(edit), 4);
+        DestroyWindow(parent);
+    }
+
+    void messageLoops()
+    {
+        static bool registered = false;
+        if (!registered) {
+            WNDCLASSEX wc{};
+            wc.cbSize = sizeof(wc);
+            wc.lpfnWndProc = loopProc;
+            wc.lpszClassName = L"PruebaBucle";
+            registered = RegisterClassEx(&wc) != 0;
+        }
+        HWND window = CreateWindowEx(0, L"PruebaBucle", L"", WS_OVERLAPPEDWINDOW, 0, 0, 100, 100, nullptr, nullptr, nullptr, nullptr);
+        QVERIFY(window);
+        // Un bucle del plugin que espera a que cambie una variable: lo que llega por
+        // PostMessage se entrega y GetMessage vuelve (WM_NULL) para que la mire
+        g_loopDone = false;
+        PostMessage(window, WM_USER + 30, 0, 0);
+        MSG msg;
+        int turns = 0;
+        while (!g_loopDone && GetMessage(&msg, nullptr, 0, 0) && turns < 1000) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+            ++turns;
+        }
+        QVERIFY(g_loopDone);
+        // PostQuitMessage: GetMessage devuelve FALSE con el código
+        PostQuitMessage(7);
+        QCOMPARE(GetMessage(&msg, nullptr, 0, 0), FALSE);
+        QCOMPARE(msg.message, UINT{WM_QUIT});
+        QCOMPARE(msg.wParam, WPARAM{7});
+        // PeekMessage: sin nada, FALSE; un mensaje del hilo (también desde otro hilo), TRUE
+        QCOMPARE(PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE), FALSE);
+        PostThreadMessage(GetCurrentThreadId(), WM_USER + 40, 1, 2);
+        QCOMPARE(PeekMessage(&msg, nullptr, 0, 0, PM_NOREMOVE), TRUE);
+        QCOMPARE(msg.message, UINT{WM_USER + 40});
+        QCOMPARE(GetQueueStatus(QS_ALLINPUT) != 0, true);
+        QCOMPARE(PeekMessage(&msg, nullptr, WM_USER + 41, WM_USER + 50, PM_REMOVE), FALSE); // fuera del filtro
+        QCOMPARE(PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE), TRUE);
+        QCOMPARE(msg.wParam, WPARAM{1});
+        QCOMPARE(PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE), FALSE);
+        // DispatchMessage: al procedimiento de la ventana
+        MSG direct{};
+        direct.hwnd = window;
+        direct.message = WM_USER + 31;
+        QCOMPARE(DispatchMessage(&direct), LRESULT{31});
+        // MsgWaitForMultipleObjects: el evento que se activa desde otro hilo, o el tiempo
+        HANDLE event = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+        QCOMPARE(MsgWaitForMultipleObjects(1, &event, FALSE, 30, QS_ALLINPUT), DWORD{WAIT_TIMEOUT});
+        HANDLE thread = CreateThread(nullptr, 0, signalLater, event, 0, nullptr);
+        QCOMPARE(MsgWaitForMultipleObjects(1, &event, FALSE, 5000, QS_ALLINPUT), DWORD{WAIT_OBJECT_0});
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+        CloseHandle(event);
+        DestroyWindow(window);
+    }
+
+    void painting()
+    {
+        static bool registered = false;
+        if (!registered) {
+            WNDCLASSEX wc{};
+            wc.cbSize = sizeof(wc);
+            wc.lpfnWndProc = paintProc;
+            wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
+            wc.lpszClassName = L"PruebaDibujo";
+            registered = RegisterClassEx(&wc) != 0;
+        }
+        g_paints = 0;
+        HWND canvas = CreateWindowEx(0, L"PruebaDibujo", L"", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 100, 60, nullptr, nullptr, nullptr,
+                                     nullptr);
+        QVERIFY(canvas);
+        auto* widget = static_cast<QWidget*>(edita_compat_widget(canvas));
+        QVERIFY(QTest::qWaitForWindowExposed(widget));
+        const QImage image = widget->grab().toImage();
+        QVERIFY(g_paints > 0);
+        auto pixel = [&image](int x, int y) { return image.pixelColor(x, y).rgb() & 0xFFFFFF; };
+        QCOMPARE(pixel(5, 5), 0xFF0000u);   // FillRect
+        QCOMPARE(pixel(10, 10), 0x0000FFu); // el contorno del rectángulo
+        QCOMPARE(pixel(29, 29), 0x0000FFu);
+        QCOMPARE(pixel(30, 30), 0xFF0000u); // fuera: como en GDI, right y bottom no
+        QCOMPARE(pixel(20, 20), 0x00FF00u); // el relleno
+        QCOMPARE(pixel(0, 40), 0x000000u);  // la línea
+        QCOMPARE(pixel(49, 40), 0x000000u);
+        QCOMPARE(pixel(50, 40), 0xFF0000u); // sin el último punto
+        QCOMPARE(pixel(60, 10), 0xFFFF00u); // BitBlt desde el DC en memoria
+        QCOMPARE(pixel(79, 29), 0xFFFF00u);
+        QCOMPARE(pixel(80, 30), 0xFF0000u);
+        // El texto blanco sobre el rojo (con antialiasing, los bordes tienen color: basta con
+        // que el canal verde, que el fondo no tiene, se encienda)
+        int text = 0;
+        for (int y = 44; y < 60; ++y) {
+            for (int x = 30; x < 70; ++x)
+                text += image.pixelColor(x, y).green() > 150 ? 1 : 0;
+        }
+        QVERIFY2(text > 5, qPrintable(QString::number(text)));
+        // InvalidateRect + UpdateWindow: otro WM_PAINT ya
+        const int before = g_paints;
+        InvalidateRect(canvas, nullptr, TRUE);
+        UpdateWindow(canvas);
+        QTRY_VERIFY(g_paints > before);
+        // Fuera de WM_PAINT: un DC que no dibuja, pero sirve (y mide)
+        HDC dc = GetDC(canvas);
+        RECT all{0, 0, 10, 10};
+        QCOMPARE(FillRect(dc, &all, static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH))), 1);
+        RECT measure{0, 0, 1000, 0};
+        QVERIFY(DrawText(dc, L"Hola", -1, &measure, DT_CALCRECT | DT_SINGLELINE) > 0);
+        QVERIFY(measure.right > 10 && measure.right < 200);
+        QVERIFY(measure.bottom > 5);
+        ReleaseDC(canvas, dc);
+        // Mapas de bits: GetObject y no se borran mientras están seleccionados
+        HDC memory = CreateCompatibleDC(nullptr);
+        HBITMAP bitmap = CreateCompatibleBitmap(memory, 12, 7);
+        BITMAP info{};
+        QCOMPARE(GetObject(bitmap, sizeof(info), &info), static_cast<int>(sizeof(BITMAP)));
+        QCOMPARE(info.bmWidth, LONG{12});
+        QCOMPARE(info.bmHeight, LONG{7});
+        HGDIOBJ old = SelectObject(memory, bitmap);
+        QVERIFY(!DeleteObject(bitmap));
+        SelectObject(memory, old);
+        QVERIFY(DeleteObject(bitmap));
+        DeleteDC(memory);
+        DestroyWindow(canvas);
+    }
+
+    void rects()
+    {
+        RECT a{0, 0, 10, 10};
+        RECT b{5, 5, 20, 20};
+        RECT r{};
+        QVERIFY(PtInRect(&a, POINT{0, 0}));
+        QVERIFY(!PtInRect(&a, POINT{10, 5})); // right no está dentro
+        QVERIFY(IntersectRect(&r, &a, &b));
+        QVERIFY(EqualRect(&r, std::array<RECT, 1>{RECT{5, 5, 10, 10}}.data()));
+        QVERIFY(UnionRect(&r, &a, &b));
+        QCOMPARE(r.right, LONG{20});
+        RECT far{30, 30, 40, 40};
+        QVERIFY(!IntersectRect(&r, &a, &far));
+        QVERIFY(IsRectEmpty(&r));
+        InflateRect(&a, 2, 3);
+        QCOMPARE(a.left, LONG{-2});
+        QCOMPARE(a.bottom, LONG{13});
+        OffsetRect(&a, 2, 3);
+        QCOMPARE(a.left, LONG{0});
+        RECT whole{0, 0, 10, 10};
+        RECT left{0, 0, 4, 10};
+        QVERIFY(SubtractRect(&r, &whole, &left));
+        QCOMPARE(r.left, LONG{4});
+        SetRectEmpty(&r);
+        QVERIFY(IsRectEmpty(&r));
     }
 
     void processes()

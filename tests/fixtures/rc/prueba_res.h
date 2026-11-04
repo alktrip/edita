@@ -8,6 +8,7 @@
 #define IDC_MODO 2103
 #define IDC_LISTA 2104
 #define IDC_COLUMNAS 2105
+#define IDC_ARBOL 2106
 #define IDC_UNO 2106
 #define IDR_CONTEXTO 2200
 #define IDM_COPIAR 2201

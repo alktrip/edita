@@ -19,7 +19,8 @@
  *   - geometría, visibilidad, foco, texto, temporizadores, menús emergentes, monitores,
  *     métricas del sistema y una parte de GDI sin dibujo: fuentes, medidas de texto y DPI.
  * Las ventanas de Edita (nppData._nppHandle, los editores) también sirven donde se
- * pide un HWND para medir o como padre. No hay WM_PAINT ni dibujo (BeginPaint, FillRect…).
+ * pide un HWND para medir o como padre. Los controles comunes, los bucles de mensajes y el
+ * dibujo (WM_PAINT, BeginPaint, FillRect…) están en npp_compat_comctl.h.
  * Las coordenadas son píxeles lógicos de Qt; los DPI son siempre 96.
  */
 
@@ -1239,5 +1240,8 @@ EDITA_COMPAT_END
 #define GetMenuItemInfo EDITA_COMPAT_AW(GetMenuItemInfo)
 #define SetMenuItemInfo EDITA_COMPAT_AW(SetMenuItemInfo)
 #define InsertMenuItem EDITA_COMPAT_AW(InsertMenuItem)
+
+/* Controles comunes, bucles de mensajes y dibujo (fase 58) */
+#include "npp_compat_comctl.h"
 
 #endif /* EDITA_NPP_COMPAT_USER_H */
