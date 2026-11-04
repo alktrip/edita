@@ -72,7 +72,7 @@ cmake -S "$SRC" -B "$WORK/build" -G Ninja \
     -DEDITA_BUILD_TESTS=OFF \
     ${CMAKE_EXTRA:-}
 cmake --build "$WORK/build"
-VERSION=$(sed -n 's/^CMAKE_PROJECT_VERSION:STATIC=//p' "$WORK/build/CMakeCache.txt")
+VERSION=$(sed -n 's/^EDITA_VERSION:INTERNAL=//p' "$WORK/build/CMakeCache.txt")
 
 log "Instalando en $APPDIR"
 rm -rf "$APPDIR"

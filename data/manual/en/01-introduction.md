@@ -119,3 +119,5 @@ at the bottom of the page or in {{actionPreferences}} (General page).
   visited; the house goes to the first chapter. {{key:actionCommandPalette}} opens the command
   palette, the fastest way to find a command when you don't remember its menu.
 - {{actionAbout}} shows the version of Edita.
+- {{actionReportProblem}} opens the GitHub form to report a bug, with your version and your system
+  already filled in.

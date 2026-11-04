@@ -5,7 +5,11 @@ namespace edita {
 
 inline constexpr const char* kAppId = "@EDITA_APP_ID@";
 inline constexpr const char* kAppName = "@PROJECT_NAME@";
-inline constexpr const char* kAppVersion = "@PROJECT_VERSION@";
+// La versión completa, la que ve el usuario (0.9.0-beta.1)
+inline constexpr const char* kAppVersion = "@EDITA_VERSION@";
+// Solo los números (0.9.0): para los plugins (NPPM_GETNPPVERSION) y las comparaciones
+inline constexpr const char* kAppVersionNumber = "@PROJECT_VERSION@";
+inline constexpr const char* kHomepageUrl = "@PROJECT_HOMEPAGE_URL@";
 // Donde se instalan los plugins, relativo al prefijo (lib, lib64, lib/x86_64-linux-gnu…)
 inline constexpr const char* kInstallLibDir = "@CMAKE_INSTALL_LIBDIR@";
 

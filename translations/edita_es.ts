@@ -1736,19 +1736,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+420"/>
-        <location line="+3670"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+421"/>
+        <location line="+3681"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3670"/>
-        <location line="+1318"/>
+        <location line="-3681"/>
+        <location line="+1329"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1224"/>
+        <location line="-1235"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2184,7 +2184,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+41"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2204,7 +2204,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1166"/>
+        <location line="+1172"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2427,7 +2427,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1853"/>
+        <location line="-1864"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
@@ -2513,12 +2513,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+729"/>
-        <location line="+739"/>
+        <location line="+750"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-718"/>
+        <location line="-729"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
@@ -2834,7 +2834,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Página de &amp;inicio</translation>
     </message>
     <message>
-        <location line="+103"/>
+        <location line="+1"/>
+        <source>&amp;Report a Problem…</source>
+        <translation>&amp;Reportar un problema…</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Report a Problem</source>
+        <translation>Reportar un problema</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Could not open the browser. Report the problem at
+%1</source>
+        <translation>No se pudo abrir el navegador. Reporta el problema en
+%1</translation>
+    </message>
+    <message>
+        <location line="+110"/>
         <source>Macro</source>
         <translation>Macro</translation>
     </message>

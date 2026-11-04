@@ -67,5 +67,9 @@ afectados.
 
 ## Informar de un problema
 
-Informa de errores y sugerencias en <https://github.com/alktrip/edita/issues>. Incluye la versión
-({{actionAbout}}), tu sistema y los pasos para reproducir el problema.
+{{actionReportProblem}} abre el formulario de GitHub con la versión de Edita y tu sistema ya
+escritos; solo hace falta una cuenta de GitHub. Hay otro formulario para los plugins. Describe los
+pasos para reproducir el problema y, si hace falta, adjunta el archivo con el que ocurre. Si Edita
+se cierra, ábrelo desde una terminal y copia lo último que escribió.
+
+Los errores y las sugerencias están en <https://github.com/alktrip/edita/issues>.

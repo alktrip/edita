@@ -36,6 +36,8 @@ add_library(edita_core STATIC
     core/LineDiff.cpp
     core/FuzzyMatch.cpp
     core/Macro.cpp
+    core/IssueReport.cpp
+    core/IssueReport.h
     core/Minisign.cpp
     core/Minisign.h
     core/RemoteCatalog.cpp

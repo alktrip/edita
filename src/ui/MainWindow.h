@@ -41,10 +41,12 @@
 
 #include <edita_plugin.h>
 
+#include <QDesktopServices>
 #include <QIcon>
 #include <QMainWindow>
 #include <QPointer>
 #include <QSet>
+#include <QUrl>
 
 #include <atomic>
 #include <functional>
@@ -121,6 +123,10 @@ public:
     static QIcon applicationIcon();
 
     void setPrompter(std::unique_ptr<Prompter> prompter);
+    // Abre una dirección en el navegador (QDesktopServices); las pruebas ponen la suya
+    void setUrlOpener(std::function<bool(const QUrl&)> opener) { _openUrl = std::move(opener); }
+    // Ayuda › Reportar un problema: el formulario de GitHub con la versión y el sistema
+    QUrl issueReportUrl() const;
 
     DocumentManager& documents() { return _documents; }
     SyntaxManager& syntax() { return _syntax; }
@@ -550,6 +556,7 @@ private:
     DocumentManager _documents;
     SyntaxManager _syntax;
     std::unique_ptr<Prompter> _prompter;
+    std::function<bool(const QUrl&)> _openUrl = [](const QUrl& url) { return QDesktopServices::openUrl(url); };
     QSplitter* _splitter = nullptr;
     EditorPane* _mainPane = nullptr;
     EditorPane* _subPane = nullptr;

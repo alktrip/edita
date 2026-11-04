@@ -63,5 +63,9 @@ To go back to the default configuration, close Edita and rename `~/.config/edita
 
 ## Reporting a problem
 
-Report errors and suggestions at <https://github.com/alktrip/edita/issues>. Include the version
-({{actionAbout}}), your system, and the steps to reproduce the problem.
+{{actionReportProblem}} opens the GitHub form with the version of Edita and your system already
+filled in; you only need a GitHub account. There is another form for plugins. Describe the steps to
+reproduce the problem and, if needed, attach the file it happens with. If Edita crashes, run it
+from a terminal and copy the last lines it printed.
+
+Errors and suggestions are at <https://github.com/alktrip/edita/issues>.

@@ -123,3 +123,5 @@ que está al pie de la página o en {{actionPreferences}} (página General).
   visitaste; la casa va al primer capítulo. {{key:actionCommandPalette}} abre la paleta de
   órdenes, la forma más rápida de encontrar una orden cuando no recuerdas en qué menú está.
 - {{actionAbout}} muestra la versión de Edita.
+- {{actionReportProblem}} abre el formulario para informar de un error en GitHub, con tu versión
+  y tu sistema ya escritos.

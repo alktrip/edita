@@ -21,6 +21,7 @@
 #include "AppInfo.h"
 #include "core/Backup.h"
 #include "core/Codec.h"
+#include "core/IssueReport.h"
 #include "core/Paths.h"
 #include "ui/Appearance.h"
 #include "ui/AutoCompletion.h"
@@ -1299,6 +1300,11 @@ void MainWindow::createMenus()
     QMenu* help = menuBar()->addMenu(tr("Help"));
     addAction(help, tr("User &Manual"), "actionUserManual", QKeySequence::HelpContents, [this] { showManual(); });
     addAction(help, tr("&Welcome Page"), "actionWelcomePage", QKeySequence(), [this] { showWelcomePage(); });
+    addAction(help, tr("&Report a Problem…"), "actionReportProblem", QKeySequence(), [this] {
+        if (!_openUrl(issueReportUrl()))
+            _prompter->warn(this, tr("Report a Problem"),
+                            tr("Could not open the browser. Report the problem at\n%1").arg(issueReportUrl().toString()));
+    });
     help->addSeparator();
     QAction* about = help->addAction(tr("&About %1").arg(QString::fromUtf8(kAppName)), this, [this] {
         QMessageBox box(this);
@@ -1315,6 +1321,12 @@ void MainWindow::createMenus()
     help->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
     createToolBar();
     applyShortcuts();
+}
+
+QUrl MainWindow::issueReportUrl() const
+{
+    return issue_report::formUrl(QString::fromUtf8(kHomepageUrl), QStringLiteral("bug.yml"), QString::fromUtf8(kAppVersion),
+                                 issue_report::describe(issue_report::currentSystem(QGuiApplication::platformName())));
 }
 
 void MainWindow::applyShortcuts()
@@ -4322,7 +4334,7 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
         return 0;
     }
     case NPPM_GETNPPVERSION: {
-        const QStringList parts = QString::fromUtf8(kAppVersion).split(QLatin1Char('.'));
+        const QStringList parts = QString::fromUtf8(kAppVersionNumber).split(QLatin1Char('.'));
         const int major = parts.value(0).toInt();
         const int minor = parts.value(1).toInt() * 100 + parts.value(2).toInt() * 10;
         return (major << 16) | minor;
@@ -4675,7 +4687,7 @@ PluginsAdminContext MainWindow::pluginsAdminContext() const
     PluginsAdminContext context;
     context.pluginDirectories = pluginDirectories();
     context.userPluginsDir = QDir(paths::configDir()).filePath(QStringLiteral("plugins"));
-    context.appVersion = PluginVersion::parse(QString::fromUtf8(kAppVersion));
+    context.appVersion = PluginVersion::parse(QString::fromUtf8(kAppVersionNumber));
 
     // La lista de plugins (nppPluginList.json en N++): la de pruebas, la del usuario o la de Edita
     QString listPath = qEnvironmentVariable("EDITA_PLUGIN_LIST");

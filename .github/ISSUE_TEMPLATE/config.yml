@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Qué probar en la beta / What to test in the beta
+    url: https://github.com/alktrip/edita/blob/main/PROBAR.md
+    about: La guía para quien prueba Edita / The guide for Edita testers

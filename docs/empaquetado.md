@@ -3,7 +3,7 @@
 `packaging/appimage/build-appimage.sh` genera `dist/Edita-<versión>-x86_64.AppImage`: un solo archivo ejecutable con Edita, Qt, sus plugins (Python Script y el de ejemplo) y Python.
 
 ```sh
-editor/packaging/appimage/build-appimage.sh     # deja dist/Edita-0.0.1-x86_64.AppImage
+editor/packaging/appimage/build-appimage.sh     # deja dist/Edita-<versión>-x86_64.AppImage
 chmod +x dist/Edita-*.AppImage && ./dist/Edita-*.AppImage
 ```
 

@@ -4,7 +4,9 @@
 //
 // Página de inicio (no existe en N++).
 
+#include "AppInfo.h"
 #include "FakePrompter.h"
+#include "core/IssueReport.h"
 #include "ui/CommandPalette.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
@@ -20,6 +22,7 @@
 #include <QLineEdit>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QUrlQuery>
 #include <QToolButton>
 
 using namespace edita;
@@ -57,6 +60,59 @@ private slots:
     {
         QVERIFY(_tmp.isValid());
         qputenv("XDG_CONFIG_HOME", _tmp.filePath("config").toUtf8());
+    }
+
+    // Fase 62: la versión de la beta y Ayuda › Reportar un problema
+    void versionAndReportAProblem()
+    {
+        // La versión que ve el usuario lleva la etapa; los plugins ven solo los números
+        QCOMPARE(QString::fromUtf8(kAppVersion), QStringLiteral("0.9.0-beta.1"));
+        QVERIFY(QString::fromUtf8(kAppVersion).startsWith(QString::fromUtf8(kAppVersionNumber)));
+        QCOMPARE(QString::fromUtf8(kHomepageUrl), QStringLiteral("https://github.com/alktrip/edita"));
+
+        issue_report::SystemInfo system;
+        system.os = QStringLiteral("Ubuntu 24.04 LTS");
+        system.kernel = QStringLiteral("6.8.0");
+        system.architecture = QStringLiteral("x86_64");
+        system.qtVersion = QStringLiteral("6.8.3");
+        system.platform = QStringLiteral("wayland");
+        system.desktop = QStringLiteral("KDE");
+        system.appImage = true;
+        QCOMPARE(issue_report::describe(system),
+                 QStringLiteral("Ubuntu 24.04 LTS (x86_64, Linux 6.8.0), KDE, wayland, Qt 6.8.3, AppImage"));
+        system.desktop.clear();
+        system.appImage = false;
+        QVERIFY(issue_report::describe(system).endsWith(QStringLiteral("wayland, Qt 6.8.3, not an AppImage")));
+
+        // El formulario de GitHub, con la versión y el sistema en los campos con ese id
+        auto w = window();
+        const QUrl url = w->issueReportUrl();
+        QCOMPARE(url.toString(QUrl::RemoveQuery), QStringLiteral("https://github.com/alktrip/edita/issues/new"));
+        const QUrlQuery query(url);
+        QCOMPARE(query.queryItemValue(QStringLiteral("template")), QStringLiteral("bug.yml"));
+        QCOMPARE(query.queryItemValue(QStringLiteral("version")), QStringLiteral("0.9.0-beta.1"));
+        QVERIFY(query.queryItemValue(QStringLiteral("system"), QUrl::FullyDecoded).contains(QStringLiteral("Qt ")));
+        // La plantilla existe y tiene esos campos
+        QFile form(QStringLiteral(EDITA_SOURCE_DIR "/.github/ISSUE_TEMPLATE/bug.yml"));
+        QVERIFY(form.open(QIODevice::ReadOnly));
+        const QByteArray yaml = form.readAll();
+        QVERIFY(yaml.contains("id: version"));
+        QVERIFY(yaml.contains("id: system"));
+
+        // La orden abre esa dirección; si no hay navegador, la muestra en un aviso
+        QAction* report = w->findChild<QAction*>(QStringLiteral("actionReportProblem"));
+        QVERIFY(report);
+        QList<QUrl> opened;
+        w->setUrlOpener([&opened](const QUrl& u) { opened << u; return true; });
+        report->trigger();
+        QCOMPARE(opened, QList<QUrl>{url});
+        auto prompter = std::make_unique<FakePrompter>();
+        FakePrompter* fake = prompter.get();
+        w->setPrompter(std::move(prompter));
+        w->setUrlOpener([](const QUrl&) { return false; });
+        report->trigger();
+        QCOMPARE(fake->warnings.size(), 1);
+        QVERIFY(fake->warnings[0].contains(QStringLiteral("https://github.com/alktrip/edita/issues/new")));
     }
 
     void shownWhileTheOnlyDocumentIsNewAndEmpty()

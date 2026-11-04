@@ -1,0 +1,46 @@
+# Ayuda › Reportar un problema abre este formulario con «version» y «system» ya escritos
+# (GitHub rellena cada campo con el parámetro de la URL que tiene su id)
+name: Problema con Edita / Problem with Edita
+description: Algo no funciona, se ve mal o se cierra / Something does not work, looks wrong or crashes
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por probar Edita. Puedes escribir en español o en inglés.
+        Thanks for testing Edita. You can write in Spanish or English.
+
+        ¿Es un plugin? Usa el formulario de plugins / Is it a plugin? Use the [plugin form](https://github.com/alktrip/edita/issues/new?template=plugin.yml).
+  - type: textarea
+    id: what
+    attributes:
+      label: Qué pasó / What happened
+      description: Lo que esperabas y lo que pasó / What you expected and what happened
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Cómo reproducirlo / How to reproduce it
+      description: Los pasos, y si hace falta un archivo, adjúntalo / The steps; attach a file if one is needed
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: input
+    id: version
+    attributes:
+      label: Versión de Edita / Edita version
+      description: Ayuda › Acerca de Edita / Help › About Edita
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Sistema / System
+      description: Distribución, escritorio, Wayland o X11, AppImage o no / Distribution, desktop, Wayland or X11, AppImage or not
+  - type: textarea
+    id: extra
+    attributes:
+      label: Más información / More information
+      description: Capturas, mensajes de la terminal (`edita` desde una terminal) / Screenshots, terminal output (run `edita` from a terminal)

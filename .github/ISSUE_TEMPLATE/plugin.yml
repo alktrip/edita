@@ -1,0 +1,50 @@
+name: Problema con un plugin / Problem with a plugin
+description: Un plugin del catálogo no se instala, no carga o no funciona / A catalog plugin does not install, load or work
+labels: [plugin]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Los plugins del catálogo son plugins de Notepad++ compilados para Linux desde su código original.
+        Si el problema también ocurre en Notepad++, repórtalo a su autor.
+        Catalog plugins are Notepad++ plugins compiled for Linux from their original source code.
+        If the problem also happens in Notepad++, report it to its author.
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin y su versión / Plugin and its version
+      description: Plugins › Administrador de plugins › Instalados / Plugins › Plugins Admin › Installed
+      placeholder: XML Tools 3.1.1.13
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Dónde falla / Where it fails
+      options:
+        - Al instalarlo / Installing it
+        - Al cargarlo (sale en Incompatibles) / Loading it (it is under Incompatible)
+        - Una orden no hace lo que debe / A command does not do what it should
+        - Un diálogo se ve mal o no responde / A dialog looks wrong or does not respond
+        - Edita se cierra / Edita crashes
+        - Otro / Other
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Qué pasó / What happened
+      description: La orden del menú, lo que esperabas y lo que pasó / The menu command, what you expected and what happened
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Versión de Edita / Edita version
+      description: Ayuda › Acerca de Edita / Help › About Edita
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Sistema / System

@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(Edita
-    VERSION 0.0.1
+    VERSION 0.9.0
     DESCRIPTION "Editor de texto nativo para Linux inspirado en Notepad++"
-    HOMEPAGE_URL "https://github.com/notepad-plus-plus/notepad-plus-plus"
+    HOMEPAGE_URL "https://github.com/alktrip/edita"
     LANGUAGES C CXX)
+# La versión que ve el usuario: la numérica más la etiqueta de la etapa («-beta.1»; vacía en
+# una versión estable). Los plugins y las comparaciones usan solo la numérica
+set(EDITA_VERSION_SUFFIX "-beta.1")
+set(EDITA_VERSION "${PROJECT_VERSION}${EDITA_VERSION_SUFFIX}" CACHE INTERNAL "Versión de Edita")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
