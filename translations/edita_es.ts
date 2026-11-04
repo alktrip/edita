@@ -3266,12 +3266,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1747"/>
+        <location line="+1742"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2026"/>
+        <location line="-2021"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3654,7 +3654,7 @@ Do you want to save the file anyway?</source>
         <translation>no se encuentra editaPluginList.json</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+46"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
     </message>
@@ -4210,12 +4210,12 @@ Continue?</source>
     <name>edita::PluginsAdminDialog</name>
     <message>
         <location filename="../src/ui/PluginsAdminDialog.cpp" line="+76"/>
-        <location line="+348"/>
+        <location line="+343"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
     </message>
     <message>
-        <location line="-252"/>
+        <location line="-247"/>
         <source>Cannot read %1</source>
         <translation>No se puede leer %1</translation>
     </message>
@@ -4290,17 +4290,12 @@ Continue?</source>
         <translation>Versión</translation>
     </message>
     <message>
-        <location line="+22"/>
-        <source>&amp;Notepad++ Plugin List…</source>
-        <translation>Lista de plugins de &amp;Notepad++…</translation>
-    </message>
-    <message>
-        <location line="-92"/>
+        <location line="-70"/>
         <source>Plugin list version: %1</source>
         <translation>Versión de la lista de plugins: %1</translation>
     </message>
     <message>
-        <location line="+186"/>
+        <location line="+181"/>
         <source>Installed with Edita: %1</source>
         <translation>Instalado con Edita: %1</translation>
     </message>
@@ -4372,7 +4367,7 @@ Continue?</source>
         <translation>Instalar plugins</translation>
     </message>
     <message>
-        <location line="-374"/>
+        <location line="-369"/>
         <source>This computer builds the plugins of the catalog: %1</source>
         <translation>Esta computadora compila los plugins del catálogo: %1</translation>
     </message>
@@ -4412,7 +4407,7 @@ Continue?</source>
         <translation>Lista firmada del catálogo de plugins de Edita: %1</translation>
     </message>
     <message>
-        <location line="+185"/>
+        <location line="+180"/>
         <source> (from source)</source>
         <translation> (se compila)</translation>
     </message>
@@ -4507,41 +4502,6 @@ Continue?</source>
         <location line="+0"/>
         <source>Disable plugins</source>
         <translation>Desactivar plugins</translation>
-    </message>
-    <message>
-        <location line="+35"/>
-        <location line="+9"/>
-        <source>Notepad++ plugin list</source>
-        <translation>Lista de plugins de Notepad++</translation>
-    </message>
-    <message>
-        <location line="-8"/>
-        <source>The official Notepad++ plugin list will be downloaded from
-%1
-
-Its plugins are Windows DLLs: they will appear under Incompatible. Continue?</source>
-        <translation>Se descargará la lista oficial de plugins de Notepad++ desde
-%1
-
-Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</translation>
-    </message>
-    <message>
-        <location line="+8"/>
-        <source>Could not read the list: %1</source>
-        <translation>No se pudo leer la lista: %1</translation>
-    </message>
-    <message>
-        <location line="+12"/>
-        <source>Notepad++ plugin for Windows (DLL); it cannot be loaded on Linux. If it is open source, it can be ported with the Edita SDK (see docs/plugins.md).</source>
-        <translation>plugin de Notepad++ para Windows (DLL); no se puede cargar en Linux. Si es de código abierto, se puede portar con el SDK de Edita (ver docs/plugins.md).</translation>
-    </message>
-    <message numerus="yes">
-        <location line="+8"/>
-        <source>Notepad++ list %1: %n plugin(s) (incompatible)</source>
-        <translation>
-            <numerusform>Lista de Notepad++ %1: %n plugin (incompatible)</numerusform>
-            <numerusform>Lista de Notepad++ %1: %n plugins (incompatibles)</numerusform>
-        </translation>
     </message>
 </context>
 <context>

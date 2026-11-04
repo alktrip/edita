@@ -4708,11 +4708,6 @@ PluginsAdminContext MainWindow::pluginsAdminContext() const
                             .filePath(QString::fromUtf8(kAppId) + QStringLiteral("/plugin-builds"));
     context.localPackagesDir = QDir(context.userPluginsDir).filePath(QStringLiteral("local"));
 
-    const QString nppList = qEnvironmentVariable("EDITA_NPP_PLUGIN_LIST");
-    context.nppCatalogUrl = nppList.isEmpty()
-        ? QUrl(QStringLiteral("https://raw.githubusercontent.com/notepad-plus-plus/nppPluginList/master/src/pl.x64.json"))
-        : (QUrl(nppList).scheme().isEmpty() ? QUrl::fromLocalFile(nppList) : QUrl(nppList));
-
     if (_plugins) {
         for (const auto& plugin : _plugins->plugins())
             context.loadedVersions.insert(plugin->path, plugin->version);

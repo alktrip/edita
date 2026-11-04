@@ -334,6 +334,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 58 — Capa de compatibilidad v2 (4) | Controles comunes (`SysTabControl32`, `SysListView32`, `SysTreeView32`, progreso, deslizador, tooltips) con sus mensajes, macros y notificaciones; bucles de mensajes propios; `WM_PAINT` y GDI de dibujo sobre `QPainter` con DC en memoria y `BitBlt`; `RECT`; macros de `windowsx.h`. Auditoría: A 10, B1 4, B2 93 | ✅ [fase58.md](fase58.md) |
 | 59 — MIME Tools y XML Tools al catálogo | Sus recetas pasan a edita-plugins (licencia, prueba, binario); `data/plugins/recipes` desaparece; la prueba a fondo del port de XML Tools lee las recetas de `../edita-plugins` | ✅ [fase59.md](fase59.md) |
 | 60 — Ocho plugins más | SelectQuotedText, Indent By Fold, NppStripIpAndHost, ElasticTabstops, MZC8051, Datamodder SQL Formatter, NppCrossCheck, Pork to Sausage; `SysLink`, ATL (`atlconv.h`), `ShellExecuteEx`, `PathCch*`, eventos y mutex con nombre, `__ImageBase`, `BFFCALLBACK`; recetas con `recode`, `package-files` y `before` | ✅ [fase60.md](fase60.md) |
+| 61 — Sin la lista de N++ | El administrador ya no descarga la lista oficial de Notepad++ (sus DLL salían como incompatibles); Incompatibles muestra solo lo instalado que no carga | ✅ [fase61.md](fase61.md) |
 
 ---
 

@@ -249,9 +249,6 @@ void PluginsAdminDialog::buildUi()
     _status = new QLabel(this);
     _status->setObjectName(QStringLiteral("status"));
     bottom->addWidget(_status, 1);
-    _nppList = new QPushButton(tr("&Notepad++ Plugin List…"), this);
-    _nppList->setObjectName(QStringLiteral("nppList"));
-    bottom->addWidget(_nppList);
     _listVersion = new QLabel(this);
     _listVersion->setObjectName(QStringLiteral("listVersion"));
     bottom->addWidget(_listVersion);
@@ -267,7 +264,6 @@ void PluginsAdminDialog::buildUi()
     connect(_remove, &QPushButton::clicked, this, [this] { removeChecked(static_cast<Tab>(_tabs->currentIndex())); });
     connect(_deactivate, &QPushButton::clicked, this, [this] { setCheckedActive(false); });
     connect(_activate, &QPushButton::clicked, this, [this] { setCheckedActive(true); });
-    connect(_nppList, &QPushButton::clicked, this, &PluginsAdminDialog::loadNppCatalog);
 
     resize(720, 520);
 }
@@ -320,7 +316,6 @@ void PluginsAdminDialog::rescan()
                                        [&failed](const InstalledPlugin& p) { return p.path == failed.fullFilePath; }),
                         installed.end());
     }
-    incompatible.insert(incompatible.end(), _nppPlugins.begin(), _nppPlugins.end());
     // Las recetas, como si fueran de la lista (si la lista no tiene ese plugin)
     PluginCatalog catalog = _context.catalog;
     for (const PluginRecipe& recipe : _context.recipes) {
@@ -651,7 +646,7 @@ bool PluginsAdminDialog::removeChecked(Tab tab)
             errors << tr("%1: it was installed with Edita (%2) and cannot be removed from here").arg(info.displayName, info.fullFilePath);
             continue;
         }
-        // Un incompatible de la lista de N++ no está en disco
+        // Sin ruta no hay qué borrar (y una ruta vacía apuntaría a la carpeta actual)
         if (tab == Incompatible && info.fullFilePath.isEmpty()) {
             errors << tr("%1: it is not installed").arg(info.displayName);
             continue;
@@ -727,43 +722,6 @@ bool PluginsAdminDialog::search(const QString& text, bool next)
         }
     }
     return false;
-}
-
-bool PluginsAdminDialog::loadNppCatalog()
-{
-    if (!_context.nppCatalogUrl.isLocalFile()
-        && !_prompter.confirm(this, tr("Notepad++ plugin list"),
-                              tr("The official Notepad++ plugin list will be downloaded from\n%1\n\nIts plugins are "
-                                 "Windows DLLs: they will appear under Incompatible. Continue?")
-                                  .arg(_context.nppCatalogUrl.toString())))
-        return false;
-    QByteArray json;
-    QString error;
-    PluginCatalog npp;
-    if (!_fetch(_context.nppCatalogUrl, json, &error) || !PluginCatalog::parse(json, npp, &error)) {
-        _prompter.warn(this, tr("Notepad++ plugin list"), tr("Could not read the list: %1").arg(error));
-        return false;
-    }
-    _nppPlugins.clear();
-    for (PluginInfo info : npp.plugins) {
-        // Los que Edita ya ofrece (un port en su lista o una receta) no son incompatibles
-        const bool offered = _context.catalog.find(info.folderName)
-            || std::any_of(_context.recipes.begin(), _context.recipes.end(), [&info](const PluginRecipe& recipe) {
-                   return recipe.info.folderName.compare(info.folderName, Qt::CaseInsensitive) == 0;
-               });
-        if (offered)
-            continue;
-        info.problem = tr("Notepad++ plugin for Windows (DLL); it cannot be loaded on Linux. If it is open source, "
-                          "it can be ported with the Edita SDK (see docs/plugins.md).");
-        info.repository.clear(); // no se instala
-        _nppPlugins.push_back(std::move(info));
-    }
-    _nppList->setEnabled(false);
-    rescan();
-    _tabs->setCurrentIndex(Incompatible);
-    _status->setText(tr("Notepad++ list %1: %n plugin(s) (incompatible)", nullptr, static_cast<int>(_nppPlugins.size()))
-                         .arg(npp.version));
-    return true;
 }
 
 } // namespace edita

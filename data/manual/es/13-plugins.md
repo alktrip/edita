@@ -61,8 +61,9 @@ versión de Qt) o si su licencia no permite distribuir el binario.
 | **NppCrossCheck** | Compara dos listas y marca los elementos que están en una pero no en la otra. |
 | **Pork to Sausage** | Transforma la selección con un programa externo y la sustituye por su salida. |
 
-**Lista de plugins de Notepad++…** descarga la lista oficial de Notepad++, para ver si un plugin
-que usas ahí tiene versión para Edita.
+Los plugins que se descargan para Notepad++ son DLL de Windows y no se pueden cargar en Linux. Un
+plugin de Notepad++ llega a Edita cuando se compila desde su código, y entonces aparece en el
+catálogo. Si copias un DLL a la carpeta de plugins, sale en **Incompatibles**.
 
 Las demás entradas del menú Plugins abren la carpeta de plugins y muestran información de los
 plugins cargados. Los plugins que instalas van a `~/.config/edita/plugins/`.

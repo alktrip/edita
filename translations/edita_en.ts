@@ -120,7 +120,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+4225"/>
+        <location line="+4220"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -223,7 +223,7 @@
 <context>
     <name>edita::PluginsAdminDialog</name>
     <message numerus="yes">
-        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+439"/>
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+434"/>
         <source>%n plugin(s) will be installed.</source>
         <translation>
             <numerusform>%n plugin will be installed.</numerusform>
@@ -260,14 +260,6 @@
         <translation>
             <numerusform>%n plugin will be disabled.</numerusform>
             <numerusform>%n plugins will be disabled.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <location line="+82"/>
-        <source>Notepad++ list %1: %n plugin(s) (incompatible)</source>
-        <translation>
-            <numerusform>Notepad++ list %1: %n plugin (incompatible)</numerusform>
-            <numerusform>Notepad++ list %1: %n plugins (incompatible)</numerusform>
         </translation>
     </message>
 </context>

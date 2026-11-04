@@ -57,7 +57,6 @@ struct PluginsAdminContext
     QMap<QString, QString> loadedVersions; // ruta del .so cargado → edita_plugin_version()
     std::vector<PluginInfo> loadFailures;  // los que no se pudieron cargar
     PluginVersion appVersion;
-    QUrl nppCatalogUrl;                // la lista oficial de Notepad++ (para consultarla)
     // Plugins que se compilan en el equipo desde su código (recetas)
     std::vector<PluginRecipe> recipes;
     PluginSdk sdk;
@@ -112,8 +111,6 @@ public:
 
     // searchInPlugins: desde la selección, en los nombres y luego en las descripciones
     bool search(const QString& text, bool next = false);
-    // Lista oficial de N++: sus plugins son DLL de Windows → Incompatibles
-    bool loadNppCatalog();
 
     QString descriptionText() const;
     // El registro de la última compilación desde el código
@@ -147,7 +144,6 @@ private:
     Prompter& _prompter;
     Fetcher _fetch;
     PluginLists _lists;
-    std::vector<PluginInfo> _nppPlugins; // de la lista de N++, si se ha consultado
     QMap<QString, QString> _installedVersions; // carpeta → versión instalada en esta sesión
     bool _changed = false;
     QString _lastBuildLog;
@@ -162,7 +158,6 @@ private:
     QPushButton* _remove = nullptr;
     QPushButton* _deactivate = nullptr;
     QPushButton* _activate = nullptr;
-    QPushButton* _nppList = nullptr;
     QPlainTextEdit* _description = nullptr;
     QLabel* _listVersion = nullptr;
     QLabel* _status = nullptr;

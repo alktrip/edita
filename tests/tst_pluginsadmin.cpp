@@ -25,6 +25,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QLabel>
+#include <QPushButton>
 #include <QTimer>
 #include <QTreeWidget>
 
@@ -324,71 +325,37 @@ private slots:
         QCOMPARE(second.list(PluginsAdminDialog::Available)->topLevelItemCount(), 1);
     }
 
-    void notepadPlusPlusPluginsThatEditaOffersAreNotIncompatible()
+    void incompatibleAndSearch()
     {
-        // MarkdownViewer++ está en la lista de Edita (un port) y XML Tools tiene receta: en la
-        // lista de N++ no salen como incompatibles; Compare sí
         writeCatalog(repo() + "/list.json",
-                     {entry("MarkdownViewerPlusPlus", "MarkdownViewer++", "0.8.2", QString(), QString())});
-        writeCatalog(repo() + "/npp.json",
-                     {entry("ComparePlugin", "Compare", "2.0.2", "https://example.org/Compare.zip", QString(64, 'a')),
-                      entry("MarkdownViewerPlusPlus", "MarkdownViewer++", "0.8.2", "https://example.org/MV.zip", QString(64, 'b')),
-                      entry("XMLTools", "XML Tools", "3.1", "https://example.org/XMLTools.zip", QString(64, 'c'))});
-        qputenv("EDITA_NPP_PLUGIN_LIST", repo().toUtf8() + "/npp.json");
-        MainWindow w;
-        w.setPrompter(std::make_unique<FakePrompter>());
-        FakePrompter prompter;
-        PluginsAdminContext context = adminContext(w);
-        PluginRecipe recipe;
-        recipe.info.folderName = QStringLiteral("XMLTools");
-        context.recipes.push_back(recipe);
-        PluginsAdminDialog dialog(context, prompter);
-        QVERIFY(dialog.loadNppCatalog());
-        QStringList incompatible;
-        for (const PluginInfo& info : dialog.lists().incompatible)
-            incompatible << info.folderName;
-        QCOMPARE(incompatible, QStringList{QStringLiteral("ComparePlugin")});
-        qunsetenv("EDITA_NPP_PLUGIN_LIST");
-    }
-
-    void incompatibleAndNotepadPlusPlusList()
-    {
-        writeCatalog(repo() + "/list.json", {});
-        writeFile(userPlugins() + "/Roto/Roto.so", "esto no es una biblioteca");
-        // La lista oficial de N++ (un archivo local en la prueba)
-        writeCatalog(repo() + "/npp.json",
                      {entry("ComparePlugin", "Compare", "2.0.2", "https://example.org/Compare.zip", QString(64, 'a'),
                             "Compara dos archivos"),
-                      entry("XMLTools", "XML Tools", "3.1", "https://example.org/XMLTools.zip", QString(64, 'b'))},
-                     QStringLiteral("1.8.3"));
-        qputenv("EDITA_NPP_PLUGIN_LIST", repo().toUtf8() + "/npp.json");
+                      entry("XMLTools", "XML Tools", "3.1", "https://example.org/XMLTools.zip", QString(64, 'b'))});
+        writeFile(userPlugins() + "/Roto/Roto.so", "esto no es una biblioteca");
         MainWindow w;
         w.setPrompter(std::make_unique<FakePrompter>());
         FakePrompter prompter;
         PluginsAdminDialog dialog(adminContext(w), prompter);
-        // Un plugin que no se pudo cargar
+        // Fase 61: ya no se consulta la lista de N++ (sus DLL de Windows nunca se pueden cargar)
+        QVERIFY(!dialog.findChild<QPushButton*>(QStringLiteral("nppList")));
+        // Un plugin que no se pudo cargar: es lo único que hay en Incompatibles
         QCOMPARE(dialog.list(PluginsAdminDialog::Incompatible)->topLevelItemCount(), 1);
         QCOMPARE(dialog.lists().incompatible[0].displayName, QStringLiteral("Roto.so"));
         QVERIFY(!dialog.lists().incompatible[0].problem.isEmpty());
 
-        QVERIFY(dialog.loadNppCatalog());
-        QCOMPARE(dialog.list(PluginsAdminDialog::Incompatible)->topLevelItemCount(), 3);
-        QVERIFY(dialog.findChild<QLabel*>(QStringLiteral("status"))->text().contains(QStringLiteral("1.8.3")));
         // Búsqueda: por nombre y, si no, por descripción (al menos dos letras)
         QVERIFY(!dialog.search(QStringLiteral("x")));
         QVERIFY(dialog.search(QStringLiteral("xml")));
-        QCOMPARE(dialog.list(PluginsAdminDialog::Incompatible)->currentItem()->text(0), QStringLiteral("XML Tools"));
-        QVERIFY(dialog.descriptionText().contains(QStringLiteral("Windows")));
+        QCOMPARE(dialog.list(PluginsAdminDialog::Available)->currentItem()->text(0), QStringLiteral("XML Tools"));
         QVERIFY(dialog.search(QStringLiteral("compara")));
-        QCOMPARE(dialog.list(PluginsAdminDialog::Incompatible)->currentItem()->text(0), QStringLiteral("Compare"));
-        // Los de N++ no se pueden quitar (no están instalados); el roto sí
-        QVERIFY(dialog.setChecked(PluginsAdminDialog::Incompatible, "XMLTools"));
+        QCOMPARE(dialog.list(PluginsAdminDialog::Available)->currentItem()->text(0), QStringLiteral("Compare"));
+        QVERIFY(dialog.descriptionText().contains(QStringLiteral("Compara dos archivos")));
+
+        // El roto se puede quitar
         QVERIFY(dialog.setChecked(PluginsAdminDialog::Incompatible, "Roto"));
         prompter.confirmations.enqueue(true);
-        QVERIFY(!dialog.removeChecked(PluginsAdminDialog::Incompatible));
-        QVERIFY(prompter.warnings.last().contains(QStringLiteral("is not installed")));
+        QVERIFY(dialog.removeChecked(PluginsAdminDialog::Incompatible));
         QVERIFY(!QFileInfo::exists(userPlugins() + "/Roto"));
-        qunsetenv("EDITA_NPP_PLUGIN_LIST");
     }
 
     // Fase 56: la lista firmada del catálogo de Edita, descargada al abrir el administrador
