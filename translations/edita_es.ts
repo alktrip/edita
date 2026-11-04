@@ -762,7 +762,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../src/core/PluginRecipe.cpp" line="+47"/>
+        <location filename="../src/core/PluginRecipe.cpp" line="+50"/>
         <source>Could not copy %1</source>
         <translation>No se pudo copiar %1</translation>
     </message>
@@ -782,7 +782,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>%1: fuente adicional no válida (se requieren url y dest)</translation>
     </message>
     <message>
-        <location line="+117"/>
+        <location line="+10"/>
+        <source>%1: unknown encoding in recode: %2</source>
+        <translation>%1: codificación desconocida en recode: %2</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>%1: invalid package file (from and to, inside the plugin)</source>
+        <translation>%1: archivo del paquete no válido (from y to, dentro del plugin)</translation>
+    </message>
+    <message>
+        <location line="+118"/>
         <source>%1 (development library, pkg-config)</source>
         <translation>%1 (biblioteca de desarrollo, pkg-config)</translation>
     </message>
@@ -3256,12 +3266,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1746"/>
+        <location line="+1747"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2025"/>
+        <location line="-2026"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3644,7 +3654,7 @@ Do you want to save the file anyway?</source>
         <translation>no se encuentra editaPluginList.json</translation>
     </message>
     <message>
-        <location line="+50"/>
+        <location line="+51"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
     </message>
@@ -5602,12 +5612,12 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
     </message>
     <message>
         <location line="+14"/>
-        <location line="+120"/>
+        <location line="+140"/>
         <source>canceled</source>
         <translation>cancelado</translation>
     </message>
     <message>
-        <location line="-111"/>
+        <location line="-131"/>
         <source>%1 %2 from source code</source>
         <translation>%1 %2 desde el código fuente</translation>
     </message>
@@ -5667,7 +5677,22 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <translation>Quitados del original: %1</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+7"/>
+        <source>cannot recode %1: it is not in the source code</source>
+        <translation>no se puede convertir %1: no está en el código fuente</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>cannot recode %1</source>
+        <translation>no se puede convertir %1</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Converted from %1 to UTF-8: %2</source>
+        <translation>Convertido de %1 a UTF-8: %2</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Edita port copied over the code (%1/)</source>
         <translation>Port de Edita copiado sobre el código (%1/)</translation>
     </message>
@@ -5718,6 +5743,11 @@ Sus plugins son DLL de Windows: aparecerán en Incompatibles. ¿Continuar?</tran
         <location line="+9"/>
         <source>the license file %1 is not in the source code</source>
         <translation>el archivo de licencia %1 no está en el código fuente</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>the package file %1 is not in the source code</source>
+        <translation>el archivo del paquete %1 no está en el código fuente</translation>
     </message>
     <message>
         <location line="+9"/>

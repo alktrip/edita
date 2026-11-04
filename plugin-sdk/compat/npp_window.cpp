@@ -49,6 +49,7 @@
 #include <QPointer>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QScreen>
 #include <QScrollBar>
@@ -153,7 +154,7 @@ bool spanish()
 
 constexpr uint32_t kWindowMagic = 0x48574E44; // "HWND"
 
-enum class Kind { Generic, Dialog, Button, Edit, Static, ListBox, ComboBox, Custom, Tab, ListView, TreeView, Progress, Trackbar, Tooltip };
+enum class Kind { Generic, Dialog, Button, Edit, Static, ListBox, ComboBox, Custom, Tab, ListView, TreeView, Progress, Trackbar, Tooltip, Link };
 
 struct WindowClass
 {
@@ -219,6 +220,7 @@ struct Window
     UINT treeAction = 0;              // TVC_BYMOUSE, TVC_BYKEYBOARD o TVC_UNKNOWN
     int progressStep = 10;
     std::vector<std::pair<HWND, QString>> tools; // tooltips: la ventana y su texto
+    std::vector<std::pair<QString, QString>> links; // SysLink: el id y la URL de cada enlace
     // Dibujo: el DC de WM_PAINT mientras dura (BeginPaint lo devuelve)
     DeviceContext* paintDc = nullptr;
     QRect paintRect;
@@ -371,6 +373,38 @@ QString windowText(Window* w)
     }
 }
 
+// SysLink: «Texto <a href="url" id="x">enlace</a>» al HTML del QLabel; cada enlace apunta a
+// «edita-link:<n>» y su id y su URL quedan en la ventana (NMLINK)
+QString linkMarkup(Window* w, const QString& text)
+{
+    static const QRegularExpression tag(QStringLiteral(R"re(<a\b([^>]*)>(.*?)</a>)re"),
+                                        QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption);
+    static const QRegularExpression attribute(QStringLiteral(R"re((href|id)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))re"),
+                                              QRegularExpression::CaseInsensitiveOption);
+    w->links.clear();
+    QString html;
+    qsizetype from = 0;
+    for (auto it = tag.globalMatch(text); it.hasNext();) {
+        const QRegularExpressionMatch match = it.next();
+        html += text.mid(from, match.capturedStart() - from).toHtmlEscaped();
+        QString id;
+        QString url;
+        for (auto at = attribute.globalMatch(match.captured(1)); at.hasNext();) {
+            const QRegularExpressionMatch a = at.next();
+            const QString value = a.captured(2) + a.captured(3) + a.captured(4);
+            if (a.captured(1).compare(QLatin1String("href"), Qt::CaseInsensitive) == 0)
+                url = value;
+            else
+                id = value;
+        }
+        html += QStringLiteral("<a href=\"edita-link:%1\">%2</a>").arg(w->links.size()).arg(match.captured(2).toHtmlEscaped());
+        w->links.emplace_back(id, url);
+        from = match.capturedEnd();
+    }
+    html += text.mid(from).toHtmlEscaped();
+    return html;
+}
+
 void setWindowText(Window* w, const QString& text)
 {
     w->text = text;
@@ -403,6 +437,10 @@ void setWindowText(Window* w, const QString& text)
     case Kind::Static:
         if (auto* label = qobject_cast<QLabel*>(widget))
             label->setText((w->style & SS_NOPREFIX) ? text : withoutMnemonic(text));
+        break;
+    case Kind::Link:
+        if (auto* label = qobject_cast<QLabel*>(widget))
+            label->setText(linkMarkup(w, text));
         break;
     default:
         if (widget->isWindow())
@@ -2816,6 +2854,8 @@ QWidget* createSmallControl(Window* w, const QString& name, QWidget* parent)
     return nullptr;
 }
 
+LRESULT linkMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam);
+
 LRESULT commonControlMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam, bool* handled)
 {
     *handled = true;
@@ -2839,6 +2879,10 @@ LRESULT commonControlMessage(Window* w, UINT message, WPARAM wParam, LPARAM lPar
     case Kind::Trackbar:
         if (message >= WM_USER && message <= WM_USER + 30)
             return trackbarMessage(w, message, wParam, lParam);
+        break;
+    case Kind::Link:
+        if (message >= LM_HITTEST && message <= LM_GETITEM)
+            return linkMessage(w, message, wParam, lParam);
         break;
     case Kind::Tooltip:
         switch (message) {
@@ -2866,8 +2910,73 @@ LRESULT commonControlMessage(Window* w, UINT message, WPARAM wParam, LPARAM lPar
     return 0;
 }
 
+void fillLinkItem(Window* w, int index, LITEM& item)
+{
+    item.iLink = index;
+    if (index < 0 || index >= static_cast<int>(w->links.size()))
+        return;
+    copyTo(w->links[static_cast<std::size_t>(index)].first.toStdWString(), item.szID, MAX_LINKID_TEXT);
+    copyTo(w->links[static_cast<std::size_t>(index)].second.toStdWString(), item.szUrl, L_MAX_URL_LENGTH);
+    item.state = LIS_ENABLED;
+}
+
+QWidget* createLinkControl(Window* w, QWidget* parent)
+{
+    w->kind = Kind::Link;
+    auto* label = new QLabel(parent);
+    label->setTextFormat(Qt::RichText);
+    label->setOpenExternalLinks(false);
+    label->setTextInteractionFlags(Qt::LinksAccessibleByMouse | Qt::LinksAccessibleByKeyboard);
+    label->setWordWrap(true);
+    // El clic (o Intro) en un enlace: NM_CLICK con su índice, su id y su URL; el plugin
+    // decide qué hacer (casi siempre, ShellExecute de la URL)
+    QObject::connect(label, &QLabel::linkActivated, label, [w](const QString& href) {
+        NMLINK nm{};
+        nm.item.mask = LIF_ITEMINDEX | LIF_ITEMID | LIF_URL | LIF_STATE;
+        fillLinkItem(w, href.section(QLatin1Char(':'), 1).toInt(), nm.item);
+        notifyNM(w, nm, NM_CLICK);
+    });
+    return label;
+}
+
+LRESULT linkMessage(Window* w, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    auto* label = qobject_cast<QLabel*>(w->widget);
+    if (!label)
+        return 0;
+    switch (message) {
+    case LM_GETIDEALHEIGHT:
+        return label->hasHeightForWidth() ? label->heightForWidth(wParam ? static_cast<int>(wParam) : label->width())
+                                          : label->sizeHint().height();
+    case LM_GETITEM: {
+        auto* item = reinterpret_cast<LITEM*>(lParam);
+        if (!item || item->iLink < 0 || item->iLink >= static_cast<int>(w->links.size()))
+            return FALSE;
+        fillLinkItem(w, item->iLink, *item);
+        return TRUE;
+    }
+    case LM_SETITEM: {
+        auto* item = reinterpret_cast<LITEM*>(lParam);
+        if (!item || item->iLink < 0 || item->iLink >= static_cast<int>(w->links.size()))
+            return FALSE;
+        auto& link = w->links[static_cast<std::size_t>(item->iLink)];
+        if (item->mask & LIF_ITEMID)
+            link.first = QString::fromWCharArray(item->szID);
+        if (item->mask & LIF_URL)
+            link.second = QString::fromWCharArray(item->szUrl);
+        return TRUE;
+    }
+    case LM_HITTEST:
+        return FALSE;
+    default:
+        return 0;
+    }
+}
+
 QWidget* createCommonControl(Window* w, const QString& name, QWidget* parent)
 {
+    if (name == QLatin1String("SYSLINK"))
+        return createLinkControl(w, parent);
     if (name == QLatin1String("SYSTABCONTROL32"))
         return createTabControl(w, parent);
     if (name == QLatin1String("SYSLISTVIEW32"))
@@ -3814,12 +3923,48 @@ QString pidlPath(PCIDLIST_ABSOLUTE pidl)
     return magic == kPidlMagic ? QString::fromUtf8(reinterpret_cast<const char*>(pidl) + sizeof magic) : QString();
 }
 
+
+// La ventana que recibe los BFFM_* del callback de SHBrowseForFolder (BFFM_SETSELECTION: la
+// carpeta con la que se abre el diálogo)
+QString g_browseSelection;
+LRESULT CALLBACK browseProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (message == BFFM_SETSELECTIONA || message == BFFM_SETSELECTIONW || message == BFFM_SETEXPANDED) {
+        if (!wParam)
+            g_browseSelection = pidlPath(reinterpret_cast<PCIDLIST_ABSOLUTE>(lParam));
+        else if (message == BFFM_SETSELECTIONA)
+            g_browseSelection = fromA(reinterpret_cast<const char*>(lParam));
+        else
+            g_browseSelection = fromW(reinterpret_cast<const wchar_t*>(lParam));
+        return TRUE;
+    }
+    if (message >= BFFM_SETSTATUSTEXTA && message <= BFFM_SETEXPANDED)
+        return TRUE;
+    return DefWindowProcW(hwnd, message, wParam, lParam);
+}
+
 template<typename Bi>
 PIDLIST_ABSOLUTE browseForFolder(Bi* bi)
 {
     if (!bi)
         return nullptr;
-    const QString start = pidlPath(bi->pidlRoot);
+    QString start = pidlPath(bi->pidlRoot);
+    if (bi->lpfn) {
+        static const ATOM atom = [] {
+            WNDCLASSW wc{};
+            wc.lpfnWndProc = browseProc;
+            wc.lpszClassName = L"EditaBrowseForFolder";
+            return RegisterClassW(&wc);
+        }();
+        HWND callbackWindow = atom ? CreateWindowExW(0, L"EditaBrowseForFolder", L"", 0, 0, 0, 0, 0, nullptr, nullptr, nullptr, nullptr)
+                                   : nullptr;
+        g_browseSelection.clear();
+        bi->lpfn(callbackWindow, BFFM_INITIALIZED, 0, bi->lParam);
+        if (!g_browseSelection.isEmpty())
+            start = QString(g_browseSelection).replace(QLatin1Char('\\'), QLatin1Char('/'));
+        if (callbackWindow)
+            DestroyWindow(callbackWindow);
+    }
     const QString folder = QFileDialog::getExistingDirectory(widgetOf(bi->hwndOwner), fromChars(bi->lpszTitle), start);
     if (folder.isEmpty())
         return nullptr;
@@ -4710,6 +4855,7 @@ BOOL EndDialog(HWND hwnd, INT_PTR result)
     return TRUE;
 }
 
+BOOL IsWindowUnicode(HWND hwnd) { return edita_compat_isWindow(hwnd) || hwnd == edita_compat_hostHwnd() ? TRUE : FALSE; }
 BOOL IsDialogMessageA(HWND, LPMSG) { return FALSE; }
 BOOL IsDialogMessageW(HWND, LPMSG) { return FALSE; }
 
@@ -5760,6 +5906,29 @@ HMENU GetSubMenu(HMENU handle, int position)
     sub->menu = action->menu();
     return sub;
 }
+
+extern "C++" template<typename Ch>
+int getMenuString(HMENU handle, UINT item, Ch* text, int size, UINT flags)
+{
+    Menu* m = menuOf(handle);
+    QAction* action = m && !m->host ? findAction(m->menu, item, flags) : nullptr;
+    if (!action || action->isSeparator())
+        return 0;
+    const QString label = action->menu() ? action->menu()->title() : action->text();
+    if (!text || size <= 0) {
+        if constexpr (sizeof(Ch) == 1)
+            return static_cast<int>(label.toStdString().size());
+        else
+            return static_cast<int>(label.toStdWString().size());
+    }
+    if constexpr (sizeof(Ch) == 1)
+        return copyTo(label.toStdString(), text, size);
+    else
+        return copyTo(label.toStdWString(), text, size);
+}
+
+int GetMenuStringA(HMENU menu, UINT item, LPSTR text, int size, UINT flags) { return getMenuString(menu, item, text, size, flags); }
+int GetMenuStringW(HMENU menu, UINT item, LPWSTR text, int size, UINT flags) { return getMenuString(menu, item, text, size, flags); }
 
 HMENU GetMenu(HWND hwnd)
 {

@@ -25,6 +25,7 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QScreen>
+#include <QTextDocumentFragment>
 #include <QTimer>
 #include <QTabBar>
 #include <QTabWidget>
@@ -46,6 +47,10 @@
 
 // Después de Qt: npp_compat.h define macros con nombres de Win32 y del CRT
 #include "npp_compat.h"
+#include "atlconv.h"
+#include "pathcch.h"
+
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
 namespace {
 
@@ -214,6 +219,8 @@ struct Notification
     WORD key = 0;
     int curSel = -2;           // TabCtrl_GetCurSel durante la notificación
     HTREEITEM caret = nullptr; // TreeView_GetSelection durante la notificación
+    QString linkId;            // SysLink: el id y la URL del enlace (NMLINK)
+    QString linkUrl;
 };
 std::vector<Notification> g_notifications;
 UINT g_refuse = 0;              // la notificación a la que se contesta TRUE
@@ -251,11 +258,17 @@ LRESULT CALLBACK notifyProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     Notification n;
     n.code = header->code;
     n.id = header->idFrom;
-    wchar_t buffer[8];
-    GetClassName(header->hwndFrom, buffer, 8);
+    wchar_t buffer[16];
+    GetClassName(header->hwndFrom, buffer, 16);
     const QString klass = QString::fromWCharArray(buffer);
     if (klass.startsWith(QLatin1String("SysTab")))
         n.curSel = TabCtrl_GetCurSel(header->hwndFrom);
+    if (klass.startsWith(QLatin1String("SysLink"))) {
+        const auto* link = reinterpret_cast<const NMLINK*>(lParam);
+        n.item = link->item.iLink;
+        n.linkId = QString::fromWCharArray(link->item.szID);
+        n.linkUrl = QString::fromWCharArray(link->item.szUrl);
+    }
     if (klass.startsWith(QLatin1String("SysList"))) {
         if (header->code == LVN_KEYDOWN) {
             n.key = reinterpret_cast<const NMLVKEYDOWN*>(lParam)->wVKey;
@@ -344,6 +357,18 @@ LRESULT CALLBACK paintProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam
 int CALLBACK compareParamsDescending(LPARAM a, LPARAM b, LPARAM)
 {
     return a < b ? 1 : a > b ? -1 : 0;
+}
+
+// SHBrowseForFolder: el callback elige la carpeta inicial (BFFM_SETSELECTION)
+std::wstring g_browseFolder;
+LPARAM g_browseInitialized = 0;
+int CALLBACK browseCallback(HWND hwnd, UINT message, LPARAM, LPARAM data)
+{
+    if (message == BFFM_INITIALIZED) {
+        g_browseInitialized = data;
+        SendMessage(hwnd, BFFM_SETSELECTION, TRUE, reinterpret_cast<LPARAM>(g_browseFolder.c_str()));
+    }
+    return 0;
 }
 
 bool g_loopDone = false;
@@ -1976,6 +2001,133 @@ private slots:
         QCOMPARE(r.left, LONG{4});
         SetRectEmpty(&r);
         QVERIFY(IsRectEmpty(&r));
+    }
+
+    // --- Fase 60: lo que frenaba al lote de plugins ----------------------------------------
+
+    void linksAndNamedObjects()
+    {
+        g_notifications.clear();
+        HWND parent = notifyParent();
+        QVERIFY(QTest::qWaitForWindowExposed(static_cast<QWidget*>(edita_compat_widget(parent))));
+        // SysLink: el texto con sus enlaces; el clic llega como NM_CLICK con el id y la URL
+        HWND link = CreateWindowEx(0, WC_LINK, L"Visita <a href=\"https://ejemplo.org/a?b=1&c=2\" id=\"web\">el sitio</a> & <a>otro</a>",
+                                   WS_CHILD | WS_VISIBLE, 0, 0, 300, 40, parent, reinterpret_cast<HMENU>(310), nullptr, nullptr);
+        QVERIFY(link);
+        auto* label = qobject_cast<QLabel*>(static_cast<QWidget*>(edita_compat_widget(link)));
+        QVERIFY(label);
+        QCOMPARE(QTextDocumentFragment::fromHtml(label->text()).toPlainText(), QStringLiteral("Visita el sitio & otro"));
+        emit label->linkActivated(QStringLiteral("edita-link:0"));
+        QCOMPARE(lastNotification(NM_CLICK)->linkUrl, QStringLiteral("https://ejemplo.org/a?b=1&c=2"));
+        QCOMPARE(lastNotification(NM_CLICK)->linkId, QStringLiteral("web"));
+        QCOMPARE(lastNotification(NM_CLICK)->item, 0);
+        QCOMPARE(lastNotification(NM_CLICK)->id, UINT_PTR{310});
+        emit label->linkActivated(QStringLiteral("edita-link:1"));
+        QCOMPARE(lastNotification(NM_CLICK)->item, 1);
+        QVERIFY(lastNotification(NM_CLICK)->linkUrl.isEmpty());
+        LITEM item{};
+        item.mask = LIF_ITEMINDEX | LIF_URL;
+        item.iLink = 0;
+        QVERIFY(SendMessage(link, LM_GETITEM, 0, reinterpret_cast<LPARAM>(&item)));
+        QCOMPARE(QString::fromWCharArray(item.szUrl), QStringLiteral("https://ejemplo.org/a?b=1&c=2"));
+        QVERIFY(SendMessage(link, LM_GETIDEALHEIGHT, 300, 0) > 0);
+        wchar_t text[128];
+        GetWindowText(link, text, 128); // el texto con su marcado, como lo dio el plugin
+        QVERIFY(QString::fromWCharArray(text).startsWith(QStringLiteral("Visita <a href=")));
+        QVERIFY(IsWindowUnicode(link));
+        DestroyWindow(parent);
+
+        // Eventos y mutex con nombre: el mismo objeto dentro del proceso
+        HANDLE first = CreateEvent(nullptr, TRUE, FALSE, L"edita-prueba");
+        QVERIFY(first);
+        QCOMPARE(GetLastError(), DWORD{0});
+        HANDLE again = CreateEvent(nullptr, TRUE, FALSE, L"edita-prueba");
+        QCOMPARE(again, first);
+        QCOMPARE(GetLastError(), DWORD{ERROR_ALREADY_EXISTS});
+        HANDLE opened = OpenEvent(EVENT_ALL_ACCESS, FALSE, L"edita-prueba");
+        QCOMPARE(opened, first);
+        QVERIFY(SetEvent(opened));
+        QCOMPARE(WaitForSingleObject(first, 0), DWORD{WAIT_OBJECT_0});
+        QVERIFY(!OpenMutex(MUTEX_ALL_ACCESS, FALSE, L"edita-prueba")); // es un evento
+        CloseHandle(opened);
+        CloseHandle(again);
+        CloseHandle(first);
+        QVERIFY(!OpenEvent(EVENT_ALL_ACCESS, FALSE, L"edita-prueba")); // ya no existe
+        HANDLE mutex = CreateMutex(nullptr, FALSE, L"edita-mutex");
+        QCOMPARE(OpenMutex(MUTEX_ALL_ACCESS, FALSE, L"edita-mutex"), mutex);
+        CloseHandle(mutex);
+        CloseHandle(mutex);
+    }
+
+    void shellAndModuleHelpers()
+    {
+        // ShellExecuteEx con SEE_MASK_NOCLOSEPROCESS: el proceso, para esperarlo
+        SHELLEXECUTEINFO info{};
+        info.cbSize = sizeof(info);
+        info.fMask = SEE_MASK_NOCLOSEPROCESS;
+        info.lpVerb = L"open";
+        info.lpFile = L"sh";
+        info.lpParameters = L"-c \"exit 3\"";
+        QVERIFY(ShellExecuteEx(&info));
+        QVERIFY(info.hProcess);
+        QVERIFY(reinterpret_cast<intptr_t>(info.hInstApp) > 32);
+        QCOMPARE(WaitForSingleObject(info.hProcess, 10000), DWORD{WAIT_OBJECT_0});
+        DWORD code = 0;
+        QVERIFY(GetExitCodeProcess(info.hProcess, &code));
+        QCOMPARE(code, DWORD{3});
+        CloseHandle(info.hProcess);
+        // &__ImageBase es el HINSTANCE del módulo, como en Windows
+        QCOMPARE(reinterpret_cast<HINSTANCE>(&__ImageBase), edita_compat_module());
+        QVERIFY(DisableThreadLibraryCalls(edita_compat_module()));
+        // GetMenuString: el texto con su '&'
+        HMENU menu = CreatePopupMenu();
+        AppendMenu(menu, MF_STRING, 10, L"&Abrir");
+        wchar_t text[32];
+        QCOMPARE(GetMenuString(menu, 10, text, 32, MF_BYCOMMAND), 6);
+        QCOMPARE(QString::fromWCharArray(text), QStringLiteral("&Abrir"));
+        QCOMPARE(GetMenuString(menu, 0, nullptr, 0, MF_BYPOSITION), 6);
+        DestroyMenu(menu);
+        // pathcch.h
+        wchar_t path[64] = L"C:\\carpeta\\archivo.txt";
+        PCWSTR extension = nullptr;
+        QCOMPARE(PathCchFindExtension(path, 64, &extension), S_OK);
+        QCOMPARE(QString::fromWCharArray(extension), QStringLiteral(".txt"));
+        QCOMPARE(PathCchRemoveFileSpec(path, 64), S_OK);
+        QCOMPARE(QString::fromWCharArray(path), QStringLiteral("C:\\carpeta"));
+        wchar_t joined[64];
+        QCOMPARE(PathCchCombine(joined, 64, L"/home/a", L"b.txt"), S_OK);
+        QCOMPARE(QString::fromWCharArray(joined), QStringLiteral("/home/a/b.txt"));
+        QCOMPARE(PathCchCombine(joined, 8, L"/home/a", L"b.txt"), E_INVALIDARG); // no cabe
+        // Las conversiones de ATL y los IsChar* de un byte
+        USES_CONVERSION;
+        QCOMPARE(QString::fromUtf8(W2A(L"año ñ")), QStringLiteral("año ñ"));
+        QCOMPARE(QString::fromWCharArray(A2W("año")), QStringLiteral("año"));
+        const CW2A euro(L"€");
+        QCOMPARE(QString::fromUtf8(static_cast<const char*>(euro)), QStringLiteral("€"));
+        QVERIFY(IsCharAlphaNumericA('7') && IsCharAlphaA('x') && !IsCharAlphaA('-'));
+        QCOMPARE(__max(3, 7), 7);
+        QCOMPARE(__min(3, 7), 3);
+        const byte b = 200;
+        QCOMPARE(int(b), 200);
+    }
+
+    void browseForFolderCallback()
+    {
+        // BFFM_INITIALIZED antes de abrir el diálogo; BFFM_SETSELECTION elige la carpeta inicial
+        const QString folder = _tmp.filePath(QStringLiteral("elegida"));
+        QDir().mkpath(folder);
+        g_browseFolder = folder.toStdWString();
+        QString shown;
+        answerDialog<QFileDialog>([&shown](QFileDialog* dialog) { shown = dialog->directory().absolutePath(); });
+        BROWSEINFO bi{};
+        bi.lpszTitle = L"Carpeta";
+        bi.lpfn = browseCallback;
+        bi.lParam = 77;
+        PIDLIST_ABSOLUTE pidl = SHBrowseForFolder(&bi);
+        QCOMPARE(g_browseInitialized, LPARAM{77});
+        QCOMPARE(shown, QDir(folder).absolutePath());
+        if (pidl)
+            CoTaskMemFree(pidl);
     }
 
     void processes()

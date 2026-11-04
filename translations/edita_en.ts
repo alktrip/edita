@@ -120,7 +120,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+4224"/>
+        <location line="+4225"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -274,7 +274,7 @@
 <context>
     <name>edita::RecipeBuilder</name>
     <message numerus="yes">
-        <location filename="../src/core/PluginRecipe.cpp" line="+557"/>
+        <location filename="../src/core/PluginRecipe.cpp" line="+600"/>
         <source>Fixed the Windows #include lines (case, \) in %n file(s)</source>
         <translation>
             <numerusform>Fixed the Windows #include lines (case, \) in %n file</numerusform>

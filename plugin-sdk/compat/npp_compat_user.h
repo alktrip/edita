@@ -863,6 +863,25 @@ typedef struct _browseinfoW {
     HWND hwndOwner; PCIDLIST_ABSOLUTE pidlRoot; LPWSTR pszDisplayName; LPCWSTR lpszTitle; UINT ulFlags; BFFCALLBACK lpfn;
     LPARAM lParam; int iImage;
 } BROWSEINFOW, *LPBROWSEINFOW;
+/* lpfn: BFFM_INITIALIZED antes de abrir el diálogo; BFFM_SETSELECTION elige la carpeta inicial */
+#define BFFM_INITIALIZED 1
+#define BFFM_SELCHANGED 2
+#define BFFM_VALIDATEFAILEDA 3
+#define BFFM_VALIDATEFAILEDW 4
+#define BFFM_SETSTATUSTEXTA (WM_USER + 100)
+#define BFFM_ENABLEOK (WM_USER + 101)
+#define BFFM_SETSELECTIONA (WM_USER + 102)
+#define BFFM_SETSELECTIONW (WM_USER + 103)
+#define BFFM_SETSTATUSTEXTW (WM_USER + 104)
+#define BFFM_SETOKTEXT (WM_USER + 105)
+#define BFFM_SETEXPANDED (WM_USER + 106)
+#ifdef UNICODE
+#define BFFM_SETSELECTION BFFM_SETSELECTIONW
+#define BFFM_SETSTATUSTEXT BFFM_SETSTATUSTEXTW
+#else
+#define BFFM_SETSELECTION BFFM_SETSELECTIONA
+#define BFFM_SETSTATUSTEXT BFFM_SETSTATUSTEXTA
+#endif
 #define BIF_RETURNONLYFSDIRS 0x00000001
 #define BIF_DONTGOBELOWDOMAIN 0x00000002
 #define BIF_EDITBOX 0x00000010
@@ -981,6 +1000,8 @@ HWND CreateDialogIndirectParamW(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplat
 INT_PTR DialogBoxIndirectParamA(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init);
 INT_PTR DialogBoxIndirectParamW(HINSTANCE instance, LPCDLGTEMPLATE dialogTemplate, HWND parent, DLGPROC proc, LPARAM init);
 BOOL EndDialog(HWND hwnd, INT_PTR result);
+/* Las ventanas de la capa son Unicode */
+BOOL IsWindowUnicode(HWND hwnd);
 BOOL IsDialogMessageA(HWND hwnd, LPMSG msg);
 BOOL IsDialogMessageW(HWND hwnd, LPMSG msg);
 HWND GetDlgItem(HWND dialog, int id);
@@ -1115,6 +1136,8 @@ UINT GetMenuState(HMENU menu, UINT item, UINT flags);
 int GetMenuItemCount(HMENU menu);
 UINT GetMenuItemID(HMENU menu, int position);
 HMENU GetSubMenu(HMENU menu, int position);
+int GetMenuStringA(HMENU menu, UINT item, LPSTR text, int size, UINT flags);
+int GetMenuStringW(HMENU menu, UINT item, LPWSTR text, int size, UINT flags);
 HMENU GetMenu(HWND hwnd);
 BOOL DrawMenuBar(HWND hwnd);
 BOOL TrackPopupMenu(HMENU menu, UINT flags, int x, int y, int reserved, HWND hwnd, const RECT* rect);
@@ -1240,6 +1263,12 @@ EDITA_COMPAT_END
 #define GetMenuItemInfo EDITA_COMPAT_AW(GetMenuItemInfo)
 #define SetMenuItemInfo EDITA_COMPAT_AW(SetMenuItemInfo)
 #define InsertMenuItem EDITA_COMPAT_AW(InsertMenuItem)
+#define GetMenuString EDITA_COMPAT_AW(GetMenuString)
+/* CreateDialog y CreateDialogIndirect: las de *Param con 0 */
+#define CreateDialogA(i, n, p, d) CreateDialogParam((i), (n), (p), (d), 0)
+#define CreateDialogW(i, n, p, d) CreateDialogParam((i), (n), (p), (d), 0)
+#define CreateDialog(i, n, p, d) CreateDialogParam((i), (n), (p), (d), 0)
+#define CreateDialogIndirect(i, t, p, d) CreateDialogIndirectParam((i), (t), (p), (d), 0)
 
 /* Controles comunes, bucles de mensajes y dibujo (fase 58) */
 #include "npp_compat_comctl.h"

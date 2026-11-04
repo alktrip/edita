@@ -651,6 +651,69 @@ private slots:
     // Fase 55: con SOURCE_DATE_EPOCH, el mismo código da el mismo paquete aunque se
     // compile en otra carpeta: así la CI del catálogo sabe si un plugin cambió y
     // cualquiera puede comprobar un binario publicado
+    // Fase 60: fuentes en la página de código del autor (recode), archivos que el plugin busca
+    // junto a él (package-files) y pruebas de varias órdenes seguidas (before)
+    void recipeRecodePackageFilesAndBefore()
+    {
+        const QString dir = recipesDir() + "/Win32Demo";
+        const QByteArray source = upstreamSource("\xC4\xE3\xBA\xC3"); // «你好» en GBK
+        writeRecipe(dir, "source.zip", plugin_installer::sha256Hex(source), false);
+        writeFile(dir + "/source.zip", source);
+        auto setRecipe = [&](const std::function<void(QJsonObject&)>& change) {
+            QJsonObject recipe = QJsonDocument::fromJson(readFile(dir + "/recipe.json")).object();
+            change(recipe);
+            writeFile(dir + "/recipe.json", QJsonDocument(recipe).toJson());
+        };
+        setRecipe([](QJsonObject& r) {
+            r["recode"] = QJsonObject{{"from", "GBK"}, {"files", QJsonArray{"src/plugin.cpp"}}};
+            r["package-files"] = QJsonArray{QJsonObject{{"from", "readme.txt"}, {"to", "Config/leeme.txt"}}};
+            r["check"] = QJsonObject{
+                {"commands", QJsonArray{"Greet"}},
+                {"cases", QJsonArray{QJsonObject{{"command", "Greet"}, {"select", "none"}, {"text", ""}, {"expect", "你好"}},
+                                     QJsonObject{{"before", QJsonArray{"Upper"}}, {"command", "Greet"}, {"text", "ab"},
+                                                 {"expect", "你好"}}}}};
+        });
+        PluginRecipe recipe;
+        QVERIFY(PluginRecipe::parse(dir + "/recipe.json", recipe));
+        QCOMPARE(recipe.recodeFrom, QStringLiteral("GBK"));
+        QCOMPARE(recipe.packageFiles.size(), std::size_t{1});
+        QCOMPARE(recipe.checks[1].before, QStringList{"Upper"});
+
+        const QString output = _tmp.filePath("salida60");
+        QString log;
+        QTextStream out(&log);
+        QCOMPARE(runRecipeCommandLine({"edita", "--build-recipe", dir + "/recipe.json", "--output", output}, out), 0);
+        QVERIFY2(log.contains(QStringLiteral("Converted from GBK to UTF-8: src/plugin.cpp")), qPrintable(log.right(2000)));
+        const QString package = output + "/Win32Demo-1.zip";
+        QVERIFY(plugin_installer::installPackage(readFile(package), "Win32Demo", plugin_installer::sha256Hex(readFile(package)),
+                                                 userPlugins(), false));
+        QCOMPARE(readFile(userPlugins() + "/Win32Demo/Config/leeme.txt"), QByteArray("Plugin de ejemplo\n"));
+        QDir(userPlugins()).removeRecursively();
+        // El saludo, ya en UTF-8; y la orden de «before» corre antes, en el mismo documento
+        log.clear();
+        QCOMPARE(checkPluginCommand(package, dir + "/recipe.json", out), 0);
+        QVERIFY2(log.contains(QStringLiteral("All checks passed")), qPrintable(log));
+        setRecipe([](QJsonObject& r) {
+            r["check"] = QJsonObject{{"cases", QJsonArray{QJsonObject{{"before", QJsonArray{"NoExiste"}}, {"command", "Greet"},
+                                                                      {"text", ""}, {"expect", "你好"}}}}};
+        });
+        log.clear();
+        QCOMPARE(checkPluginCommand(package, dir + "/recipe.json", out), 1);
+        QVERIFY(log.contains(QStringLiteral("FAIL: \"NoExiste\": there is no such command")));
+
+        // Lo que no vale: una codificación desconocida, un archivo que sale del plugin
+        QString error;
+        setRecipe([](QJsonObject& r) { r["recode"] = QJsonObject{{"from", "klingon"}, {"files", QJsonArray{"src/plugin.cpp"}}}; });
+        QVERIFY(!PluginRecipe::parse(dir + "/recipe.json", recipe, &error));
+        QVERIFY2(error.contains(QStringLiteral("unknown encoding")), qPrintable(error));
+        setRecipe([](QJsonObject& r) {
+            r.remove("recode");
+            r["package-files"] = QJsonArray{QJsonObject{{"from", "readme.txt"}, {"to", "../fuera.txt"}}};
+        });
+        QVERIFY(!PluginRecipe::parse(dir + "/recipe.json", recipe, &error));
+        QVERIFY2(error.contains(QStringLiteral("invalid package file")), qPrintable(error));
+    }
+
     void packagesAreReproducible()
     {
         const QByteArray source = upstreamSource();

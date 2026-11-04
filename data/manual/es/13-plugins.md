@@ -52,6 +52,14 @@ versión de Qt) o si su licencia no permite distribuir el binario.
 | **NppPluginOpenHost** | Abre `/etc/hosts`. |
 | **XML Tools** | Comprueba y valida XML (con los errores bajo sus líneas), da formato, lo pasa a una línea, XPath, XSLT, cierra etiquetas automáticamente… Necesita `libxml2` y `libxslt` (los traen casi todas las distribuciones). |
 | **MIME Tools** | Codifica y decodifica Base64, quoted-printable y URL. |
+| **SelectQuotedText** | Selecciona el texto entre comillas alrededor del cursor. |
+| **Indent By Fold** | Sangra el código según su plegado, en lenguajes sin reglas de sangría propias. |
+| **NppStripIpAndHost** | Enmascara las direcciones IP y los nombres de host, para compartir registros sin datos sensibles. |
+| **ElasticTabstops** | Tabulaciones elásticas: alinea las columnas separadas por tabulaciones, y convierte entre tabulaciones y espacios. |
+| **MZC8051** | Compila C para microcontroladores 8051 con el compilador MZC8051 (hay que instalarlo aparte). |
+| **Datamodder SQL Formatter** | Da formato a SQL en varios dialectos (T-SQL, MySQL, PostgreSQL, Oracle…) o lo pasa a una línea. |
+| **NppCrossCheck** | Compara dos listas y marca los elementos que están en una pero no en la otra. |
+| **Pork to Sausage** | Transforma la selección con un programa externo y la sustituye por su salida. |
 
 **Lista de plugins de Notepad++…** descarga la lista oficial de Notepad++, para ver si un plugin
 que usas ahí tiene versión para Edita.

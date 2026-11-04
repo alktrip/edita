@@ -74,7 +74,15 @@ Campos opcionales:
                       "sha256": "…", "strip-components": 1, "dest": "plugintemplate" }]
   ```
 - **`"license"`** y **`"license-files"`**: la licencia del plugin (identificador SPDX, para el catálogo) y los archivos del código que van en el paquete junto al `.so`. Si un archivo no está, la compilación falla.
-- **`"check"`**: la prueba del paquete, que ejecuta `edita --check-plugin` (abajo). `commands` son órdenes que tienen que estar en el menú del plugin. Cada caso de `cases` pone un texto en un documento nuevo, lo selecciona entero (o deja el cursor al principio con `"select": "none"`), ejecuta la orden y compara el documento con `expect`, o el archivo abierto con `expect-file`:
+- **`"package-files"`**: otros archivos del código que van en el paquete, como la configuración que el plugin busca junto a él. Cada uno es una ruta, o `{"from", "to"}` para ponerlo en otra ruta dentro del plugin. Por ejemplo, un `.ini` cuyo nombre el plugin escribe con otras mayúsculas: en Windows da igual, en Linux no. `to` no puede salir de la carpeta del plugin:
+  ```json
+  "package-files": [{ "from": "Config/pork2Sausage.ini", "to": "Config/pork2sausage.ini" }]
+  ```
+- **`"recode"`**: fuentes escritos en la página de código del autor (GBK, Shift-JIS, Windows-1252…), que se pasan a UTF-8 después de `remove` y antes del overlay y los parches. GCC lee UTF-8, y `-finput-charset` no sirve: se aplicaría también a las cabeceras del SDK. Los nombres de codificación son los de Edita:
+  ```json
+  "recode": { "from": "GBK", "files": ["src/PluginDefinition.cpp", "src/NppPluginDemo.rc"] }
+  ```
+- **`"check"`**: la prueba del paquete, que ejecuta `edita --check-plugin` (abajo). `commands` son órdenes que tienen que estar en el menú del plugin. Cada caso de `cases` pone un texto en un documento nuevo, lo selecciona entero (o deja el cursor al principio con `"select": "none"`), ejecuta la orden y compara el documento con `expect`, o el archivo abierto con `expect-file`. `before` son órdenes que se ejecutan antes, en el mismo documento (activar un modo, por ejemplo); si una no existe, el caso falla:
   ```json
   "check": { "commands": ["Selection", "Document"],
              "cases": [{ "command": "Selection", "text": "a\nb\nc", "expect": "c\nb\na" },
@@ -88,7 +96,7 @@ edita --build-recipe recipes/MiPlugin/recipe.json --output paquetes/
 edita --check-plugin paquetes/MiPlugin-1.2.zip --recipe recipes/MiPlugin/recipe.json
 ```
 
-`--build-recipe` descarga el código y sus fuentes adicionales, comprueba sus SHA-256 y compila la receta. Las rutas locales de `url` son relativas a la receta. Deja `<carpeta>-<versión>.zip` y su `.sha256` en la carpeta de salida, y la compilación en `work/`. `--check-plugin` instala el paquete en una configuración temporal (no toca la del usuario), abre Edita sin ventana visible, carga el plugin y ejecuta la prueba de la receta. Los diálogos modales que abra el plugin se aceptan solos, y su texto sale en la salida (`dialog: …`). Las dos terminan con código 0 si todo va bien. Las recetas del catálogo de plugins de Edita están en [alktrip/edita-plugins](https://github.com/alktrip/edita-plugins).
+`--build-recipe` descarga el código y sus fuentes adicionales, comprueba sus SHA-256 y compila la receta. Las rutas locales de `url` son relativas a la receta. Deja `<carpeta>-<versión>.zip` y su `.sha256` en la carpeta de salida, y la compilación en `work/`. `--check-plugin` instala el paquete en una configuración temporal (no toca la del usuario), abre Edita sin ventana visible, carga el plugin y ejecuta la prueba de la receta. Los diálogos modales que abra el plugin se aceptan solos, también los que abra al cargarse, y su texto sale en la salida (`dialog: …`). Las dos terminan con código 0 si todo va bien. Las recetas del catálogo de plugins de Edita están en [alktrip/edita-plugins](https://github.com/alktrip/edita-plugins).
 
 **Paquetes reproducibles.** El mismo código, compilado con el mismo SDK y el mismo compilador, da el mismo `.so` en cualquier carpeta: el SDK cambia las rutas de trabajo dentro del binario por nombres fijos (`-ffile-prefix-map`) y no le pone RUNPATH (el plugin lo carga Edita, que ya tiene Qt). Con `SOURCE_DATE_EPOCH`, todas las entradas del `.zip` llevan esa fecha (en hora local, así que también hace falta la misma `TZ`), y el paquete sale idéntico byte a byte. Así la CI del catálogo sabe si un plugin cambió, y cualquiera puede comprobar un binario publicado: `scripts/build-all.sh` de edita-plugins, con el AppImage de Edita con el que se compiló el catálogo y el mismo compilador (Ubuntu 22.04 con GCC 12), da los mismos SHA-256 que la lista.
 
@@ -127,6 +135,8 @@ edita_npp_plugin(MiPlugin UNICODE
 - **módulos y sistema:** `GetModuleFileName` (con el `HINSTANCE` del plugin, su `.so`; con `NULL`, Edita), `GetEnvironmentVariable`, `ExpandEnvironmentStrings`, `SHGetFolderPath` (`CSIDL_APPDATA` es `~/.config`), `GetTickCount`, `GetLocalTime`, `Sleep`, `GlobalAlloc`/`LocalAlloc`;
 - **interfaz sin ventanas:** `MessageBox` (Qt), el portapapeles (`OpenClipboard`, `SetClipboardData` y `GetClipboardData` con `CF_UNICODETEXT`, `CF_TEXT` y formatos registrados), `GetKeyState` (Mayús, Ctrl, Alt) y `ShellExecute` (abre archivos y direcciones con la aplicación del sistema o lanza un programa).
 
+**Como MSVC.** El código de los plugins se compila con `-fpermissive` (MSVC acepta conversiones que GCC rechaza) y `-fno-operator-names` (`and`, `or` y `not` son nombres válidos en MSVC). El C, con lo que MSVC solo avisa: punteros de tipos distintos, enteros como punteros y funciones sin declarar. Los avisos del código original no se muestran (`-w`).
+
 Antes de compilar, el administrador corrige los `#include` que solo funcionan en Windows: `<Windows.h>`, `"..\PluginInterface.h"`, `"Resource.H"`. Un `#include` se reescribe solo si en Linux no encuentra su archivo. Se desactiva con `"fix-includes": false` en la receta.
 
 **Ventanas** (`compat/npp_compat_user.h`, `npp_window.cpp`). Un `HWND` de la capa es una ventana con su `QWidget`, su procedimiento y sus datos, y los mensajes llegan como en Windows: `SendMessage` llama al procedimiento, que deja lo que no trata a `DefWindowProc`.
@@ -150,13 +160,18 @@ Antes de compilar, el administrador corrige los `#include` que solo funcionan en
 - `SetWindowSubclass`/`DefSubclassProc` (comctl32);
 - los diálogos comunes sobre los de Qt: `GetOpenFileName` (también con selección múltiple) y `GetSaveFileName`, `SHBrowseForFolder` con `SHGetPathFromIDList` y `ChooseColor`. Son los del sistema o los de Qt, según la preferencia de diálogos de archivos de Edita;
 - `CreateProcess` con las tuberías de `CreatePipe` (`STARTF_USESTDHANDLES`), `GetExitCodeProcess` y `TerminateProcess`. La línea de órdenes se divide con las reglas de Windows, y `cmd /c …` se ejecuta con `/bin/sh -c`;
-- `GetMenuItemInfo`/`SetMenuItemInfo`/`InsertMenuItem`.
+- `GetMenuItemInfo`/`SetMenuItemInfo`/`InsertMenuItem` y `GetMenuString`;
+- `ShellExecuteEx` (con `SEE_MASK_NOCLOSEPROCESS`, el `hProcess` del programa lanzado, para esperarlo), las rutas de `pathcch.h` (`PathCchCombine`, `PathCchRemoveExtension`…), `IsCharAlpha` y compañía, `DisableThreadLibraryCalls` y `__ImageBase` (el `HINSTANCE` del propio plugin);
+- eventos y mutex con nombre (`CreateEvent`, `OpenEvent`, `CreateMutex`, `OpenMutex`; el segundo `Create` con el mismo nombre da `ERROR_ALREADY_EXISTS`), dentro del proceso de Edita;
+- de ATL, las conversiones de texto: `CW2A`, `CA2W`, `USES_CONVERSION` con `W2A`, `A2W`, `T2A`…, en UTF-8 (`atlconv.h`, `atlbase.h`);
+- `SHBrowseForFolder` llama a la función del plugin (`BFFCALLBACK`) con `BFFM_INITIALIZED`, y `BFFM_SETSELECTION` elige la carpeta inicial.
 
 **Controles comunes** (`compat/npp_compat_comctl.h`). Cada uno es un widget de Qt con los mensajes y las notificaciones (`WM_NOTIFY`) de Windows:
 
 - pestañas (`SysTabControl32`, sobre `QTabWidget`): `TCM_*` y `TabCtrl_*`; `TCN_SELCHANGING` todavía ve la pestaña anterior y, si el plugin devuelve `TRUE`, no cambia. `TCM_ADJUSTRECT` da el área de la página, donde el plugin coloca sus diálogos;
 - listas con columnas (`SysListView32` en modo informe, sobre `QTreeWidget`): columnas, elementos y subelementos, `lParam`, selección y foco, casillas (`LVS_EX_CHECKBOXES`), buscar, ordenar con la función del plugin, `LVM_HITTEST`; notificaciones `LVN_ITEMCHANGED` (también cuando el cambio lo hace el plugin, como en Windows), `LVN_COLUMNCLICK`, `LVN_KEYDOWN`, `LVN_ITEMACTIVATE`, `LVN_DELETEITEM`, `NM_CLICK`, `NM_DBLCLK`, `NM_RCLICK` y `NM_RETURN`;
 - árboles (`SysTreeView32`, sobre `QTreeWidget`): insertar (`TVI_FIRST`, `TVI_LAST`, `TVI_SORT`), navegar (`TVGN_*`), expandir, seleccionar, casillas y elementos con hijos por cargar (`cChildren = 1`, que el plugin rellena en `TVN_ITEMEXPANDING`); notificaciones `TVN_SELCHANGING`/`TVN_SELCHANGED` (con `TVC_BYMOUSE`, `TVC_BYKEYBOARD` o `TVC_UNKNOWN`), `TVN_ITEMEXPANDING`/`TVN_ITEMEXPANDED`, `TVN_KEYDOWN`, `TVN_DELETEITEM` y los `NM_*`. `TVM_EXPAND` no notifica, como en Windows;
+- enlaces (`SysLink`, sobre `QLabel`): el texto lleva `<a href="…" id="…">`, y un clic envía `NM_CLICK` con `NMLINK` (su `iLink`, `szID` y `szUrl`); `LM_GETITEM`, `LM_SETITEM` y `LM_GETIDEALHEIGHT`;
 - barras de progreso (`msctls_progress32`), deslizadores (`msctls_trackbar32`, con `WM_HSCROLL`/`WM_VSCROLL` y los códigos `TB_*`) y tooltips (`tooltips_class32`: el texto de cada herramienta es el `toolTip` de su ventana);
 - las macros de `windowsx.h` (`Edit_SetText`, `ComboBox_AddString`, `Button_GetCheck`…).
 
@@ -166,7 +181,7 @@ Los controles comunes de los `.rc` (`CONTROL "", id, "SysListView32", …`) se c
 
 **Dibujo** (GDI sobre `QPainter`). Las clases registradas y los diálogos reciben `WM_ERASEBKGND` (con el pincel de la clase, `hbrBackground`) y `WM_PAINT`; `BeginPaint` devuelve un DC que dibuja en el widget. Hay `FillRect`, `FrameRect`, `Rectangle`, `RoundRect`, `Ellipse`, `MoveToEx`/`LineTo`, `Polyline`, `Polygon`, `SetPixel`, `TextOut`, `ExtTextOut`, `DrawText` (con `DT_CALCRECT`, la alineación, el ajuste de línea y los puntos suspensivos), `DrawEdge`, `DrawFocusRect`, plumas con estilo y grosor, pinceles (también `(HBRUSH)(COLOR_xxx + 1)`), `SaveDC`/`RestoreDC`, `IntersectClipRect` y los DC en memoria (`CreateCompatibleDC`, `CreateCompatibleBitmap`) con `BitBlt` y `StretchBlt`, para el doble búfer. Las coordenadas son las de GDI: los rectángulos no incluyen el borde derecho ni el de abajo. `InvalidateRect` pide repintar y `UpdateWindow` repinta en el acto. Fuera de `WM_PAINT`, un DC (`GetDC`) mide texto pero no dibuja. También están las funciones de `RECT` (`PtInRect`, `IntersectRect`, `InflateRect`…).
 
-**Todavía no hay:** el dibujo propio de los controles (`NM_CUSTOMDRAW`, `WM_DRAWITEM`), las listas virtuales (`LVS_OWNERDATA`), las listas de imágenes, editar etiquetas, arrastrar, hooks ni COM más allá de `CoInitialize` y `CoTaskMemFree`. Si el plugin los necesita, el overlay trae un port de esa parte en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en [`recipes/XMLTools`](https://github.com/alktrip/edita-plugins/tree/main/recipes/XMLTools) del catálogo. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
+**Todavía no hay:** el dibujo propio de los controles (`NM_CUSTOMDRAW`, `WM_DRAWITEM`), las listas virtuales (`LVS_OWNERDATA`), las listas de imágenes, las barras de herramientas, editar etiquetas, arrastrar, hooks, lexers de plugins ni COM más allá de `CoInitialize` y `CoTaskMemFree`. Si el plugin los necesita, el overlay trae un port de esa parte en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en [`recipes/XMLTools`](https://github.com/alktrip/edita-plugins/tree/main/recipes/XMLTools) del catálogo. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
 
 ## De Notepad++ a Edita
 

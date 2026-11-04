@@ -48,6 +48,9 @@
 #include <cstring>
 #include <cwchar>
 #include <cwctype>
+/* Los encabezados de MSVC traen <memory> por el camino (<string>, <xstring>); hay plugins que
+ * usan std::unique_ptr sin incluirlo */
+#include <memory>
 #endif
 #include <stdarg.h>
 #include <stddef.h>
@@ -70,6 +73,21 @@
 #define EDITA_COMPAT_EXTERN_C
 #define EDITA_COMPAT_BEGIN
 #define EDITA_COMPAT_END
+#endif
+
+/* EXTERN_C de winnt.h */
+#ifndef EXTERN_C
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+#endif
+
+/* __max y __min del CRT de MSVC */
+#ifndef __max
+#define __max(a, b) (((a) > (b)) ? (a) : (b))
+#define __min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
 /* --- Las exportaciones del plugin de N++, con otro nombre ------------------------- */
@@ -207,6 +225,9 @@ typedef void* HKEY;
 typedef void* HRSRC;
 typedef void* HIMAGELIST;
 typedef void* HTREEITEM;
+/* rpcndr.h, que windows.h incluye */
+typedef unsigned char byte;
+typedef unsigned char boolean;
 typedef WORD ATOM;
 typedef WORD LANGID;
 typedef DWORD LCID;
@@ -681,6 +702,15 @@ BOOL GetExitCodeThread(HANDLE thread, LPDWORD code);
 DWORD ResumeThread(HANDLE thread);
 HANDLE CreateEventA(LPSECURITY_ATTRIBUTES security, BOOL manualReset, BOOL initialState, LPCSTR name);
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES security, BOOL manualReset, BOOL initialState, LPCWSTR name);
+/* Con nombre, dentro del proceso: OpenEvent/OpenMutex dan el que se creó con ese nombre */
+#define EVENT_ALL_ACCESS 0x1F0003
+#define EVENT_MODIFY_STATE 0x0002
+#define MUTEX_ALL_ACCESS 0x1F0001
+#define SYNCHRONIZE 0x00100000L
+HANDLE OpenEventA(DWORD access, BOOL inherit, LPCSTR name);
+HANDLE OpenEventW(DWORD access, BOOL inherit, LPCWSTR name);
+HANDLE OpenMutexA(DWORD access, BOOL inherit, LPCSTR name);
+HANDLE OpenMutexW(DWORD access, BOOL inherit, LPCWSTR name);
 BOOL SetEvent(HANDLE event);
 BOOL ResetEvent(HANDLE event);
 HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES security, BOOL initialOwner, LPCSTR name);
@@ -777,6 +807,10 @@ BOOL IsCharAlphaW(WCHAR c);
 BOOL IsCharAlphaNumericW(WCHAR c);
 BOOL IsCharUpperW(WCHAR c);
 BOOL IsCharLowerW(WCHAR c);
+BOOL IsCharAlphaA(CHAR c);
+BOOL IsCharAlphaNumericA(CHAR c);
+BOOL IsCharUpperA(CHAR c);
+BOOL IsCharLowerA(CHAR c);
 
 /* printf de MSVC: en las funciones anchas, %s y %c son wchar_t (en C son char) y
  * %S y %C, char; también %I64d. Se traduce el formato antes de llamar a vswprintf */
@@ -998,6 +1032,39 @@ int StrToIntW(LPCWSTR s);
  * lanza un programa; SHGetFolderPath conoce APPDATA, LOCAL_APPDATA, PERSONAL y PROFILE */
 HINSTANCE ShellExecuteA(HWND hwnd, LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR directory, INT show);
 HINSTANCE ShellExecuteW(HWND hwnd, LPCWSTR verb, LPCWSTR file, LPCWSTR parameters, LPCWSTR directory, INT show);
+/* ShellExecuteEx: con SEE_MASK_NOCLOSEPROCESS y un programa, hProcess es su proceso
+ * (WaitForSingleObject, GetExitCodeProcess); un documento o una dirección, sin proceso */
+#define SEE_MASK_DEFAULT 0x00000000
+#define SEE_MASK_NOCLOSEPROCESS 0x00000040
+#define SEE_MASK_NOASYNC 0x00000100
+#define SEE_MASK_FLAG_DDEWAIT 0x00000100
+#define SEE_MASK_FLAG_NO_UI 0x00000400
+#define SEE_MASK_UNICODE 0x00004000
+#define SEE_MASK_NO_CONSOLE 0x00008000
+typedef struct _SHELLEXECUTEINFOA {
+    DWORD cbSize; ULONG fMask; HWND hwnd; LPCSTR lpVerb; LPCSTR lpFile; LPCSTR lpParameters; LPCSTR lpDirectory; int nShow;
+    HINSTANCE hInstApp; void* lpIDList; LPCSTR lpClass; HKEY hkeyClass; DWORD dwHotKey; HANDLE hIcon; HANDLE hProcess;
+} SHELLEXECUTEINFOA, *LPSHELLEXECUTEINFOA;
+typedef struct _SHELLEXECUTEINFOW {
+    DWORD cbSize; ULONG fMask; HWND hwnd; LPCWSTR lpVerb; LPCWSTR lpFile; LPCWSTR lpParameters; LPCWSTR lpDirectory; int nShow;
+    HINSTANCE hInstApp; void* lpIDList; LPCWSTR lpClass; HKEY hkeyClass; DWORD dwHotKey; HANDLE hIcon; HANDLE hProcess;
+} SHELLEXECUTEINFOW, *LPSHELLEXECUTEINFOW;
+BOOL ShellExecuteExA(SHELLEXECUTEINFOA* info);
+BOOL ShellExecuteExW(SHELLEXECUTEINFOW* info);
+/* pathcch.h: las de shlwapi con el tamaño del búfer */
+HRESULT PathCchFindExtension(PCWSTR path, size_t size, PCWSTR* extension);
+HRESULT PathCchRemoveExtension(PWSTR path, size_t size);
+HRESULT PathCchRemoveFileSpec(PWSTR path, size_t size);
+HRESULT PathCchAppend(PWSTR path, size_t size, PCWSTR more);
+HRESULT PathCchCombine(PWSTR out, size_t size, PCWSTR path, PCWSTR more);
+/* DisableThreadLibraryCalls: en Linux, DllMain no recibe los hilos */
+BOOL DisableThreadLibraryCalls(HMODULE module);
+/* El encabezado de un ejecutable: su dirección (&__ImageBase) es el HINSTANCE del plugin */
+typedef struct _IMAGE_DOS_HEADER {
+    WORD e_magic; WORD e_cblp; WORD e_cp; WORD e_crlc; WORD e_cparhdr; WORD e_minalloc; WORD e_maxalloc; WORD e_ss; WORD e_sp;
+    WORD e_csum; WORD e_ip; WORD e_cs; WORD e_lfarlc; WORD e_ovno; WORD e_res[4]; WORD e_oemid; WORD e_oeminfo; WORD e_res2[10];
+    LONG e_lfanew;
+} IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
 HRESULT SHGetFolderPathA(HWND hwnd, int csidl, HANDLE token, DWORD flags, LPSTR path);
 HRESULT SHGetFolderPathW(HWND hwnd, int csidl, HANDLE token, DWORD flags, LPWSTR path);
 BOOL SHGetSpecialFolderPathA(HWND hwnd, LPSTR path, int csidl, BOOL create);
@@ -1093,6 +1160,15 @@ inline INT_PTR DialogBox(HINSTANCE instance, N name, HWND parent, P proc)
 #define lstrcmp EDITA_COMPAT_AW(lstrcmp)
 #define lstrcmpi EDITA_COMPAT_AW(lstrcmpi)
 #define CharUpper EDITA_COMPAT_AW(CharUpper)
+#define OpenEvent EDITA_COMPAT_AW(OpenEvent)
+#define OpenMutex EDITA_COMPAT_AW(OpenMutex)
+#define IsCharAlpha EDITA_COMPAT_AW(IsCharAlpha)
+#define IsCharAlphaNumeric EDITA_COMPAT_AW(IsCharAlphaNumeric)
+#define IsCharUpper EDITA_COMPAT_AW(IsCharUpper)
+#define IsCharLower EDITA_COMPAT_AW(IsCharLower)
+#define ShellExecuteEx EDITA_COMPAT_AW(ShellExecuteEx)
+typedef EDITA_COMPAT_AW(SHELLEXECUTEINFO) SHELLEXECUTEINFO;
+typedef SHELLEXECUTEINFO* LPSHELLEXECUTEINFO;
 #define CharLower EDITA_COMPAT_AW(CharLower)
 #define wsprintf EDITA_COMPAT_AW(wsprintf)
 #define wvsprintf EDITA_COMPAT_AW(wvsprintf)

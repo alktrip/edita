@@ -30,11 +30,17 @@ namespace edita {
 //   "extra-sources": [{"url": …, "sha256": …, "strip-components": 1, "dest": "carpeta"}]
 //                           más código, dentro del del autor (sus submódulos de git);
 //   "check": {"commands": [nombres], "cases": [{"text": …, "select": "all"|"none",
-//             "command": …, "expect": …} o {"command": …, "expect-file": ruta}]}
+//             "before": [órdenes], "command": …, "expect": …} o {"command": …, "expect-file": ruta}]}
 //                           la prueba del paquete (edita --check-plugin);
+//   "recode": {"from": "GBK", "files": [rutas]}   archivos del original en otra codificación
+//                           (la página de código de Windows del autor), que se pasan a UTF-8
+//                           antes de los parches;
 //   "license": "GPL-2.0-or-later"   la licencia del plugin (SPDX), para el catálogo;
 //   "license-files": [rutas]  archivos del código que van en el paquete con el .so
-//                           (la licencia, sus avisos): al distribuirlo, van con él.
+//                           (la licencia, sus avisos): al distribuirlo, van con él;
+//   "package-files": [{"from": ruta, "to": ruta}]   otros archivos del código que el plugin
+//                           busca junto a él (su configuración de serie…), con su ruta en el
+//                           paquete (relativa a la carpeta del plugin).
 struct RecipeSource
 {
     QString url;
@@ -47,6 +53,7 @@ struct RecipeCheck
 {
     QString text;               // el documento antes de la orden
     bool selectAll = true;      // "select": "all" (por defecto) o "none" (el cursor al principio)
+    QStringList before;         // "before": órdenes que se ejecutan antes, en el mismo documento
     QString command;            // el nombre de la orden en el menú del plugin
     QString expect;             // el documento después
     bool hasExpect = false;
@@ -71,6 +78,9 @@ struct PluginRecipe
     std::vector<RecipeCheck> checks;
     QString license;
     QStringList licenseFiles;
+    std::vector<std::pair<QString, QString>> packageFiles; // del código → en el paquete
+    QString recodeFrom;       // "GBK", "Shift_JIS", "windows-1252"…
+    QStringList recodeFiles;
 
     QString directory() const;
     static bool parse(const QString& path, PluginRecipe& recipe, QString* error = nullptr);

@@ -147,8 +147,13 @@ function(edita_npp_plugin name)
         EDITA_PLUGIN_DISPLAY_NAME="${EDITA_PLUGIN_DISPLAY_NAME}"
         EDITA_PLUGIN_HOMEPAGE="${EDITA_PLUGIN_HOMEPAGE}"
         ${ARG_DEFINITIONS})
-    # El código original se escribió para MSVC: sus avisos no interesan aquí
-    target_compile_options(${name} PRIVATE -w $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>)
+    # El código original se escribió para MSVC: sus avisos no interesan aquí. Para MSVC, «not»,
+    # «and» y «or» no son palabras reservadas y se usan como nombres (-fno-operator-names)
+    # En C, la misma tolerancia que MSVC con los punteros (un callback con WPARAM donde va LPARAM),
+    # que GCC 14 trata como error
+    target_compile_options(${name} PRIVATE -w $<$<COMPILE_LANGUAGE:CXX>:-fpermissive -fno-operator-names>
+        $<$<COMPILE_LANGUAGE:C>:-Wno-error=incompatible-pointer-types -Wno-error=int-conversion
+        -Wno-error=implicit-function-declaration>)
     _edita_link_qt(${name})
     _edita_reproducible(${name})
     target_link_libraries(${name} PRIVATE ${ARG_LIBRARIES} ${CMAKE_DL_LIBS})

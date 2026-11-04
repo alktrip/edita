@@ -53,6 +53,14 @@ distributing the binary.
 | **NppPluginOpenHost** | Opens `/etc/hosts`. |
 | **XML Tools** | Checks and validates XML (with errors shown under their lines), pretty print, linearize, XPath, XSLT, closing tags automatically… Needs `libxml2` and `libxslt` (almost every distribution has them). |
 | **MIME Tools** | Base64, quoted-printable and URL encoding and decoding. |
+| **SelectQuotedText** | Selects the quoted text around the cursor. |
+| **Indent By Fold** | Indents code by its folding, in languages without indentation rules of their own. |
+| **NppStripIpAndHost** | Masks IP addresses and host names, to share logs without sensitive data. |
+| **ElasticTabstops** | Elastic tabstops: aligns tab-separated columns, and converts between tabs and spaces. |
+| **MZC8051** | Compiles C for 8051 microcontrollers with the MZC8051 compiler (installed separately). |
+| **Datamodder SQL Formatter** | Formats SQL in several dialects (T-SQL, MySQL, PostgreSQL, Oracle…) or minifies it. |
+| **NppCrossCheck** | Compares two lists and marks the items that are in one but not in the other. |
+| **Pork to Sausage** | Transforms the selection with an external program and replaces it with its output. |
 
 **Notepad++ Plugin List…** downloads the official list of Notepad++, to see whether a plugin you
 use there has a version for Edita.

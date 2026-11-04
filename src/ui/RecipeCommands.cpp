@@ -25,6 +25,8 @@
 #include <QTemporaryDir>
 #include <QUrl>
 
+#include <optional>
+
 namespace edita {
 
 namespace {
@@ -206,8 +208,16 @@ int checkPluginCommand(const QString& packagePath, const QString& recipePath, QT
         return 1;
     }
 
+    // Los diálogos de la carga (un aviso en setInfo…) también se cierran solos
+    std::optional<ModalCloser> loading(std::in_place, out);
     MainWindow window;
+    // Una ventana de verdad (sin pantalla): con su tamaño, Scintilla sabe cuántas líneas se
+    // ven, y hay plugins que solo trabajan sobre ellas
+    window.resize(1000, 700);
+    window.show();
+    QCoreApplication::processEvents();
     window.notifyPluginsReady();
+    loading.reset();
     const PluginManager::Plugin* plugin = nullptr;
     const QString file = recipe.info.folderName + QLatin1Char('/') + recipe.info.folderName + QStringLiteral(".so");
     for (const auto& p : window.plugins()->plugins()) {
@@ -258,6 +268,15 @@ int checkPluginCommand(const QString& packagePath, const QString& recipePath, QT
             editor->sci(SCI_GOTOPOS, 0);
         {
             ModalCloser closer(out);
+            for (const QString& name : check.before) {
+                if (const PluginManager::Command* first = findCommand(name)) {
+                    window.plugins()->runCommand(first->cmdId);
+                    QCoreApplication::processEvents();
+                } else {
+                    ++failures;
+                    out << QStringLiteral("FAIL: \"%1\": there is no such command\n").arg(name);
+                }
+            }
             window.plugins()->runCommand(command->cmdId);
             QCoreApplication::processEvents();
         }

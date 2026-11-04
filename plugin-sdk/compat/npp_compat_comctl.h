@@ -17,7 +17,8 @@
  *   - las macros de windowsx.h (Edit_SetText, ComboBox_AddString, Button_GetCheck…);
  *   - controles comunes: pestañas (SysTabControl32), listas con columnas (SysListView32,
  *     en modo informe), árboles (SysTreeView32), barras de progreso (msctls_progress32),
- *     deslizadores (msctls_trackbar32) y tooltips (tooltips_class32), con sus mensajes,
+ *     deslizadores (msctls_trackbar32), tooltips (tooltips_class32) y enlaces (SysLink,
+ *     fase 60), con sus mensajes,
  *     sus macros (TabCtrl_*, ListView_*, TreeView_*) y sus notificaciones (WM_NOTIFY).
  * Todavía no: dibujo propio de los controles (NM_CUSTOMDRAW, WM_DRAWITEM), listas
  * virtuales (LVS_OWNERDATA), listas de imágenes, edición de etiquetas y arrastrar.
@@ -129,6 +130,13 @@
 #define PROGRESS_CLASS PROGRESS_CLASSA
 #define TRACKBAR_CLASS TRACKBAR_CLASSA
 #define TOOLTIPS_CLASS TOOLTIPS_CLASSA
+#endif
+#define WC_LINKA "SysLink"
+#define WC_LINKW L"SysLink"
+#ifdef UNICODE
+#define WC_LINK WC_LINKW
+#else
+#define WC_LINK WC_LINKA
 #endif
 #define ICC_LISTVIEW_CLASSES 0x00000001
 #define ICC_TREEVIEW_CLASSES 0x00000002
@@ -417,6 +425,22 @@
 #define TB_BOTTOM 7
 #define TB_ENDTRACK 8
 
+/* --- Enlaces (SysLink): el texto lleva <a href="…" id="…">…</a>; NM_CLICK/NM_RETURN con NMLINK */
+#define MAX_LINKID_TEXT 48
+#define L_MAX_URL_LENGTH (2048 + 32 + 4)
+#define LIF_ITEMINDEX 0x00000001
+#define LIF_STATE 0x00000002
+#define LIF_ITEMID 0x00000004
+#define LIF_URL 0x00000008
+#define LIS_FOCUSED 0x00000001
+#define LIS_ENABLED 0x00000002
+#define LIS_VISITED 0x00000004
+#define LM_HITTEST (WM_USER + 0x300)
+#define LM_GETIDEALHEIGHT (WM_USER + 0x301)
+#define LM_SETITEM (WM_USER + 0x302)
+#define LM_GETITEM (WM_USER + 0x303)
+#define LM_GETIDEALSIZE LM_GETIDEALHEIGHT
+
 /* --- Tooltips ------------------------------------------------------------------------ */
 #define TTM_ACTIVATE (WM_USER + 1)
 #define TTM_ADDTOOLA (WM_USER + 4)
@@ -518,6 +542,11 @@ typedef struct tagTOOLINFOA {
 typedef struct tagTOOLINFOW {
     UINT cbSize; UINT uFlags; HWND hwnd; UINT_PTR uId; RECT rect; HINSTANCE hinst; LPWSTR lpszText; LPARAM lParam; void* lpReserved;
 } TTTOOLINFOW, *LPTTTOOLINFOW;
+
+typedef struct tagLITEM {
+    UINT mask; int iLink; UINT state; UINT stateMask; WCHAR szID[MAX_LINKID_TEXT]; WCHAR szUrl[L_MAX_URL_LENGTH];
+} LITEM, *PLITEM;
+typedef struct tagNMLINK { NMHDR hdr; LITEM item; } NMLINK, *PNMLINK;
 
 typedef struct tagNMCUSTOMDRAWINFO {
     NMHDR hdr; DWORD dwDrawStage; HDC hdc; RECT rc; DWORD_PTR dwItemSpec; UINT uItemState; LPARAM lItemlParam;

@@ -3,6 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "core/PluginRecipe.h"
+#include "core/Encoding.h"
+
+#include "core/Codec.h"
 
 #include "core/Paths.h"
 #include "core/PluginInstaller.h"
@@ -225,6 +228,25 @@ bool PluginRecipe::parse(const QString& path, PluginRecipe& recipe, QString* err
         }
         recipe.extraSources.push_back(extraSource);
     }
+    const QJsonObject recode = o.value(QStringLiteral("recode")).toObject();
+    recipe.recodeFrom = recode.value(QStringLiteral("from")).toString();
+    recipe.recodeFiles = stringList(recode.value(QStringLiteral("files")));
+    if (!recipe.recodeFiles.isEmpty() && codepageFromCharsetName(recipe.recodeFrom.toStdString()) <= 0) {
+        if (error)
+            *error = QObject::tr("%1: unknown encoding in recode: %2").arg(path, recipe.recodeFrom);
+        return false;
+    }
+    for (const QJsonValue& v : o.value(QStringLiteral("package-files")).toArray()) {
+        const QString from = v.isString() ? v.toString() : v.toObject().value(QStringLiteral("from")).toString();
+        const QString to = v.isString() ? v.toString() : v.toObject().value(QStringLiteral("to")).toString(from);
+        if (from.isEmpty() || to.isEmpty() || from.contains(QLatin1String("..")) || to.contains(QLatin1String(".."))
+            || QDir::isAbsolutePath(to)) {
+            if (error)
+                *error = QObject::tr("%1: invalid package file (from and to, inside the plugin)").arg(path);
+            return false;
+        }
+        recipe.packageFiles.emplace_back(from, to);
+    }
     recipe.license = o.value(QStringLiteral("license")).toString();
     recipe.licenseFiles = stringList(o.value(QStringLiteral("license-files")));
     const QJsonObject check = o.value(QStringLiteral("check")).toObject();
@@ -234,6 +256,7 @@ bool PluginRecipe::parse(const QString& path, PluginRecipe& recipe, QString* err
         RecipeCheck item;
         item.text = c.value(QStringLiteral("text")).toString();
         item.selectAll = c.value(QStringLiteral("select")).toString(QStringLiteral("all")) != QLatin1String("none");
+        item.before = stringList(c.value(QStringLiteral("before")));
         item.command = c.value(QStringLiteral("command")).toString();
         item.hasExpect = c.contains(QStringLiteral("expect"));
         item.expect = c.value(QStringLiteral("expect")).toString();
@@ -495,6 +518,26 @@ bool RecipeBuilder::prepareSources(const QByteArray& sourceZip, const std::vecto
     }
     if (!_recipe.remove.isEmpty())
         step(tr("Removed from the original: %1").arg(_recipe.remove.join(QStringLiteral(", "))));
+    if (!_recipe.recodeFiles.isEmpty()) {
+        // Del código de Windows del autor (GBK, Shift_JIS…) a UTF-8, que es lo que lee GCC
+        const TextEncoding encoding = TextEncoding::fromCodepage(codepageFromCharsetName(_recipe.recodeFrom.toStdString()));
+        for (const QString& path : _recipe.recodeFiles) {
+            QFile file(QDir(_sourceDir).filePath(path));
+            if (path.contains(QLatin1String("..")) || !file.open(QIODevice::ReadOnly)) {
+                *error = tr("cannot recode %1: it is not in the source code").arg(path);
+                return false;
+            }
+            const QByteArray bytes = file.readAll();
+            file.close();
+            const std::string utf8 = decodeAll(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), encoding);
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                *error = tr("cannot recode %1").arg(path);
+                return false;
+            }
+            file.write(utf8.data(), static_cast<qint64>(utf8.size()));
+        }
+        step(tr("Converted from %1 to UTF-8: %2").arg(_recipe.recodeFrom, _recipe.recodeFiles.join(QStringLiteral(", "))));
+    }
     if (!_recipe.overlay.isEmpty()) {
         if (!copyTree(QDir(_recipe.directory()).filePath(_recipe.overlay), _sourceDir, error))
             return false;
@@ -617,6 +660,14 @@ bool RecipeBuilder::package(QString* error)
             return false;
         }
         files.emplace_back(QFileInfo(name).fileName(), path);
+    }
+    for (const auto& [from, to] : _recipe.packageFiles) {
+        const QString path = QDir(_sourceDir).filePath(from);
+        if (!QFileInfo(path).isFile()) {
+            *error = tr("the package file %1 is not in the source code").arg(from);
+            return false;
+        }
+        files.emplace_back(to, path);
     }
     if (!plugin_installer::createZip(_package, files, error))
         return false;

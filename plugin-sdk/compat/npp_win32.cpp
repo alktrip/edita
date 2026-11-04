@@ -553,8 +553,7 @@ QString fullPathName(const QString& path)
 
 // --- Módulos ------------------------------------------------------------------------------
 
-char g_moduleMarker = 0;   // el HINSTANCE del plugin es su dirección
-char g_hostMarker = 0;     // y el de Edita (GetModuleHandle(NULL)), esta
+char g_hostMarker = 0;     // el HINSTANCE de Edita (GetModuleHandle(NULL)) es su dirección
 
 QString modulePath(HMODULE module)
 {
@@ -1326,7 +1325,22 @@ struct SyncHandle
     pid_t pid = 0;             // procesos
     bool terminated = false;   // TerminateProcess: el código es el suyo
     int references = 1;        // el handle y, para los hilos, el hilo mismo
+    std::wstring name;         // eventos y mutex con nombre (CreateEvent, OpenEvent)
 };
+
+// Los objetos con nombre del proceso: CreateEvent/CreateMutex con un nombre que ya existe
+// y OpenEvent/OpenMutex dan el mismo objeto (como en Windows, dentro del proceso)
+std::mutex& namedSyncMutex()
+{
+    static auto* m = new std::mutex;
+    return *m;
+}
+
+std::map<std::wstring, SyncHandle*>& namedSyncs()
+{
+    static auto* syncs = new std::map<std::wstring, SyncHandle*>;
+    return *syncs;
+}
 
 SyncHandle* syncHandle(HANDLE handle)
 {
@@ -1340,8 +1354,14 @@ void releaseSync(SyncHandle* sync)
 {
     bool last = false;
     {
+        // Con nombre: el último handle lo quita de la tabla antes de que nadie lo abra
+        std::unique_lock<std::mutex> names(namedSyncMutex(), std::defer_lock);
+        if (!sync->name.empty())
+            names.lock();
         std::lock_guard<std::mutex> lock(sync->mutex);
         last = --sync->references == 0;
+        if (last && !sync->name.empty())
+            namedSyncs().erase(sync->name);
     }
     if (last) {
         if (sync->thread.joinable())
@@ -1729,9 +1749,16 @@ LANGID userLanguage()
 
 extern "C" {
 
+// El HINSTANCE del plugin es la dirección de __ImageBase, como en Windows: el código que lo
+// toma de ahí («EXTERN_C IMAGE_DOS_HEADER __ImageBase; (HINSTANCE)&__ImageBase») recibe
+// el mismo que DllMain. Oculto: cada plugin tiene el suyo
+extern "C" {
+__attribute__((visibility("hidden"))) IMAGE_DOS_HEADER __ImageBase = {};
+}
+
 HINSTANCE edita_compat_module(void)
 {
-    return &g_moduleMarker;
+    return &__ImageBase;
 }
 
 DWORD GetLastError(void)
@@ -1923,6 +1950,10 @@ DWORD CharLowerBuffW(LPWSTR s, DWORD count)
 }
 
 BOOL IsCharAlphaW(WCHAR c) { return std::iswalpha(static_cast<wint_t>(c)) ? TRUE : FALSE; }
+BOOL IsCharAlphaA(CHAR c) { return IsCharAlphaW(static_cast<WCHAR>(static_cast<unsigned char>(c))); }
+BOOL IsCharAlphaNumericA(CHAR c) { return IsCharAlphaNumericW(static_cast<WCHAR>(static_cast<unsigned char>(c))); }
+BOOL IsCharUpperA(CHAR c) { return IsCharUpperW(static_cast<WCHAR>(static_cast<unsigned char>(c))); }
+BOOL IsCharLowerA(CHAR c) { return IsCharLowerW(static_cast<WCHAR>(static_cast<unsigned char>(c))); }
 BOOL IsCharAlphaNumericW(WCHAR c) { return std::iswalnum(static_cast<wint_t>(c)) ? TRUE : FALSE; }
 BOOL IsCharUpperW(WCHAR c) { return std::iswupper(static_cast<wint_t>(c)) ? TRUE : FALSE; }
 BOOL IsCharLowerW(WCHAR c) { return std::iswlower(static_cast<wint_t>(c)) ? TRUE : FALSE; }
@@ -2892,6 +2923,110 @@ HINSTANCE ShellExecuteW(HWND, LPCWSTR verb, LPCWSTR file, LPCWSTR parameters, LP
     return shellExecute(fromW(verb), fromW(file), fromW(parameters), fromW(directory));
 }
 
+extern "C++" template<typename Info>
+BOOL shellExecuteEx(Info* info, const QString& verb, const QString& file, const QString& parameters, const QString& directory)
+{
+    if (!info)
+        return FALSE;
+    info->hProcess = nullptr;
+    // Un programa con SEE_MASK_NOCLOSEPROCESS: su proceso, para esperarlo
+    if (info->fMask & SEE_MASK_NOCLOSEPROCESS) {
+        QString program = nativePath(file);
+        const QString dir = nativePath(directory);
+        if (QFileInfo(program).isRelative() && !dir.isEmpty() && QFileInfo::exists(QDir(dir).filePath(program)))
+            program = QDir(dir).filePath(program);
+        else if (!program.contains(QLatin1Char('/')))
+            program = QStandardPaths::findExecutable(program).isEmpty() ? program : QStandardPaths::findExecutable(program);
+        const QFileInfo exe(program);
+        if (exe.isFile() && exe.isExecutable()) {
+            const QString line = QLatin1Char('"') + exe.absoluteFilePath() + QLatin1Char('"')
+                + (parameters.isEmpty() ? QString() : QLatin1Char(' ') + parameters);
+            STARTUPINFOW startup{};
+            startup.cb = sizeof(startup);
+            PROCESS_INFORMATION process{};
+            if (!createProcess(QString(), line, dir, &startup, &process)) {
+                info->hInstApp = reinterpret_cast<HINSTANCE>(intptr_t{2});
+                return FALSE;
+            }
+            CloseHandle(process.hThread);
+            info->hProcess = process.hProcess;
+            info->hInstApp = reinterpret_cast<HINSTANCE>(intptr_t{42});
+            return TRUE;
+        }
+    }
+    info->hInstApp = shellExecute(verb, file, parameters, directory);
+    return reinterpret_cast<intptr_t>(info->hInstApp) > 32 ? TRUE : FALSE;
+}
+
+BOOL ShellExecuteExA(SHELLEXECUTEINFOA* info)
+{
+    return info ? shellExecuteEx(info, fromA(info->lpVerb), fromA(info->lpFile), fromA(info->lpParameters), fromA(info->lpDirectory)) : FALSE;
+}
+
+BOOL ShellExecuteExW(SHELLEXECUTEINFOW* info)
+{
+    return info ? shellExecuteEx(info, fromW(info->lpVerb), fromW(info->lpFile), fromW(info->lpParameters), fromW(info->lpDirectory)) : FALSE;
+}
+
+BOOL DisableThreadLibraryCalls(HMODULE) { return TRUE; }
+
+// --- pathcch.h ---------------------------------------------------------------------------------------
+
+HRESULT PathCchFindExtension(PCWSTR path, size_t size, PCWSTR* extension)
+{
+    if (!path || !extension || wcsnlen(path, size) >= size)
+        return E_INVALIDARG;
+    *extension = PathFindExtensionW(path);
+    return S_OK;
+}
+
+HRESULT PathCchRemoveExtension(PWSTR path, size_t size)
+{
+    if (!path || wcsnlen(path, size) >= size)
+        return E_INVALIDARG;
+    wchar_t* extension = PathFindExtensionW(path);
+    if (!*extension)
+        return S_FALSE;
+    *extension = 0;
+    return S_OK;
+}
+
+HRESULT PathCchRemoveFileSpec(PWSTR path, size_t size)
+{
+    if (!path || wcsnlen(path, size) >= size)
+        return E_INVALIDARG;
+    return PathRemoveFileSpecW(path) ? S_OK : S_FALSE;
+}
+
+HRESULT PathCchAppend(PWSTR path, size_t size, PCWSTR more)
+{
+    if (!path || !more)
+        return E_INVALIDARG;
+    std::wstring joined = path;
+    if (!joined.empty() && joined.back() != L'\\' && joined.back() != L'/' && *more != L'\\' && *more != L'/')
+        joined += L'/';
+    joined += more;
+    if (joined.size() >= size)
+        return E_INVALIDARG; // ERROR_INSUFFICIENT_BUFFER en Windows
+    std::copy(joined.begin(), joined.end(), path);
+    path[joined.size()] = 0;
+    return S_OK;
+}
+
+HRESULT PathCchCombine(PWSTR out, size_t size, PCWSTR path, PCWSTR more)
+{
+    if (!out)
+        return E_INVALIDARG;
+    std::wstring base = path ? path : L"";
+    if (more && (*more == L'/' || (more[0] && more[1] == L':')))
+        base.clear();
+    if (base.size() >= size)
+        return E_INVALIDARG;
+    std::copy(base.begin(), base.end(), out);
+    out[base.size()] = 0;
+    return more && *more ? PathCchAppend(out, size, more) : S_OK;
+}
+
 HRESULT SHGetFolderPathA(HWND, int csidl, HANDLE, DWORD, LPSTR path) { return folderPath(csidl, path); }
 HRESULT SHGetFolderPathW(HWND, int csidl, HANDLE, DWORD, LPWSTR path) { return folderPath(csidl, path); }
 BOOL SHGetSpecialFolderPathA(HWND, LPSTR path, int csidl, BOOL create)
@@ -3025,10 +3160,71 @@ BOOL GetExitCodeThread(HANDLE thread, LPDWORD code)
     return TRUE;
 }
 
-HANDLE CreateEventA(LPSECURITY_ATTRIBUTES, BOOL manualReset, BOOL initialState, LPCSTR) { return createEvent(manualReset, initialState); }
-HANDLE CreateEventW(LPSECURITY_ATTRIBUTES, BOOL manualReset, BOOL initialState, LPCWSTR) { return createEvent(manualReset, initialState); }
-HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES, BOOL initialOwner, LPCSTR) { return createMutex(initialOwner); }
-HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES, BOOL initialOwner, LPCWSTR) { return createMutex(initialOwner); }
+extern "C++" {
+// Con nombre: el que ya existe (ERROR_ALREADY_EXISTS) o uno nuevo que queda en la tabla
+template<typename Create>
+static HANDLE namedSync(const std::wstring& name, SyncHandle::Kind kind, Create create)
+{
+    if (name.empty()) {
+        t_lastError = 0;
+        return create();
+    }
+    std::lock_guard<std::mutex> names(namedSyncMutex());
+    auto& table = namedSyncs();
+    if (const auto it = table.find(name); it != table.end()) {
+        if (it->second->kind != kind) {
+            t_lastError = 6; // ERROR_INVALID_HANDLE: el nombre es de otra clase de objeto
+            return nullptr;
+        }
+        std::lock_guard<std::mutex> lock(it->second->mutex);
+        ++it->second->references;
+        t_lastError = 183; // ERROR_ALREADY_EXISTS
+        return it->second;
+    }
+    auto* sync = static_cast<SyncHandle*>(create());
+    sync->name = name;
+    table[name] = sync;
+    t_lastError = 0;
+    return sync;
+}
+
+HANDLE openNamed(const std::wstring& name, SyncHandle::Kind kind)
+{
+    std::lock_guard<std::mutex> names(namedSyncMutex());
+    const auto it = namedSyncs().find(name);
+    if (name.empty() || it == namedSyncs().end() || it->second->kind != kind) {
+        t_lastError = 2; // ERROR_FILE_NOT_FOUND
+        return nullptr;
+    }
+    std::lock_guard<std::mutex> lock(it->second->mutex);
+    ++it->second->references;
+    return it->second;
+}
+
+std::wstring syncName(LPCSTR name) { return name ? fromA(name).toStdWString() : std::wstring(); }
+std::wstring syncName(LPCWSTR name) { return name ? std::wstring(name) : std::wstring(); }
+} // extern "C++"
+
+HANDLE CreateEventA(LPSECURITY_ATTRIBUTES, BOOL manualReset, BOOL initialState, LPCSTR name)
+{
+    return namedSync(syncName(name), SyncHandle::Kind::Event, [=] { return createEvent(manualReset, initialState); });
+}
+HANDLE CreateEventW(LPSECURITY_ATTRIBUTES, BOOL manualReset, BOOL initialState, LPCWSTR name)
+{
+    return namedSync(syncName(name), SyncHandle::Kind::Event, [=] { return createEvent(manualReset, initialState); });
+}
+HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES, BOOL initialOwner, LPCSTR name)
+{
+    return namedSync(syncName(name), SyncHandle::Kind::Mutex, [=] { return createMutex(initialOwner); });
+}
+HANDLE CreateMutexW(LPSECURITY_ATTRIBUTES, BOOL initialOwner, LPCWSTR name)
+{
+    return namedSync(syncName(name), SyncHandle::Kind::Mutex, [=] { return createMutex(initialOwner); });
+}
+HANDLE OpenEventA(DWORD, BOOL, LPCSTR name) { return openNamed(syncName(name), SyncHandle::Kind::Event); }
+HANDLE OpenEventW(DWORD, BOOL, LPCWSTR name) { return openNamed(syncName(name), SyncHandle::Kind::Event); }
+HANDLE OpenMutexA(DWORD, BOOL, LPCSTR name) { return openNamed(syncName(name), SyncHandle::Kind::Mutex); }
+HANDLE OpenMutexW(DWORD, BOOL, LPCWSTR name) { return openNamed(syncName(name), SyncHandle::Kind::Mutex); }
 
 BOOL SetEvent(HANDLE event)
 {
