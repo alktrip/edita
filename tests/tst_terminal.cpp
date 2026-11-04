@@ -174,9 +174,12 @@ private slots:
         v.sendText("echo despues\n");
         QTRY_VERIFY2(printed(v.text(), "despues"), qPrintable(v.text())); // (QTRY espera 5 s)
         // Pegar: con «bracketed paste» (bash 5) lo pegado espera a Intro; dash y el bash 3.2
-        // de macOS no lo piden y se ejecuta al momento. En los dos casos, con Intro, sale
+        // de macOS no lo piden y se ejecuta al momento. En los dos casos, con Intro, sale.
+        // Sin bracketed paste, el eco de la segunda línea se mezcla en pantalla con la salida
+        // de la primera (como al escribir por adelantado en cualquier terminal): «echo
+        // pegado2» no siempre se ve entero, pero sí su salida
         v.paste("echo pegado1\necho pegado2\n");
-        QTRY_VERIFY(v.text().contains("echo pegado2"));
+        QTRY_VERIFY2(v.text().contains("echo pegado2") || printed(v.text(), "pegado2"), qPrintable(v.text()));
         v.sendText("\n");
         QTRY_VERIFY2(printed(v.text(), "pegado2"), qPrintable(v.text()));
         // Al salir avisa con el código

@@ -212,8 +212,10 @@ class _Callbacks:
 class _Worker:
     """Un hilo que ejecuta trabajos en orden (PyProducerConsumer de PythonScript)"""
 
-    def __init__(self, name):
+    def __init__(self, name, interruptible=False):
         self.name = name
+        # Los scripts se pueden parar (Stop Script): sus trabajos pasan por _npp.run_job
+        self.interruptible = interruptible
         self.queue = _queue.Queue()
         self.busy = False      # hay trabajo en curso o pendiente
         self.running = False   # un trabajo se está ejecutando (se puede interrumpir)
@@ -256,6 +258,8 @@ class _Worker:
         job = self.queue.get()
         if job is None:
             return False
+        if self.interruptible:
+            _npp.clear_stop()
         with self.lock:
             if self.cancelled:
                 self.cancelled = False
@@ -265,7 +269,10 @@ class _Worker:
                 self.running = True
         if job is not None:
             try:
-                job()
+                if self.interruptible:
+                    _npp.run_job(job)
+                else:
+                    job()
             except BaseException:
                 _traceback.print_exc()
         with self.lock:
@@ -289,7 +296,7 @@ class _Worker:
 # Los callbacks asíncronos se ejecutan en su propio hilo, en el orden en que llegaron
 _callback_worker = _Worker("PythonScript callbacks")
 # Los scripts (menú, consola, otros plugins) en otro, para que la interfaz siga viva
-_script_worker = _Worker("PythonScript")
+_script_worker = _Worker("PythonScript", interruptible=True)
 
 
 def _call(entries, code, args):

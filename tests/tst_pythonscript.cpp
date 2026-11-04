@@ -56,6 +56,13 @@ struct Window
     EditorView* editor() const { return window->editor(); }
     std::string text() const { return window->documents().text(window->currentBuffer()); }
 
+    // Sin ningún script en marcha en el hilo de los scripts. El intérprete es el mismo en
+    // todas las pruebas, y con la máquina cargada un script puede tardar en terminar: lanzar
+    // otro antes abre el aviso modal «Another script is currently running» (como PythonScript)
+    // y la prueba se queda esperando a que alguien lo cierre. Antes de cada envío asíncrono:
+    //   QTRY_VERIFY(x.idle());
+    bool idle() const { return eval("__import__('Npp')._script_running()") == QLatin1String("False"); }
+
     // PYSCR_EXECSTATEMENT síncrono, como otro plugin
     bool exec(const QByteArray& statement, long message = PYSCR_EXECSTATEMENT) const
     {
@@ -330,6 +337,7 @@ private slots:
             "    if called: break\n"
             "    time.sleep(0.02)\n"
             "editor.appendText(' ok' if called else ' sin callback')\n";
+        QTRY_VERIFY(x.idle());
         PythonScript_Exec exec{1, script.constData(), nullptr, 0, 0};
         EditaCommunicationInfo info{PYSCR_EXECSTATEMENT, "tst.so", &exec};
         x.w().handlePluginMessage(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("PythonScript.so"),
@@ -341,6 +349,7 @@ private slots:
         PythonScript_Exec loop{1, "import time\nwhile True:\n    time.sleep(0.01)\n", nullptr, 0, 0};
         EditaCommunicationInfo loopInfo{PYSCR_EXECSTATEMENT, "tst.so", &loop};
         x.exec("console.clear()");
+        QTRY_VERIFY(x.idle()); // el script de «12345 ok» puede estar terminando
         x.w().handlePluginMessage(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("PythonScript.so"),
                                   reinterpret_cast<intptr_t>(&loopInfo));
         QTRY_COMPARE(x.eval("__import__('Npp')._script_running()"), QStringLiteral("True"));
@@ -352,17 +361,19 @@ private slots:
         QVERIFY(stop);
         stop->trigger();
         QTRY_VERIFY2(x.consoleText().contains(QStringLiteral("KeyboardInterrupt")), qPrintable(x.consoleText()));
-        QTRY_COMPARE(x.eval("__import__('Npp')._script_running()"), QStringLiteral("False"));
+        QTRY_VERIFY(x.idle());
 
-        // Stop Script justo al lanzar el script (antes de que empiece o al empezar): el
-        // script no se queda ejecutando y el hilo de los scripts sigue vivo
-        for (int i = 0; i < 30; ++i) {
+        // Stop Script justo al lanzar el script (antes de que empiece, al empezar o al
+        // terminar): el script no se queda ejecutando y el hilo de los scripts sigue vivo.
+        // Antes de la fase 57, el KeyboardInterrupt podía caer ya fuera del script (en
+        // queue.get() del hilo) y dejar un cerrojo tomado: la siguiente prueba se colgaba
+        for (int i = 0; i < 120; ++i) {
             x.w().handlePluginMessage(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("PythonScript.so"),
                                       reinterpret_cast<intptr_t>(&loopInfo));
             if (i % 3 == 1)
                 QTest::qWait(1);
             stop->trigger();
-            QTRY_COMPARE(x.eval("__import__('Npp')._script_running()"), QStringLiteral("False"));
+            QTRY_VERIFY(x.idle());
         }
         x.editor()->sends(SCI_SETTEXT, 0, "");
         PythonScript_Exec after{1, "editor.setText('sigue vivo')", nullptr, 0, 0};
@@ -370,6 +381,7 @@ private slots:
         x.w().handlePluginMessage(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("PythonScript.so"),
                                   reinterpret_cast<intptr_t>(&afterInfo));
         QTRY_COMPARE(x.text(), "sigue vivo"s);
+        QTRY_VERIFY(x.idle());
     }
 
     void enumsMatchNotepadPlusPlus()
@@ -391,6 +403,11 @@ private slots:
         Window x;
         // ATSTARTUP: Python y el startup.py del usuario al terminar de arrancar
         QCOMPARE(x.text(), "startup del usuario"s);
+        // El intérprete es el mismo de las pruebas anteriores: un script suyo puede estar
+        // terminando (con la máquina cargada, tarda). Lanzar otro abriría el aviso modal
+        // «Another script is currently running» (como en PythonScript) y la prueba se quedaría
+        // esperando a que alguien lo cerrara
+        QTRY_VERIFY(x.idle());
         // El script configurado está en el menú del plugin y en Scripts
         QAction* item = nullptr;
         for (QAction* a : x.w().findChildren<QAction*>()) {
@@ -409,14 +426,16 @@ private slots:
         }
         QVERIFY(previous);
         QCOMPARE(previous->text(), QStringLiteral("Run Previous Script (Mio)"));
-        QTRY_COMPARE(x.eval("__import__('Npp')._script_running()"), QStringLiteral("False"));
+        QTRY_VERIFY(x.idle());
         previous->trigger();
         QTRY_COMPARE(x.text(), "desde script"s);
         // PYSCR_EXECSCRIPT con la ruta de un archivo
         writeFile(file("otro.py"), "editor.appendText(' + otro')\n");
         QVERIFY(x.exec(file("otro.py").toUtf8(), PYSCR_EXECSCRIPT));
         QCOMPARE(x.text(), "desde script + otro"s);
-        // Sin PYSCRF_SYNC se ejecuta al volver al bucle de eventos
+        // Sin PYSCRF_SYNC se ejecuta al volver al bucle de eventos (en el hilo de los scripts:
+        // el de Run Previous Script tiene que haber terminado, si no salta el aviso modal)
+        QTRY_VERIFY(x.idle());
         PythonScript_Exec later{1, "editor.appendText('!')", nullptr, 0, 0};
         EditaCommunicationInfo info{PYSCR_EXECSTATEMENT, "tst.so", &later};
         x.w().handlePluginMessage(NPPM_MSGTOPLUGIN, reinterpret_cast<uintptr_t>("PythonScript.so"),

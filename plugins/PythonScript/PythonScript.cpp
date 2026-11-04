@@ -61,6 +61,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 using pythonscript::Config;
@@ -91,6 +92,11 @@ struct State
 
     bool pythonReady = false;
     bool pythonFailed = false;
+    // El hilo que ejecuta un script ahora mismo (0: ninguno). Solo se lee y se cambia con el
+    // GIL: es lo que permite a Stop Script interrumpirlo sin que la excepción caiga fuera
+    unsigned long scriptJobThread = 0;
+    // Stop Script cuando el trabajo ya salió de la cola pero aún no empezó: no se ejecuta
+    bool stopPending = false;
     PyObject* npp = nullptr; // paquete Npp
     QString previousScript;
     std::set<unsigned> scintillaCodes; // SCN_* con callbacks en Python
@@ -862,6 +868,37 @@ PyObject* py_destroy_scintilla(PyObject*, PyObject* args)
     return PyBool_FromLong(host(NPPM_DESTROYSCINTILLAHANDLE, 0, static_cast<intptr_t>(editor)) != 0);
 }
 
+// Ejecuta un trabajo del hilo de los scripts (_npp.run_job(job)). Stop Script lanza un
+// KeyboardInterrupt asíncrono (PyThreadState_SetAsyncExc), que cae en el primer punto de
+// control del intérprete: si llegara cuando el script ya terminó, caería en queue.get() o en
+// un `with lock` del hilo y podría dejar un cerrojo tomado para siempre (y la interfaz,
+// bloqueada en queue.put()). Por eso solo se lanza mientras scriptJobThread es este hilo, y
+// al volver del trabajo, sin soltar el GIL (sin volver al intérprete), se marca que ya no hay
+// trabajo y se quita la excepción que aún estuviera pendiente.
+PyObject* py_run_job(PyObject*, PyObject* job)
+{
+    if (std::exchange(g.stopPending, false)) {
+        PyErr_SetNone(PyExc_KeyboardInterrupt);
+        return nullptr;
+    }
+    const unsigned long self = PyThread_get_thread_ident();
+    g.scriptJobThread = self;
+    PyObject* result = PyObject_CallNoArgs(job);
+    g.scriptJobThread = 0;
+    PyThreadState_SetAsyncExc(self, nullptr);
+    if (!result)
+        return nullptr; // la excepción del trabajo (también el KeyboardInterrupt) sube a Python
+    Py_DECREF(result);
+    Py_RETURN_NONE;
+}
+
+// Un trabajo nuevo sale de la cola: un Stop Script anterior (sin nada en marcha) no le toca
+PyObject* py_clear_stop(PyObject*, PyObject*)
+{
+    g.stopPending = false;
+    Py_RETURN_NONE;
+}
+
 PyObject* py_paths(PyObject*, PyObject*)
 {
     return Py_BuildValue("(ss)", g.pluginDir.toUtf8().constData(), g.userBase.toUtf8().constData());
@@ -898,6 +935,8 @@ PyMethodDef kMethods[] = {
     {"create_scintilla", py_create_scintilla, METH_NOARGS, nullptr},
     {"destroy_scintilla", py_destroy_scintilla, METH_VARARGS, nullptr},
     {"paths", py_paths, METH_NOARGS, nullptr},
+    {"run_job", py_run_job, METH_O, nullptr},
+    {"clear_stop", py_clear_stop, METH_NOARGS, nullptr},
     {nullptr, nullptr, 0, nullptr},
 };
 
@@ -1295,13 +1334,17 @@ void stopScript()
     if (!g.pythonReady)
         return;
     Gil gil;
-    // Lo pendiente se cancela; si un script se está ejecutando, devuelve su hilo
+    // Lo pendiente se cancela (y lo que se sacó de la cola sin empezar no se ejecuta)
     PyRef fn(PyObject_GetAttrString(g.npp, "_stop_script"));
-    PyRef ident(fn ? PyObject_CallNoArgs(fn.p) : nullptr);
-    if (ident && ident.p != Py_None)
-        PyThreadState_SetAsyncExc(PyLong_AsUnsignedLong(ident.p), PyExc_KeyboardInterrupt);
-    else
+    PyRef result(fn ? PyObject_CallNoArgs(fn.p) : nullptr);
+    if (!result)
         PyErr_Clear();
+    // El script que se está ejecutando: con el GIL tomado, scriptJobThread no cambia hasta
+    // que la excepción esté puesta (ver py_run_job)
+    if (g.scriptJobThread != 0)
+        PyThreadState_SetAsyncExc(g.scriptJobThread, PyExc_KeyboardInterrupt);
+    else
+        g.stopPending = true;
 }
 
 void showConfiguration()
