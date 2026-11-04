@@ -32,12 +32,12 @@ jobs:
           sudo apt-get update
           # Compilar: Ninja, libzip, OpenSSL (la firma del catálogo de plugins), Python (Python
           # Script), OpenGL y xkbcommon (Qt Gui).
-          # Pruebas: git, patch y nm (recetas), libxml2/libxslt (receta de XML Tools),
+          # Pruebas: git, patch y nm (recetas),
           # pdftotext (impresión)
           sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 \
             libzip-dev zlib1g-dev libssl-dev python3-dev libgl-dev libegl-dev libxkbcommon-dev \
             libfontconfig1-dev libfreetype-dev \
-            git patch binutils libxml2-dev libxslt1-dev poppler-utils
+            git patch binutils poppler-utils
 
       - name: Qt
         uses: jurplel/install-qt-action@v4

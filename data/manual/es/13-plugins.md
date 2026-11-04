@@ -50,6 +50,8 @@ versión de Qt) o si su licencia no permite distribuir el binario.
 | **SQL Column Highlighter** | En un `INSERT`, resalta los valores de una columna o la columna de un valor. |
 | **Select 'N' Launch** | Abre la selección con la aplicación asociada a una extensión. |
 | **NppPluginOpenHost** | Abre `/etc/hosts`. |
+| **XML Tools** | Comprueba y valida XML (con los errores bajo sus líneas), da formato, lo pasa a una línea, XPath, XSLT, cierra etiquetas automáticamente… Necesita `libxml2` y `libxslt` (los traen casi todas las distribuciones). |
+| **MIME Tools** | Codifica y decodifica Base64, quoted-printable y URL. |
 
 **Lista de plugins de Notepad++…** descarga la lista oficial de Notepad++, para ver si un plugin
 que usas ahí tiene versión para Edita.
@@ -63,13 +65,6 @@ plugins cargados. Los plugins que instalas van a `~/.config/edita/plugins/`.
 |---|---|
 | **MarkdownViewer++** | Muestra una vista previa del documento Markdown en un panel (Ctrl+Mayús+M), con desplazamiento sincronizado, y lo exporta a HTML o PDF, lo imprime o lo copia como HTML. |
 | **Python Script** | Ejecuta scripts de Python que controlan el editor, con la API del plugin PythonScript de Notepad++ (`notepad`, `editor`, `console`), así que muchos de sus scripts funcionan sin cambios. Tiene una consola interactiva. (Aún no se incluye en la versión para macOS.) |
-
-## Plugins que se compilan desde su código
-
-| Plugin | Qué hace |
-|---|---|
-| **XML Tools** | Comprueba y valida XML (con los errores bajo sus líneas), da formato, lo pasa a una línea, XPath, cierra etiquetas automáticamente… Necesita `libxml2` y `libxslt`. |
-| **MIME Tools** | Codifica y decodifica Base64, quoted-printable y URL. |
 
 ## Escribir plugins
 

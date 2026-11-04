@@ -50,14 +50,9 @@ https://github.com/bruderstein/PythonScript, GPL). El código es propio; los
 nombres de la API, los enums, el startup.py de la máquina y el formato de
 PythonScriptStartup.cnf siguen a PythonScript para que sus scripts funcionen.
 
-data/plugins/recipes/: recetas para compilar en el equipo del usuario plugins de
-Notepad++ a partir de su código original, que se descarga de su repositorio y no
-se incluye en Edita. Las recetas contienen solo los archivos del port:
-  MIME Tools — Copyright (C) Don HO — GPL v3
-      https://github.com/npp-plugins/mimetools (receta: solo un CMakeLists.txt)
-  XML Tools — Copyright (C) Nicolas Crittin y colaboradores — GPL v3
-      https://github.com/morbac/xmltools (receta: un parche y XMLToolsEdita.cpp,
-      que usa su biblioteca QuickXml; libxml2 y libxslt, licencia MIT)
+Recetas de plugins de Notepad++: desde la fase 59 están todas en el catálogo de
+plugins de Edita (https://github.com/alktrip/edita-plugins), cada una con la
+licencia del plugin que adapta (ver su README).
 
 data/functionList/: los analizadores de la Lista de funciones de Notepad++
 (installer/functionList/), sin cambios, con su licencia GPL.

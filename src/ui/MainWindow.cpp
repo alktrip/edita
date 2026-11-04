@@ -4695,7 +4695,8 @@ PluginsAdminContext MainWindow::pluginsAdminContext() const
     if (PluginCatalog cached; context.catalogSettings.enabled() && remote_catalog::loadCached(context.catalogSettings, cached))
         PluginsAdminDialog::useRemoteCatalog(context, std::move(cached));
 
-    // Recetas: las del usuario y las de Edita (data/plugins/recipes)
+    // Recetas locales: las del usuario y las de la distribución (share/edita/plugins/recipes).
+    // Las del catálogo de Edita llegan con su lista firmada (recipes.zip)
     QStringList recipeDirs{QDir(context.userPluginsDir).filePath(QStringLiteral("recipes"))};
     for (const QString& dataDir : paths::dataDirs())
         recipeDirs << QDir(dataDir).filePath(QStringLiteral("plugins/recipes"));

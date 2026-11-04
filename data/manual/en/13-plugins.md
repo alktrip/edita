@@ -51,6 +51,8 @@ distributing the binary.
 | **SQL Column Highlighter** | In an `INSERT`, highlights the values of a column or the column of a value. |
 | **Select 'N' Launch** | Opens the selection with the application associated with an extension. |
 | **NppPluginOpenHost** | Opens `/etc/hosts`. |
+| **XML Tools** | Checks and validates XML (with errors shown under their lines), pretty print, linearize, XPath, XSLT, closing tags automatically… Needs `libxml2` and `libxslt` (almost every distribution has them). |
+| **MIME Tools** | Base64, quoted-printable and URL encoding and decoding. |
 
 **Notepad++ Plugin List…** downloads the official list of Notepad++, to see whether a plugin you
 use there has a version for Edita.
@@ -64,13 +66,6 @@ loaded plugins. The plugins you install go to `~/.config/edita/plugins/`.
 |---|---|
 | **MarkdownViewer++** | Shows a preview of the Markdown document in a panel (Ctrl+Shift+M), with synchronized scrolling, and exports it to HTML or PDF, prints it or copies it as HTML. |
 | **Python Script** | Runs Python scripts that control the editor, with the API of the PythonScript plugin of Notepad++ (`notepad`, `editor`, `console`), so many of its scripts work unchanged. It has an interactive console. (Not included in the macOS version yet.) |
-
-## Plugins built from source
-
-| Plugin | What it does |
-|---|---|
-| **XML Tools** | Checks and validates XML (with errors shown under their lines), pretty print, linearize, XPath, closing tags automatically… Needs `libxml2` and `libxslt`. |
-| **MIME Tools** | Base64, quoted-printable and URL encoding and decoding. |
 
 ## Writing plugins
 

@@ -474,13 +474,11 @@ private slots:
         QCOMPARE(r.info.recipePath, r.path);
         QVERIFY(r.info.describe().contains(QStringLiteral("Built on your computer")));
 
-        // Las recetas de Edita: MIME Tools y XML Tools, con el SHA-256 del código de GitHub
-        const std::vector<PluginRecipe> shipped = loadRecipes({QStringLiteral(EDITA_SOURCE_DIR "/data/plugins/recipes")});
-        QCOMPARE(shipped.size(), std::size_t{2});
-        for (const PluginRecipe& recipe : shipped) {
-            QVERIFY(recipe.sourceUrl.startsWith(QStringLiteral("https://github.com/")));
-            QCOMPARE(recipe.sourceSha256.size(), 64);
-        }
+        // Una carpeta de recetas que no existe (la de Edita ya no trae ninguna: están en el
+        // catálogo, alktrip/edita-plugins, fase 59): ni recetas ni avisos
+        warnings.clear();
+        QVERIFY(loadRecipes({_tmp.filePath(QStringLiteral("no-existe"))}, &warnings).empty());
+        QVERIFY(warnings.isEmpty());
 
         // El SDK sin instalar: el del código y la Scintilla de third_party
         const PluginSdk sdk = findPluginSdk();
@@ -877,11 +875,9 @@ private slots:
         PluginsAdminDialog dialog(context(w), prompter);
         // En Disponibles, marcado como "se compila"
         QTreeWidget* available = dialog.list(PluginsAdminDialog::Available);
-        // (además de las recetas que trae Edita: MIME Tools y XML Tools)
         const QList<QTreeWidgetItem*> found = available->findItems(QStringLiteral("Win32 Demo"), Qt::MatchExactly);
         QCOMPARE(found.size(), 1);
         QCOMPARE(found.first()->text(1), QStringLiteral("1 (from source)"));
-        QCOMPARE(available->findItems(QStringLiteral("MIME Tools"), Qt::MatchExactly).size(), 1);
         QVERIFY(dialog.setChecked(PluginsAdminDialog::Available, "Win32Demo"));
         prompter.confirmations.enqueue(true);
         QVERIFY2(dialog.installChecked(), qPrintable(prompter.warnings.join('\n') + dialog.lastBuildLog().right(2000)));
@@ -1182,15 +1178,19 @@ private slots:
 
     void realNotepadPlusPlusPlugins()
     {
-        // Las recetas de Edita con el código real (git archive de referencia/plugins, sin red)
+        // Las recetas del catálogo (../edita-plugins, junto a editor/) con el código real (git
+        // archive de referencia/plugins, sin red): el port de XML Tools, a fondo
         QFETCH(QString, folder);
         QFETCH(QString, repository);
         QFETCH(QString, tag);
         QFETCH(QString, prefix);
         if (folder == QLatin1String("XMLTools") && !missingRequirements({"pkg-config:libxml-2.0"}).isEmpty())
             QSKIP("falta libxml2");
+        const QString recipePath = QStringLiteral(EDITA_SOURCE_DIR "/../edita-plugins/recipes/") + folder + "/recipe.json";
+        if (!QFileInfo::exists(recipePath))
+            QSKIP("no está ../edita-plugins (el catálogo de plugins)");
         PluginRecipe recipe;
-        QVERIFY(PluginRecipe::parse(QStringLiteral(EDITA_SOURCE_DIR "/data/plugins/recipes/") + folder + "/recipe.json", recipe));
+        QVERIFY(PluginRecipe::parse(recipePath, recipe));
         // Con EDITA_TEST_PLUGIN_ARCHIVES, los .zip descargados de GitHub (con su SHA-256)
         QByteArray source;
         const QString archives = qEnvironmentVariable("EDITA_TEST_PLUGIN_ARCHIVES");
