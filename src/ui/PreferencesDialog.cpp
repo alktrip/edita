@@ -215,6 +215,7 @@ QWidget* PreferencesDialog::addPage(const QString& name, const QString& title)
         {"newDocument", "new"},     {"recentFiles", "recent"},        {"indentation", "tabs"},
         {"autoCompletion", "autocompletion"}, {"highlighting", "highlighting"}, {"searching", "find"},
         {"printing", "print"},      {"backup", "backup"},             {"misc", "misc"},
+        {"languageServers", "language"},
     };
     for (const auto& [pageName, icon] : kPageIcons) {
         if (name == QLatin1String(pageName))
