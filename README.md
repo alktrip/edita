@@ -4,7 +4,7 @@ Editor de texto nativo para Linux inspirado en Notepad++. Usa el mismo motor de
 edición que Notepad++ (Scintilla 5 + Lexilla, con sus parches y su regex Boost)
 y una interfaz en Qt 6. Licencia GPL v3 o posterior (ver `COPYING` y `NOTICE`).
 
-**Beta pública: [Edita 0.9.0 beta 2](https://github.com/alktrip/edita/releases/tag/v0.9.0-beta.2)** (AppImage para Linux x86_64). Qué probar y cómo reportar un problema: [PROBAR.md](PROBAR.md).
+**Beta pública: [Edita 0.9.0 beta 3](https://github.com/alktrip/edita/releases/tag/v0.9.0-beta.3)** (AppImage para Linux x86_64). Qué probar y cómo reportar un problema: [PROBAR.md](PROBAR.md).
 
 Estado: **completo** (MVP en las fases 0-5 y ampliaciones en las 6-23): pestañas, abrir/guardar con detección
 de codificación y fin de línea idéntica a Notepad++, resaltado de sintaxis con
