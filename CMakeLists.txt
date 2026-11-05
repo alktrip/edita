@@ -7,7 +7,7 @@ project(Edita
     LANGUAGES C CXX)
 # La versión que ve el usuario: la numérica más la etiqueta de la etapa («-beta.1»; vacía en
 # una versión estable). Los plugins y las comparaciones usan solo la numérica
-set(EDITA_VERSION_SUFFIX "-beta.1")
+set(EDITA_VERSION_SUFFIX "-beta.2")
 set(EDITA_VERSION "${PROJECT_VERSION}${EDITA_VERSION_SUFFIX}" CACHE INTERNAL "Versión de Edita")
 
 set(CMAKE_CXX_STANDARD 20)

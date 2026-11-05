@@ -6,9 +6,9 @@ Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. 
 
 ## Instalar
 
-1. Descarga `Edita-0.9.0-beta.1-x86_64.AppImage` de la [página de la versión](https://github.com/alktrip/edita/releases/tag/v0.9.0-beta.1).
+1. Descarga el AppImage (`Edita-<versión>-x86_64.AppImage`) de la [última versión](https://github.com/alktrip/edita/releases/latest).
 2. Dale permiso de ejecución: `chmod +x Edita-*.AppImage` (o en las propiedades del archivo).
-3. Ábrelo con doble clic o desde una terminal: `./Edita-0.9.0-beta.1-x86_64.AppImage`.
+3. Ábrelo con doble clic o desde una terminal: `./Edita-*.AppImage`.
 
 Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, en x86_64. Tu configuración se guarda en `~/.config/edita/`.
 
@@ -36,7 +36,7 @@ Si Edita se cierra, ábrelo desde una terminal y copia lo último que escribió.
 
 En **Plugins › Administrador de plugins › Disponibles** están los plugins del catálogo: plugins de Notepad++ compilados para Linux desde su código original. Los DLL de Windows de Notepad++ no funcionan en Linux.
 
-Para cada plugin que instales, revisa: que se instale sin errores, que sus órdenes aparezcan en el menú Plugins, que hagan lo que dicen y que sus ventanas (opciones, «Acerca de») se vean bien y respondan.
+Para cada plugin que instales, revisa: que se instale sin errores, que sus órdenes aparezcan en el menú Plugins, que hagan lo que dicen y que sus ventanas (opciones, «Acerca de») se vean bien y respondan. Los plugins de lenguaje (HLASM Lexer, OCaml Lexer) agregan un lenguaje en vez de órdenes: abre un archivo con su extensión y revisa que se coloree.
 
 | Plugin | Qué probar |
 |---|---|
@@ -57,6 +57,8 @@ Para cada plugin que instales, revisa: que se instale sin errores, que sus órde
 | Datamodder SQL Formatter | Dar formato a SQL y pasarlo a una línea; sus opciones |
 | NppCrossCheck | Comparar dos listas |
 | Pork to Sausage | Transformar la selección con un programa (por ejemplo `sort` o `tr a-z A-Z`) |
+| HLASM Lexer | Plugin de lenguaje: abrir un `.mlc` (o elegir Lenguaje › HLASM) y ver que se colorea; cambiar sus colores en el Configurador de estilos |
+| OCaml Lexer | Plugin de lenguaje: abrir un `.ml` y ver que se colorea; con `olint` instalado, que marque sus avisos |
 
 También vienen con Edita **Python Script** (scripts de Python que controlan el editor) y **MarkdownViewer++** (vista previa de Markdown, Ctrl+Mayús+M).
 
@@ -68,9 +70,9 @@ Thank you for testing Edita, a text editor for Linux inspired by Notepad++. This
 
 ## Install
 
-1. Download `Edita-0.9.0-beta.1-x86_64.AppImage` from the [release page](https://github.com/alktrip/edita/releases/tag/v0.9.0-beta.1).
+1. Download the AppImage (`Edita-<version>-x86_64.AppImage`) from the [latest release](https://github.com/alktrip/edita/releases/latest).
 2. Make it executable: `chmod +x Edita-*.AppImage` (or in the file properties).
-3. Open it with a double click or from a terminal: `./Edita-0.9.0-beta.1-x86_64.AppImage`.
+3. Open it with a double click or from a terminal: `./Edita-*.AppImage`.
 
 It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, on x86_64. Your settings are stored in `~/.config/edita/`.
 
@@ -98,6 +100,6 @@ Use it as your everyday editor: that helps the most. If you have time, also chec
 
 **Plugins › Plugins Admin › Available** lists the catalog plugins: Notepad++ plugins compiled for Linux from their original source code. The Windows DLLs of Notepad++ do not work on Linux.
 
-For each plugin you install, check that it installs without errors, that its commands appear in the Plugins menu, that they do what they say, and that its windows (options, "About") look right and respond. The table above lists what to try in each one; the commands have the same names in the menu.
+For each plugin you install, check that it installs without errors, that its commands appear in the Plugins menu, that they do what they say, and that its windows (options, "About") look right and respond. Language plugins (HLASM Lexer, OCaml Lexer) add a language instead: open a file with their extension (`.mlc`, `.ml`) and check that it is highlighted, and that you can change its colors in the Style Configurator. The table above lists what to try in each one; the commands have the same names in the menu.
 
 Edita also comes with **Python Script** (Python scripts that control the editor) and **MarkdownViewer++** (Markdown preview, Ctrl+Shift+M).

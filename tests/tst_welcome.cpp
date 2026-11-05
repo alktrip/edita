@@ -66,7 +66,8 @@ private slots:
     void versionAndReportAProblem()
     {
         // La versión que ve el usuario lleva la etapa; los plugins ven solo los números
-        QCOMPARE(QString::fromUtf8(kAppVersion), QStringLiteral("0.9.0-beta.1"));
+        static const QRegularExpression format(QStringLiteral("^\\d+\\.\\d+\\.\\d+(-(alpha|beta|rc)\\.\\d+)?$"));
+        QVERIFY2(format.match(QString::fromUtf8(kAppVersion)).hasMatch(), kAppVersion);
         QVERIFY(QString::fromUtf8(kAppVersion).startsWith(QString::fromUtf8(kAppVersionNumber)));
         QCOMPARE(QString::fromUtf8(kHomepageUrl), QStringLiteral("https://github.com/alktrip/edita"));
 
@@ -90,7 +91,7 @@ private slots:
         QCOMPARE(url.toString(QUrl::RemoveQuery), QStringLiteral("https://github.com/alktrip/edita/issues/new"));
         const QUrlQuery query(url);
         QCOMPARE(query.queryItemValue(QStringLiteral("template")), QStringLiteral("bug.yml"));
-        QCOMPARE(query.queryItemValue(QStringLiteral("version")), QStringLiteral("0.9.0-beta.1"));
+        QCOMPARE(query.queryItemValue(QStringLiteral("version")), QString::fromUtf8(kAppVersion));
         QVERIFY(query.queryItemValue(QStringLiteral("system"), QUrl::FullyDecoded).contains(QStringLiteral("Qt ")));
         // La plantilla existe y tiene esos campos
         QFile form(QStringLiteral(EDITA_SOURCE_DIR "/.github/ISSUE_TEMPLATE/bug.yml"));
