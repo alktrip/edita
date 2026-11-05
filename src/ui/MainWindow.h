@@ -44,6 +44,7 @@
 #include <QDesktopServices>
 #include <QIcon>
 #include <QMainWindow>
+#include <QNetworkReply> // QPointer<QNetworkReply>: con Qt 6.8 hace falta el tipo completo
 #include <QPointer>
 #include <QSet>
 #include <QUrl>
@@ -56,7 +57,6 @@
 class QActionGroup;
 class QDate;
 class QNetworkAccessManager;
-class QNetworkReply;
 class QDockWidget;
 class QJsonObject;
 class QFileSystemWatcher;
