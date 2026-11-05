@@ -250,6 +250,10 @@ public:
     void setLanguage(LangType lang);
     // Lenguaje > Definido por el usuario > nombre
     void setUserLanguage(const QString& name);
+    // Lenguaje de un plugin de lexer (IDM_LANG_EXTERNAL + i en N++)
+    void setExternalLanguage(const QString& name);
+    // NPPM_GETCURRENTLANGTYPE…: L_EXTERNAL + índice para los de un plugin
+    int langTypeForPlugins(const Buffer& buffer) const;
     // Lenguaje > Definir tu lenguaje… (UserDefineDialog)
     void showUserLanguageDialog();
     // Importa un userDefineLang de N++; devuelve los lenguajes importados
@@ -472,6 +476,8 @@ private:
     QMenu* createLanguageMenu();
     void populateThemeMenu(QMenu* menu);
     void populateUserLanguageMenu();
+    // Tras cargar los plugins: sus lexers, en el menú Lenguaje (antes del de usuario)
+    void registerExternalLexers();
     // Filtros del diálogo de archivos por lenguaje (setFileOpenSaveDlgFilters)
     QString fileFilters() const;
     QString fileFilterFor(LangType lang) const;
@@ -602,6 +608,7 @@ private:
     void setDocumentIndentation(bool useTabs, int width);
     std::map<int, QAction*> _languageActions;     // LangType → acción
     QMenu* _userLanguageMenu = nullptr;
+    std::map<QString, QAction*> _externalLanguageActions; // lenguajes de los plugins de lexer
     QAction* _readOnlyAction = nullptr;
     QAction* _wrapAction = nullptr;
     std::vector<std::pair<bool Preferences::*, QAction*>> _viewOptionActions; // Ver > Mostrar símbolo

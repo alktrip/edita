@@ -305,6 +305,7 @@ struct FileHandle
     uint32_t magic = kFileMagic;
     int fd = -1;
     bool pipe = false; // ReadFile devuelve en cuanto hay datos
+    bool standard = false; // GetStdHandle: los de Edita, que CloseHandle no cierra
 };
 
 struct FindEntry
@@ -2413,6 +2414,8 @@ BOOL CloseHandle(HANDLE handle)
         return TRUE;
     }
     if (FileHandle* file = fileHandle(handle)) {
+        if (file->standard)
+            return TRUE;
         ::close(file->fd);
         file->magic = 0;
         delete file;
@@ -2516,6 +2519,56 @@ DWORD GetModuleFileNameW(HMODULE module, LPWSTR buffer, DWORD size)
 
 HMODULE GetModuleHandleA(LPCSTR name) { return name ? edita_compat_module() : &g_hostMarker; }
 HMODULE GetModuleHandleW(LPCWSTR name) { return name ? edita_compat_module() : &g_hostMarker; }
+
+extern "C++" {
+namespace {
+
+BOOL moduleHandleEx(DWORD flags, const void* name, HMODULE* module, HMODULE byName)
+{
+    if (!module) {
+        t_lastError = ERROR_INVALID_PARAMETER;
+        return FALSE;
+    }
+    *module = nullptr;
+    if (!(flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS)) {
+        *module = byName;
+        return TRUE;
+    }
+    // ¿En qué biblioteca está la dirección? La del plugin es la de su __ImageBase
+    Dl_info at {}, self {};
+    if (!name || !::dladdr(name, &at) || !::dladdr(edita_compat_module(), &self)) {
+        t_lastError = ERROR_MOD_NOT_FOUND;
+        return FALSE;
+    }
+    *module = at.dli_fbase == self.dli_fbase ? edita_compat_module() : &g_hostMarker;
+    return TRUE;
+}
+
+} // namespace
+} // extern "C++"
+
+BOOL GetModuleHandleExA(DWORD flags, LPCSTR name, HMODULE* module)
+{
+    return moduleHandleEx(flags, name, module, (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) ? nullptr : GetModuleHandleA(name));
+}
+
+BOOL GetModuleHandleExW(DWORD flags, LPCWSTR name, HMODULE* module)
+{
+    return moduleHandleEx(flags, name, module, (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS) ? nullptr : GetModuleHandleW(name));
+}
+
+HANDLE GetStdHandle(DWORD which)
+{
+    static FileHandle handles[3];
+    const int fd = which == STD_INPUT_HANDLE ? 0 : which == STD_OUTPUT_HANDLE ? 1 : which == STD_ERROR_HANDLE ? 2 : -1;
+    if (fd < 0) {
+        t_lastError = ERROR_INVALID_PARAMETER;
+        return INVALID_HANDLE_VALUE;
+    }
+    handles[fd].fd = fd;
+    handles[fd].standard = true;
+    return &handles[fd];
+}
 
 // --- Archivos .ini -------------------------------------------------------------------------------
 

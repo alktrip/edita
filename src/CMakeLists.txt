@@ -97,6 +97,8 @@ set_target_properties(edita_core PROPERTIES AUTOMOC ON)
 add_library(edita_syntax STATIC
     syntax/DesktopFonts.cpp
     syntax/DesktopFonts.h
+    syntax/ExternalLexers.cpp
+    syntax/ExternalLexers.h
     syntax/LanguageDetection.cpp
     syntax/LanguageDetection.h
     syntax/LanguageRegistry.cpp

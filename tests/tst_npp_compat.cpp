@@ -41,6 +41,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <fcntl.h>
+
 #include <array>
 #include <string>
 #include <vector>
@@ -2001,6 +2003,57 @@ private slots:
         QCOMPARE(r.left, LONG{4});
         SetRectEmpty(&r);
         QVERIFY(IsRectEmpty(&r));
+    }
+
+    // --- Fase 63: lo que pedía OCaml Lexer ----------------------------------------------
+
+    void stdHandlesAndModuleFromAddress()
+    {
+        // GetStdHandle: la E/S de Edita, que el hijo hereda y CloseHandle no cierra
+        HANDLE in = GetStdHandle(STD_INPUT_HANDLE);
+        QVERIFY(in && in != INVALID_HANDLE_VALUE);
+        QCOMPARE(GetStdHandle(5), INVALID_HANDLE_VALUE);
+        QVERIFY(CloseHandle(GetStdHandle(STD_ERROR_HANDLE)));
+        QVERIFY(::fcntl(2, F_GETFD) != -1);
+        HANDLE readPipe = nullptr, writePipe = nullptr;
+        SECURITY_ATTRIBUTES sa{sizeof(sa), nullptr, TRUE};
+        QVERIFY(CreatePipe(&readPipe, &writePipe, &sa, 0));
+        STARTUPINFOW si{};
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdInput = in;
+        si.hStdOutput = writePipe;
+        si.hStdError = writePipe;
+        PROCESS_INFORMATION pi{};
+        wchar_t command[] = L"cmd /c echo ok";
+        QVERIFY(CreateProcessW(nullptr, command, nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi));
+        CloseHandle(writePipe);
+        std::string output;
+        char buffer[64];
+        DWORD got = 0;
+        while (ReadFile(readPipe, buffer, sizeof(buffer), &got, nullptr) && got > 0)
+            output.append(buffer, got);
+        QCOMPARE(QByteArray::fromStdString(output), QByteArray("ok\n"));
+        WaitForSingleObject(pi.hProcess, 5000);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(readPipe);
+
+        // GetModuleHandleEx: una dirección del propio módulo da su HINSTANCE; una de otra
+        // biblioteca, no
+        static const char anchor = 0;
+        HMODULE self = nullptr;
+        QVERIFY(GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                   reinterpret_cast<LPCWSTR>(&anchor), &self));
+        QCOMPARE(self, edita_compat_module());
+        HMODULE other = nullptr;
+        QVERIFY(GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, reinterpret_cast<LPCSTR>(&::strlen), &other));
+        QVERIFY(other && other != self);
+        HMODULE host = nullptr;
+        QVERIFY(GetModuleHandleEx(0, nullptr, &host));
+        QCOMPARE(host, GetModuleHandle(nullptr));
+        QVERIFY(!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, nullptr, &other));
+        QVERIFY(!GetModuleHandleExW(0, nullptr, nullptr));
     }
 
     // --- Fase 60: lo que frenaba al lote de plugins ----------------------------------------

@@ -90,6 +90,17 @@ edita_add_test(tst_editcommands LIBS edita_ui)
 if(EDITA_BUILD_PLUGINS)
     edita_add_test(tst_plugins LIBS edita_ui)
     add_dependencies(tst_plugins EditaDemo)
+    # Fase 63: un plugin de lexer (los lenguajes «externos» de N++). Fuera de tests/plugins,
+    # que es la carpeta de plugins de los ejecutables de prueba: las demás suites lo cargarían
+    add_library(EditaTestLexer MODULE fixtures/lexer-plugin/EditaTestLexer.cpp)
+    set_target_properties(EditaTestLexer PROPERTIES PREFIX "" CXX_VISIBILITY_PRESET hidden
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/lexer-plugins/EditaTestLexer)
+    target_include_directories(EditaTestLexer PRIVATE ${PROJECT_SOURCE_DIR}/plugin-sdk
+        ${PROJECT_SOURCE_DIR}/third_party/scintilla/include)
+    target_compile_options(EditaTestLexer PRIVATE -Wall -Wextra -Wpedantic $<$<BOOL:${EDITA_WERROR}>:-Werror>)
+    edita_add_test(tst_externallexers LIBS edita_ui)
+    add_dependencies(tst_externallexers EditaTestLexer)
+    target_compile_definitions(tst_externallexers PRIVATE EDITA_TEST_PLUGIN_DIR="${CMAKE_CURRENT_BINARY_DIR}/lexer-plugins")
     target_compile_definitions(tst_plugins PRIVATE EDITA_PLUGIN_BUILD_DIR="${PROJECT_BINARY_DIR}/plugins")
     # Shortcut Mapper (usa el plugin de ejemplo para las órdenes de plugins)
     edita_add_test(tst_shortcuts LIBS edita_ui)

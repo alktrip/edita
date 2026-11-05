@@ -516,6 +516,7 @@ typedef PWIN32_FIND_DATAA PWIN32_FIND_DATA;
 #define ERROR_NO_MORE_FILES 18L
 #define ERROR_FILE_EXISTS 80L
 #define ERROR_INVALID_PARAMETER 87L
+#define ERROR_MOD_NOT_FOUND 126L
 #define ERROR_INSUFFICIENT_BUFFER 122L
 #define ERROR_ALREADY_EXISTS 183L
 #define ERROR_MORE_DATA 234L
@@ -929,6 +930,16 @@ DWORD GetModuleFileNameA(HMODULE module, LPSTR buffer, DWORD size);
 DWORD GetModuleFileNameW(HMODULE module, LPWSTR buffer, DWORD size);
 HMODULE GetModuleHandleA(LPCSTR name);
 HMODULE GetModuleHandleW(LPCWSTR name);
+/* Con GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, el módulo de una dirección: el del plugin si
+ * está en su .so (dladdr), Edita si está en el ejecutable */
+#define GET_MODULE_HANDLE_EX_FLAG_PIN 0x00000001
+#define GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT 0x00000002
+#define GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS 0x00000004
+BOOL GetModuleHandleExA(DWORD flags, LPCSTR name, HMODULE* module);
+BOOL GetModuleHandleExW(DWORD flags, LPCWSTR name, HMODULE* module);
+/* La entrada, la salida y los errores de Edita: para pasarlos a CreateProcess
+ * (STARTF_USESTDHANDLES). CloseHandle no los cierra */
+HANDLE GetStdHandle(DWORD which);
 
 /* Archivos .ini: UTF-8 (también leen UTF-16 con BOM, como los que deja N++) */
 DWORD GetPrivateProfileStringA(LPCSTR section, LPCSTR key, LPCSTR fallback, LPSTR buffer, DWORD size, LPCSTR file);
@@ -1189,6 +1200,7 @@ typedef SHELLEXECUTEINFO* LPSHELLEXECUTEINFO;
 #define GetFullPathName EDITA_COMPAT_AW(GetFullPathName)
 #define GetModuleFileName EDITA_COMPAT_AW(GetModuleFileName)
 #define GetModuleHandle EDITA_COMPAT_AW(GetModuleHandle)
+#define GetModuleHandleEx EDITA_COMPAT_AW(GetModuleHandleEx)
 #define GetPrivateProfileString EDITA_COMPAT_AW(GetPrivateProfileString)
 #define GetPrivateProfileInt EDITA_COMPAT_AW(GetPrivateProfileInt)
 #define WritePrivateProfileString EDITA_COMPAT_AW(WritePrivateProfileString)
@@ -1240,17 +1252,7 @@ typedef SHELLEXECUTEINFO* LPSHELLEXECUTEINFO;
 /* printf ancho con la semántica de MSVC (ver arriba) */
 #define swprintf edita_compat_swprintf
 #define vswprintf edita_compat_vswprintf
-#define _stricmp strcasecmp
-#define _strnicmp strncasecmp
-#define _strcmpi strcasecmp
-#define stricmp strcasecmp
-#define strnicmp strncasecmp
-#define _strdup strdup
-#define _wcsicmp wcscasecmp
-#define _wcsnicmp wcsncasecmp
-#define _wcsdup wcsdup
-#define _wcsicoll wcscasecmp
-#define wcsicmp wcscasecmp
+#include "msvc_crt.h" /* _stricmp, _wcsicmp… */
 #define _access access
 #define _getcwd getcwd
 #define _fileno fileno

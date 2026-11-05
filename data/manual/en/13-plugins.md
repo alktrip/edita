@@ -61,10 +61,19 @@ distributing the binary.
 | **Datamodder SQL Formatter** | Formats SQL in several dialects (T-SQL, MySQL, PostgreSQL, Oracle…) or minifies it. |
 | **NppCrossCheck** | Compares two lists and marks the items that are in one but not in the other. |
 | **Pork to Sausage** | Transforms the selection with an external program and replaces it with its output. |
+| **HLASM Lexer** | Highlights HLASM, the IBM mainframe assembler (`.mlc`, `.mac`, `.cpy`). |
+| **OCaml Lexer** | Highlights OCaml (`.ml`, `.mli`, `.mll`, `.mly`) and, if you have `olint`, marks its warnings. |
 
 The plugins you download for Notepad++ are Windows DLLs and cannot be loaded on Linux. A Notepad++
 plugin comes to Edita when it is compiled from its source code, and then it appears in the catalog.
 If you copy a DLL to the plugins folder, it shows up under **Incompatible**.
+
+**Language plugins.** Some plugins, like HLASM Lexer and OCaml Lexer, add a language instead of
+commands. They appear in the Language menu, after the languages of Edita and before **User Defined
+Language**, and in the status bar picker. Files with their extensions open with that language.
+Their colors are changed in the Style Configurator, like those of any language, and are saved in
+the configuration file of the plugin (`~/.config/edita/plugins/config/<plugin>.xml`), so they do
+not change with the theme.
 
 The other entries of the Plugins menu open the plugins folder and show information about the
 loaded plugins. The plugins you install go to `~/.config/edita/plugins/`.

@@ -19,6 +19,7 @@
 #include "syntax/SyntaxStyler.h"
 
 #include "syntax/DesktopFonts.h"
+#include "syntax/ExternalLexers.h"
 #include "syntax/LanguageRegistry.h"
 #include "syntax/StyleSheet.h"
 #include "syntax/UserLanguages.h"
@@ -644,7 +645,8 @@ void SyntaxStyler::setTabSettings(ScintillaEditBase& view, LangType lang) const
 
 // --- defineDocType -------------------------------------------------------------------
 
-void SyntaxStyler::apply(ScintillaEditBase& view, LangType lang, const UserLanguage* userLanguage) const
+void SyntaxStyler::apply(ScintillaEditBase& view, LangType lang, const UserLanguage* userLanguage,
+                         const ExternalLanguage* external) const
 {
     if (const Style* def = _styles.globalById(STYLE_DEFAULT)) {
         Style forced = *def;
@@ -710,8 +712,13 @@ void SyntaxStyler::apply(ScintillaEditBase& view, LangType lang, const UserLangu
         else
             setLexerFromLangId(view, L::Text);
         break;
-    case L::Text: case L::External:
-        // Los lexers externos (DLL de N++) no existen aquí: texto normal
+    case L::External:
+        if (external && external->create)
+            setExternalLexer(view, *external);
+        else
+            setLexerFromLangId(view, L::Text);
+        break;
+    case L::Text:
         setLexerFromLangId(view, L::Text);
         break;
     default:
@@ -737,6 +744,36 @@ void SyntaxStyler::apply(ScintillaEditBase& view, LangType lang, const UserLangu
         view.send(SCI_SETINDENTATIONGUIDES, SC_IV_NONE);
 
     applyGlobalStyles(view);
+}
+
+// --- Lenguajes de los plugins de lexer (ScintillaEditView::setExternalLexer) -------------
+
+void SyntaxStyler::setExternalLexer(ScintillaEditBase& view, const ExternalLanguage& lang) const
+{
+    Scintilla::ILexer5* lexer = lang.create(lang.name.c_str());
+    if (!lexer) {
+        setLexerFromLangId(view, LangType::Text);
+        return;
+    }
+    // Scintilla se queda con el lexer y lo libera (Release) al cambiarlo
+    view.send(SCI_SETILEXER, 0, reinterpret_cast<sptr_t>(lexer));
+    // Los estilos: los de la hoja en uso (el Configurador de estilos los cambia ahí) o los
+    // del XML del plugin
+    const LexerStyles* styles = _styles.lexer(lang.name);
+    if (!styles && lang.hasStyles)
+        styles = &lang.styles;
+    if (!styles)
+        return;
+    for (const Style& style : styles->styles) {
+        setStyle(view, style);
+        if (style.keywordClass >= 0 && style.keywordClass < kKeywordListCount) {
+            // concatToBuildKeywordList: las palabras del estilo y las de <Language> del XML
+            std::string list = style.keywords;
+            list += ' ';
+            list += lang.definition.keywords[static_cast<std::size_t>(style.keywordClass)];
+            view.sends(SCI_SETKEYWORDS, static_cast<uptr_t>(style.keywordClass), list.c_str());
+        }
+    }
 }
 
 // --- Lenguajes del usuario (ScintillaEditView::setUserLexer) ----------------------------

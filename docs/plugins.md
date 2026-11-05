@@ -88,6 +88,12 @@ Campos opcionales:
              "cases": [{ "command": "Selection", "text": "a\nb\nc", "expect": "c\nb\na" },
                        { "command": "Open", "expect-file": "/etc/hosts" }] }
   ```
+  Para un plugin de lexer (abajo), `languages` son los lenguajes que tiene que añadir, y un caso con `language` y sin orden pone el texto con ese lenguaje, lo colorea y compara los estilos de algunas posiciones (`expect-styles`, pares `[posición, estilo]`). Con `extension`, el texto se abre como un archivo con esa extensión, y el lenguaje tiene que detectarse:
+  ```json
+  "check": { "languages": ["HLASM"],
+             "cases": [{ "language": "HLASM", "text": "* nota\n", "expect-styles": [[0, 4]] },
+                       { "language": "HLASM", "extension": "mlc", "text": "* nota\n", "expect-styles": [[0, 4]] }] }
+  ```
 
 **Desde la línea de órdenes**, sin abrir la interfaz:
 
@@ -132,10 +138,12 @@ edita_npp_plugin(MiPlugin UNICODE
 - **`printf` de MSVC:** en `swprintf`, `wsprintf`, `_snwprintf`, `swprintf_s`, `StringCchPrintf`…, `%s` es `wchar_t` y `%S` es `char`, como en Windows (en C es al revés); `%I64d` también funciona;
 - **el CRT de MSVC:** `wcscpy_s` y compañía (también con arreglos: `wcscpy_s(buf, L"…")`), `_itow`, `_wtoi`, `_wfopen` (con `ccs=UTF-8`), `_wcsicmp`…;
 - **rutas (`shlwapi`):** `PathAppend`, `PathCombine`, `PathFindFileName`, `PathRemoveFileSpec`, `PathFileExists`… Aceptan `\` y `/`; los separadores que añaden son `/`;
-- **módulos y sistema:** `GetModuleFileName` (con el `HINSTANCE` del plugin, su `.so`; con `NULL`, Edita), `GetEnvironmentVariable`, `ExpandEnvironmentStrings`, `SHGetFolderPath` (`CSIDL_APPDATA` es `~/.config`), `GetTickCount`, `GetLocalTime`, `Sleep`, `GlobalAlloc`/`LocalAlloc`;
+- **módulos y sistema:** `GetModuleFileName` (con el `HINSTANCE` del plugin, su `.so`; con `NULL`, Edita), `GetModuleHandleEx` (con `FROM_ADDRESS`, el plugin si la dirección es de su `.so`), `GetEnvironmentVariable`, `ExpandEnvironmentStrings`, `SHGetFolderPath` (`CSIDL_APPDATA` es `~/.config`), `GetTickCount`, `GetLocalTime`, `Sleep`, `GlobalAlloc`/`LocalAlloc`;
 - **interfaz sin ventanas:** `MessageBox` (Qt), el portapapeles (`OpenClipboard`, `SetClipboardData` y `GetClipboardData` con `CF_UNICODETEXT`, `CF_TEXT` y formatos registrados), `GetKeyState` (Mayús, Ctrl, Alt) y `ShellExecute` (abre archivos y direcciones con la aplicación del sistema o lanza un programa).
 
-**Como MSVC.** El código de los plugins se compila con `-fpermissive` (MSVC acepta conversiones que GCC rechaza) y `-fno-operator-names` (`and`, `or` y `not` son nombres válidos en MSVC). El C, con lo que MSVC solo avisa: punteros de tipos distintos, enteros como punteros y funciones sin declarar. Los avisos del código original no se muestran (`-w`).
+**Como MSVC.** El código de los plugins se compila con `-fpermissive` (MSVC acepta conversiones que GCC rechaza) y `-fno-operator-names` (`and`, `or` y `not` son nombres válidos en MSVC). El C, con lo que MSVC solo avisa: punteros de tipos distintos, enteros como punteros y funciones sin declarar. Los avisos del código original no se muestran (`-w`). Las funciones de cadenas del CRT de MSVC (`_stricmp`, `_wcsicmp`, `_strdup`…) existen sin incluir nada, como con MSVC (`compat/msvc_crt.h`, que se incluye antes de cada fuente).
+
+**Exportaciones (`EXPORTS`).** Si el plugin exporta más funciones que las de la API de plugins con un `.def` de Windows (en vez de `__declspec(dllexport)`), `edita_npp_plugin(… EXPORTS ../exports.def)` hace lo mismo en Linux: el `.so` exporta los nombres del `.def` y la API de Edita, y nada más (un *version script*).
 
 Antes de compilar, el administrador corrige los `#include` que solo funcionan en Windows: `<Windows.h>`, `"..\PluginInterface.h"`, `"Resource.H"`. Un `#include` se reescribe solo si en Linux no encuentra su archivo. Se desactiva con `"fix-includes": false` en la receta.
 
@@ -159,7 +167,7 @@ Antes de compilar, el administrador corrige los `#include` que solo funcionan en
 
 - `SetWindowSubclass`/`DefSubclassProc` (comctl32);
 - los diálogos comunes sobre los de Qt: `GetOpenFileName` (también con selección múltiple) y `GetSaveFileName`, `SHBrowseForFolder` con `SHGetPathFromIDList` y `ChooseColor`. Son los del sistema o los de Qt, según la preferencia de diálogos de archivos de Edita;
-- `CreateProcess` con las tuberías de `CreatePipe` (`STARTF_USESTDHANDLES`), `GetExitCodeProcess` y `TerminateProcess`. La línea de órdenes se divide con las reglas de Windows, y `cmd /c …` se ejecuta con `/bin/sh -c`;
+- `CreateProcess` con las tuberías de `CreatePipe` (`STARTF_USESTDHANDLES`) o la E/S de Edita (`GetStdHandle`), `GetExitCodeProcess` y `TerminateProcess`. La línea de órdenes se divide con las reglas de Windows, y `cmd /c …` se ejecuta con `/bin/sh -c`;
 - `GetMenuItemInfo`/`SetMenuItemInfo`/`InsertMenuItem` y `GetMenuString`;
 - `ShellExecuteEx` (con `SEE_MASK_NOCLOSEPROCESS`, el `hProcess` del programa lanzado, para esperarlo), las rutas de `pathcch.h` (`PathCchCombine`, `PathCchRemoveExtension`…), `IsCharAlpha` y compañía, `DisableThreadLibraryCalls` y `__ImageBase` (el `HINSTANCE` del propio plugin);
 - eventos y mutex con nombre (`CreateEvent`, `OpenEvent`, `CreateMutex`, `OpenMutex`; el segundo `Create` con el mismo nombre da `ERROR_ALREADY_EXISTS`), dentro del proceso de Edita;
@@ -181,7 +189,14 @@ Los controles comunes de los `.rc` (`CONTROL "", id, "SysListView32", …`) se c
 
 **Dibujo** (GDI sobre `QPainter`). Las clases registradas y los diálogos reciben `WM_ERASEBKGND` (con el pincel de la clase, `hbrBackground`) y `WM_PAINT`; `BeginPaint` devuelve un DC que dibuja en el widget. Hay `FillRect`, `FrameRect`, `Rectangle`, `RoundRect`, `Ellipse`, `MoveToEx`/`LineTo`, `Polyline`, `Polygon`, `SetPixel`, `TextOut`, `ExtTextOut`, `DrawText` (con `DT_CALCRECT`, la alineación, el ajuste de línea y los puntos suspensivos), `DrawEdge`, `DrawFocusRect`, plumas con estilo y grosor, pinceles (también `(HBRUSH)(COLOR_xxx + 1)`), `SaveDC`/`RestoreDC`, `IntersectClipRect` y los DC en memoria (`CreateCompatibleDC`, `CreateCompatibleBitmap`) con `BitBlt` y `StretchBlt`, para el doble búfer. Las coordenadas son las de GDI: los rectángulos no incluyen el borde derecho ni el de abajo. `InvalidateRect` pide repintar y `UpdateWindow` repinta en el acto. Fuera de `WM_PAINT`, un DC (`GetDC`) mide texto pero no dibuja. También están las funciones de `RECT` (`PtInRect`, `IntersectRect`, `InflateRect`…).
 
-**Todavía no hay:** el dibujo propio de los controles (`NM_CUSTOMDRAW`, `WM_DRAWITEM`), las listas virtuales (`LVS_OWNERDATA`), las listas de imágenes, las barras de herramientas, editar etiquetas, arrastrar, hooks, lexers de plugins ni COM más allá de `CoInitialize` y `CoTaskMemFree`. Si el plugin los necesita, el overlay trae un port de esa parte en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en [`recipes/XMLTools`](https://github.com/alktrip/edita-plugins/tree/main/recipes/XMLTools) del catálogo. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
+**Plugins de lexer.** Un plugin que exporta las funciones de Lexilla (`GetLexerCount`, `GetLexerName` y `CreateLexer`) añade un lenguaje por lexer, como en N++ desde la 8.4 (`PluginsManager::loadPluginFromPath`). Edita las pide después de `setInfo` y lee `<carpeta de configuración de plugins>/<plugin>.xml` (la de `NPPM_GETPLUGINSCONFIGDIR`, o `Config/<plugin>.xml` dentro de la carpeta del plugin):
+
+- `<Languages><Language name="…" ext="…" commentLine="…">` con sus `<Keywords>`: extensiones, palabras clave y comentarios;
+- `<LexerStyles><LexerType name="…" ext="…">` con sus `<WordsStyle>`: los estilos, y más extensiones. Un estilo con `keywordClass` pasa sus palabras (y las de `<Keywords>`) al lexer con `SCI_SETKEYWORDS`.
+
+El nombre del lexer es el del lenguaje y el del `LexerType`. Los lenguajes van en el menú Lenguaje, antes de **Lenguaje definido por el usuario**, y sus estilos en el Configurador de estilos. Al guardar, los estilos del plugin se escriben en su XML, no en `stylers.xml` ni en el tema. Para los plugins, `NPPM_GETCURRENTLANGTYPE` y `NPPM_GETBUFFERLANGTYPE` dan `L_EXTERNAL` más el índice del lenguaje, y `NPPM_GETLANGUAGENAME` su nombre. Sin XML, el lexer funciona con los estilos por defecto. Como en N++, hay como máximo 30, y un nombre repetido se ignora. Un plugin de lexer de N++ suele exportar esas funciones con un `.def`: su receta usa `EXPORTS` (ver [`recipes/HLASMLexer`](https://github.com/alktrip/edita-plugins/tree/main/recipes/HLASMLexer)). Un plugin escrito para Edita las exporta con `EDITA_PLUGIN_EXPORT`.
+
+**Todavía no hay:** el dibujo propio de los controles (`NM_CUSTOMDRAW`, `WM_DRAWITEM`), las listas virtuales (`LVS_OWNERDATA`), las listas de imágenes, las barras de herramientas, editar etiquetas, arrastrar, hooks ni COM más allá de `CoInitialize` y `CoTaskMemFree`. Si el plugin los necesita, el overlay trae un port de esa parte en Qt, compilado con `edita_native_plugin` sobre `edita_plugin.h`, como el de XML Tools en [`recipes/XMLTools`](https://github.com/alktrip/edita-plugins/tree/main/recipes/XMLTools) del catálogo. Para probar una receta sin red, su `source.url` puede ser una ruta local al zip.
 
 ## De Notepad++ a Edita
 

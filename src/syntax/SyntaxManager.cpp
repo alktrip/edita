@@ -154,6 +154,7 @@ QStringList SyntaxManager::loadAll()
             warnings << tr("stylers.model.xml cannot be read either: there will be no colors");
     }
     _styles.globalOverride() = readGlobalOverride(_config);
+    _externalLexers.addStylesTo(_styles);
     warnings << _userLanguages.load(_configDir);
     return warnings;
 }
@@ -191,6 +192,7 @@ bool SyntaxManager::setTheme(const QString& path, QString* error)
     if (!candidate.load(file, error))
         return false;
     _styles = std::move(candidate);
+    _externalLexers.addStylesTo(_styles); // los del plugin no cambian con el tema, como en N++
     _themePath = path;
     _config.setGuiConfig(kThemeConfig, QStringLiteral("path"), path);
     _config.save();
@@ -222,7 +224,7 @@ bool SyntaxManager::saveStyles(const StyleSheet& styles, QString* error)
         _themePath = copy;
         _config.setGuiConfig(kThemeConfig, QStringLiteral("path"), copy);
     }
-    if (!styles.save(target, error))
+    if (!styles.save(target, error) || !_externalLexers.saveStyles(styles, error))
         return false;
     _styles = styles;
     writeGlobalOverride(_config, _styles.globalOverride());
@@ -234,7 +236,29 @@ bool SyntaxManager::saveStyles(const StyleSheet& styles, QString* error)
 void SyntaxManager::apply(ScintillaEditBase& view, LangType lang, const QString& userLanguage) const
 {
     const UserLanguage* udl = lang == LangType::User ? _userLanguages.find(userLanguage) : nullptr;
-    SyntaxStyler(_languages, _styles, _options).apply(view, lang, udl);
+    const ExternalLanguage* external = lang == LangType::External ? _externalLexers.find(userLanguage.toStdString()) : nullptr;
+    SyntaxStyler(_languages, _styles, _options).apply(view, lang, udl, external);
+}
+
+QStringList SyntaxManager::addExternalLexers(const QString& pluginName, const std::vector<std::string>& names,
+                                             CreateLexerFunction create, const QString& xmlPath)
+{
+    const QStringList warnings = _externalLexers.add(pluginName, names, create, xmlPath);
+    _externalLexers.addStylesTo(_styles);
+    return warnings;
+}
+
+QString SyntaxManager::detectExternalLanguage(const QString& filePath) const
+{
+    if (_externalLexers.empty())
+        return {};
+    // getLangFromExt: la extensión sin el punto (o el nombre entero, para «Makefile»)
+    const QFileInfo info(filePath);
+    const std::string ext = info.suffix().toStdString();
+    std::string name = _externalLexers.languageForExtension(ext);
+    if (name.empty())
+        name = _externalLexers.languageForExtension(info.fileName().toStdString());
+    return QString::fromStdString(name);
 }
 
 QString SyntaxManager::detectUserLanguage(const QString& filePath) const

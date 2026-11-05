@@ -343,6 +343,7 @@ MainWindow::MainWindow(QWidget* parent)
     // Sintaxis antes de crear documentos: decide su lenguaje y sus estilos
     const QStringList syntaxWarnings = _syntax.initialize();
     _documents.setUserLanguageDetector([this](const QString& path) { return _syntax.detectUserLanguage(path); });
+    _documents.setExternalLanguageDetector([this](const QString& path) { return _syntax.detectExternalLanguage(path); });
     _documents.setLanguageDetector([this](const QString& path, std::string_view text) {
         return _syntax.detect(path, text);
     });
@@ -1706,6 +1707,8 @@ BufferId MainWindow::openReference(EditorPane* pane, const QString& name, const 
     if (Buffer* buf = _documents.buffer(id)) {
         if (lang == LangType::User)
             buf->setUserLanguage(userLanguage);
+        else if (lang == LangType::External)
+            buf->setExternalLanguage(userLanguage);
         else
             buf->setLanguage(lang);
         buf->setUserReadOnly(true);
@@ -2659,6 +2662,56 @@ void MainWindow::setLanguage(LangType lang)
         buf->setLanguage(lang, /*fromMenu*/ true);
 }
 
+int MainWindow::langTypeForPlugins(const Buffer& buffer) const
+{
+    // L_EXTERNAL + el índice del lenguaje, como en N++
+    if (buffer.language() == LangType::External) {
+        const int i = _syntax.externalLexers().indexOf(buffer.userLanguage().toStdString());
+        if (i >= 0)
+            return static_cast<int>(LangType::External) + i;
+    }
+    return static_cast<int>(buffer.language());
+}
+
+void MainWindow::setExternalLanguage(const QString& name)
+{
+    if (Buffer* buf = _documents.buffer(currentBuffer()); buf && _syntax.externalLexers().find(name.toStdString()))
+        buf->setExternalLanguage(name, /*fromMenu*/ true);
+}
+
+void MainWindow::registerExternalLexers()
+{
+    const QString configDir = QDir(paths::configDir()).filePath(QStringLiteral("plugins/config"));
+    for (const auto& plugin : _plugins->plugins()) {
+        if (plugin->lexerNames.empty() || !plugin->createLexer)
+            continue;
+        _pluginWarnings << _syntax.addExternalLexers(plugin->name, plugin->lexerNames,
+                                                      reinterpret_cast<CreateLexerFunction>(plugin->createLexer),
+                                                      findExternalLexerXml(configDir, plugin->path));
+    }
+    if (_syntax.externalLexers().empty())
+        return;
+    // Como en N++, después de los lenguajes de Edita, por orden de carga
+    auto* menu = qobject_cast<QMenu*>(_userLanguageMenu->parent()); // el menú Lenguaje
+    if (!menu)
+        return;
+    QAction* before = _userLanguageMenu->menuAction();
+    for (const ExternalLanguage& lang : _syntax.externalLexers().languages()) {
+        const QString name = QString::fromStdString(lang.name);
+        auto* action = new QAction(name, menu);
+        action->setCheckable(true);
+        action->setActionGroup(_languageGroup);
+        action->setObjectName(QStringLiteral("actionExternalLang:") + name); // su texto es del plugin
+        action->setToolTip(tr("Language of the %1 plugin").arg(lang.pluginName));
+        connect(action, &QAction::triggered, this, [this, name] { setExternalLanguage(name); });
+        menu->insertAction(before, action);
+        _externalLanguageActions[name] = action;
+    }
+    menu->insertSeparator(before);
+    // Los estilos del plugin ya están en la hoja: los documentos abiertos los usan
+    _syntax.notifyUserLanguagesChanged();
+}
+
 void MainWindow::setUserLanguage(const QString& name)
 {
     if (Buffer* buf = _documents.buffer(currentBuffer()); buf && _syntax.userLanguages().find(name))
@@ -3540,6 +3593,15 @@ CommentSymbols MainWindow::commentSymbols(BufferId id) const
         }
         return symbols;
     }
+    if (lang == LangType::External) {
+        // Los comentarios del <Language> del XML del plugin
+        if (const ExternalLanguage* external = _syntax.externalLexers().find(buf->userLanguage().toStdString())) {
+            symbols.line = external->definition.commentLine;
+            symbols.start = external->definition.commentStart;
+            symbols.end = external->definition.commentEnd;
+        }
+        return symbols;
+    }
     if (const LanguageDefinition* def = _syntax.languages().find(lang)) {
         symbols.line = def->commentLine;
         symbols.start = def->commentStart;
@@ -3748,7 +3810,7 @@ std::vector<WindowsDialog::Row> MainWindow::windowRows() const
         row.id = id;
         row.name = buf->displayName();
         row.path = buf->isUntitled() ? QString() : buf->filePath();
-        row.type = buf->language() == LangType::User && !buf->userLanguage().isEmpty()
+        row.type = buf->hasNamedLanguage()
             ? buf->userLanguage()
             : QCoreApplication::translate("LangType", languageInfo(buf->language()).longName);
         row.size = static_cast<qint64>(_documents.text(id).size());
@@ -4175,6 +4237,7 @@ void MainWindow::loadPlugins()
     _plugins = std::make_unique<PluginManager>(this, _mainPane->editor(), _subPane->editor(),
         [this](unsigned int message, uintptr_t wParam, intptr_t lParam) { return handlePluginMessage(message, wParam, lParam); });
     _pluginWarnings = _plugins->loadFrom(pluginDirectories());
+    registerExternalLexers();
 
     // Menú Plugins: un submenú por plugin con sus órdenes (PluginsManager::setMenu)
     _pluginsMenu = new QMenu(tr("&Plugins"), this);
@@ -4272,10 +4335,13 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
     case NPPM_GETCURRENTVIEW:
         return _activePane == _subPane ? 1 : 0;
     case NPPM_GETCURRENTLANGTYPE:
-        return intOut(current ? static_cast<int>(current->language()) : 0);
+        return intOut(current ? langTypeForPlugins(*current) : 0);
     case NPPM_SETCURRENTLANGTYPE:
         if (lParam >= 0 && lParam < static_cast<intptr_t>(LangType::External))
             setLanguage(static_cast<LangType>(lParam));
+        else if (const auto i = static_cast<std::size_t>(lParam - static_cast<intptr_t>(LangType::External));
+                 lParam >= static_cast<intptr_t>(LangType::External) && i < _syntax.externalLexers().languages().size())
+            setExternalLanguage(QString::fromStdString(_syntax.externalLexers().languages()[i].name));
         return 1;
     case NPPM_GETNBOPENFILES:
         if (lParam == PRIMARY_VIEW)
@@ -4352,7 +4418,7 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
         return static_cast<intptr_t>(currentBuffer());
     case NPPM_GETBUFFERLANGTYPE: {
         const Buffer* buf = _documents.buffer(static_cast<BufferId>(wParam));
-        return buf ? static_cast<intptr_t>(buf->language()) : -1;
+        return buf ? static_cast<intptr_t>(langTypeForPlugins(*buf)) : -1;
     }
     case NPPM_SETBUFFERLANGTYPE: {
         Buffer* buf = _documents.buffer(static_cast<BufferId>(wParam));
@@ -4473,8 +4539,16 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
     }
     case NPPM_GETLANGUAGENAME:
     case NPPM_GETLANGUAGEDESC: {
-        if (wParam >= static_cast<uintptr_t>(LangType::External))
-            return 0;
+        if (wParam >= static_cast<uintptr_t>(LangType::External)) {
+            // getLangDesc: de un lenguaje externo, su nombre
+            const std::size_t i = wParam - static_cast<uintptr_t>(LangType::External);
+            if (i >= _syntax.externalLexers().languages().size())
+                return 0;
+            const std::string& name = _syntax.externalLexers().languages()[i].name;
+            if (auto* out = reinterpret_cast<char*>(lParam))
+                std::memcpy(out, name.c_str(), name.size() + 1);
+            return static_cast<intptr_t>(name.size());
+        }
         const LanguageInfo& lang = languageInfo(static_cast<LangType>(wParam));
         const QByteArray text = QByteArray(message == NPPM_GETLANGUAGENAME ? lang.shortName : lang.longName);
         if (auto* out = reinterpret_cast<char*>(lParam))
@@ -6934,8 +7008,8 @@ Session MainWindow::captureSession(bool named, bool withFolders)
                 f.originalLastModified = buf->lastModified();
             }
             const char* menuName = languageInfo(buf->language()).menuName;
-            // Un lenguaje del usuario se guarda por su nombre, como en N++
-            f.languageName = buf->language() == LangType::User && !buf->userLanguage().isEmpty()
+            // Un lenguaje del usuario o de un plugin se guarda por su nombre, como en N++
+            f.languageName = buf->hasNamedLanguage()
                 ? buf->userLanguage()
                 : QString::fromUtf8(menuName ? menuName : languageInfo(buf->language()).name);
             f.encoding = buf->encoding().codepage;
@@ -7014,6 +7088,9 @@ void MainWindow::restoreSession(const Session& session, QStringList* missing)
                 buf->setLanguage(lang, /*fromMenu*/ true); // distinto del detectado: lo eligió el usuario
             else if (!known && _syntax.userLanguages().find(f.languageName) && buf->userLanguage() != f.languageName)
                 buf->setUserLanguage(f.languageName, /*fromMenu*/ true);
+            else if (!known && _syntax.externalLexers().find(f.languageName.toStdString())
+                     && buf->userLanguage() != f.languageName)
+                buf->setExternalLanguage(f.languageName, /*fromMenu*/ true);
             buf->setUserReadOnly(f.userReadOnly);
             buf->setPosition(pane->editor(), f.position);
             if (!f.bookmarks.empty()) {
@@ -7208,6 +7285,9 @@ void MainWindow::refreshMenuChecks()
 
     if (const auto it = _languageActions.find(static_cast<int>(buf->language())); it != _languageActions.end())
         it->second->setChecked(true);
+    else if (const auto ext = _externalLanguageActions.find(buf->userLanguage());
+             buf->language() == LangType::External && ext != _externalLanguageActions.end())
+        ext->second->setChecked(true);
     else if (QAction* current = _languageGroup->checkedAction())
         current->setChecked(false); // también con un lenguaje del usuario
 

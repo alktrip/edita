@@ -7,7 +7,12 @@
 #   project(MiPlugin CXX C)
 #   include(${EDITA_PLUGIN_SDK}/cmake/EditaNppPlugin.cmake)
 #   edita_npp_plugin(MiPlugin [UNICODE] SOURCES ../src/plugin.cpp … [RESOURCES ../src/plugin.rc …]
-#                    [INCLUDES …] [LIBRARIES …])
+#                    [INCLUDES …] [LIBRARIES …] [EXPORTS ../exports.def])
+#
+# EXPORTS es el .def del plugin, si exporta más funciones que las de la API de plugins (en
+# Windows, con un .def en vez de __declspec(dllexport)): los plugins de lexer exportan las de
+# Lexilla (CreateLexer, GetLexerCount, GetLexerName…). El .so exporta los nombres del .def
+# y la API de Edita, y nada más, como la DLL.
 #
 # RESOURCES son los .rc del plugin: edita_rc (tools/) los convierte al compilar en los
 # diálogos, menús y cadenas que usan CreateDialogParam, DialogBoxParam, LoadMenu y
@@ -124,7 +129,7 @@ function(_edita_plugin_resources name)
 endfunction()
 
 function(edita_npp_plugin name)
-    cmake_parse_arguments(ARG "UNICODE" "" "SOURCES;RESOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
+    cmake_parse_arguments(ARG "UNICODE" "EXPORTS" "SOURCES;RESOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
     add_library(${name} MODULE ${ARG_SOURCES}
         "${EDITA_PLUGIN_SDK}/compat/npp_compat.cpp" "${EDITA_PLUGIN_SDK}/compat/npp_win32.cpp"
         "${EDITA_PLUGIN_SDK}/compat/npp_window.cpp")
@@ -151,12 +156,47 @@ function(edita_npp_plugin name)
     # «and» y «or» no son palabras reservadas y se usan como nombres (-fno-operator-names)
     # En C, la misma tolerancia que MSVC con los punteros (un callback con WPARAM donde va LPARAM),
     # que GCC 14 trata como error
+    # Las funciones de cadenas de MSVC (_stricmp…) existen sin incluir nada, como con MSVC
+    target_compile_options(${name} PRIVATE -include "${EDITA_PLUGIN_SDK}/compat/msvc_crt.h")
     target_compile_options(${name} PRIVATE -w $<$<COMPILE_LANGUAGE:CXX>:-fpermissive -fno-operator-names>
         $<$<COMPILE_LANGUAGE:C>:-Wno-error=incompatible-pointer-types -Wno-error=int-conversion
         -Wno-error=implicit-function-declaration>)
     _edita_link_qt(${name})
     _edita_reproducible(${name})
     target_link_libraries(${name} PRIVATE ${ARG_LIBRARIES} ${CMAKE_DL_LIBS})
+    if(ARG_EXPORTS)
+        _edita_def_exports(${name} "${ARG_EXPORTS}")
+    endif()
+endfunction()
+
+# Un .def de Windows (EXPORTS y un nombre por línea, quizá con @ordinal, =alias o PRIVATE)
+# como version script: esos nombres y la API de Edita son globales, lo demás local. Con un
+# version script, la visibilidad oculta sobra (y ocultaría los nombres del .def)
+function(_edita_def_exports name def)
+    get_filename_component(def "${def}" ABSOLUTE)
+    file(STRINGS "${def}" lines)
+    set(symbols setInfo getName getFuncsArray beNotified messageProc edita_plugin_api_version edita_plugin_version)
+    set(inExports FALSE)
+    foreach(line IN LISTS lines)
+        string(STRIP "${line}" line)
+        string(REGEX REPLACE "[ \t]*;.*$" "" line "${line}") # comentarios
+        if(line MATCHES "^EXPORTS")
+            set(inExports TRUE)
+            string(REGEX REPLACE "^EXPORTS[ \t]*" "" line "${line}")
+        elseif(line MATCHES "^(LIBRARY|NAME|SECTIONS|VERSION|HEAPSIZE|STACKSIZE)")
+            set(inExports FALSE)
+        endif()
+        if(inExports AND line MATCHES "^([A-Za-z_][A-Za-z0-9_]*)")
+            list(APPEND symbols "${CMAKE_MATCH_1}")
+        endif()
+    endforeach()
+    list(REMOVE_DUPLICATES symbols)
+    list(JOIN symbols ";\n        " globals)
+    set(script "${CMAKE_CURRENT_BINARY_DIR}/${name}.exports")
+    file(WRITE "${script}" "{\n    global:\n        ${globals};\n    local: *;\n};\n")
+    set_target_properties(${name} PROPERTIES C_VISIBILITY_PRESET default CXX_VISIBILITY_PRESET default
+        LINK_DEPENDS "${script}")
+    target_link_options(${name} PRIVATE "LINKER:--version-script=${script}")
 endfunction()
 
 # Un port escrito para la API de Edita (edita_plugin.h) que reutiliza partes

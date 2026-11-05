@@ -139,7 +139,8 @@ QStringList menuTexts(QMenuBar* bar)
             if (action->menu()) {
                 if (!action->menu()->objectName().startsWith(QLatin1String("plugin")))
                     walk(action->menu());
-            } else if (action->objectName().startsWith(QLatin1String("action")) && !action->text().isEmpty()) {
+            } else if (action->objectName().startsWith(QLatin1String("action")) && !action->text().isEmpty()
+                       && !action->objectName().startsWith(QLatin1String("actionExternalLang:"))) { // del plugin
                 texts << action->text();
             }
         }

@@ -91,6 +91,48 @@ private:
     QTimer _timer;
 };
 
+// Un caso de un plugin de lexer: el texto con su lenguaje, coloreado; o abierto como un
+// archivo con esa extensión, para ver que el lenguaje se detecta
+bool checkLanguageCase(MainWindow& window, const RecipeCheck& check, QTextStream& out)
+{
+    const QString label = check.extension.isEmpty() ? check.language : QStringLiteral("*.%1").arg(check.extension);
+    QTemporaryDir dir;
+    QString detail;
+    bool passed = true;
+    if (!check.extension.isEmpty()) {
+        const QString path = dir.filePath(QStringLiteral("check.") + check.extension);
+        QFile file(path);
+        if (!file.open(QIODevice::WriteOnly) || file.write(check.text.toUtf8()) < 0) {
+            out << QStringLiteral("FAIL: \"%1\": cannot write %2\n").arg(label, path);
+            return false;
+        }
+        file.close();
+        window.openFile(path);
+        const Buffer* buffer = window.documents().buffer(window.currentBuffer());
+        passed = buffer && buffer->language() == LangType::External && buffer->userLanguage() == check.language;
+        if (!passed)
+            detail = QStringLiteral("\n    expected language: %1\n    got:               %2")
+                         .arg(check.language, buffer ? buffer->userLanguage() : QString());
+    } else {
+        window.newDocument();
+        window.editor()->sends(SCI_SETTEXT, 0, check.text.toUtf8().constData());
+        if (Buffer* buffer = window.documents().buffer(window.currentBuffer()))
+            buffer->setExternalLanguage(check.language);
+        QCoreApplication::processEvents();
+    }
+    EditorView* editor = window.editor();
+    editor->sci(SCI_COLOURISE, 0, -1);
+    for (const auto& [position, style] : check.expectStyles) {
+        const int got = static_cast<int>(editor->sci(SCI_GETSTYLEAT, static_cast<uptr_t>(position)));
+        if (got != style) {
+            passed = false;
+            detail += QStringLiteral("\n    position %1: expected style %2, got %3").arg(position).arg(style).arg(got);
+        }
+    }
+    out << (passed ? QStringLiteral("PASS") : QStringLiteral("FAIL")) << QStringLiteral(": \"%1\"%2\n").arg(label, detail);
+    return passed;
+}
+
 } // namespace
 
 int runRecipeCommandLine(const QStringList& arguments, QTextStream& out)
@@ -251,7 +293,19 @@ int checkPluginCommand(const QString& packagePath, const QString& recipePath, QT
         out << (found ? QStringLiteral("PASS") : QStringLiteral("FAIL")) << QStringLiteral(": command \"%1\"\n").arg(name);
     }
 
+    for (const QString& name : recipe.checkLanguages) {
+        const ExternalLanguage* lang = window.syntax().externalLexers().find(name.toStdString());
+        const bool found = lang && lang->pluginName == plugin->name;
+        failures += found ? 0 : 1;
+        out << (found ? QStringLiteral("PASS") : QStringLiteral("FAIL")) << QStringLiteral(": language \"%1\"%2\n")
+                   .arg(name, found && !lang->hasStyles ? QStringLiteral(" (without styles)") : QString());
+    }
+
     for (const RecipeCheck& check : recipe.checks) {
+        if (!check.language.isEmpty() && check.command.isEmpty()) {
+            failures += checkLanguageCase(window, check, out) ? 0 : 1;
+            continue;
+        }
         const PluginManager::Command* command = findCommand(check.command);
         if (!command) {
             ++failures;

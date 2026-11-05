@@ -105,9 +105,14 @@ public:
     // nombre del archivo (Buffer::_hasLangBeenSetFromMenu en N++)
     void setLanguage(LangType lang, bool fromMenu = false);
     bool isLanguageSetFromMenu() const { return _languageFromMenu; }
-    // Con LangType::User, el nombre del lenguaje del usuario (Buffer::_userLangExt en N++)
+    // Con LangType::User, el nombre del lenguaje del usuario (Buffer::_userLangExt en N++);
+    // con LangType::External, el del lenguaje de un plugin de lexer
     const QString& userLanguage() const { return _userLanguage; }
     void setUserLanguage(const QString& name, bool fromMenu = false);
+    void setExternalLanguage(const QString& name, bool fromMenu = false);
+    // User o External: el lenguaje es el del nombre
+    bool hasNamedLanguage() const { return isNamedLanguage(_language) && !_userLanguage.isEmpty(); }
+    static bool isNamedLanguage(LangType lang) { return lang == LangType::User || lang == LangType::External; }
 
     bool isDirty() const { return _dirty; }
     void setDirty(bool dirty);

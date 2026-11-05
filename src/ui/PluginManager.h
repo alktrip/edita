@@ -29,6 +29,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 class QLibrary;
@@ -68,6 +69,10 @@ public:
         void (*beNotified)(SCNotification*) = nullptr;
         intptr_t (*messageProc)(unsigned int, uintptr_t, intptr_t) = nullptr;
         std::vector<Command> commands;
+        // Plugin de lexer (exporta GetLexerCount, GetLexerName y CreateLexer de Lexilla):
+        // los nombres de sus lexers y su CreateLexer
+        std::vector<std::string> lexerNames;
+        void* (*createLexer)(const char* name) = nullptr;
     };
 
     PluginManager(void* host, ScintillaEditBase* mainEditor, ScintillaEditBase* subEditor, HostHandler handler,

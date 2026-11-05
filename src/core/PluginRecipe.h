@@ -58,6 +58,12 @@ struct RecipeCheck
     QString expect;             // el documento después
     bool hasExpect = false;
     QString expectFile;         // o: el archivo que queda abierto
+    // Plugins de lexer: el texto con el lenguaje «language» del plugin (sin orden), o abierto
+    // como un archivo con la extensión «extension» (y entonces el lenguaje se detecta);
+    // «expect-styles»: [[posición, estilo], …] tras colorear
+    QString language;
+    QString extension;
+    std::vector<std::pair<int, int>> expectStyles;
 };
 
 struct PluginRecipe
@@ -75,6 +81,7 @@ struct PluginRecipe
     bool fixIncludes = true;
     std::vector<RecipeSource> extraSources;
     QStringList checkCommands;
+    QStringList checkLanguages; // "languages": los que tiene que añadir (plugins de lexer)
     std::vector<RecipeCheck> checks;
     QString license;
     QStringList licenseFiles;

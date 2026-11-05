@@ -20,6 +20,7 @@
 
 #include "core/ConfigXml.h"
 #include "core/LangType.h"
+#include "syntax/ExternalLexers.h"
 #include "syntax/LanguageRegistry.h"
 #include "syntax/StyleSheet.h"
 #include "syntax/UserLanguages.h"
@@ -93,7 +94,8 @@ public:
     void setOptions(const StylerOptions& options);
 
     // Aplica lexer y estilos a una vista (SyntaxStyler::apply). Con LangType::User,
-    // `userLanguage` es el nombre del lenguaje del usuario.
+    // `userLanguage` es el nombre del lenguaje del usuario; con LangType::External, el del
+    // lenguaje del plugin.
     void apply(ScintillaEditBase& view, LangType lang, const QString& userLanguage = {}) const;
 
     // Lenguajes definidos por el usuario (userDefineLang.xml y userDefineLangs/)
@@ -105,6 +107,13 @@ public:
     void setDarkMode(bool dark) { _darkMode = dark; }
     // Tras cambiar un lenguaje del usuario: hay que volver a aplicar los estilos
     void notifyUserLanguagesChanged() { emit stylesChanged(); }
+
+    // Lenguajes de los plugins de lexer (sus estilos se añaden a la hoja en uso)
+    const ExternalLexers& externalLexers() const { return _externalLexers; }
+    QStringList addExternalLexers(const QString& pluginName, const std::vector<std::string>& names,
+                                  CreateLexerFunction create, const QString& xmlPath);
+    // Nombre del lenguaje de un plugin para un archivo, por su extensión (vacío si ninguno)
+    QString detectExternalLanguage(const QString& filePath) const;
 
     // Lenguaje para un archivo (DocumentManager::LanguageDetector)
     LangType detect(const QString& filePath, std::string_view textStart) const;
@@ -125,6 +134,7 @@ private:
     LanguageRegistry _languages;
     StyleSheet _styles;
     UserLanguages _userLanguages;
+    ExternalLexers _externalLexers;
     QString _themePath;
     bool _darkMode = false;
     StylerOptions _options;

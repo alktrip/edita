@@ -286,6 +286,13 @@ void DocumentManager::assignDetectedLanguage(Buffer& buffer, const QString& path
             return;
         }
     }
+    if (_externalLanguageDetector && !buffer._largeFile) {
+        if (const QString name = _externalLanguageDetector(path); !name.isEmpty()) {
+            buffer._language = LangType::External;
+            buffer._userLanguage = name;
+            return;
+        }
+    }
     buffer._language = detectLanguage(buffer, path);
 }
 

@@ -200,6 +200,23 @@ bool PluginManager::loadPlugin(const QString& path, QString* error)
         }
         plugin->commands.push_back(command);
     }
+    // Plugin de lexer (PluginsManager::loadPluginFromPath): tras setInfo, que es cuando
+    // algunos escriben su XML en la carpeta de configuración
+    using GetLexerCountFn = int (*)();
+    using GetLexerNameFn = void (*)(unsigned int, char*, int);
+    const auto lexerCount = reinterpret_cast<GetLexerCountFn>(library->resolve("GetLexerCount"));
+    const auto lexerName = reinterpret_cast<GetLexerNameFn>(library->resolve("GetLexerName"));
+    const auto createLexer = reinterpret_cast<void* (*)(const char*)>(library->resolve("CreateLexer"));
+    if (lexerCount && lexerName && createLexer) {
+        plugin->createLexer = createLexer;
+        const int lexers = std::min(lexerCount(), 30); // NB_MAX_EXTERNAL_LANG
+        for (int i = 0; i < lexers; ++i) {
+            char buffer[64] = {}; // MAX_EXTERNAL_LEXER_NAME_LEN
+            lexerName(static_cast<unsigned int>(i), buffer, static_cast<int>(sizeof(buffer)));
+            buffer[sizeof(buffer) - 1] = '\0';
+            plugin->lexerNames.emplace_back(buffer);
+        }
+    }
     plugin->library = std::move(library);
     _plugins.push_back(std::move(plugin));
     return true;

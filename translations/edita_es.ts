@@ -18,6 +18,19 @@
     </message>
 </context>
 <context>
+    <name>ExternalLexers</name>
+    <message>
+        <location filename="../src/syntax/ExternalLexers.cpp" line="+34"/>
+        <source>%1: cannot read %2</source>
+        <translation>%1: no se puede leer %2</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>%1: there is no room for more plugin languages (%2 at most)</source>
+        <translation>%1: no caben más lenguajes de plugins (%2 como máximo)</translation>
+    </message>
+</context>
+<context>
     <name>LangType</name>
     <message>
         <location filename="../src/core/LangType.cpp" line="+32"/>
@@ -792,7 +805,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>%1: archivo del paquete no válido (from y to, dentro del plugin)</translation>
     </message>
     <message>
-        <location line="+118"/>
+        <location line="+26"/>
+        <source>%1: expect-styles is a list of [position, style]</source>
+        <translation>%1: expect-styles es una lista de [posición, estilo]</translation>
+    </message>
+    <message>
+        <location line="+104"/>
         <source>%1 (development library, pkg-config)</source>
         <translation>%1 (biblioteca de desarrollo, pkg-config)</translation>
     </message>
@@ -1140,7 +1158,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Lenguaje definido por el usuario - %1</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+12"/>
         <source>length: %1    lines: %2</source>
         <translation>longitud: %1    líneas: %2</translation>
     </message>
@@ -1197,7 +1215,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>No hay memoria suficiente para abrir %1</translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+68"/>
         <location line="+213"/>
         <source>Scintilla could not create the document</source>
         <translation>Scintilla no pudo crear el documento</translation>
@@ -1736,19 +1754,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+421"/>
-        <location line="+3681"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+422"/>
+        <location line="+3742"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3681"/>
-        <location line="+1329"/>
+        <location line="-3742"/>
+        <location line="+1331"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1235"/>
+        <location line="-1237"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2204,7 +2222,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1172"/>
+        <location line="+1174"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2250,12 +2268,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+799"/>
+        <location line="+849"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-775"/>
+        <location line="-825"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2280,7 +2298,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Todos los archivos (*)</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+89"/>
         <source>&amp;Define your language…</source>
         <translation>&amp;Definir tu lenguaje…</translation>
     </message>
@@ -2427,12 +2445,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1864"/>
+        <location line="-1916"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-842"/>
+        <location line="-843"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2512,7 +2530,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+729"/>
+        <location line="+730"/>
         <location line="+750"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -2896,7 +2914,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Problemas</translation>
     </message>
     <message>
-        <location line="+139"/>
+        <location line="+141"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+10"/>
@@ -3062,7 +3080,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>C&amp;odificación</translation>
     </message>
     <message>
-        <location line="+307"/>
+        <location line="+188"/>
+        <source>Language of the %1 plugin</source>
+        <translation>Lenguaje del plugin %1</translation>
+    </message>
+    <message>
+        <location line="+169"/>
         <source>Go to &amp;File…</source>
         <translation>Ir a &amp;archivo…</translation>
     </message>
@@ -3283,12 +3306,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1742"/>
+        <location line="+1763"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2021"/>
+        <location line="-2042"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3427,7 +3450,7 @@ Do you want to save the file anyway?</source>
         <translation>No se puede ordenar numéricamente por la línea %1.</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+89"/>
         <source>&amp;Macro</source>
         <translation>&amp;Macro</translation>
     </message>
@@ -3626,7 +3649,7 @@ Do you want to save the file anyway?</source>
         <translation>Macro:</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+37"/>
         <source>&amp;Plugins</source>
         <translation>&amp;Plugins</translation>
     </message>
@@ -3666,7 +3689,7 @@ Do you want to save the file anyway?</source>
         <translation>Plugins</translation>
     </message>
     <message>
-        <location line="+467"/>
+        <location line="+478"/>
         <source>editaPluginList.json not found</source>
         <translation>no se encuentra editaPluginList.json</translation>
     </message>
@@ -4117,7 +4140,7 @@ Continue?</source>
         <translation>¿Reemplazar todas las apariciones de «%1» por «%2» en los archivos «%3» de %4?</translation>
     </message>
     <message>
-        <location line="+287"/>
+        <location line="+290"/>
         <location line="+14"/>
         <source>Load Session</source>
         <translation>Cargar una sesión</translation>
@@ -6502,12 +6525,12 @@ Do you want to save your changes before switching themes?</source>
         <translation>Tampoco se puede leer stylers.model.xml: no habrá colores</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+29"/>
         <source>Default</source>
         <translation>Predeterminado</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+36"/>
         <source>Cannot create %1</source>
         <translation>No se puede crear %1</translation>
     </message>

@@ -78,6 +78,9 @@ public:
     // Devuelve el nombre del lenguaje o vacío.
     using UserLanguageDetector = std::function<QString(const QString& filePath)>;
     void setUserLanguageDetector(UserLanguageDetector detector) { _userLanguageDetector = std::move(detector); }
+    // Lenguajes de los plugins de lexer: después de los del usuario y antes que langs.xml
+    // (en getLangFromExt, las extensiones de los estilos van primero)
+    void setExternalLanguageDetector(UserLanguageDetector detector) { _externalLanguageDetector = std::move(detector); }
 
     // Documento vacío "nuevo N", con el número libre más bajo (nextUntitledNewNumber)
     BufferId newEmptyDocument();
@@ -172,6 +175,7 @@ private:
     SciDocument _scratchDefaultDocument = 0;
     LanguageDetector _languageDetector;
     UserLanguageDetector _userLanguageDetector;
+    UserLanguageDetector _externalLanguageDetector;
     std::vector<std::unique_ptr<Buffer>> _buffers;
     BufferId _nextId = 1;
 };

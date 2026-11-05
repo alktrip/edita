@@ -142,6 +142,8 @@ void DocStatusBar::updateDocument(const Buffer* buffer)
     // Como N++: la descripción larga del lenguaje ("C++ source file")
     if (buffer->language() == LangType::User && !buffer->userLanguage().isEmpty())
         _language->setText(tr("User Defined language - %1").arg(buffer->userLanguage()));
+    else if (buffer->language() == LangType::External && !buffer->userLanguage().isEmpty())
+        _language->setText(buffer->userLanguage()); // getLangDesc: el nombre del lexer
     else
         _language->setText(QCoreApplication::translate("LangType", languageInfo(buffer->language()).longName));
     _eol->setText(QString::fromLatin1(eolDisplayName(buffer->eol())));

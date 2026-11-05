@@ -251,6 +251,7 @@ bool PluginRecipe::parse(const QString& path, PluginRecipe& recipe, QString* err
     recipe.licenseFiles = stringList(o.value(QStringLiteral("license-files")));
     const QJsonObject check = o.value(QStringLiteral("check")).toObject();
     recipe.checkCommands = stringList(check.value(QStringLiteral("commands")));
+    recipe.checkLanguages = stringList(check.value(QStringLiteral("languages")));
     for (const QJsonValue& v : check.value(QStringLiteral("cases")).toArray()) {
         const QJsonObject c = v.toObject();
         RecipeCheck item;
@@ -261,6 +262,17 @@ bool PluginRecipe::parse(const QString& path, PluginRecipe& recipe, QString* err
         item.hasExpect = c.contains(QStringLiteral("expect"));
         item.expect = c.value(QStringLiteral("expect")).toString();
         item.expectFile = c.value(QStringLiteral("expect-file")).toString();
+        item.language = c.value(QStringLiteral("language")).toString();
+        item.extension = c.value(QStringLiteral("extension")).toString();
+        for (const QJsonValue& pair : c.value(QStringLiteral("expect-styles")).toArray()) {
+            const QJsonArray a = pair.toArray();
+            if (a.size() != 2 || !a[0].isDouble() || !a[1].isDouble()) {
+                if (error)
+                    *error = QObject::tr("%1: expect-styles is a list of [position, style]").arg(path);
+                return false;
+            }
+            item.expectStyles.emplace_back(a[0].toInt(), a[1].toInt());
+        }
         recipe.checks.push_back(item);
     }
     return true;

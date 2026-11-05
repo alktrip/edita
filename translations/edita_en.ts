@@ -88,7 +88,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+1796"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+1799"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -120,7 +120,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+4220"/>
+        <location line="+4291"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -266,7 +266,7 @@
 <context>
     <name>edita::RecipeBuilder</name>
     <message numerus="yes">
-        <location filename="../src/core/PluginRecipe.cpp" line="+600"/>
+        <location filename="../src/core/PluginRecipe.cpp" line="+612"/>
         <source>Fixed the Windows #include lines (case, \) in %n file(s)</source>
         <translation>
             <numerusform>Fixed the Windows #include lines (case, \) in %n file</numerusform>

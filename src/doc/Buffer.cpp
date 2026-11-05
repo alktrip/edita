@@ -53,7 +53,7 @@ void Buffer::setEncoding(const TextEncoding& encoding)
 void Buffer::setLanguage(LangType lang, bool fromMenu)
 {
     _languageFromMenu = _languageFromMenu || fromMenu;
-    if (lang == _language && (lang != LangType::User || _userLanguage.isEmpty()))
+    if (lang == _language && (!isNamedLanguage(lang) || _userLanguage.isEmpty()))
         return;
     _language = lang;
     _userLanguage.clear();
@@ -66,6 +66,16 @@ void Buffer::setUserLanguage(const QString& name, bool fromMenu)
     if (_language == LangType::User && _userLanguage == name)
         return;
     _language = LangType::User;
+    _userLanguage = name;
+    notify(BufferChange::Language);
+}
+
+void Buffer::setExternalLanguage(const QString& name, bool fromMenu)
+{
+    _languageFromMenu = _languageFromMenu || fromMenu;
+    if (_language == LangType::External && _userLanguage == name)
+        return;
+    _language = LangType::External;
     _userLanguage = name;
     notify(BufferChange::Language);
 }

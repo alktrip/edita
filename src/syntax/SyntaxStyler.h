@@ -32,6 +32,7 @@ namespace edita {
 
 class LanguageRegistry;
 struct UserLanguage;
+struct ExternalLanguage;
 class StyleSheet;
 struct Style;
 
@@ -101,8 +102,10 @@ public:
     SyntaxStyler(const LanguageRegistry& languages, const StyleSheet& styles, const StylerOptions& options = {});
 
     // defineDocType + performGlobalStyles. Con LangType::User, `userLanguage` es
-    // la definición del lenguaje del usuario (nullptr = texto normal)
-    void apply(ScintillaEditBase& view, LangType lang, const UserLanguage* userLanguage = nullptr) const;
+    // la definición del lenguaje del usuario, y con LangType::External, `external` es el
+    // lenguaje de un plugin de lexer (nullptr = texto normal)
+    void apply(ScintillaEditBase& view, LangType lang, const UserLanguage* userLanguage = nullptr,
+               const ExternalLanguage* external = nullptr) const;
 
     // Solo performGlobalStyles
     void applyGlobalStyles(ScintillaEditBase& view) const;
@@ -141,6 +144,7 @@ private:
     void setEmbeddedAspLexer(ScintillaEditBase& view) const;
     void setJsonLexer(ScintillaEditBase& view, bool json5) const;
     void setUserLexer(ScintillaEditBase& view, const UserLanguage& language) const;
+    void setExternalLexer(ScintillaEditBase& view, const ExternalLanguage& language) const;
     void setBashLexer(ScintillaEditBase& view) const;
     void setNfoStyle(ScintillaEditBase& view) const;
     void setTabSettings(ScintillaEditBase& view, LangType lang) const;
