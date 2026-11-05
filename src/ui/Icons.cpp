@@ -22,11 +22,14 @@
 #include <QApplication>
 #include <QFile>
 #include <QHash>
+#include <QIconEngine>
 #include <QPainter>
 #include <QPalette>
 #include <QPixmap>
 #include <QSvgRenderer>
 #include <QWidget>
+
+#include <algorithm>
 
 namespace edita::icons {
 
@@ -59,6 +62,51 @@ QPixmap render(const QByteArray& svg, const QColor& color, int size, qreal ratio
     return pixmap;
 }
 
+// Un icono que se pinta con la paleta del momento: si el tema cambia (claro u oscuro, o el
+// del sistema), los iconos ya puestos en árboles, botones y pestañas cambian con él al
+// volver a dibujarse, sin tener que crearlos de nuevo
+class PaletteIconEngine final : public QIconEngine
+{
+public:
+    explicit PaletteIconEngine(QString name) : _name(std::move(name)) {}
+
+    void paint(QPainter* painter, const QRect& rect, QIcon::Mode mode, QIcon::State state) override
+    {
+        const qreal ratio = painter->device() ? painter->device()->devicePixelRatioF() : 1.0;
+        painter->drawPixmap(rect, scaledPixmap(rect.size(), mode, state, ratio));
+    }
+    QPixmap pixmap(const QSize& size, QIcon::Mode mode, QIcon::State state) override
+    {
+        return scaledPixmap(size, mode, state, 1.0);
+    }
+    QPixmap scaledPixmap(const QSize& size, QIcon::Mode mode, QIcon::State, qreal scale) override
+    {
+        const QPalette palette = QApplication::palette();
+        const QColor color = mode == QIcon::Disabled ? palette.color(QPalette::Disabled, QPalette::WindowText)
+                                                     : palette.color(QPalette::Active, QPalette::WindowText);
+        const int side = std::max(1, std::min(size.width(), size.height()));
+        const QString key = QStringLiteral("%1|%2|%3|%4").arg(_name, color.name(QColor::HexArgb)).arg(side).arg(scale);
+        static QHash<QString, QPixmap> cache;
+        if (const auto it = cache.constFind(key); it != cache.constEnd())
+            return *it;
+        const QPixmap pixmap = render(svgSource(_name), color, side, scale);
+        cache.insert(key, pixmap);
+        return pixmap;
+    }
+    QSize actualSize(const QSize& size, QIcon::Mode, QIcon::State) override
+    {
+        const int side = std::min(size.width(), size.height());
+        return QSize(side, side);
+    }
+    QIconEngine* clone() const override { return new PaletteIconEngine(_name); }
+    QString key() const override { return QStringLiteral("edita-palette"); }
+    QString iconName() override { return _name; }
+    bool isNull() override { return svgSource(_name).isEmpty(); }
+
+private:
+    QString _name;
+};
+
 } // namespace
 
 QIcon icon(const QString& name, const QColor& color)
@@ -83,7 +131,9 @@ QIcon icon(const QString& name, const QColor& color)
 
 QIcon icon(const QString& name)
 {
-    return icon(name, QApplication::palette().color(QPalette::Active, QPalette::WindowText));
+    if (svgSource(name).isEmpty())
+        return {};
+    return QIcon(new PaletteIconEngine(name));
 }
 
 void setIcon(QAction* action, const QString& name)

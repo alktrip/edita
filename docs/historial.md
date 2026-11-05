@@ -1,0 +1,76 @@
+# Historial de desarrollo
+
+Cómo se construyó Edita, fase por fase. Cada fase tiene su documento con el análisis de Notepad++, lo que cambió y sus criterios de aceptación.
+
+Estado: **completo** (MVP en las fases 0-5 y ampliaciones en las 6-23): pestañas, abrir/guardar con detección
+de codificación y fin de línea idéntica a Notepad++, resaltado de sintaxis con
+`langs.xml`/`stylers.xml` y sus temas, buscar/reemplazar (normal, extendido y
+regex de Boost) también en archivos, vista dividida con clones y restauración
+de la sesión al volver a abrir.
+
+Después del MVP:
+- Fase 6: aviso de cambios externos, copias de los cambios sin guardar que se recuperan al volver a abrir (modo "snapshot") y `.bak` al guardar.
+- Fase 7: diálogo de preferencias (Configuración > Preferencias…), archivos recientes, resaltado inteligente y sangría automática.
+- Fase 8: autocompletado con las API de N++ (palabras, funciones, parámetros, rutas, cierre de pares) y macros compatibles con `shortcuts.xml`.
+- Fase 9: imprimir (con cabecera, pie, márgenes y modo de color) y exportar a PDF.
+- Fase 10: lenguajes definidos por el usuario, compatibles con los `userDefineLang.xml` de N++, y su editor.
+- Fase 11: plugins nativos (`.so`) con una API calcada de la de N++ y un plugin de ejemplo. Ver [docs/plugins.md](plugins.md).
+- Fase 12: órdenes de edición de N++: ordenar y depurar líneas, mayúsculas, comentar (Ctrl+Q), espacios y tabulaciones, marcadores (Ctrl+F2/F2), historial de cambios en el margen, etiqueta XML/HTML pareja, estilos de token, plegado por niveles (Alt+0…8) y zoom.
+- Fase 13: plugin **Python Script** compatible con el PythonScript de N++ (`notepad`, `editor`, `console`, callbacks, consola acoplable); necesita las cabeceras de Python 3.
+- Fase 14: **administrador de plugins** como el de N++ (Plugins > Administrador de plugins…): lista con el formato de `nppPluginList.json`, instalar, actualizar, quitar, desactivar y activar paquetes `.zip` verificados con SHA-256; la lista oficial de N++ se puede consultar (sus DLL salen como incompatibles).
+- Fase 15: plugins de N++ **compilados en el equipo desde su código** (recetas): el administrador descarga la etiqueta original, verifica su SHA-256, aplica el port, compila y reempaqueta en local. Incluye MIME Tools (código original sin cambios) y XML Tools (port con libxml2). Requiere cmake y un compilador de C++.
+- Fase 16: **interfaz en inglés y español** (completa). El código está en inglés y el español es una traducción de Qt (`translations/edita_es.ts`). El idioma es el del sistema o el de Preferencias > General > Idioma. Opción para usar los diálogos de archivos de Qt, que siguen el idioma de Edita.
+- Fase 17: **interfaz moderna**: modo claro u oscuro siguiendo al sistema (con un tema de colores para cada modo), barra de herramientas con los botones de N++, iconos de línea propios, pestañas planas con un punto para «sin guardar» y la letra monoespaciada del sistema en el editor.
+- Fase 18: repositorio git y **una sola instancia**: con Edita abierto, los archivos se abren en esa ventana (`--multiInst` o Preferencias para abrir otra).
+- Fase 19: **Configurador de estilos** como el de N++ (Configuración > Configurador de estilos…): colores, fuentes, Global override, extensiones y palabras clave del usuario, con vista previa; guarda el tema (los de la aplicación, en una copia en `~/.config/edita/themes`).
+- Fase 20: **Asignación de atajos** (Shortcut Mapper de N++): menú, macros, plugins y órdenes de Scintilla, guardados en `shortcuts.xml` con el formato de N++.
+- Fase 21: **Editor de columnas** (Alt+C): texto o números (incremento, repetición, base, relleno) en la columna del cursor o en cada línea de una selección rectangular.
+- Fase 22: **paneles** de N++: Lista de documentos, Mapa del documento, Lista de funciones (con los analizadores `functionList` de N++) y Explorador de carpetas (Archivo > Abrir carpeta como espacio de trabajo).
+- Fase 23: temas **Edita Light** y **Edita Dark** (de serie), generados de los de N++ para combinar con la interfaz.
+- Fase 24: **AppImage portable**, generado en Ubuntu 22.04 con el Qt 6.8 oficial (`packaging/appimage/build-portable.sh`, sin Docker): funciona en Ubuntu 22.04+, Debian 12+, Fedora 36+…
+- Fase 25: **XML Tools completo**: navegación entre errores (con anotaciones), cierre automático de etiquetas, tipo XML automático, XXE, archivos enormes, aplicar a todos los archivos, tokenizar, opciones y ventana de depuración.
+- Fase 26: plugin **MarkdownViewer++** (port nativo del de N++, que está en C#): vista previa de Markdown en un panel, desplazamiento sincronizado, exportar a HTML y PDF, imprimir y copiar; se incluye con Edita.
+- Fase 27: **paleta de órdenes** (Ctrl+Mayús+A), **Ir a archivo** (Ctrl+E) e **Ir a símbolo** (Ctrl+Mayús+O), con búsqueda difusa; no existen en N++.
+- Fase 28: **cambios de Git en el margen** (añadidas, modificadas, borradas, con las líneas originales en un aviso) y **marcas en la barra de desplazamiento** (Git, marcadores, Marcar todo, resaltado inteligente, cursor); no existen en N++.
+- Fase 29: **mejoras visuales**: iconos por tipo de archivo, vista previa de colores (con selector), número de línea actual y guía del bloque resaltados, temas One Dark, Dracula, Catppuccin, Nord y Tokyo Night, y avisos sin ventanas modales.
+- Fase 30: **página de inicio**: accesos para empezar, archivos y carpetas recientes, apariencia (claro, oscuro, sistema y tema) y atajos útiles, en lugar del «new 1» vacío.
+- Fase 31: **barra de estado interactiva** (lenguaje, codificación, fin de línea y sangría con buscador), **paréntesis por colores** y las fuentes del escritorio KDE en el AppImage.
+- Fase 32: **ruta de navegación** (carpeta › archivo › clase › función, con listas para saltar) y **encabezado fijo** (la primera línea del bloque actual se queda arriba).
+- Fase 33: **mapa del documento mejorado** (cambios de Git, marcadores y búsquedas; zona visible resaltada) y **buscar en línea** (barra flotante con resaltado mientras se escribe, «3 de 17» y reemplazar).
+- Fase 34: **probador de expresiones regulares** (coincidencias y grupos en vivo, vista previa del reemplazo y referencia rápida, con el mismo motor que Buscar).
+- Fase 35: **terminal integrada** (libvterm: colores, ratón, historial y pestañas, con la fuente y los colores del editor; Ctrl+` o Ctrl+Ñ).
+- Fase 36: **servidores de lenguaje (LSP)**: diagnósticos subrayados y panel Problemas, autocompletado del servidor e información al pasar el ratón (clangd, pyright, rust-analyzer, gopls… los que estén instalados).
+- Fase 37: LSP, parte 2: **ir a la definición** (F12), **referencias** (Mayús+F12), **renombrar**, **dar formato** (Alt+Mayús+F) y **ayuda de parámetros**.
+- Fase 38: **versión para macOS**: un `.dmg` universal (Apple Silicon e Intel) que compila GitHub Actions (`.github/workflows/macos.yml`), con el código adaptado (terminal, paquete `.app`, abrir desde Finder). *En pausa desde la fase 54: el desarrollo se centra en Linux; el workflow solo se lanza a mano.*
+- Fase 39: **comparar documentos** lado a lado (con la otra vista, con lo guardado o con Git), alineados, con los caracteres distintos resaltados.
+- Fase 40: **Git en el explorador** (archivos modificados, nuevos e ignorados con color y letra) y **Git blame** (autor y fecha al final de la línea del cursor y en un margen).
+- Fase 41: **fragmentos de código** con el formato de VS Code (prefijo + Tab, marcadores y espejos, variables), con los de 15 lenguajes y los del usuario.
+- Fase 42: LSP, parte 3: **acciones de código** (Ctrl+. y bombilla), **símbolos del proyecto** (Ctrl+Alt+O) y **pistas** de tipos y parámetros al final de las líneas.
+- Fase 43: **manual de usuario** dentro de la aplicación (Ayuda › Manual de usuario, F1), en inglés y español: índice, búsqueda, historial, y las órdenes con su menú y su atajo reales. Los capítulos están en `data/manual/<idioma>/`.
+- Fase 44: el resto del **manual**: lenguajes y temas, autocompletado y fragmentos, servidores de lenguaje, Git, comparar, terminal, macros, plugins, preferencias y atajos, y solución de problemas.
+- Fase 45: **capturas** del manual generadas con la aplicación (`cmake --build build --target edita_manual_images`), **tabla de atajos** que sale de los menús y prueba de que el manual cita cada orden.
+- Fase 46: **pestaña Marcar** del diálogo Buscar (Ctrl+M: marcar todo, con marcadores en las líneas) y **Copiar el texto con estilo**, como en N++.
+- Fase 47: **sesiones con nombre** (Archivo › Cargar una sesión / Guardar la sesión, con el formato de N++), extensión de las sesiones y `--openSession`.
+- Fase 48: **menú Ejecutar** (F5): órdenes con variables como `$(FULL_CURRENT_PATH)`, guardadas con nombre y atajo en el menú, con el formato de N++.
+- Fase 49: **ocultar líneas** (Ver › Ocultar líneas, Alt+H), con las marcas de N++ para volver a mostrarlas.
+- Fase 50: **menú Ventana**: ordenar las pestañas, los documentos de la vista y el diálogo **Ventanas…** (activar, guardar o cerrar varios a la vez).
+- Fase 51: **plugins de N++ en Unicode**: la capa de compatibilidad compila los plugins modernos (`TCHAR = wchar_t`) y emula la parte de Win32 sin ventanas (archivos, `.ini`, rutas, texto, portapapeles, CRT de MSVC); las recetas corrigen los `#include` de Windows. Ver la [auditoría de los plugins de N++](https://github.com/alktrip/edita-plugins/tree/main/audit).
+- Fase 52: **ventanas de Win32 para los plugins de N++**: controles estándar, diálogos, subclassing, temporizadores, menús emergentes y GDI sin dibujo; las clases de la plantilla de N++ (`StaticDialog`, `DockingDlgInterface`) funcionan sin cambios y sus paneles se acoplan en Edita.
+- Fase 53: **los `.rc` de los plugins de N++**: `edita_rc` convierte sus diálogos, menús y cadenas al formato de Windows y la capa los crea (también modales); además `SetWindowSubclass`, los diálogos de abrir, guardar, carpeta y color, y `CreateProcess` con tuberías.
+- Fase 54: **las primeras recetas del catálogo**: siete plugins de N++ en [edita-plugins](https://github.com/alktrip/edita-plugins), fijados a su etiqueta original; `edita --build-recipe` y `edita --check-plugin` los compilan y los prueban sin la interfaz, y las recetas admiten submódulos, la licencia del paquete y su prueba.
+- **CI de Linux** (`.github/workflows/linux.yml`): en cada push compila en Ubuntu 22.04 con GCC 12 y Qt 6.8.3 (`-Werror`), pasa todas las pruebas y genera el AppImage; con una etiqueta `v*` lo publica en Releases.
+- Fase 55: **catálogo de plugins**: la CI de [edita-plugins](https://github.com/alktrip/edita-plugins) compila las recetas con el AppImage en desarrollo (release `continuous`) y publica los paquetes y una lista firmada (Ed25519, formato minisign); los plugins son reproducibles byte a byte.
+- Fase 56: **el administrador de plugins usa el catálogo**: descarga la lista firmada sin bloquear el diálogo, comprueba la firma (Ed25519, con OpenSSL), no acepta listas más antiguas e instala los binarios, o compila la receta si el binario no sirve en el equipo.
+- Fase 57: **pruebas intermitentes corregidas**: la de Python Script esperaba un aviso modal que nadie cerraba, y la de la terminal suponía cómo se ve lo pegado con `dash`. Además, Stop Script solo interrumpe dentro del script.
+- Fase 58: **controles comunes, bucles de mensajes y dibujo para los plugins de N++**: pestañas, listas con columnas, árboles, barras de progreso, deslizadores y tooltips; `GetMessage`/`PeekMessage`; `WM_PAINT` con GDI sobre `QPainter` (figuras, texto, doble búfer con `BitBlt`).
+- Fase 59: **MIME Tools y XML Tools pasan al [catálogo](https://github.com/alktrip/edita-plugins)**: se publican como binarios con los demás; Edita ya no trae recetas.
+- Fase 60: **ocho plugins más en el catálogo** (SelectQuotedText, Indent By Fold, NppStripIpAndHost, ElasticTabstops, MZC8051, Datamodder SQL Formatter, NppCrossCheck y Pork to Sausage): `SysLink`, ATL, `ShellExecuteEx`, eventos con nombre; las recetas admiten `recode`, `package-files` y órdenes previas en la prueba.
+- Fase 61: **sin la lista de plugins de Notepad++** en el administrador: sus DLL de Windows nunca se pueden cargar; los plugins de N++ llegan compilados por el catálogo de Edita.
+- Fase 62: **beta pública 0.9.0-beta.1**: versión con etapa (los plugins ven solo los números), Ayuda › Reportar un problema (el formulario de GitHub con la versión y el sistema), plantillas de issues para Edita y para plugins, la guía [PROBAR.md](../PROBAR.md) y las notas de cada versión en `packaging/release-notes/`.
+- Fase 63: **lexers de plugins**: los plugins de N++ que añaden un lenguaje (exportan las funciones de Lexilla) funcionan como en N++: menú Lenguaje, extensiones, estilos en el Configurador (guardados en el XML del plugin) y los mensajes `L_EXTERNAL`. En el catálogo, HLASM Lexer y OCaml Lexer.
+- Fase 64: **aviso de versión nueva**: al arrancar (cada día en una beta, cada 15 días en una estable, como N++) y con Ayuda › Buscar actualizaciones, Edita pregunta a GitHub por la última versión y, si es más nueva, lo dice con un botón a su página de descarga y otro para omitirla. Una distribución lo desactiva con `-DEDITA_UPDATE_CHECK=OFF`.
+
+Plan en [fase1-analisis.md](fase1-analisis.md);
+registro de cada fase: [0](fase0.md), [1](fase1.md), [2](fase2.md),
+[3](fase3.md), [4](fase4.md), [5](fase5.md), [6](fase6.md), [7](fase7.md), [8](fase8.md), [9](fase9.md), [10](fase10.md), [11](fase11.md), [12](fase12.md), [13](fase13.md), [14](fase14.md), [15](fase15.md), [16](fase16.md), [17](fase17.md), [18](fase18.md), [19](fase19.md), [20](fase20.md), [21](fase21.md), [22](fase22.md), [23](fase23.md), [24](fase24.md), [25](fase25.md), [26](fase26.md), [27](fase27.md), [28](fase28.md), [29](fase29.md), [30](fase30.md), [31](fase31.md), [32](fase32.md), [33](fase33.md), [34](fase34.md), [35](fase35.md), [36](fase36.md), [37](fase37.md), [38](fase38.md), [39](fase39.md), [40](fase40.md), [41](fase41.md), [42](fase42.md), [43](fase43.md), [44](fase44.md), [45](fase45.md), [46](fase46.md), [47](fase47.md), [48](fase48.md), [49](fase49.md), [50](fase50.md), [51](fase51.md), [52](fase52.md), [53](fase53.md), [54](fase54.md), [55](fase55.md), [56](fase56.md), [57](fase57.md), [58](fase58.md), [59](fase59.md), [60](fase60.md), [61](fase61.md), [62](fase62.md), [63](fase63.md), [64](fase64.md).
+

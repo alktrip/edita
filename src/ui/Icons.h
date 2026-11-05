@@ -27,8 +27,9 @@ class QWidget;
 
 namespace edita::icons {
 
-// Icono de línea de resources/icons/ui/<name>.svg, pintado con el color del texto
-// de la paleta (y su versión desactivada). Vacío si no existe.
+// Icono de línea de resources/icons/ui/<name>.svg, pintado con el color del texto de la
+// paleta (y su versión desactivada) en el momento de dibujarse: sigue al tema si cambia.
+// Vacío si no existe.
 QIcon icon(const QString& name);
 // El mismo icono en un color concreto
 QIcon icon(const QString& name, const QColor& color);

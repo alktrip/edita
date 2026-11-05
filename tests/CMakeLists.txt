@@ -167,3 +167,15 @@ add_custom_target(edita_manual_images
     DEPENDS manual_screenshots
     COMMENT "Capturas del manual de usuario"
     VERBATIM)
+
+# Las capturas del README (docs/images): «cmake --build build --target edita_readme_images».
+# La del administrador de plugins necesita el catálogo publicado en EDITA_PLUGIN_CATALOG_URL
+add_executable(readme_screenshots readme_screenshots.cpp)
+target_link_libraries(readme_screenshots PRIVATE edita_ui edita_warnings)
+set_target_properties(readme_screenshots PROPERTIES AUTOMOC ON)
+add_custom_target(edita_readme_images
+    COMMAND ${CMAKE_COMMAND} -E env QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 EDITA_LSP=0 EDITA_UPDATE_URL=none
+            EDITA_PLUGIN_PATH=${PROJECT_BINARY_DIR}/plugins
+            $<TARGET_FILE:readme_screenshots> es ${PROJECT_SOURCE_DIR}/docs/images
+    DEPENDS readme_screenshots
+    COMMENT "Capturas del README")

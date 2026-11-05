@@ -1,137 +1,150 @@
-# Edita
+<p align="center">
+  <img src="resources/logo.png" alt="Edita" width="128">
+</p>
 
-Editor de texto nativo para Linux inspirado en Notepad++. Usa el mismo motor de
-edición que Notepad++ (Scintilla 5 + Lexilla, con sus parches y su regex Boost)
-y una interfaz en Qt 6. Licencia GPL v3 o posterior (ver `COPYING` y `NOTICE`).
+<h1 align="center">Edita</h1>
 
-**Beta pública: [Edita 0.9.0 beta 3](https://github.com/alktrip/edita/releases/tag/v0.9.0-beta.3)** (AppImage para Linux x86_64). Qué probar y cómo reportar un problema: [PROBAR.md](PROBAR.md).
+<p align="center">
+  <b>Un editor de texto nativo para Linux inspirado en Notepad++.</b><br>
+  El mismo motor de edición (Scintilla y Lexilla), sus formatos de configuración y sus plugins, con una interfaz moderna en Qt 6.
+</p>
 
-Estado: **completo** (MVP en las fases 0-5 y ampliaciones en las 6-23): pestañas, abrir/guardar con detección
-de codificación y fin de línea idéntica a Notepad++, resaltado de sintaxis con
-`langs.xml`/`stylers.xml` y sus temas, buscar/reemplazar (normal, extendido y
-regex de Boost) también en archivos, vista dividida con clones y restauración
-de la sesión al volver a abrir.
+<p align="center">
+  <a href="https://github.com/alktrip/edita/releases/latest"><img alt="Última versión" src="https://img.shields.io/github/v/release/alktrip/edita?label=versi%C3%B3n&color=2ea44f"></a>
+  <a href="https://github.com/alktrip/edita/actions/workflows/linux.yml"><img alt="CI de Linux" src="https://github.com/alktrip/edita/actions/workflows/linux.yml/badge.svg"></a>
+  <a href="COPYING"><img alt="Licencia GPL v3" src="https://img.shields.io/badge/licencia-GPL%20v3-blue"></a>
+  <img alt="Linux x86_64" src="https://img.shields.io/badge/Linux-x86__64-informational?logo=linux&logoColor=white">
+</p>
 
-Después del MVP:
-- Fase 6: aviso de cambios externos, copias de los cambios sin guardar que se recuperan al volver a abrir (modo "snapshot") y `.bak` al guardar.
-- Fase 7: diálogo de preferencias (Configuración > Preferencias…), archivos recientes, resaltado inteligente y sangría automática.
-- Fase 8: autocompletado con las API de N++ (palabras, funciones, parámetros, rutas, cierre de pares) y macros compatibles con `shortcuts.xml`.
-- Fase 9: imprimir (con cabecera, pie, márgenes y modo de color) y exportar a PDF.
-- Fase 10: lenguajes definidos por el usuario, compatibles con los `userDefineLang.xml` de N++, y su editor.
-- Fase 11: plugins nativos (`.so`) con una API calcada de la de N++ y un plugin de ejemplo. Ver [docs/plugins.md](docs/plugins.md).
-- Fase 12: órdenes de edición de N++: ordenar y depurar líneas, mayúsculas, comentar (Ctrl+Q), espacios y tabulaciones, marcadores (Ctrl+F2/F2), historial de cambios en el margen, etiqueta XML/HTML pareja, estilos de token, plegado por niveles (Alt+0…8) y zoom.
-- Fase 13: plugin **Python Script** compatible con el PythonScript de N++ (`notepad`, `editor`, `console`, callbacks, consola acoplable); necesita las cabeceras de Python 3.
-- Fase 14: **administrador de plugins** como el de N++ (Plugins > Administrador de plugins…): lista con el formato de `nppPluginList.json`, instalar, actualizar, quitar, desactivar y activar paquetes `.zip` verificados con SHA-256; la lista oficial de N++ se puede consultar (sus DLL salen como incompatibles).
-- Fase 15: plugins de N++ **compilados en el equipo desde su código** (recetas): el administrador descarga la etiqueta original, verifica su SHA-256, aplica el port, compila y reempaqueta en local. Incluye MIME Tools (código original sin cambios) y XML Tools (port con libxml2). Requiere cmake y un compilador de C++.
-- Fase 16: **interfaz en inglés y español** (completa). El código está en inglés y el español es una traducción de Qt (`translations/edita_es.ts`). El idioma es el del sistema o el de Preferencias > General > Idioma. Opción para usar los diálogos de archivos de Qt, que siguen el idioma de Edita.
-- Fase 17: **interfaz moderna**: modo claro u oscuro siguiendo al sistema (con un tema de colores para cada modo), barra de herramientas con los botones de N++, iconos de línea propios, pestañas planas con un punto para «sin guardar» y la letra monoespaciada del sistema en el editor.
-- Fase 18: repositorio git y **una sola instancia**: con Edita abierto, los archivos se abren en esa ventana (`--multiInst` o Preferencias para abrir otra).
-- Fase 19: **Configurador de estilos** como el de N++ (Configuración > Configurador de estilos…): colores, fuentes, Global override, extensiones y palabras clave del usuario, con vista previa; guarda el tema (los de la aplicación, en una copia en `~/.config/edita/themes`).
-- Fase 20: **Asignación de atajos** (Shortcut Mapper de N++): menú, macros, plugins y órdenes de Scintilla, guardados en `shortcuts.xml` con el formato de N++.
-- Fase 21: **Editor de columnas** (Alt+C): texto o números (incremento, repetición, base, relleno) en la columna del cursor o en cada línea de una selección rectangular.
-- Fase 22: **paneles** de N++: Lista de documentos, Mapa del documento, Lista de funciones (con los analizadores `functionList` de N++) y Explorador de carpetas (Archivo > Abrir carpeta como espacio de trabajo).
-- Fase 23: temas **Edita Light** y **Edita Dark** (de serie), generados de los de N++ para combinar con la interfaz.
-- Fase 24: **AppImage portable**, generado en Ubuntu 22.04 con el Qt 6.8 oficial (`packaging/appimage/build-portable.sh`, sin Docker): funciona en Ubuntu 22.04+, Debian 12+, Fedora 36+…
-- Fase 25: **XML Tools completo**: navegación entre errores (con anotaciones), cierre automático de etiquetas, tipo XML automático, XXE, archivos enormes, aplicar a todos los archivos, tokenizar, opciones y ventana de depuración.
-- Fase 26: plugin **MarkdownViewer++** (port nativo del de N++, que está en C#): vista previa de Markdown en un panel, desplazamiento sincronizado, exportar a HTML y PDF, imprimir y copiar; se incluye con Edita.
-- Fase 27: **paleta de órdenes** (Ctrl+Mayús+A), **Ir a archivo** (Ctrl+E) e **Ir a símbolo** (Ctrl+Mayús+O), con búsqueda difusa; no existen en N++.
-- Fase 28: **cambios de Git en el margen** (añadidas, modificadas, borradas, con las líneas originales en un aviso) y **marcas en la barra de desplazamiento** (Git, marcadores, Marcar todo, resaltado inteligente, cursor); no existen en N++.
-- Fase 29: **mejoras visuales**: iconos por tipo de archivo, vista previa de colores (con selector), número de línea actual y guía del bloque resaltados, temas One Dark, Dracula, Catppuccin, Nord y Tokyo Night, y avisos sin ventanas modales.
-- Fase 30: **página de inicio**: accesos para empezar, archivos y carpetas recientes, apariencia (claro, oscuro, sistema y tema) y atajos útiles, en lugar del «new 1» vacío.
-- Fase 31: **barra de estado interactiva** (lenguaje, codificación, fin de línea y sangría con buscador), **paréntesis por colores** y las fuentes del escritorio KDE en el AppImage.
-- Fase 32: **ruta de navegación** (carpeta › archivo › clase › función, con listas para saltar) y **encabezado fijo** (la primera línea del bloque actual se queda arriba).
-- Fase 33: **mapa del documento mejorado** (cambios de Git, marcadores y búsquedas; zona visible resaltada) y **buscar en línea** (barra flotante con resaltado mientras se escribe, «3 de 17» y reemplazar).
-- Fase 34: **probador de expresiones regulares** (coincidencias y grupos en vivo, vista previa del reemplazo y referencia rápida, con el mismo motor que Buscar).
-- Fase 35: **terminal integrada** (libvterm: colores, ratón, historial y pestañas, con la fuente y los colores del editor; Ctrl+` o Ctrl+Ñ).
-- Fase 36: **servidores de lenguaje (LSP)**: diagnósticos subrayados y panel Problemas, autocompletado del servidor e información al pasar el ratón (clangd, pyright, rust-analyzer, gopls… los que estén instalados).
-- Fase 37: LSP, parte 2: **ir a la definición** (F12), **referencias** (Mayús+F12), **renombrar**, **dar formato** (Alt+Mayús+F) y **ayuda de parámetros**.
-- Fase 38: **versión para macOS**: un `.dmg` universal (Apple Silicon e Intel) que compila GitHub Actions (`.github/workflows/macos.yml`), con el código adaptado (terminal, paquete `.app`, abrir desde Finder). *En pausa desde la fase 54: el desarrollo se centra en Linux; el workflow solo se lanza a mano.*
-- Fase 39: **comparar documentos** lado a lado (con la otra vista, con lo guardado o con Git), alineados, con los caracteres distintos resaltados.
-- Fase 40: **Git en el explorador** (archivos modificados, nuevos e ignorados con color y letra) y **Git blame** (autor y fecha al final de la línea del cursor y en un margen).
-- Fase 41: **fragmentos de código** con el formato de VS Code (prefijo + Tab, marcadores y espejos, variables), con los de 15 lenguajes y los del usuario.
-- Fase 42: LSP, parte 3: **acciones de código** (Ctrl+. y bombilla), **símbolos del proyecto** (Ctrl+Alt+O) y **pistas** de tipos y parámetros al final de las líneas.
-- Fase 43: **manual de usuario** dentro de la aplicación (Ayuda › Manual de usuario, F1), en inglés y español: índice, búsqueda, historial, y las órdenes con su menú y su atajo reales. Los capítulos están en `data/manual/<idioma>/`.
-- Fase 44: el resto del **manual**: lenguajes y temas, autocompletado y fragmentos, servidores de lenguaje, Git, comparar, terminal, macros, plugins, preferencias y atajos, y solución de problemas.
-- Fase 45: **capturas** del manual generadas con la aplicación (`cmake --build build --target edita_manual_images`), **tabla de atajos** que sale de los menús y prueba de que el manual cita cada orden.
-- Fase 46: **pestaña Marcar** del diálogo Buscar (Ctrl+M: marcar todo, con marcadores en las líneas) y **Copiar el texto con estilo**, como en N++.
-- Fase 47: **sesiones con nombre** (Archivo › Cargar una sesión / Guardar la sesión, con el formato de N++), extensión de las sesiones y `--openSession`.
-- Fase 48: **menú Ejecutar** (F5): órdenes con variables como `$(FULL_CURRENT_PATH)`, guardadas con nombre y atajo en el menú, con el formato de N++.
-- Fase 49: **ocultar líneas** (Ver › Ocultar líneas, Alt+H), con las marcas de N++ para volver a mostrarlas.
-- Fase 50: **menú Ventana**: ordenar las pestañas, los documentos de la vista y el diálogo **Ventanas…** (activar, guardar o cerrar varios a la vez).
-- Fase 51: **plugins de N++ en Unicode**: la capa de compatibilidad compila los plugins modernos (`TCHAR = wchar_t`) y emula la parte de Win32 sin ventanas (archivos, `.ini`, rutas, texto, portapapeles, CRT de MSVC); las recetas corrigen los `#include` de Windows. Ver la [auditoría de los plugins de N++](https://github.com/alktrip/edita-plugins/tree/main/audit).
-- Fase 52: **ventanas de Win32 para los plugins de N++**: controles estándar, diálogos, subclassing, temporizadores, menús emergentes y GDI sin dibujo; las clases de la plantilla de N++ (`StaticDialog`, `DockingDlgInterface`) funcionan sin cambios y sus paneles se acoplan en Edita.
-- Fase 53: **los `.rc` de los plugins de N++**: `edita_rc` convierte sus diálogos, menús y cadenas al formato de Windows y la capa los crea (también modales); además `SetWindowSubclass`, los diálogos de abrir, guardar, carpeta y color, y `CreateProcess` con tuberías.
-- Fase 54: **las primeras recetas del catálogo**: siete plugins de N++ en [edita-plugins](https://github.com/alktrip/edita-plugins), fijados a su etiqueta original; `edita --build-recipe` y `edita --check-plugin` los compilan y los prueban sin la interfaz, y las recetas admiten submódulos, la licencia del paquete y su prueba.
-- **CI de Linux** (`.github/workflows/linux.yml`): en cada push compila en Ubuntu 22.04 con GCC 12 y Qt 6.8.3 (`-Werror`), pasa todas las pruebas y genera el AppImage; con una etiqueta `v*` lo publica en Releases.
-- Fase 55: **catálogo de plugins**: la CI de [edita-plugins](https://github.com/alktrip/edita-plugins) compila las recetas con el AppImage en desarrollo (release `continuous`) y publica los paquetes y una lista firmada (Ed25519, formato minisign); los plugins son reproducibles byte a byte.
-- Fase 56: **el administrador de plugins usa el catálogo**: descarga la lista firmada sin bloquear el diálogo, comprueba la firma (Ed25519, con OpenSSL), no acepta listas más antiguas e instala los binarios, o compila la receta si el binario no sirve en el equipo.
-- Fase 57: **pruebas intermitentes corregidas**: la de Python Script esperaba un aviso modal que nadie cerraba, y la de la terminal suponía cómo se ve lo pegado con `dash`. Además, Stop Script solo interrumpe dentro del script.
-- Fase 58: **controles comunes, bucles de mensajes y dibujo para los plugins de N++**: pestañas, listas con columnas, árboles, barras de progreso, deslizadores y tooltips; `GetMessage`/`PeekMessage`; `WM_PAINT` con GDI sobre `QPainter` (figuras, texto, doble búfer con `BitBlt`).
-- Fase 59: **MIME Tools y XML Tools pasan al [catálogo](https://github.com/alktrip/edita-plugins)**: se publican como binarios con los demás; Edita ya no trae recetas.
-- Fase 60: **ocho plugins más en el catálogo** (SelectQuotedText, Indent By Fold, NppStripIpAndHost, ElasticTabstops, MZC8051, Datamodder SQL Formatter, NppCrossCheck y Pork to Sausage): `SysLink`, ATL, `ShellExecuteEx`, eventos con nombre; las recetas admiten `recode`, `package-files` y órdenes previas en la prueba.
-- Fase 61: **sin la lista de plugins de Notepad++** en el administrador: sus DLL de Windows nunca se pueden cargar; los plugins de N++ llegan compilados por el catálogo de Edita.
-- Fase 62: **beta pública 0.9.0-beta.1**: versión con etapa (los plugins ven solo los números), Ayuda › Reportar un problema (el formulario de GitHub con la versión y el sistema), plantillas de issues para Edita y para plugins, la guía [PROBAR.md](PROBAR.md) y las notas de cada versión en `packaging/release-notes/`.
-- Fase 63: **lexers de plugins**: los plugins de N++ que añaden un lenguaje (exportan las funciones de Lexilla) funcionan como en N++: menú Lenguaje, extensiones, estilos en el Configurador (guardados en el XML del plugin) y los mensajes `L_EXTERNAL`. En el catálogo, HLASM Lexer y OCaml Lexer.
-- Fase 64: **aviso de versión nueva**: al arrancar (cada día en una beta, cada 15 días en una estable, como N++) y con Ayuda › Buscar actualizaciones, Edita pregunta a GitHub por la última versión y, si es más nueva, lo dice con un botón a su página de descarga y otro para omitirla. Una distribución lo desactiva con `-DEDITA_UPDATE_CHECK=OFF`.
+<p align="center">
+  <a href="https://github.com/alktrip/edita/releases/latest"><b>⬇ Descargar el AppImage</b></a> ·
+  <a href="PROBAR.md">Probar la beta</a> ·
+  <a href="https://github.com/alktrip/edita/issues/new/choose">Reportar un problema</a>
+</p>
 
-Plan en [docs/fase1-analisis.md](docs/fase1-analisis.md);
-registro de cada fase: [0](docs/fase0.md), [1](docs/fase1.md), [2](docs/fase2.md),
-[3](docs/fase3.md), [4](docs/fase4.md), [5](docs/fase5.md), [6](docs/fase6.md), [7](docs/fase7.md), [8](docs/fase8.md), [9](docs/fase9.md), [10](docs/fase10.md), [11](docs/fase11.md), [12](docs/fase12.md), [13](docs/fase13.md), [14](docs/fase14.md), [15](docs/fase15.md), [16](docs/fase16.md), [17](docs/fase17.md), [18](docs/fase18.md), [19](docs/fase19.md), [20](docs/fase20.md), [21](docs/fase21.md), [22](docs/fase22.md), [23](docs/fase23.md), [24](docs/fase24.md), [25](docs/fase25.md), [26](docs/fase26.md), [27](docs/fase27.md), [28](docs/fase28.md), [29](docs/fase29.md), [30](docs/fase30.md), [31](docs/fase31.md), [32](docs/fase32.md), [33](docs/fase33.md), [34](docs/fase34.md), [35](docs/fase35.md), [36](docs/fase36.md), [37](docs/fase37.md), [38](docs/fase38.md), [39](docs/fase39.md), [40](docs/fase40.md), [41](docs/fase41.md), [42](docs/fase42.md), [43](docs/fase43.md), [44](docs/fase44.md), [45](docs/fase45.md), [46](docs/fase46.md), [47](docs/fase47.md), [48](docs/fase48.md), [49](docs/fase49.md), [50](docs/fase50.md), [51](docs/fase51.md), [52](docs/fase52.md), [53](docs/fase53.md), [54](docs/fase54.md), [55](docs/fase55.md), [56](docs/fase56.md), [57](docs/fase57.md), [58](docs/fase58.md), [59](docs/fase59.md), [60](docs/fase60.md), [61](docs/fase61.md), [62](docs/fase62.md), [63](docs/fase63.md), [64](docs/fase64.md).
+![Edita con el tema claro: explorador de carpetas, código C++ y mapa del documento](docs/images/edita-light.png)
 
-Uso: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst] [--openSession archivo]`
+## Qué es
 
-Configuración del usuario en `~/.config/edita/` (`langs.xml`, `stylers.xml`,
-`config.xml`, `session.xml`, `shortcuts.xml`, `themes/`, `backup/`, `autoCompletion/`, `userDefineLang.xml`, `userDefineLangs/`, `plugins/`), con el mismo formato que Notepad++.
+Edita lleva a Linux la forma de trabajar de Notepad++: abre tus archivos tal como los dejaste, entiende las mismas codificaciones y finales de línea, colorea más de 90 lenguajes y lee los mismos `langs.xml`, `stylers.xml`, temas, macros, atajos y lenguajes definidos por el usuario. Si vienes de Notepad++, ya sabes usarlo.
 
+Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git en el margen, terminal integrada, servidores de lenguaje (LSP), comparación de archivos y un manual integrado en español e inglés.
 
-## Compilar (Arch Linux)
+> **Estado:** beta pública (0.9.0). Casi todo está hecho; falta que lo use gente real. Si lo pruebas, [cuéntanos qué encuentras](https://github.com/alktrip/edita/issues/new/choose).
 
-Desde el directorio que contiene `editor/`:
+## Capturas
+
+| | |
+|:---:|:---:|
+| ![Tema oscuro con la lista de funciones](docs/images/edita-dark.png) | ![Paleta de órdenes](docs/images/edita-palette.png) |
+| **Tema oscuro**, con el explorador y la lista de funciones | **Paleta de órdenes** (Ctrl+Mayús+A): cualquier orden por su nombre |
+| ![Comparar con la versión guardada](docs/images/edita-compare.png) | ![Vista previa de Markdown](docs/images/edita-markdown.png) |
+| **Comparar** con lo guardado o entre dos archivos | **Vista previa de Markdown** mientras escribes (MarkdownViewer++) |
+
+<p align="center">
+  <img src="docs/images/edita-plugins.png" alt="Administrador de plugins con el catálogo" width="80%"><br>
+  <b>Plugins de Notepad++</b> compilados para Linux desde su código original, desde un catálogo firmado
+</p>
+
+## Características
+
+**Lo de Notepad++**
+- Pestañas y dos vistas (con clones), sesiones con nombre y restauración al volver a abrir.
+- Detección de codificación y de fin de línea idéntica a la de Notepad++, con más de 40 juegos de caracteres.
+- Buscar y reemplazar (normal, extendido y expresiones regulares de Boost), también en archivos, con marcado y marcadores.
+- Macros, edición en columna, ocultar líneas, plegado, mapa del documento y lista de funciones.
+- Lenguajes definidos por el usuario, temas y el Configurador de estilos, compatibles con los archivos de Notepad++.
+- Menú Ejecutar, asignación de atajos, autocompletado con las API de Notepad++, impresión y exportación a PDF.
+
+**Lo que Notepad++ no tiene**
+- Paleta de órdenes, ir a archivo y ir a símbolo.
+- Git: cambios en el margen, blame y estado en el explorador.
+- Terminal integrada.
+- Servidores de lenguaje: diagnósticos, completado, ir a la definición, renombrar e inlay hints.
+- Comparación de archivos, fragmentos (snippets) y probador de expresiones regulares.
+- Barra de búsqueda en línea, ruta de navegación y encabezado fijo.
+- Temas claros y oscuros modernos que siguen al sistema.
+- Manual de usuario integrado (F1), en español e inglés.
+
+**Plugins**
+- **Python Script**, con la API del plugin de Notepad++: muchos de sus scripts funcionan sin cambios.
+- **MarkdownViewer++**, la vista previa de Markdown.
+- Un [catálogo firmado](https://github.com/alktrip/edita-plugins) con 19 plugins de Notepad++ compilados para Linux desde su código original (XML Tools, MIME Tools, un formateador de SQL, plugins de lenguaje…), instalables desde **Plugins › Administrador de plugins**.
+- Un SDK para escribir plugins nuevos o portar los de Notepad++ ([guía](docs/plugins.md)).
+
+## Instalar
+
+Descarga el AppImage de la [última versión](https://github.com/alktrip/edita/releases/latest), dale permiso de ejecución y ábrelo:
 
 ```sh
-sudo pacman -S --needed qt6-base qt6-5compat qt6-svg qt6-tools qt6-translations cmake ninja gcc openssl python libzip   # opcionales: python (Python Script), libzip (paquetes de plugins)
+chmod +x Edita-*-x86_64.AppImage
+./Edita-*-x86_64.AppImage
+```
+
+Funciona en Linux x86_64: Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores. Trae Qt, Python Script y MarkdownViewer++. Edita te avisa cuando hay una versión nueva.
+
+Uso desde la terminal: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst] [--openSession archivo]`. La configuración va en `~/.config/edita/`, con los mismos archivos que Notepad++ (`langs.xml`, `stylers.xml`, `config.xml`, `session.xml`, `shortcuts.xml`, `themes/`, `userDefineLangs/`, `plugins/`…).
+
+## Probar la beta y reportar
+
+La guía [PROBAR.md](PROBAR.md) dice qué probar. Para reportar un problema, **Ayuda › Reportar un problema…** abre el formulario de GitHub con tu versión y tu sistema ya escritos. Hay otro formulario para los plugins.
+
+## Compilar
+
+En Arch Linux, desde la carpeta que contiene `editor/`:
+
+```sh
+sudo pacman -S --needed qt6-base qt6-5compat qt6-svg qt6-tools qt6-translations cmake ninja gcc openssl python libzip
 cmake -S editor -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build
-ctest --test-dir build --output-on-failure      # -LE perf para saltar el de rendimiento; poppler (pdftotext) opcional
+ctest --test-dir build --output-on-failure      # -LE perf para saltar el de rendimiento
 ./build/edita
 ```
 
-Opciones de CMake:
-
-| Opción | Por defecto | |
+| Opción de CMake | Por defecto | |
 |---|---|---|
-| `EDITA_WERROR` | `ON` | warnings del código propio como errores |
-| `EDITA_BUILD_TESTS` | `ON` | compila los tests (QtTest, sin pantalla) |
-| `EDITA_BUILD_PLUGINS` | `ON` | compila los plugins: el de ejemplo (`plugins/EditaDemo`) y Python Script (si hay cabeceras de Python 3) |
-| `EDITA_APP_ID` | `edita` | nombre del binario y de `~/.config/<id>/` |
+| `EDITA_WERROR` | `ON` | Los avisos del código propio son errores |
+| `EDITA_BUILD_TESTS` | `ON` | Las pruebas (QtTest, sin pantalla) |
+| `EDITA_BUILD_PLUGINS` | `ON` | Los plugins: el de ejemplo (`plugins/EditaDemo`), Python Script (si hay cabeceras de Python 3) y MarkdownViewer++ |
+| `EDITA_UPDATE_CHECK` | `ON` | Avisar de versiones nuevas; una distribución lo desactiva |
+| `EDITA_APP_ID` | `edita` | Nombre del binario y de `~/.config/<id>/` |
 
-## AppImage
+**AppImage:** `packaging/appimage/build-portable.sh` genera `dist/Edita-<versión>-x86_64.AppImage` en Ubuntu 22.04, con Qt, los plugins y Python incluidos ([empaquetado](docs/empaquetado.md)). La CI de Linux lo genera en cada cambio.
 
-`editor/packaging/appimage/build-portable.sh` genera `dist/Edita-<versión>-x86_64.AppImage`, con Qt, los plugins y Python incluidos. Lo genera en Ubuntu 22.04, así que funciona en Ubuntu 22.04+, Debian 12+, Fedora 36+ y posteriores. `build-appimage.sh` lo genera con el sistema propio, y entonces solo funciona en sistemas con una glibc igual o más nueva. Ver [docs/empaquetado.md](docs/empaquetado.md).
+**macOS:** en pausa. Hay una CI (`.github/workflows/macos.yml`, a mano) que genera un `.dmg` universal sin notarizar, todavía sin Python Script.
 
-## macOS
+**Capturas:** las de esta página y las del manual se generan con la aplicación real: `cmake --build build --target edita_readme_images` y `edita_manual_images`.
 
-`.github/workflows/macos.yml` compila en GitHub Actions (macOS 15, Qt 6.8.3 universal), pasa las pruebas y genera `Edita-<versión>-macos-universal.dmg` como artefacto de la ejecución. Con una etiqueta `v*`, además lo publica en Releases. En un Mac se puede generar igual con `packaging/macos/build-dmg.sh` (Qt 6, CMake y Ninja). La app va firmada ad hoc y sin notarizar: la primera vez hay que abrirla con clic derecho › Abrir (o en Ajustes › Privacidad y seguridad › «Abrir igualmente»). Por ahora no incluye el plugin Python Script.
+## Documentación
 
-## Estructura
+- [Manual de usuario](data/manual/es): integrado en Edita (F1), en español e inglés.
+- [Escribir o portar plugins](docs/plugins.md) y el [catálogo de plugins](https://github.com/alktrip/edita-plugins).
+- [Empaquetado](docs/empaquetado.md).
+- [Historial de desarrollo](docs/historial.md): cada fase, con el análisis de Notepad++ y sus criterios de aceptación. El plan está en [fase1-analisis.md](docs/fase1-analisis.md).
+- [Lo que tiene Notepad++ y Edita no](docs/paridad-npp.md).
+
+## Estructura del código
 
 ```
 src/core/      núcleo sin widgets: encodings, fin de línea, E/S de archivos, rutas
 src/doc/       documentos abiertos sobre Scintilla (FileManager/Buffer de N++)
 src/syntax/    langs.xml, stylers.xml/temas, detección de lenguaje, lexers y estilos
 src/search/    motor de búsqueda (FindReplaceDlg sin interfaz) y buscar en archivos
-src/ui/        ventana, editor (ScintillaEditBase), diálogos
-tests/         QtTest, se ejecutan con QT_QPA_PLATFORM=offscreen; fixtures/ con generate.py
-third_party/   Scintilla, Lexilla, boostregex, uchardet y pugixml copiados de Notepad++ (no editar a mano)
-data/          langs.model.xml, stylers.model.xml, themes/, autoCompletion/ y userDefineLangs/ de Notepad++, snippets/, manual/ (el manual de usuario) y plugins/ (editaPluginList.json y las recetas; se instalan en share/edita)
-translations/  edita_es.ts (español) y edita_en.ts (plurales del inglés): se compilan dentro del binario
-resources/     logo e ícono de Edita; icons/ui/: iconos de línea de la interfaz (SVG) (en el binario; se instalan en share/icons/hicolor con edita.desktop)
-tools/         import-third-party.sh: regenera third_party/ desde referencia/npp; make-edita-themes.py: los temas de Edita
-plugin-sdk/    edita_plugin.h: API para escribir plugins (se instala en include/edita); compat/ y cmake/: capa Win32 y funciones de CMake para compilar plugins de N++ (en share/edita/plugin-sdk)
-plugins/       plugin de ejemplo en C (EditaDemo) y Python Script
-docs/          análisis, registro de cada fase, guía de plugins y empaquetado
-packaging/     appimage/: scripts para generar el AppImage (el portable, en Ubuntu 22.04); macos/: el .app y el .dmg
+src/lsp/       cliente de servidores de lenguaje
+src/ui/        ventana, editor (ScintillaEditBase), paneles y diálogos
+tests/         QtTest, sin pantalla (QT_QPA_PLATFORM=offscreen); fixtures/ con generate.py
+third_party/   Scintilla, Lexilla, boostregex, uchardet y pugixml de Notepad++ (no editar a mano)
+data/          langs.model.xml, stylers.model.xml, themes/, autoCompletion/, userDefineLangs/, snippets/ y manual/
+translations/  edita_es.ts (español) y edita_en.ts (plurales del inglés)
+resources/     logo e iconos de la interfaz (SVG)
+plugin-sdk/    edita_plugin.h, la API de plugins; compat/ y cmake/: la capa Win32 para compilar plugins de N++
+plugins/       el plugin de ejemplo (EditaDemo), Python Script y MarkdownViewer++
+packaging/     appimage/, macos/ y release-notes/ (las notas de cada versión)
+docs/          análisis, historial de cada fase, guías e images/ (las capturas de esta página)
 ```
 
-`third_party/` se regenera con `tools/import-third-party.sh`. Los parches
-locales están documentados en [third_party/PATCHES.md](third_party/PATCHES.md).
+`third_party/` se regenera con `tools/import-third-party.sh`; los parches locales están en [third_party/PATCHES.md](third_party/PATCHES.md).
+
+## Licencia
+
+Edita es software libre, con licencia [GPL v3 o posterior](COPYING). Se basa en Notepad++ (© Don Ho y el equipo de Notepad++) y en Scintilla y Lexilla (© Neil Hodgson). Los créditos de cada componente están en [NOTICE](NOTICE).

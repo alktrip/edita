@@ -17,6 +17,7 @@
 #include "ui/EditorView.h"
 #include "ui/FileIcons.h"
 #include "ui/MainWindow.h"
+#include "ui/Icons.h"
 #include "ui/NotificationBar.h"
 
 #include <QDir>
@@ -53,6 +54,34 @@ class TestVisual : public QObject
     QTemporaryDir _tmp;
 
 private slots:
+    // Un icono ya puesto (en un árbol, en la ruta) sigue al tema: se pinta con la paleta del
+    // momento. Antes se quedaba con el color de cuando se creó, oscuro sobre el tema oscuro
+    void iconsFollowThePalette()
+    {
+        const QPalette original = QApplication::palette();
+        auto darkestPixel = [](const QIcon& icon) {
+            const QImage image = icon.pixmap(QSize(32, 32)).toImage().convertToFormat(QImage::Format_ARGB32);
+            int darkest = 256;
+            for (int y = 0; y < image.height(); ++y)
+                for (int x = 0; x < image.width(); ++x)
+                    if (qAlpha(image.pixel(x, y)) > 200)
+                        darkest = std::min(darkest, qGray(image.pixel(x, y)));
+            return darkest;
+        };
+        QPalette light = original;
+        light.setColor(QPalette::Active, QPalette::WindowText, Qt::black);
+        QApplication::setPalette(light);
+        const QIcon folder = icons::icon(QStringLiteral("open"));
+        QVERIFY(!folder.isNull());
+        QVERIFY(darkestPixel(folder) < 60);
+        QPalette dark = original;
+        dark.setColor(QPalette::Active, QPalette::WindowText, Qt::white);
+        QApplication::setPalette(dark);
+        QVERIFY2(darkestPixel(folder) > 200, "el mismo icono, ahora claro");
+        QVERIFY(icons::icon(QStringLiteral("no-existe")).isNull());
+        QApplication::setPalette(original);
+    }
+
     void initTestCase()
     {
         QVERIFY(_tmp.isValid());
