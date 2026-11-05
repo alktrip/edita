@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "AppInfo.h"
+
 #include <QList>
 #include <QString>
 
@@ -273,6 +275,10 @@ struct Preferences
     // se usa en su lugar la monoespaciada del sistema. Propio de Edita:
     // <GUIConfig name="EditaSystemMonospaceFont">yes</GUIConfig>
     bool systemMonospaceFont = true;
+    // Avisar de las versiones nuevas (AutoUpdateOptions de N++): <GUIConfig name="noUpdate"
+    // autoUpdateMode="1" intervalDays="15">. En una beta, cada día
+    bool updateOnStartup = true;
+    int updateIntervalDays = kAppPrerelease ? 1 : 15;
 
     bool detectsChanges() const { return fileAutoDetection != FileAutoDetection::Disabled; }
     bool detectsAllFiles() const { return (fileAutoDetection & FileAutoDetection::AllFiles) != 0; }

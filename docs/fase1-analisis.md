@@ -337,6 +337,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 61 — Sin la lista de N++ | El administrador ya no descarga la lista oficial de Notepad++ (sus DLL salían como incompatibles); Incompatibles muestra solo lo instalado que no carga | ✅ [fase61.md](fase61.md) |
 | 62 — Beta pública | Versión 0.9.0-beta.1 (`EDITA_VERSION_SUFFIX`; `kAppVersionNumber` para los plugins), Ayuda › Reportar un problema (core/IssueReport), plantillas de issues, PROBAR.md, notas de la versión y release de la etiqueta como la última | ✅ [fase62.md](fase62.md) |
 | 63 — Lexers de plugins | syntax/ExternalLexers (CreateLexer, XML del plugin, detección, guardar estilos en su XML), `LangType::External` con nombre en el documento, menú Lenguaje, mensajes `L_EXTERNAL`+índice; SDK: `EXPORTS` (.def → version script), `msvc_crt.h`, `GetStdHandle`, `GetModuleHandleEx`; recetas: `languages` y `expect-styles`. HLASM Lexer y OCaml Lexer | ✅ [fase63.md](fase63.md) |
+| 64 — Aviso de versión nueva | core/UpdateCheck (SemVer con etapas, `releases/latest` de GitHub, `noUpdate` de config.xml como N++), Ayuda › Buscar actualizaciones, comprobación al arrancar cada `intervalDays` (1 en beta, 15 en estable), Preferencias › Varios, opción `EDITA_UPDATE_CHECK` para las distribuciones | ✅ [fase64.md](fase64.md) |
 
 ---
 

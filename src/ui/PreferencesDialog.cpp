@@ -19,6 +19,8 @@
 
 #include "ui/PreferencesDialog.h"
 
+#include "AppInfo.h"
+
 #include "core/Encoding.h"
 #include "ui/Icons.h"
 #include "ui/TerminalPanel.h"
@@ -538,6 +540,15 @@ void PreferencesDialog::buildMisc()
     _terminalShell->setPlaceholderText(TerminalPanel::resolveShell(QString()));
     _terminalShell->setToolTip(tr("Program and arguments, e.g. \"zsh -l\". Empty: the login shell ($SHELL)"));
     form->addRow(tr("Shell:"), _terminalShell);
+    // El actualizador de N++ («Auto-updater»): aquí solo avisa, y lleva a la página de la versión
+    form->addRow(new QLabel(tr("<b>New Versions</b>")));
+    _updateOnStartup = addCheck(form, tr("Check for a new version of Edita at startup"), "updateOnStartup");
+    _updateInterval = addSpin(form, tr("Every:"), "updateIntervalDays", 0, 365, tr(" days"));
+    connect(_updateOnStartup, &QCheckBox::toggled, _updateInterval, &QWidget::setEnabled);
+    if (!kUpdateCheck) { // un paquete de una distribución: se actualiza con su gestor de paquetes
+        _updateOnStartup->setEnabled(false);
+        _updateOnStartup->setToolTip(tr("This copy of Edita is updated by your distribution"));
+    }
 }
 
 // Servidores de lenguaje (no existe en N++): cuál usa cada lenguaje y si está instalado
@@ -765,6 +776,9 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _detectEncoding->setChecked(p.detectEncoding);
     setComboValue(_fallbackCodepage, p.fallbackCodepage);
     _terminalShell->setText(p.terminalShell);
+    _updateOnStartup->setChecked(p.updateOnStartup);
+    _updateInterval->setValue(p.updateIntervalDays);
+    _updateInterval->setEnabled(p.updateOnStartup && kUpdateCheck);
     _lspEnabled->setChecked(p.lspEnabled);
     _inlayHints->setChecked(p.inlayHints);
     const QMap<QString, QString> overrides = lsp::parseOverrides(p.lspServers);
@@ -840,6 +854,8 @@ Preferences PreferencesDialog::preferences() const
     p.openSaveDir = static_cast<OpenSaveDir>(comboValue(_openSaveDir));
     p.defaultDirPath = _defaultDir->text().trimmed();
     p.terminalShell = _terminalShell->text().trimmed();
+    p.updateOnStartup = _updateOnStartup->isChecked();
+    p.updateIntervalDays = _updateInterval->value();
     p.lspEnabled = _lspEnabled->isChecked();
     p.inlayHints = _inlayHints->isChecked();
     QMap<QString, QString> overrides;

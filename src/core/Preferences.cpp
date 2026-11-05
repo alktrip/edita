@@ -314,6 +314,11 @@ Preferences loadPreferences(const ConfigXml& config)
     else if (!icons.isEmpty())
         p.toolbarIcons = ToolbarIcons::Standard;
     r.boolText("EditaSystemMonospaceFont", p.systemMonospaceFont);
+    // autoUpdateMode: 0 desactivado, 1 al arrancar, 2 al salir (aquí, como al arrancar)
+    int updateMode = p.updateOnStartup ? 1 : 0;
+    r.intAttr("noUpdate", "autoUpdateMode", updateMode, 0, 2);
+    p.updateOnStartup = updateMode != 0;
+    r.intAttr("noUpdate", "intervalDays", p.updateIntervalDays, 0, 365);
     r.boolText("EditaQtFileDialog", p.qtFileDialog);
     r.boolText("EditaGitMargin", p.gitMargin);
     r.boolText("EditaScrollBarMarks", p.scrollBarMarks);
@@ -455,6 +460,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     static const char* const kToolbarIcons[] = {"small", "standard", "large"};
     w.text("ToolBar", QString::fromLatin1(kToolbarIcons[static_cast<int>(p.toolbarIcons)]));
     w.text("EditaSystemMonospaceFont", yesNo(p.systemMonospaceFont));
+    w.attr("noUpdate", "autoUpdateMode", p.updateOnStartup ? 1 : 0);
+    w.attr("noUpdate", "intervalDays", p.updateIntervalDays);
     w.text("EditaQtFileDialog", yesNo(p.qtFileDialog));
     w.text("EditaGitMargin", yesNo(p.gitMargin));
     w.text("EditaScrollBarMarks", yesNo(p.scrollBarMarks));

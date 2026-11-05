@@ -9,6 +9,14 @@ project(Edita
 # una versión estable). Los plugins y las comparaciones usan solo la numérica
 set(EDITA_VERSION_SUFFIX "-beta.2")
 set(EDITA_VERSION "${PROJECT_VERSION}${EDITA_VERSION_SUFFIX}" CACHE INTERNAL "Versión de Edita")
+# Avisar de las versiones nuevas (Ayuda › Buscar actualizaciones): en el AppImage, sí; un
+# paquete de una distribución lo desactiva, porque se actualiza con su gestor de paquetes
+option(EDITA_UPDATE_CHECK "Avisar cuando hay una versión nueva de Edita" ON)
+if(EDITA_UPDATE_CHECK)
+    set(EDITA_UPDATE_CHECK_VALUE true)
+else()
+    set(EDITA_UPDATE_CHECK_VALUE false)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

@@ -39,6 +39,8 @@ add_library(edita_core STATIC
     core/IssueReport.cpp
     core/IssueReport.h
     core/Minisign.cpp
+    core/UpdateCheck.cpp
+    core/UpdateCheck.h
     core/Minisign.h
     core/RemoteCatalog.cpp
     core/RemoteCatalog.h

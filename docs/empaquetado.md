@@ -39,3 +39,7 @@ Descarga el sistema base de Ubuntu (comprobado con su SHA-256) a `build-portable
 
 - **Plugins compilados desde su código (recetas, fase 15):** dentro del AppImage se compilan con el Qt del AppImage, cuyas cabeceras públicas (QtCore, QtGui, QtWidgets) van en `share/edita/plugin-sdk/qt/include`, y no con el del sistema. Así cargan aunque el Qt del sistema sea más nuevo ([fase 24](fase24.md)). Hacen falta cmake y un compilador de C++; las cabeceras de Qt del sistema no.
 - La integración con el escritorio va por el portal de XDG (`xdgdesktopportal`), que también da el diálogo de archivos del escritorio. El tema de Plasma no va incluido.
+
+## Para las distribuciones
+
+Un paquete de una distribución se actualiza con su gestor de paquetes. Para que Edita no busque versiones nuevas en GitHub (ni muestre **Ayuda › Buscar actualizaciones**), se compila con `-DEDITA_UPDATE_CHECK=OFF` ([fase 64](fase64.md)). El AppImage la deja activada.

@@ -205,6 +205,8 @@ private:
     QCheckBox* _goToEnd = nullptr;
     QCheckBox* _detectEncoding = nullptr;
     QComboBox* _fallbackCodepage = nullptr;
+    QCheckBox* _updateOnStartup = nullptr;
+    QSpinBox* _updateInterval = nullptr;
 };
 
 } // namespace edita

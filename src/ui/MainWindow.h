@@ -54,6 +54,9 @@
 #include <memory>
 
 class QActionGroup;
+class QDate;
+class QNetworkAccessManager;
+class QNetworkReply;
 class QDockWidget;
 class QJsonObject;
 class QFileSystemWatcher;
@@ -125,6 +128,13 @@ public:
     void setPrompter(std::unique_ptr<Prompter> prompter);
     // Abre una dirección en el navegador (QDesktopServices); las pruebas ponen la suya
     void setUrlOpener(std::function<bool(const QUrl&)> opener) { _openUrl = std::move(opener); }
+    // Ayuda › Buscar actualizaciones (manual: aunque no toque y aunque se haya omitido esa
+    // versión, y dice también si no hay nada nuevo) o al arrancar, cada intervalDays días.
+    // Sin bloquear: el resultado sale en la barra de avisos
+    void checkForUpdates(bool manual);
+    bool isCheckingForUpdates() const { return _updateReply != nullptr; }
+    // Al arrancar, si toca (Preferences::updateOnStartup, cada updateIntervalDays días)
+    void checkForUpdatesIfDue(const QDate& today);
     // Ayuda › Reportar un problema: el formulario de GitHub con la versión y el sistema
     QUrl issueReportUrl() const;
 
@@ -626,6 +636,9 @@ private:
     CommandPalette* _palette = nullptr;
     // Cambios de Git en el margen y marcas en la barra de desplazamiento, de cada vista
     QPointer<GitChanges> _git[2];
+    QNetworkAccessManager* _updateNetwork = nullptr;
+    QPointer<QNetworkReply> _updateReply;
+    void updateCheckFinished(QNetworkReply* reply, bool manual);
     QPointer<GitBlame> _blame[2];
     SnippetLibrary* _snippets = nullptr;
     QPointer<SnippetController> _snippetControllers[2];

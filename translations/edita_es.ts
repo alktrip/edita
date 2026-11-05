@@ -913,6 +913,14 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>UpdateCheck</name>
+    <message>
+        <location filename="../src/core/UpdateCheck.cpp" line="+98"/>
+        <source>The answer is not a version of Edita</source>
+        <translation>La respuesta no es una versión de Edita</translation>
+    </message>
+</context>
+<context>
     <name>UserLanguages</name>
     <message>
         <location filename="../src/syntax/UserLanguages.cpp" line="+295"/>
@@ -1754,24 +1762,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+422"/>
-        <location line="+3742"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+427"/>
+        <location line="+3819"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3742"/>
-        <location line="+1331"/>
+        <location line="-3819"/>
+        <location line="+1408"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1237"/>
+        <location line="-1314"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+371"/>
+        <location line="+373"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2202,7 +2210,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+41"/>
+        <location line="+43"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2222,7 +2230,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1174"/>
+        <location line="+1247"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2445,12 +2453,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1916"/>
+        <location line="-1991"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-843"/>
+        <location line="-845"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2530,13 +2538,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+730"/>
-        <location line="+750"/>
+        <location line="+732"/>
+        <location line="+825"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-729"/>
+        <location line="-804"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
@@ -2852,6 +2860,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Página de &amp;inicio</translation>
     </message>
     <message>
+        <location line="+2"/>
+        <source>Check for &amp;Updates…</source>
+        <translation>Buscar act&amp;ualizaciones…</translation>
+    </message>
+    <message>
         <location line="+1"/>
         <source>&amp;Report a Problem…</source>
         <translation>&amp;Reportar un problema…</translation>
@@ -2869,7 +2882,53 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 %1</translation>
     </message>
     <message>
-        <location line="+110"/>
+        <location line="+40"/>
+        <location line="+27"/>
+        <source>Check for Updates</source>
+        <translation>Buscar actualizaciones</translation>
+    </message>
+    <message>
+        <location line="-27"/>
+        <source>Checking for new versions is disabled.</source>
+        <translation>La búsqueda de versiones nuevas está desactivada.</translation>
+    </message>
+    <message>
+        <location line="+27"/>
+        <source>Could not check for a new version: %1</source>
+        <translation>No se pudo buscar una versión nueva: %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Edita is up to date</source>
+        <translation>Edita está al día</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edita %1 is the latest version.</source>
+        <translation>Edita %1 es la última versión.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Edita %1 is available</source>
+        <translation>Ya está disponible Edita %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>You have version %1.</source>
+        <translation>Tienes la versión %1.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Download Page</source>
+        <translation>Página de descarga</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Skip This Version</source>
+        <translation>Omitir esta versión</translation>
+    </message>
+    <message>
+        <location line="+98"/>
         <source>Macro</source>
         <translation>Macro</translation>
     </message>
@@ -4547,7 +4606,7 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+134"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+136"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
@@ -4945,12 +5004,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+272"/>
+        <location line="+281"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-272"/>
+        <location line="-281"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -5439,11 +5498,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
+        <location line="+35"/>
         <source>Every:</source>
         <translation>Cada:</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-35"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -5538,7 +5598,27 @@ Continue?</source>
         <translation>Shell:</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
+        <source>&lt;b&gt;New Versions&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Versiones nuevas&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Check for a new version of Edita at startup</source>
+        <translation>Buscar una versión nueva de Edita al arrancar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source> days</source>
+        <translation> días</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>This copy of Edita is updated by your distribution</source>
+        <translation>Esta copia de Edita la actualiza tu distribución</translation>
+    </message>
+    <message>
+        <location line="+7"/>
         <source>Language Servers</source>
         <translation>Servidores de lenguaje</translation>
     </message>

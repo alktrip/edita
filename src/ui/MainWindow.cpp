@@ -22,6 +22,7 @@
 #include "core/Backup.h"
 #include "core/Codec.h"
 #include "core/IssueReport.h"
+#include "core/UpdateCheck.h"
 #include "core/Paths.h"
 #include "ui/Appearance.h"
 #include "ui/AutoCompletion.h"
@@ -82,7 +83,11 @@
 #include <QCoreApplication>
 #include <QCloseEvent>
 #include <QDateTime>
+#include <QDate>
 #include <QDesktopServices>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QDockWidget>
 #include <QDir>
 #include <QDragEnterEvent>
@@ -186,7 +191,7 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionMoveToOtherView", 10001}, {"actionCloneToOtherView", 10002}, {"actionSwitchView", 44072},
         {"actionPreferences", 48011},    {"actionStyleConfigurator", 46001}, {"actionShortcutMapper", 48009},
         {"actionRecordMacro", 42018},    {"actionPlayMacro", 42021},      {"actionSaveMacro", 42025},
-        {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionEol0", 45001},
+        {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionCheckForUpdates", 47006},          {"actionEol0", 45001},
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
         {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
         {"actionDocumentList", 44070},   {"actionFunctionList", 44084},   {"actionFolderAsWorkspace", 44085},
@@ -514,6 +519,8 @@ MainWindow::MainWindow(QWidget* parent)
 
     if (!syntaxWarnings.isEmpty())
         QTimer::singleShot(0, this, [this, syntaxWarnings] { showWarnings(tr("Settings"), syntaxWarnings); });
+    // Versiones nuevas: unos segundos después de abrir, para no retrasar el arranque
+    QTimer::singleShot(3000, this, [this] { checkForUpdatesIfDue(QDate::currentDate()); });
 }
 
 void MainWindow::connectPane(EditorPane* pane)
@@ -1301,6 +1308,8 @@ void MainWindow::createMenus()
     QMenu* help = menuBar()->addMenu(tr("Help"));
     addAction(help, tr("User &Manual"), "actionUserManual", QKeySequence::HelpContents, [this] { showManual(); });
     addAction(help, tr("&Welcome Page"), "actionWelcomePage", QKeySequence(), [this] { showWelcomePage(); });
+    if (kUpdateCheck) // un paquete de una distribución se actualiza con su gestor de paquetes
+        addAction(help, tr("Check for &Updates…"), "actionCheckForUpdates", QKeySequence(), [this] { checkForUpdates(true); });
     addAction(help, tr("&Report a Problem…"), "actionReportProblem", QKeySequence(), [this] {
         if (!_openUrl(issueReportUrl()))
             _prompter->warn(this, tr("Report a Problem"),
@@ -1322,6 +1331,79 @@ void MainWindow::createMenus()
     help->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
     createToolBar();
     applyShortcuts();
+}
+
+void MainWindow::checkForUpdatesIfDue(const QDate& today)
+{
+    update_check::State state = update_check::readState(_syntax.config());
+    if (!kUpdateCheck || !update_check::isDue(_prefs.updateOnStartup, state, today)
+        || update_check::releaseUrl(QString::fromUtf8(kHomepageUrl)).isEmpty())
+        return;
+    // Como launchUpdater: la próxima fecha se fija al comprobar, salga bien o no
+    update_check::scheduleNext(state, _prefs.updateIntervalDays, today);
+    update_check::writeState(_syntax.config(), state);
+    _syntax.config().save();
+    checkForUpdates(false);
+}
+
+void MainWindow::checkForUpdates(bool manual)
+{
+    const QUrl url = update_check::releaseUrl(QString::fromUtf8(kHomepageUrl));
+    if (_updateReply)
+        return;
+    if (url.isEmpty()) {
+        if (manual)
+            _prompter->warn(this, tr("Check for Updates"), tr("Checking for new versions is disabled."));
+        return;
+    }
+    if (!_updateNetwork)
+        _updateNetwork = new QNetworkAccessManager(this);
+    QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setTransferTimeout(15000);
+    // GitHub pide un User-Agent; solo va la versión
+    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Edita/%1").arg(QString::fromUtf8(kAppVersion)));
+    request.setRawHeader("Accept", "application/vnd.github+json");
+    _updateReply = _updateNetwork->get(request);
+    connect(_updateReply, &QNetworkReply::finished, this, [this, reply = _updateReply.data(), manual] {
+        updateCheckFinished(reply, manual);
+    });
+}
+
+void MainWindow::updateCheckFinished(QNetworkReply* reply, bool manual)
+{
+    reply->deleteLater();
+    _updateReply = nullptr;
+    update_check::Release release;
+    QString error = reply->error() == QNetworkReply::NoError ? QString() : reply->errorString();
+    if (error.isEmpty())
+        update_check::parseLatestRelease(reply->readAll(), release, &error);
+    if (!error.isEmpty()) {
+        if (manual) // al arrancar, sin red no se molesta a nadie
+            _prompter->warn(this, tr("Check for Updates"), tr("Could not check for a new version: %1").arg(error));
+        return;
+    }
+    const QString current = QString::fromUtf8(kAppVersion);
+    if (update_check::compareVersions(release.version, current) <= 0) {
+        if (manual)
+            _notifications->show(NotificationBar::Kind::Info, tr("Edita is up to date"),
+                                 tr("Edita %1 is the latest version.").arg(current));
+        return;
+    }
+    update_check::State state = update_check::readState(_syntax.config());
+    if (!manual && state.skippedVersion == release.version)
+        return;
+    const QUrl page = release.page.isValid() ? release.page : QUrl(QString::fromUtf8(kHomepageUrl) + QStringLiteral("/releases"));
+    _notifications->show(
+        NotificationBar::Kind::Info, tr("Edita %1 is available").arg(release.version),
+        tr("You have version %1.").arg(current),
+        {{tr("Download Page"), [this, page] { _openUrl(page); }},
+         {tr("Skip This Version"), [this, version = release.version] {
+              update_check::State s = update_check::readState(_syntax.config());
+              s.skippedVersion = version;
+              update_check::writeState(_syntax.config(), s);
+              _syntax.config().save(); // la barra se cierra sola al pulsar
+          }}});
 }
 
 QUrl MainWindow::issueReportUrl() const

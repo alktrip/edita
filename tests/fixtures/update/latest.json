@@ -1,0 +1,14 @@
+{
+  "url": "https://api.github.com/repos/alktrip/edita/releases/1",
+  "html_url": "https://github.com/alktrip/edita/releases/tag/v99.0.0",
+  "tag_name": "v99.0.0",
+  "name": "Edita v99.0.0",
+  "draft": false,
+  "prerelease": false,
+  "assets": [
+    {
+      "name": "Edita-99.0.0-x86_64.AppImage",
+      "browser_download_url": "https://github.com/alktrip/edita/releases/download/v99.0.0/Edita-99.0.0-x86_64.AppImage"
+    }
+  ]
+}

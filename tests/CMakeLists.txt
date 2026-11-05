@@ -25,7 +25,9 @@ function(edita_add_test name)
     # EDITA_LSP=0: sin servidores de lenguaje (los que haya instalados); tst_lsp los activa.
     # EDITA_PLUGIN_CATALOG_URL=none: el administrador de plugins no descarga el catálogo de
     # Edita (las pruebas del catálogo ponen el suyo)
-    set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;EDITA_LSP=0;EDITA_PLUGIN_CATALOG_URL=none")
+    # EDITA_UPDATE_URL=none: no se pregunta a GitHub por versiones nuevas (tst_updatecheck
+    # pone la suya)
+    set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;EDITA_LSP=0;EDITA_PLUGIN_CATALOG_URL=none;EDITA_UPDATE_URL=none")
     if(ARG_LABELS)
         set_tests_properties(${name} PROPERTIES LABELS "${ARG_LABELS}")
     endif()
@@ -59,6 +61,7 @@ edita_add_test(tst_commandpalette LIBS edita_ui)
 edita_add_test(tst_gitchanges LIBS edita_ui)
 edita_add_test(tst_visual LIBS edita_ui)
 edita_add_test(tst_welcome LIBS edita_ui)
+edita_add_test(tst_updatecheck LIBS edita_ui)
 edita_add_test(tst_statusbar LIBS edita_ui)
 edita_add_test(tst_navigation LIBS edita_ui)
 edita_add_test(tst_findbar LIBS edita_ui)
