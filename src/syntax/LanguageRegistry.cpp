@@ -24,6 +24,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <map>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
 namespace edita {
 
@@ -167,6 +172,100 @@ LangType LanguageRegistry::langFromExtension(std::string_view extension) const
             return it->type;
     }
     return LangType::Text;
+}
+
+bool updateLangsFromModel(const QString& userPath, const QString& modelPath, QString* error)
+{
+    pugi::xml_document user, model;
+    const QByteArray userFile = userPath.toUtf8();
+    if (!user.load_file(userFile.constData(), pugi::parse_default | pugi::parse_comments)
+        || !model.load_file(modelPath.toUtf8().constData()))
+        return false; // el langs.xml dañado lo trata loadAll
+    pugi::xml_node userRoot = user.child("NotepadPlus");
+    const pugi::xml_node modelRoot = model.child("NotepadPlus");
+    const long long modelDate = modelRoot.attribute("modelDate").as_llong(0);
+    if (modelDate == 0 || userRoot.attribute("modelDate").as_llong(0) >= modelDate)
+        return false;
+    pugi::xml_node userLanguages = userRoot.child("Languages");
+    const pugi::xml_node modelLanguages = modelRoot.child("Languages");
+    if (!userLanguages || !modelLanguages)
+        return false;
+
+    std::map<std::string, pugi::xml_node> byName;
+    for (pugi::xml_node lang : userLanguages.children("Language"))
+        byName[lang.attribute("name").as_string()] = lang;
+    auto words = [](const char* text) {
+        std::vector<std::string> list;
+        std::istringstream in(text ? text : "");
+        for (std::string w; in >> w;)
+            list.push_back(w);
+        return list;
+    };
+    for (const pugi::xml_node modelLang : modelLanguages.children("Language")) {
+        const std::string name = modelLang.attribute("name").as_string();
+        if (name.empty())
+            continue;
+        const auto found = byName.find(name);
+        if (found == byName.end()) { // un lenguaje nuevo: entero
+            userLanguages.append_copy(modelLang);
+            continue;
+        }
+        pugi::xml_node userLang = found->second;
+        // Las listas de palabras: las que falten, enteras; en las que ya están, las palabras que falten
+        for (const pugi::xml_node modelKw : modelLang.children("Keywords")) {
+            const char* kwName = modelKw.attribute("name").as_string(nullptr);
+            if (!kwName)
+                continue;
+            pugi::xml_node userKw = userLang.find_child_by_attribute("Keywords", "name", kwName);
+            if (!userKw) {
+                userLang.append_copy(modelKw);
+                continue;
+            }
+            std::vector<std::string> list = words(userKw.child_value());
+            const std::set<std::string> have(list.begin(), list.end());
+            bool added = false;
+            for (const std::string& w : words(modelKw.child_value())) {
+                if (!have.count(w)) {
+                    list.push_back(w);
+                    added = true;
+                }
+            }
+            if (added) {
+                std::sort(list.begin(), list.end());
+                std::string text;
+                for (const std::string& w : list)
+                    text += (text.empty() ? "" : " ") + w;
+                userKw.text().set(text.c_str());
+            }
+        }
+        // Los atributos que falten; en «ext», las extensiones que falten (uno vacío se respeta: es a propósito)
+        for (const pugi::xml_attribute attr : modelLang.attributes()) {
+            pugi::xml_attribute mine = userLang.attribute(attr.name());
+            if (!mine) {
+                userLang.append_attribute(attr.name()).set_value(attr.value());
+            } else if (std::string(attr.name()) == "ext" && mine.value()[0]) {
+                std::vector<std::string> exts = words(mine.value());
+                const std::set<std::string> have(exts.begin(), exts.end());
+                for (const std::string& e : words(attr.value()))
+                    if (!have.count(e))
+                        exts.push_back(e);
+                std::string text;
+                for (const std::string& e : exts)
+                    text += (text.empty() ? "" : " ") + e;
+                mine.set_value(text.c_str());
+            }
+        }
+    }
+    pugi::xml_attribute date = userRoot.attribute("modelDate");
+    if (!date)
+        date = userRoot.append_attribute("modelDate");
+    date.set_value(modelDate);
+    if (!user.save_file(userFile.constData(), "    ", pugi::format_default, pugi::encoding_utf8)) {
+        if (error)
+            *error = QCoreApplication::translate("LanguageRegistry", "Cannot write %1").arg(userPath);
+        return false;
+    }
+    return true;
 }
 
 } // namespace edita

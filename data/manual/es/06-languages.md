@@ -11,6 +11,10 @@ Para cambiarlo, elige otro en el menú **Lenguaje** (agrupados por inicial) o pu
 lenguaje en la barra de estado, que abre una lista con buscador. {{actionLang0}} quita el
 resaltado.
 
+Delphi y Free Pascal (Lazarus) están en **Pascal / Delphi**: su resaltado entiende el Object
+Pascal actual (`strict private`, `sealed`, `helper`…) y abre los archivos `.pas`, `.dpr`, `.dpk`,
+`.dfm`, `.lfm`, `.lpr`, `.pp` e `.inc`.
+
 Cada lenguaje define más que los colores: los símbolos de comentario que usa
 {{actionToggleComment}}, las palabras del autocompletado, el plegado y el analizador de la Lista de
 funciones.
@@ -26,8 +30,9 @@ los `userDefineLang.xml` de Notepad++, así que sirven las muchas definiciones q
 - **Abrir la carpeta de lenguajes** abre `~/.config/edita/userDefineLangs/`, donde cada lenguaje
   es un archivo.
 
-Edita incluye Markdown (en una variante clara y otra oscura). Los lenguajes del usuario se eligen
-por extensión antes que los incluidos.
+Edita incluye así Markdown y Kotlin (`.kt`, `.kts`), cada uno en una variante clara y otra oscura
+que se elige según el modo de la apariencia. Los lenguajes del usuario se eligen por extensión
+antes que los incluidos.
 
 ### El editor de lenguajes del usuario
 

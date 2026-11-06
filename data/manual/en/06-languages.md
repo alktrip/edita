@@ -11,6 +11,10 @@ To change it, choose another one in the **Language** menu (grouped by initial) o
 language field of the status bar, which opens a list with a search field.
 {{actionLang0}} turns the highlighting off.
 
+Delphi and Free Pascal (Lazarus) are under **Pascal / Delphi**: its highlighting understands
+current Object Pascal (`strict private`, `sealed`, `helper`…) and it opens `.pas`, `.dpr`, `.dpk`,
+`.dfm`, `.lfm`, `.lpr`, `.pp` and `.inc` files.
+
 Each language defines more than colors: the comment symbols used by {{actionToggleComment}},
 the words of the autocompletion, the folding, and the parser of the Function List.
 
@@ -25,8 +29,9 @@ delimiters (such as strings), folding and colors. The files are compatible with 
 - **Open User Defined Language folder** opens `~/.config/edita/userDefineLangs/`, where each
   language is a file.
 
-Edita includes Markdown (in a light and a dark variant). The user defined languages are chosen
-by extension before the built-in ones.
+Edita includes Markdown and Kotlin (`.kt`, `.kts`) this way, each in a light and a dark variant
+chosen by the appearance mode. The user defined languages are chosen by extension before the
+included ones.
 
 ### The editor of user defined languages
 

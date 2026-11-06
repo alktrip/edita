@@ -2667,7 +2667,9 @@ QMenu* MainWindow::createLanguageMenu()
         const LanguageInfo& info = languageInfo(lang);
         // Los lenguajes definidos por el usuario (UDL) quedan fuera del MVP
         if (info.menuName && lang != LangType::Text && lang != LangType::User)
-            entries.emplace_back(QString::fromUtf8(info.menuName), lang);
+            entries.emplace_back(lang == LangType::Pascal ? QStringLiteral("Pascal / Delphi") // su lexer es el de Delphi
+                                                          : QString::fromUtf8(info.menuName),
+                                 lang);
     }
     std::sort(entries.begin(), entries.end(),
               [](const auto& a, const auto& b) { return a.first.compare(b.first, Qt::CaseInsensitive) < 0; });

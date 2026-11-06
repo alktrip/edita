@@ -1,0 +1,31 @@
+--- a/lexilla/lexers/LexUser.cxx
++++ b/lexilla/lexers/LexUser.cxx
+@@ -1607,6 +1607,7 @@
+     bool dontMove = false;
+     bool finished = true;
+     int checkEOL = EOL_DEFAULT_VALUE;
++    Sci_PositionU lastEolPos = static_cast<Sci_PositionU>(-1); // Edita: cada fin de línea, una sola vez
+ 
+     int nestedLevel = 0;
+     int openIndex = 0;
+@@ -2226,6 +2227,11 @@
+         else if (visibleChars == false && !isWhiteSpace(sc.ch))
+             visibleChars = true;
+ 
++        // Edita: una secuencia que cierra justo antes del fin de línea (el */ de un comentario, una
++        // cadena) deja el cursor en él con dontMove, y la vuelta siguiente lo procesaba otra vez:
++        // lineCurrent avanzaba dos y el plegado de lo que sigue quedaba una línea más abajo
++        if (sc.atLineEnd == true && sc.currentPos == lastEolPos)
++            checkEOL = EOL_SKIP_CHECK;
+         if ((sc.atLineEnd == true && checkEOL != EOL_SKIP_CHECK) || (sc.atLineEnd == false && checkEOL == EOL_FORCE_CHECK))
+         {
+             if (foldComments == true)
+@@ -2303,6 +2309,8 @@
+             }
+             nlCount = 0;
+ 
++            if (sc.atLineEnd == true)
++                lastEolPos = sc.currentPos;
+             lineCurrent++;
+             levelCurrent = levelNext;
+             levelMinCurrent = levelCurrent;

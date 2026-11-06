@@ -136,6 +136,13 @@ QStringList SyntaxManager::loadAll()
     QString error;
 
     const QString langs = ensureUserFile(QStringLiteral("langs.xml"), QStringLiteral("langs.model.xml"), warnings);
+    // Lo nuevo del modelo de esta versión (lenguajes, palabras, extensiones), como N++
+    if (const QString model = paths::findDataFile(QStringLiteral("langs.model.xml")); !langs.isEmpty() && !model.isEmpty()
+        && langs != model) {
+        QString updateError;
+        if (!updateLangsFromModel(langs, model, &updateError) && !updateError.isEmpty())
+            warnings << updateError;
+    }
     if (langs.isEmpty() || !_languages.load(langs, &error)) {
         if (!langs.isEmpty())
             warnings << tr("Cannot read %1 (%2); using langs.model.xml").arg(langs, error);

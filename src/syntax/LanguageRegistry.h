@@ -88,6 +88,13 @@ private:
     std::vector<LanguageDefinition> _languages;
 };
 
+// NppParameters::updateFromModelXml + updateLangXml: si el modelo (langs.model.xml) tiene un
+// modelDate más nuevo que el langs.xml del usuario, le añade lo que falte, sin quitar ni cambiar
+// nada: lenguajes, listas de palabras clave, palabras, atributos y extensiones. Así una versión
+// nueva de Edita trae sus lenguajes mejorados a quien ya tenía su langs.xml. Devuelve si cambió
+// el archivo del usuario
+bool updateLangsFromModel(const QString& userPath, const QString& modelPath, QString* error = nullptr);
+
 // isInList de N++: ¿está `token` en la lista separada por espacios? (sin
 // distinguir mayúsculas en ASCII)
 bool isInSpaceSeparatedList(std::string_view token, std::string_view list);

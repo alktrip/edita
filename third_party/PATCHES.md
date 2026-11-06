@@ -2,8 +2,8 @@
 
 `third_party/` se regenera con `tools/import-third-party.sh` a partir de
 `referencia/npp`, que ya trae los parches de Notepad++ sobre Scintilla 5.6.6 y
-Lexilla 5.5.3, y su copia de uchardet (`PowerEditor/src/uchardet`). Encima de eso, Edita aplica estos parches mínimos, todos de
-portabilidad a Linux/GCC y **sin cambios de comportamiento**:
+Lexilla 5.5.3, y su copia de uchardet (`PowerEditor/src/uchardet`). Encima de eso, Edita aplica estos parches mínimos, casi todos de
+portabilidad a Linux/GCC y sin cambios de comportamiento (los que sí cambian algo lo dicen):
 
 | Parche | Archivo | Motivo |
 |---|---|---|
@@ -14,6 +14,7 @@ portabilidad a Linux/GCC y **sin cambios de comportamiento**:
 | `0004-scintilla-h-c-compatible.patch` | `scintilla/include/Scintilla.h` | N++ añadió al final una estructura de C++ (`SearchResultMarkings`, con `std::vector`) para su panel de resultados, lo que impide incluir la cabecera desde C. Se rodea de `#ifdef __cplusplus` para que los plugins en C (como el de ejemplo) puedan usar `Scintilla.h`. Para C++ no cambia nada. |
 | `0005-regex-match-groups.patch` | `scintilla/include/BoostRegexSearch.h`, `boostregex/BoostRegExSearch.cxx` | Edita guarda dónde cae cada grupo de la última coincidencia (`g_lastMatchGroups`, por hilo) para el probador de expresiones regulares (fase 34). No cambia cómo se busca. |
 | `0006-pugixml-charconv-macos.patch` | `pugixml/pugiconfig.hpp` | `PUGIXML_CHARCONV_FLOAT` (que activa N++) no se activa en macOS: la libc++ de Apple no tiene `from_chars`/`to_chars` para decimales antes de macOS 13.3, y Edita pide macOS 12. pugixml usa entonces `strtod`/`snprintf`; Edita no lee ni escribe decimales con pugixml. |
+| `0007-lexuser-eol-una-vez.patch` | `lexilla/lexers/LexUser.cxx` | **Corrige un error** (cambia el comportamiento): en los lenguajes definidos por el usuario, una secuencia que cierra justo antes del fin de línea (el `*/` de un comentario de bloque de una línea, como la documentación `/** … */`) dejaba el cursor en el fin de línea con `dontMove`, y la vuelta siguiente lo procesaba otra vez. `lineCurrent` avanzaba dos, y el plegado de todo lo que seguía quedaba una línea más abajo. Ahora cada fin de línea se procesa una sola vez (fase 65). Notepad++ tiene el mismo error. |
 
 Además, sin tocar el fuente, en `third_party/CMakeLists.txt`:
 

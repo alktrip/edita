@@ -30,9 +30,10 @@ rm -f "$dst/boostregex/"*.mak
 cp -r "$npp/PowerEditor/src/uchardet" "$dst/"
 cp -r "$npp/PowerEditor/src/pugixml" "$dst/"
 
-# Datos de N++ que se usan tal cual: definiciones de lenguajes, estilos y temas
+# Datos de N++: definiciones de lenguajes, estilos, temas, API y lenguajes preinstalados. Se
+# copian encima de los de data/, sin borrar la carpeta: en ella están también el manual, los
+# fragmentos, los temas de Edita y sus lenguajes preinstalados (Kotlin)
 data="$here/data"
-rm -rf "$data"
 mkdir -p "$data/themes"
 cp "$npp/PowerEditor/src/langs.model.xml" "$npp/PowerEditor/src/stylers.model.xml" "$data/"
 cp "$npp/PowerEditor/installer/themes/"*.xml "$data/themes/"
@@ -40,6 +41,15 @@ mkdir -p "$data/autoCompletion"
 cp "$npp/PowerEditor/installer/APIs/"*.xml "$data/autoCompletion/"
 mkdir -p "$data/userDefineLangs"
 cp "$npp/PowerEditor/bin/userDefineLangs/"*.xml "$data/userDefineLangs/"
+
+# Los cambios de Edita sobre esos datos (tools/data-patches): por ejemplo, Pascal con lo de Delphi
+for p in "$here/tools/data-patches/"*.patch; do
+    [ -e "$p" ] || continue
+    echo "Aplicando $(basename "$p")"
+    patch -d "$here" -p1 --binary --forward --silent < "$p"
+done
+# Los lenguajes preinstalados de Edita
+python3 "$here/tools/make-kotlin-udl.py" >/dev/null
 
 # Registrar de dónde viene cada copia
 rev="$(git -C "$npp" rev-parse HEAD 2>/dev/null || echo desconocido)"
