@@ -339,6 +339,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 63 — Lexers de plugins | syntax/ExternalLexers (CreateLexer, XML del plugin, detección, guardar estilos en su XML), `LangType::External` con nombre en el documento, menú Lenguaje, mensajes `L_EXTERNAL`+índice; SDK: `EXPORTS` (.def → version script), `msvc_crt.h`, `GetStdHandle`, `GetModuleHandleEx`; recetas: `languages` y `expect-styles`. HLASM Lexer y OCaml Lexer | ✅ [fase63.md](fase63.md) |
 | 64 — Aviso de versión nueva | core/UpdateCheck (SemVer con etapas, `releases/latest` de GitHub, `noUpdate` de config.xml como N++), Ayuda › Buscar actualizaciones, comprobación al arrancar cada `intervalDays` (1 en beta, 15 en estable), Preferencias › Varios, opción `EDITA_UPDATE_CHECK` para las distribuciones | ✅ [fase64.md](fase64.md) |
 | 65 — Kotlin y Delphi | Kotlin preinstalado (UDL claro y oscuro, `tools/make-kotlin-udl.py`), Pascal/Delphi (extensiones, `//`, palabras), `updateLangsFromModel` (updateLangXml de N++), parche 0007 de LexUser (plegado tras `*/`), `import-third-party.sh` ya no borra `data/` | ✅ [fase65.md](fase65.md) |
+| 66 — Reporte de fallos | core/CrashReport (manejadores de señales con pila aparte, traza con `backtrace_symbols_fd`, reporte en `crash/last-crash.txt`), aviso al volver a abrir con Reportar/Copiar/Descartar, `formUrl` con más campos y todo codificado | ✅ [fase66.md](fase66.md) |
 
 ---
 

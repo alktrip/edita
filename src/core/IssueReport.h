@@ -9,7 +9,10 @@
 #pragma once
 
 #include <QString>
+#include <QList>
 #include <QUrl>
+
+#include <utility>
 
 namespace edita::issue_report {
 
@@ -27,7 +30,9 @@ struct SystemInfo {
 SystemInfo currentSystem(const QString& platform);
 QString describe(const SystemInfo& system);
 
-// homepage: https://github.com/<dueño>/<repo>; form: el archivo de la plantilla (bug.yml)
-QUrl formUrl(const QString& homepage, const QString& form, const QString& version, const QString& system);
+// homepage: https://github.com/<dueño>/<repo>; form: el archivo de la plantilla (bug.yml).
+// `fields`: más campos del formulario, por su id ({"what", …}, {"extra", …})
+QUrl formUrl(const QString& homepage, const QString& form, const QString& version, const QString& system,
+             const QList<std::pair<QString, QString>>& fields = {});
 
 } // namespace edita::issue_report

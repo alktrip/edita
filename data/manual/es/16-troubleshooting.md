@@ -69,7 +69,12 @@ afectados.
 
 {{actionReportProblem}} abre el formulario de GitHub con la versión de Edita y tu sistema ya
 escritos; solo hace falta una cuenta de GitHub. Hay otro formulario para los plugins. Describe los
-pasos para reproducir el problema y, si hace falta, adjunta el archivo con el que ocurre. Si Edita
-se cierra, ábrelo desde una terminal y copia lo último que escribió.
+pasos para reproducir el problema y, si hace falta, adjunta el archivo con el que ocurre.
+
+**Si Edita se cierra de golpe**, guarda un reporte del fallo: la versión, el error y dónde
+ocurrió. La próxima vez que lo abras, la barra de avisos ofrece **Reportar…** (abre el formulario
+con todo eso ya escrito: revísalo y añade qué estabas haciendo), **Copiar detalles** o
+**Descartar**. El reporte no lleva el contenido de tus archivos. Se guarda en
+`~/.config/edita/crash/` hasta que eliges una de las tres.
 
 Los errores y las sugerencias están en <https://github.com/alktrip/edita/issues>.

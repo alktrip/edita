@@ -20,7 +20,7 @@ Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, en x8
 - qué esperabas y qué pasó;
 - si hace falta, el archivo con el que pasa (o un trozo).
 
-Si Edita se cierra, ábrelo desde una terminal y copia lo último que escribió.
+Si Edita se cierra de golpe, al volver a abrirlo te ofrece reportar el fallo con los detalles ya escritos.
 
 ## Qué probar
 
@@ -84,7 +84,7 @@ It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, on x86_64. Yo
 - what you expected and what happened;
 - if needed, the file it happens with (or part of it).
 
-If Edita crashes, run it from a terminal and copy the last lines it printed.
+If Edita crashes, the next time you open it, it offers to report the crash with the details already written.
 
 ## What to test
 

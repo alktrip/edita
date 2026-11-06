@@ -21,6 +21,7 @@
 #include "AppInfo.h"
 #include "core/Backup.h"
 #include "core/Codec.h"
+#include "core/CrashReport.h"
 #include "core/IssueReport.h"
 #include "core/UpdateCheck.h"
 #include "core/Paths.h"
@@ -519,6 +520,8 @@ MainWindow::MainWindow(QWidget* parent)
 
     if (!syntaxWarnings.isEmpty())
         QTimer::singleShot(0, this, [this, syntaxWarnings] { showWarnings(tr("Settings"), syntaxWarnings); });
+    // ¿Se cerró por un fallo la vez anterior?
+    QTimer::singleShot(0, this, [this] { offerCrashReport(crash_report::defaultDirectory()); });
     // Versiones nuevas: unos segundos después de abrir, para no retrasar el arranque
     QTimer::singleShot(3000, this, [this] { checkForUpdatesIfDue(QDate::currentDate()); });
 }
@@ -1404,6 +1407,44 @@ void MainWindow::updateCheckFinished(QNetworkReply* reply, bool manual)
               update_check::writeState(_syntax.config(), s);
               _syntax.config().save(); // la barra se cierra sola al pulsar
           }}});
+}
+
+QUrl MainWindow::crashReportUrl(const QString& report) const
+{
+    // El formulario cabe en una URL de unos 8 KB: el principio de la traza, que es lo que importa
+    QString details = crash_report::readable(report).trimmed();
+    constexpr qsizetype kMax = 4000;
+    if (details.size() > kMax)
+        details = details.left(kMax) + QStringLiteral("\n…");
+    const QString signal = crash_report::signalName(report);
+    return issue_report::formUrl(
+        QString::fromUtf8(kHomepageUrl), QStringLiteral("bug.yml"), QString::fromUtf8(kAppVersion),
+        issue_report::describe(issue_report::currentSystem(QGuiApplication::platformName())),
+        {{QStringLiteral("what"), tr("Edita closed unexpectedly (%1). What I was doing:").arg(signal)},
+         {QStringLiteral("extra"), QStringLiteral("```\n%1\n```").arg(details)}});
+}
+
+bool MainWindow::offerCrashReport(const QString& directory)
+{
+    const QString report = crash_report::pending(directory);
+    if (report.isEmpty())
+        return false;
+    const QString signal = crash_report::signalName(report);
+    _notifications->show(
+        NotificationBar::Kind::Warning, tr("Edita closed unexpectedly"),
+        tr("The last time, Edita closed because of an error (%1). Reporting it helps to fix it: the report "
+           "has the version, your system and where it failed, and you can review it before sending it.")
+            .arg(signal.isEmpty() ? tr("unknown") : signal),
+        {{tr("Report…"), [this, directory, report] {
+              _openUrl(crashReportUrl(report));
+              crash_report::clear(directory);
+          }},
+         {tr("Copy Details"), [directory, report] {
+              QGuiApplication::clipboard()->setText(crash_report::readable(report));
+              crash_report::clear(directory);
+          }},
+         {tr("Discard"), [directory] { crash_report::clear(directory); }}});
+    return true;
 }
 
 QUrl MainWindow::issueReportUrl() const

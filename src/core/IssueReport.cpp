@@ -37,14 +37,23 @@ QString describe(const SystemInfo& s)
     return parts.join(QStringLiteral(", "));
 }
 
-QUrl formUrl(const QString& homepage, const QString& form, const QString& version, const QString& system)
+QUrl formUrl(const QString& homepage, const QString& form, const QString& version, const QString& system,
+             const QList<std::pair<QString, QString>>& fields)
 {
+    // Cada valor, codificado entero: QUrlQuery deja el «+» tal cual, y GitHub lo lee como un
+    // espacio (las trazas de un fallo están llenas de «+0x1c»)
+    QList<std::pair<QString, QString>> items{{QStringLiteral("template"), form},
+                                             {QStringLiteral("version"), version},
+                                             {QStringLiteral("system"), system}};
+    items += fields;
+    QByteArray query;
+    for (const auto& [id, value] : items) {
+        if (!query.isEmpty())
+            query += '&';
+        query += QUrl::toPercentEncoding(id) + '=' + QUrl::toPercentEncoding(value);
+    }
     QUrl url(homepage + QStringLiteral("/issues/new"));
-    QUrlQuery query;
-    query.addQueryItem(QStringLiteral("template"), form);
-    query.addQueryItem(QStringLiteral("version"), version);
-    query.addQueryItem(QStringLiteral("system"), system);
-    url.setQuery(query);
+    url.setQuery(QString::fromLatin1(query), QUrl::StrictMode);
     return url;
 }
 

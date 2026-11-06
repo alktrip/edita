@@ -135,6 +135,11 @@ public:
     bool isCheckingForUpdates() const { return _updateReply != nullptr; }
     // Al arrancar, si toca (Preferences::updateOnStartup, cada updateIntervalDays días)
     void checkForUpdatesIfDue(const QDate& today);
+    // Si la vez anterior Edita se cerró por un fallo (crash_report), lo dice en la barra de
+    // avisos y ofrece reportarlo, copiarlo o descartarlo. Devuelve si había uno
+    bool offerCrashReport(const QString& directory);
+    // El formulario de GitHub con el reporte de un fallo (versión, sistema, señal y traza)
+    QUrl crashReportUrl(const QString& report) const;
     // Ayuda › Reportar un problema: el formulario de GitHub con la versión y el sistema
     QUrl issueReportUrl() const;
 

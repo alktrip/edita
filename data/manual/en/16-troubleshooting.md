@@ -65,7 +65,12 @@ To go back to the default configuration, close Edita and rename `~/.config/edita
 
 {{actionReportProblem}} opens the GitHub form with the version of Edita and your system already
 filled in; you only need a GitHub account. There is another form for plugins. Describe the steps to
-reproduce the problem and, if needed, attach the file it happens with. If Edita crashes, run it
-from a terminal and copy the last lines it printed.
+reproduce the problem and, if needed, attach the file it happens with.
+
+**If Edita crashes**, it keeps a crash report: the version, the error and where it happened. The
+next time you open it, the notification bar offers **Report…** (it opens the form with all that
+already written: review it and add what you were doing), **Copy Details** or **Discard**. The
+report does not contain your files. It is kept in `~/.config/edita/crash/` until you choose one
+of the three.
 
 Errors and suggestions are at <https://github.com/alktrip/edita/issues>.

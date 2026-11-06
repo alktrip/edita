@@ -526,7 +526,7 @@
 <context>
     <name>LanguageRegistry</name>
     <message>
-        <location filename="../src/syntax/LanguageRegistry.cpp" line="+41"/>
+        <location filename="../src/syntax/LanguageRegistry.cpp" line="+46"/>
         <source>Invalid XML (position %1): %2</source>
         <translation>XML no válido (posición %1): %2</translation>
     </message>
@@ -534,6 +534,11 @@
         <location line="+47"/>
         <source>&lt;NotepadPlus&gt;&lt;Languages&gt; is missing</source>
         <translation>Falta &lt;NotepadPlus&gt;&lt;Languages&gt;</translation>
+    </message>
+    <message>
+        <location line="+172"/>
+        <source>Cannot write %1</source>
+        <translation>No se puede escribir %1</translation>
     </message>
 </context>
 <context>
@@ -1762,24 +1767,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+427"/>
-        <location line="+3819"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+428"/>
+        <location line="+3861"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3819"/>
-        <location line="+1408"/>
+        <location line="-3861"/>
+        <location line="+1448"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1314"/>
+        <location line="-1354"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+373"/>
+        <location line="+375"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2230,7 +2235,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1247"/>
+        <location line="+1285"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2276,7 +2281,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+849"/>
+        <location line="+851"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
@@ -2453,12 +2458,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-1991"/>
+        <location line="-2031"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-845"/>
+        <location line="-847"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2538,13 +2543,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+732"/>
-        <location line="+825"/>
+        <location line="+734"/>
+        <location line="+863"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-804"/>
+        <location line="-842"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
@@ -2928,7 +2933,42 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Omitir esta versión</translation>
     </message>
     <message>
-        <location line="+98"/>
+        <location line="+19"/>
+        <source>Edita closed unexpectedly (%1). What I was doing:</source>
+        <translation>Edita se cerró de forma inesperada (%1). Lo que estaba haciendo:</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Edita closed unexpectedly</source>
+        <translation>Edita se cerró de forma inesperada</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The last time, Edita closed because of an error (%1). Reporting it helps to fix it: the report has the version, your system and where it failed, and you can review it before sending it.</source>
+        <translation>La última vez, Edita se cerró por un error (%1). Reportarlo ayuda a corregirlo: el reporte lleva la versión, tu sistema y dónde falló, y puedes revisarlo antes de enviarlo.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>unknown</source>
+        <translation>desconocido</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Report…</source>
+        <translation>Reportar…</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Copy Details</source>
+        <translation>Copiar detalles</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Discard</source>
+        <translation>Descartar</translation>
+    </message>
+    <message>
+        <location line="+94"/>
         <source>Macro</source>
         <translation>Macro</translation>
     </message>
@@ -3139,7 +3179,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>C&amp;odificación</translation>
     </message>
     <message>
-        <location line="+188"/>
+        <location line="+190"/>
         <source>Language of the %1 plugin</source>
         <translation>Lenguaje del plugin %1</translation>
     </message>
@@ -4626,7 +4666,7 @@ Continue?</source>
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location line="+87"/>
+        <location line="+88"/>
         <source>General</source>
         <translation>General</translation>
     </message>
@@ -6585,7 +6625,7 @@ Do you want to save your changes before switching themes?</source>
         <translation>El tema %1 ya no existe; se usa el predeterminado</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+30"/>
         <source>Cannot read %1 (%2); using langs.model.xml</source>
         <translation>No se puede leer %1 (%2); se usa langs.model.xml</translation>
     </message>
@@ -7508,7 +7548,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/main.cpp" line="+103"/>
+        <location filename="../src/main.cpp" line="+106"/>
         <source>Text editor inspired by Notepad++</source>
         <translation>Editor de texto inspirado en Notepad++</translation>
     </message>
