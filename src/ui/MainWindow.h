@@ -41,6 +41,7 @@
 
 #include <edita_plugin.h>
 
+#include <QCryptographicHash>
 #include <QDesktopServices>
 #include <QIcon>
 #include <QMainWindow>
@@ -185,6 +186,21 @@ public:
     bool isPostIt() const { return _postIt; }
     // Ver › Sincronizar el desplazamiento vertical/horizontal de las dos vistas
     void setScrollSync(bool vertical);
+    // Escribe el texto en lugar de la selección, en un solo paso de deshacer
+    void insertText(const QString& text);
+    // Los documentos abiertos (las dos vistas, sin repetir): sus nombres o sus rutas
+    QStringList openDocumentNames(bool paths) const;
+    // IDM_EDIT_MULTISELECTALL*/NEXT*: SCFIND_MATCHCASE, SCFIND_WHOLEWORD
+    void multiSelect(int searchFlags, bool all);
+    // Ver › Resumen: ruta, fechas, caracteres, palabras, líneas, tamaño y selección
+    QString documentSummary() const;
+    // Ver › Seguimiento (tail -f) del documento actual
+    void toggleMonitoring();
+    // Herramientas › … › Generar desde la selección al portapapeles
+    bool hashSelectionToClipboard(QCryptographicHash::Algorithm algorithm);
+    // Ayuda › Información de depuración
+    QString debugInfo() const;
+    void showDebugInfo();
     bool closeAllToLeft(BufferId id);
     bool closeAllToRight(BufferId id);
 
@@ -661,6 +677,9 @@ private:
     bool _syncScrollH = false;
     bool _syncingScroll = false;
     sptr_t _syncLineOffset = 0;
+    int _multiSelectFlags = 0;
+    QTimer* _monitorTimer = nullptr;
+    void checkMonitoredDocuments();
     sptr_t _syncXOffset = 0;
     void syncScroll(EditorView* source);
     QNetworkAccessManager* _updateNetwork = nullptr;

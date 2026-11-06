@@ -129,6 +129,9 @@ public:
     // El color de la pestaña (IDM_VIEW_TAB_COLOUR_*): 0…4, -1 sin color
     int tabColor() const { return _tabColor; }
     void setTabColor(int color);
+    // Ver › Seguimiento (tail -f): el archivo se vuelve a leer en cuanto cambia y se va al final
+    bool isMonitoring() const { return _monitoring; }
+    void setMonitoring(bool on);
     bool isReadOnly() const { return _fileReadOnly || _userReadOnly; }
 
     // Archivos de más de 200 MB: sin estilos (N++: _largeFileRestriction)
@@ -174,6 +177,7 @@ private:
     bool _userReadOnly = false;
     bool _pinned = false;
     int _tabColor = -1;
+    bool _monitoring = false;
     bool _largeFile = false;
     QDateTime _lastModified;
     std::uint64_t _contentVersion = 0;

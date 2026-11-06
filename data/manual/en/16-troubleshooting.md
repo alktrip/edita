@@ -73,4 +73,7 @@ already written: review it and add what you were doing), **Copy Details** or **D
 report does not contain your files. It is kept in `~/.config/edita/crash/` until you choose one
 of the three.
 
+{{actionDebugInfo}} gathers the version, how it was built, the system, the configuration and the
+loaded plugins, with a button to copy it: paste it in the report if you are asked for it.
+
 Errors and suggestions are at <https://github.com/alktrip/edita/issues>.

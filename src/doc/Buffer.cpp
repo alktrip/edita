@@ -104,6 +104,14 @@ void Buffer::setPinned(bool pinned)
     notify(BufferChange::Tab);
 }
 
+void Buffer::setMonitoring(bool on)
+{
+    if (on == _monitoring)
+        return;
+    _monitoring = on;
+    notify(BufferChange::Status);
+}
+
 void Buffer::setTabColor(int color)
 {
     color = color < 0 || color > 4 ? -1 : color;

@@ -698,12 +698,12 @@
     <name>Prompter</name>
     <message>
         <location filename="../src/ui/Prompter.cpp" line="+36"/>
-        <location line="+76"/>
+        <location line="+81"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-75"/>
+        <location line="-80"/>
         <source>Save changes to &quot;%1&quot;?</source>
         <translation>¿Guardar los cambios de «%1»?</translation>
     </message>
@@ -729,7 +729,7 @@
     </message>
     <message>
         <location line="+1"/>
-        <location line="+50"/>
+        <location line="+55"/>
         <location line="+21"/>
         <source>Cancel</source>
         <translation>Cancelar</translation>
@@ -1755,6 +1755,49 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::HashDialog</name>
+    <message>
+        <location filename="../src/ui/HashDialog.cpp" line="+31"/>
+        <source>Generate %1 digest</source>
+        <translation>Generar el resumen %1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Generate %1 digest from files</source>
+        <translation>Generar el resumen %1 de archivos</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Treat each line as a &amp;separate string</source>
+        <translation>Cada línea por &amp;separado</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Choose files to &amp;generate %1…</source>
+        <translation>Elegir los archivos para &amp;generar el %1…</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>All types (*)</source>
+        <translation>Todos los tipos (*)</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Type or paste the text</source>
+        <translation>Escribe o pega el texto</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Co&amp;py to Clipboard</source>
+        <translation>Co&amp;piar al portapapeles</translation>
+    </message>
+    <message>
+        <location line="+43"/>
+        <source>%1: cannot be read</source>
+        <translation>%1: no se puede leer</translation>
+    </message>
+</context>
+<context>
     <name>edita::LspManager</name>
     <message>
         <location filename="../src/ui/LspManager.cpp" line="+245"/>
@@ -1775,19 +1818,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+428"/>
-        <location line="+3974"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+455"/>
+        <location line="+4068"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3974"/>
-        <location line="+1536"/>
+        <location line="-4068"/>
+        <location line="+1630"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1442"/>
+        <location line="-1536"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -1917,7 +1960,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Seleccionar todo</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+37"/>
         <source>&amp;Line Operations</source>
         <translation>&amp;Líneas</translation>
     </message>
@@ -2077,7 +2120,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Completar &amp;ruta</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+47"/>
         <source>Read-&amp;Only</source>
         <translation>Solo &amp;lectura</translation>
     </message>
@@ -2203,7 +2246,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Girar la división</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+33"/>
         <source>&amp;Next Tab</source>
         <translation>Pestaña &amp;siguiente</translation>
     </message>
@@ -2223,7 +2266,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+43"/>
+        <location line="+65"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2466,12 +2509,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2100"/>
+        <location line="-2160"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-866"/>
+        <location line="-922"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2551,13 +2594,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+742"/>
-        <location line="+943"/>
+        <location line="+764"/>
+        <location line="+1037"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-926"/>
+        <location line="-1020"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2602,7 +2645,57 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Guardar la ses&amp;ión…</translation>
     </message>
     <message>
-        <location line="+51"/>
+        <location line="+37"/>
+        <source>I&amp;nsert</source>
+        <translation>I&amp;nsertar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Date Time (&amp;short)</source>
+        <translation>Fecha y hora (&amp;corta)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Date Time (&amp;long)</source>
+        <translation>Fecha y hora (&amp;larga)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Date Time (&amp;customized)</source>
+        <translation>Fecha y hora (&amp;personalizada)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Cop&amp;y to Clipboard</source>
+        <translation>Cop&amp;iar al portapapeles</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Copy Current Full File &amp;Path</source>
+        <translation>Copiar la &amp;ruta completa</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Copy Current &amp;Filename</source>
+        <translation>Copiar el &amp;nombre del archivo</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Copy Current &amp;Dir. Path</source>
+        <translation>Copiar la &amp;carpeta</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Copy All File&amp;names</source>
+        <translation>Copiar todos los n&amp;ombres</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Copy All File P&amp;aths</source>
+        <translation>Copiar todas las r&amp;utas</translation>
+    </message>
+    <message>
+        <location line="+19"/>
         <source>Remove &amp;Empty Lines</source>
         <translation>Quitar las líneas &amp;vacías</translation>
     </message>
@@ -2742,7 +2835,47 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Acciones de código…</translation>
     </message>
     <message>
+        <location line="+4"/>
+        <source>Multi-select &amp;All</source>
+        <translation>Seleccionar to&amp;das las coincidencias</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Multi-select Ne&amp;xt</source>
+        <translation>Seleccionar la si&amp;guiente coincidencia</translation>
+    </message>
+    <message>
         <location line="+3"/>
+        <source>Ignore Case &amp;&amp; Whole Word</source>
+        <translation>Sin distinguir mayúsculas ni palabras completas</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Match Case Only</source>
+        <translation>Solo distinguir mayúsculas</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Match Whole Word Only</source>
+        <translation>Solo palabras completas</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Match Case &amp;&amp; Whole Word</source>
+        <translation>Distinguir mayúsculas y palabras completas</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>&amp;Undo the Latest Added Multi-Select</source>
+        <translation>&amp;Quitar la última coincidencia añadida</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>S&amp;kip Current &amp;&amp; Go to Next Multi-select</source>
+        <translation>&amp;Saltar la actual y seleccionar la siguiente</translation>
+    </message>
+    <message>
+        <location line="+10"/>
         <source>Colu&amp;mn Editor…</source>
         <translation>Editor de colu&amp;mnas…</translation>
     </message>
@@ -2871,6 +3004,21 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+3"/>
         <source>Syn&amp;chronize Horizontal Scrolling</source>
         <translation>Sincronizar el desplazamiento &amp;horizontal</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>S&amp;ummary…</source>
+        <translation>Res&amp;umen…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Summary</source>
+        <translation>Resumen</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Monitoring (tail -&amp;f)</source>
+        <translation>Seguimiento (tail -&amp;f)</translation>
     </message>
     <message>
         <location line="+5"/>
@@ -3003,7 +3151,27 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Este documento no tiene servidor de lenguaje</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+9"/>
+        <source>T&amp;ools</source>
+        <translation>&amp;Herramientas</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>&amp;Generate…</source>
+        <translation>&amp;Generar…</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Generate from &amp;files…</source>
+        <translation>Generar de &amp;archivos…</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Generate from &amp;selection into clipboard</source>
+        <translation>Generar de la &amp;selección al portapapeles</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Help</source>
         <translation>Ayuda</translation>
     </message>
@@ -3040,7 +3208,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 %1</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+2"/>
+        <source>&amp;Debug Info…</source>
+        <translation>Información de &amp;depuración…</translation>
+    </message>
+    <message>
+        <location line="+39"/>
         <location line="+27"/>
         <source>Check for Updates</source>
         <translation>Buscar actualizaciones</translation>
@@ -3102,11 +3275,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
+        <location line="+4187"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-4186"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3583,12 +3757,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1767"/>
+        <location line="+1775"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2046"/>
+        <location line="-2054"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4022,7 +4196,7 @@ Restart now?</source>
 ¿Reiniciar ahora?</translation>
     </message>
     <message>
-        <location line="+97"/>
+        <location line="+105"/>
         <source>&quot;%1&quot;
 
 This file has been modified by another program.
@@ -4056,7 +4230,73 @@ Keep this file in editor?</source>
 ¿Desea mantenerlo en el editor?</translation>
     </message>
     <message>
-        <location line="+401"/>
+        <location line="+376"/>
+        <source>Full file path: %1</source>
+        <translation>Ruta completa: %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Created: %1</source>
+        <translation>Creado: %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Modified: %1</source>
+        <translation>Modificado: %1</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Characters (without line endings): %1</source>
+        <translation>Caracteres (sin los fines de línea): %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Words: %1</source>
+        <translation>Palabras: %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Lines: %1</source>
+        <translation>Líneas: %1</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Document length: %1</source>
+        <translation>Tamaño del documento: %1</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>%1 selected characters (%2 bytes) in %3 ranges</source>
+        <translation>%1 caracteres seleccionados (%2 bytes) en %3 rangos</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <location line="+2"/>
+        <source>Monitoring problem</source>
+        <translation>No se puede seguir el archivo</translation>
+    </message>
+    <message>
+        <location line="-2"/>
+        <source>The file should exist to be monitored.</source>
+        <translation>Para seguir un archivo, tiene que existir.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The document is dirty. Please save the modification before monitoring it.</source>
+        <translation>El documento tiene cambios sin guardar. Guárdalos antes de seguirlo.</translation>
+    </message>
+    <message>
+        <location line="+90"/>
+        <source>Debug Info</source>
+        <translation>Información de depuración</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>&amp;Copy Debug Info into Clipboard</source>
+        <translation>&amp;Copiar la información al portapapeles</translation>
+    </message>
+    <message>
+        <location line="+92"/>
         <source>Save modifications</source>
         <translation>Guardar las modificaciones</translation>
     </message>
@@ -4824,7 +5064,7 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+136"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+137"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
@@ -5222,12 +5462,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+281"/>
+        <location line="+295"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-281"/>
+        <location line="-295"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -5716,12 +5956,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+35"/>
+        <location line="+49"/>
         <source>Every:</source>
         <translation>Cada:</translation>
     </message>
     <message>
-        <location line="-35"/>
+        <location line="-49"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -5817,6 +6057,26 @@ Continue?</source>
     </message>
     <message>
         <location line="+2"/>
+        <source>&lt;b&gt;Insert Date Time&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Insertar fecha y hora&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Date before time (short and long formats)</source>
+        <translation>La fecha antes que la hora (formatos corto y largo)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>yyyy year, MM month, dd day, HH hour, mm minutes, ss seconds; ddd/dddd and MMM/MMMM the name of the day and the month, tt AM/PM</source>
+        <translation>yyyy año, MM mes, dd día, HH hora, mm minutos, ss segundos; ddd/dddd y MMM/MMMM el nombre del día y del mes, tt a. m./p. m.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Customized format:</source>
+        <translation>Formato personalizado:</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>&lt;b&gt;New Versions&lt;/b&gt;</source>
         <translation>&lt;b&gt;Versiones nuevas&lt;/b&gt;</translation>
     </message>

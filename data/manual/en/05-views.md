@@ -63,6 +63,14 @@ difference they had when it was turned on: useful to compare two versions of a f
   the same key goes back.
 - {{actionAlwaysOnTop}} keeps the Edita window above the others.
 
+## Summary and monitoring
+
+- {{actionSummary}} shows the path and dates of the file, and counts its characters (without the
+  line endings), words, lines and bytes, and the selection.
+- {{actionMonitoring}} follows a growing file, like a log: it becomes read-only and, each time it
+  changes on disk, it is read again without asking and goes to the end, also with Edita in the
+  background. To follow it, the file has to be saved.
+
 ## The Window menu
 
 The **Window** menu lists the documents of the current view, numbered (Alt+W and the number opens

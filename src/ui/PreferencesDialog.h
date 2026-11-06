@@ -28,6 +28,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QLabel;
 class QLineEdit;
 class QListWidget;
 class QSpinBox;
@@ -206,6 +207,9 @@ private:
     QCheckBox* _detectEncoding = nullptr;
     QComboBox* _fallbackCodepage = nullptr;
     QCheckBox* _updateOnStartup = nullptr;
+    QLineEdit* _dateTimeFormat = nullptr;
+    QLabel* _dateTimePreview = nullptr;
+    QCheckBox* _dateTimeReverse = nullptr;
     QSpinBox* _updateInterval = nullptr;
 };
 

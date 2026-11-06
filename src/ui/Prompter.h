@@ -45,6 +45,8 @@ public:
     virtual bool confirm(QWidget* parent, const QString& title, const QString& text) = 0;
 
     virtual void warn(QWidget* parent, const QString& title, const QString& text) = 0;
+    // Un aviso informativo (el Resumen del documento, por ejemplo)
+    virtual void inform(QWidget* parent, const QString& title, const QString& text) = 0;
 
     // Diálogos de archivo. Vacío = cancelado. `filters` con el formato de
     // QFileDialog ("Python file (*.py *.pyw);;…"); `selectedFilter` preselecciona uno.
@@ -70,6 +72,7 @@ public:
     SaveChoice askSaveChanges(QWidget* parent, const QString& documentName, bool offerAll) override;
     bool confirm(QWidget* parent, const QString& title, const QString& text) override;
     void warn(QWidget* parent, const QString& title, const QString& text) override;
+    void inform(QWidget* parent, const QString& title, const QString& text) override;
     QStringList openFileNames(QWidget* parent, const QString& directory, const QString& filters) override;
     QString saveFileName(QWidget* parent, const QString& suggestedPath, const QString& filters,
                          const QString& selectedFilter) override;

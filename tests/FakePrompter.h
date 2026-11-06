@@ -54,6 +54,11 @@ public:
     {
         warnings << QStringLiteral("%1: %2").arg(title, text);
     }
+    void inform(QWidget*, const QString& title, const QString& text) override
+    {
+        informations << QStringLiteral("%1: %2").arg(title, text);
+    }
+    QStringList informations;
 
     QString lastFilters;
     QString lastSelectedFilter;

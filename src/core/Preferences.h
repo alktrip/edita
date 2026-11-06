@@ -275,6 +275,11 @@ struct Preferences
     // se usa en su lugar la monoespaciada del sistema. Propio de Edita:
     // <GUIConfig name="EditaSystemMonospaceFont">yes</GUIConfig>
     bool systemMonospaceFont = true;
+    // Editar › Insertar › Fecha y hora: <GUIConfig name="insertDateTime" customizedFormat="…"
+    // reverseDefaultOrder="no">. El formato es el de N++ (el de Windows: yyyy, MM, dd, HH, mm,
+    // ss, ddd, MMMM, tt…); por defecto, la hora va antes que la fecha (como el Bloc de notas)
+    QString dateTimeFormat = QStringLiteral("yyyy-MM-dd HH:mm:ss");
+    bool dateTimeReverseOrder = false;
     // Avisar de las versiones nuevas (AutoUpdateOptions de N++): <GUIConfig name="noUpdate"
     // autoUpdateMode="1" intervalDays="15">. En una beta, cada día
     bool updateOnStartup = true;

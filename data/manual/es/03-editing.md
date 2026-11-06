@@ -39,6 +39,12 @@ Scintilla**).
   Es la casilla **Edición múltiple** de la página Edición.
 - **Espacio virtual** (casilla de la página Edición) deja que el cursor y la selección
   rectangular pasen del final de las líneas.
+- **Seleccionar las coincidencias**: {{actionMultiSelectAll}} selecciona a la vez todas las
+  apariciones de la palabra del cursor (o de lo seleccionado), y {{actionMultiSelectNext}} añade
+  solo la siguiente. Cada una tiene cuatro variantes: distinguir o no mayúsculas, y solo palabras
+  completas o no. {{actionMultiSelectUndo}} quita la última añadida y {{actionMultiSelectSkip}}
+  la cambia por la siguiente. Después, lo que escribas cambia todas a la vez. No tienen atajo,
+  como en Notepad++: se le puede poner uno en {{actionShortcutMapper}}.
 
 ## Editor de columnas
 
@@ -159,6 +165,26 @@ Edita completa palabras y funciones mientras escribes, e inserta fragmentos con 
 - El paréntesis junto al cursor y su pareja se resaltan. {{actionGoToMatchingBrace}} salta a la
   pareja y {{actionSelectMatchingBraces}} selecciona todo lo que hay entre ellos.
 - **Paréntesis por colores según el nivel** (página Edición) da un color distinto a cada nivel.
+
+## Insertar y copiar
+
+- {{actionDateTimeShort}} y {{actionDateTimeLong}} escriben la hora y la fecha con el formato del
+  sistema; {{actionDateTimeCustom}}, con el de **Preferencias › Varios** (por defecto
+  `yyyy-MM-dd HH:mm:ss`; `dddd` y `MMMM` son el nombre del día y del mes, y `tt`, a. m. o p. m.).
+  Ahí también se puede poner la fecha antes de la hora.
+- **Copiar al portapapeles**: {{actionCopyFullPath}}, {{actionCopyFileName}} y
+  {{actionCopyDirPath}} del documento actual, o los nombres ({{actionCopyAllNames}}) y las rutas
+  ({{actionCopyAllPaths}}) de todos los abiertos, uno por línea.
+
+## Herramientas: MD5 y SHA
+
+El menú **Herramientas** calcula resúmenes MD5, SHA-1, SHA-256 y SHA-512 (para comprobar una
+descarga, por ejemplo). Para cada uno:
+
+- {{actionMd5Text}}: de un texto que escribes o pegas, que se calcula al momento; con **Cada línea
+  por separado**, uno por línea.
+- {{actionMd5Files}}: de los archivos que elijas, con el formato de `sha256sum` (`resumen  archivo`).
+- {{actionMd5Selection}}: de lo seleccionado, directamente al portapapeles.
 
 ## Solo lectura y fin de línea
 

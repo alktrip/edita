@@ -24,10 +24,10 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 |---|---|
 | Increase/Decrease Line Indent | En el menú (Tab y Mayús+Tab ya lo hacen en el editor) |
 | Begin/End Select (y en modo columna) | Marcar el inicio y el fin de una selección larga sin arrastrar |
-| Date Time (short, long, customized) | Insertar fecha y hora; el formato se elige en Preferencias |
-| Copy Current File Path/Filename/Dir. Path | En el menú Editar (hoy solo en el menú de la pestaña) |
-| Copy All Filenames / File Paths | De todos los documentos abiertos |
-| Multi-select: seleccionar la siguiente coincidencia (4 variantes ×2), deshacer la última añadida, saltar la actual | Selección múltiple como en VS Code (Ctrl+D) |
+| ✅ Date Time (short, long, customized) | Insertar fecha y hora; el formato se elige en Preferencias |
+| ✅ Copy Current File Path/Filename/Dir. Path | En el menú Editar (hoy solo en el menú de la pestaña) |
+| ✅ Copy All Filenames / File Paths | De todos los documentos abiertos |
+| ✅ Multi-select: seleccionar la siguiente coincidencia (4 variantes ×2), deshacer la última añadida, saltar la actual | Selección múltiple como en VS Code (Ctrl+D) |
 | Read-Only for All Documents / Clear | Solo lectura para todos |
 | Search on Internet / Change Search Engine | Buscar la selección en la web (y página de Preferencias «Search Engine») |
 | Open File / Open Containing Folder (de la selección) | Abrir la ruta seleccionada |
@@ -49,8 +49,8 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | ✅ Post-It (F12) | Ventana sin barras ni bordes |
 | ✅ Always on Top | Siempre visible |
 | ✅ Synchronize Vertical/Horizontal Scrolling | Desplazar las dos vistas juntas |
-| Summary… | Líneas, palabras, caracteres, tamaño, fechas del documento |
-| Monitoring (tail -f) | Seguir un archivo de registro que crece |
+| ✅ Summary… | Líneas, palabras, caracteres, tamaño, fechas del documento |
+| ✅ Monitoring (tail -f) | Seguir un archivo de registro que crece |
 | Show Non-Printing Characters, Show Control Characters & Unicode EOL | Las opciones de símbolos nuevas de N++ 8.x |
 | Project Panel 1…3 | Los paneles de proyecto (`.workspace` de N++) |
 
@@ -60,10 +60,10 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | Import plugin(s)… / Import style theme(s)… | Instalar un plugin o un tema desde un archivo |
 | Modify Shortcut/Delete Macro… | Editar las macros guardadas (para el menú Ejecutar ya existe) |
 | Edit Popup ContextMenu | Personalizar el menú contextual (`contextMenu.xml`) |
-| Generate MD5/SHA-1/SHA-256/SHA-512 | Calcular hashes del texto, de archivos o de la selección |
+| ✅ Generate MD5/SHA-1/SHA-256/SHA-512 | Calcular hashes del texto, de archivos o de la selección |
 | Toggle macro record | Empezar y parar con una sola orden |
 | Function Parameters Previous/Next Hint | Recorrer las sobrecargas en la ayuda de parámetros |
-| Debug Info… | La versión, el sistema, los plugins y la configuración, para copiar en un reporte |
+| ✅ Debug Info… | La versión, el sistema, los plugins y la configuración, para copiar en un reporte |
 | Command Line Arguments… | La ayuda de la línea de órdenes |
 | Home / Project Page / Online Manual / Forum | Enlaces (en Edita: el repositorio, las discusiones y los reportes) |
 

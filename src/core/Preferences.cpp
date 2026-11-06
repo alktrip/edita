@@ -314,6 +314,9 @@ Preferences loadPreferences(const ConfigXml& config)
     else if (!icons.isEmpty())
         p.toolbarIcons = ToolbarIcons::Standard;
     r.boolText("EditaSystemMonospaceFont", p.systemMonospaceFont);
+    if (const QString format = r.get("insertDateTime", "customizedFormat"); !format.isEmpty())
+        p.dateTimeFormat = format;
+    r.boolAttr("insertDateTime", "reverseDefaultOrder", p.dateTimeReverseOrder);
     // autoUpdateMode: 0 desactivado, 1 al arrancar, 2 al salir (aquí, como al arrancar)
     int updateMode = p.updateOnStartup ? 1 : 0;
     r.intAttr("noUpdate", "autoUpdateMode", updateMode, 0, 2);
@@ -460,6 +463,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     static const char* const kToolbarIcons[] = {"small", "standard", "large"};
     w.text("ToolBar", QString::fromLatin1(kToolbarIcons[static_cast<int>(p.toolbarIcons)]));
     w.text("EditaSystemMonospaceFont", yesNo(p.systemMonospaceFont));
+    w.attr("insertDateTime", "customizedFormat", p.dateTimeFormat);
+    w.attr("insertDateTime", "reverseDefaultOrder", p.dateTimeReverseOrder);
     w.attr("noUpdate", "autoUpdateMode", p.updateOnStartup ? 1 : 0);
     w.attr("noUpdate", "intervalDays", p.updateIntervalDays);
     w.text("EditaQtFileDialog", yesNo(p.qtFileDialog));

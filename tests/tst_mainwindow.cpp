@@ -103,8 +103,9 @@ private slots:
         QCOMPARE(w.tabs()->count(), 1);
         QCOMPARE(w.current()->displayName(), QStringLiteral("new 1"));
         QCOMPARE(w.window.windowTitle(), QStringLiteral("new 1 - Edita"));
-        // Archivo, Editar, Buscar, Ver, Codificación, Lenguaje, Configuración, Plugins, Macro, Ejecutar, Ventana, Ayuda
-        QCOMPARE(w.window.menuBar()->actions().size(), 12);
+        // Archivo, Editar, Buscar, Ver, Codificación, Lenguaje, Configuración, Herramientas, Plugins, Macro,
+        // Ejecutar, Ventana, Ayuda
+        QCOMPARE(w.window.menuBar()->actions().size(), 13);
         // El ícono de Edita (resources/), del tamaño de la barra de tareas al del menú
         const QList<QSize> sizes = w.window.windowIcon().availableSizes();
         QVERIFY(sizes.contains(QSize(16, 16)));

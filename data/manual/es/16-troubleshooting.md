@@ -77,4 +77,7 @@ con todo eso ya escrito: revísalo y añade qué estabas haciendo), **Copiar det
 **Descartar**. El reporte no lleva el contenido de tus archivos. Se guarda en
 `~/.config/edita/crash/` hasta que eliges una de las tres.
 
+{{actionDebugInfo}} reúne la versión, cómo se compiló, el sistema, la configuración y los plugins
+cargados, con un botón para copiarlo: pégalo en el reporte si te lo piden.
+
 Los errores y las sugerencias están en <https://github.com/alktrip/edita/issues>.

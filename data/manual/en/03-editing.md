@@ -37,6 +37,12 @@ All the editor keys can be changed in {{actionShortcutMapper}} (the **Scintilla 
   single cursor. This is the **Multi-Editing** option of the Editing page.
 - **Virtual space** (option of the Editing page) lets the cursor and the rectangular selection go
   beyond the end of the lines.
+- **Selecting the matches**: {{actionMultiSelectAll}} selects at once every occurrence of the word
+  at the cursor (or of the selection), and {{actionMultiSelectNext}} adds only the next one. Each
+  has four variants: matching case or not, and whole words only or not. {{actionMultiSelectUndo}}
+  removes the last one added and {{actionMultiSelectSkip}} replaces it with the next one. Then,
+  whatever you type changes all of them at once. They have no shortcut, as in Notepad++: you can
+  give them one in {{actionShortcutMapper}}.
 
 ## Column editor
 
@@ -155,6 +161,26 @@ Edita completes words and functions while you type, and inserts snippets with Ta
 - The bracket next to the cursor and its pair are highlighted. {{actionGoToMatchingBrace}} jumps
   to the pair and {{actionSelectMatchingBraces}} selects everything between them.
 - **Color brackets by nesting level** (Editing page) gives a different color to each level.
+
+## Inserting and copying
+
+- {{actionDateTimeShort}} and {{actionDateTimeLong}} write the time and date in the format of the
+  system; {{actionDateTimeCustom}}, in the one of **Preferences › MISC.** (by default
+  `yyyy-MM-dd HH:mm:ss`; `dddd` and `MMMM` are the name of the day and the month, and `tt`, AM or
+  PM). There you can also put the date before the time.
+- **Copy to Clipboard**: {{actionCopyFullPath}}, {{actionCopyFileName}} and {{actionCopyDirPath}}
+  of the current document, or the names ({{actionCopyAllNames}}) and paths
+  ({{actionCopyAllPaths}}) of all the open ones, one per line.
+
+## Tools: MD5 and SHA
+
+The **Tools** menu computes MD5, SHA-1, SHA-256 and SHA-512 digests (to check a download, for
+example). For each one:
+
+- {{actionMd5Text}}: of a text you type or paste, computed as you type; with **Treat each line as
+  a separate string**, one per line.
+- {{actionMd5Files}}: of the files you choose, in the format of `sha256sum` (`digest  file`).
+- {{actionMd5Selection}}: of the selection, straight into the clipboard.
 
 ## Read-only and end of line
 

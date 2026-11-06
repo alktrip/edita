@@ -341,6 +341,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 65 — Kotlin y Delphi | Kotlin preinstalado (UDL claro y oscuro, `tools/make-kotlin-udl.py`), Pascal/Delphi (extensiones, `//`, palabras), `updateLangsFromModel` (updateLangXml de N++), parche 0007 de LexUser (plegado tras `*/`), `import-third-party.sh` ya no borra `data/` | ✅ [fase65.md](fase65.md) |
 | 66 — Reporte de fallos | core/CrashReport (manejadores de señales con pila aparte, traza con `backtrace_symbols_fd`, reporte en `crash/last-crash.txt`), aviso al volver a abrir con Reportar/Copiar/Descartar, `formUrl` con más campos y todo codificado | ✅ [fase66.md](fase66.md) |
 | 67 — Ver y Pestañas | Pestañas fijadas (alfiler, zona propia, sesión), colores de pestaña, Ver › Pestaña (ir a N, mover), Archivo › Cerrar varios documentos, siempre visible, pantalla completa, Post-It, desplazamiento sincronizado | ✅ [fase67.md](fase67.md) |
+| 68 — Edición y Herramientas | Insertar fecha y hora (core/DateTimeFormat, `insertDateTime`), Copiar al portapapeles, selección múltiple, Resumen, Seguimiento (tail -f), menú Herramientas (ui/HashDialog), Información de depuración, `Prompter::inform`, IDM_* de las fases 67 y 68 | ✅ [fase68.md](fase68.md) |
 
 ---
 

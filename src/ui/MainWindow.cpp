@@ -22,6 +22,7 @@
 #include "core/Backup.h"
 #include "core/Codec.h"
 #include "core/CrashReport.h"
+#include "core/DateTimeFormat.h"
 #include "core/IssueReport.h"
 #include "core/UpdateCheck.h"
 #include "core/Paths.h"
@@ -30,6 +31,7 @@
 #include "ui/ColumnEditorDialog.h"
 #include "ui/DocStatusBar.h"
 #include "ui/DocTabBar.h"
+#include "ui/HashDialog.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
 #include "ui/FileIcons.h"
@@ -96,6 +98,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFileSystemWatcher>
+#include <QFontDatabase>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QKeySequence>
@@ -115,6 +118,7 @@
 #include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QRegularExpression>
@@ -125,6 +129,7 @@
 #include <QStackedWidget>
 #include <QSplitter>
 #include <QStyleHints>
+#include <QSysInfo>
 #include <QToolBar>
 #include <QTimer>
 #include <QUrl>
@@ -192,6 +197,22 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionMoveToOtherView", 10001}, {"actionCloneToOtherView", 10002}, {"actionSwitchView", 44072},
         {"actionPreferences", 48011},    {"actionStyleConfigurator", 46001}, {"actionShortcutMapper", 48009},
         {"actionRecordMacro", 42018},    {"actionPlayMacro", 42021},      {"actionSaveMacro", 42025},
+        // Fases 67 y 68 (Ver, Pestaña, Cerrar varios, Copiar al portapapeles, Herramientas, Ayuda)
+        {"actionCloseAllButPinned", 41026}, {"actionCloseAllToLeft", 41009}, {"actionCloseAllToRight", 41018},
+        {"actionCloseAllUnchanged", 41024}, {"actionAlwaysOnTop", 44034}, {"actionFullScreen", 44032},
+        {"actionPostIt", 44009}, {"actionSyncScrollV", 44035}, {"actionSyncScrollH", 44036},
+        {"actionTab1", 44086}, {"actionTab2", 44087}, {"actionTab3", 44088}, {"actionTab4", 44089},
+        {"actionTab5", 44090}, {"actionTab6", 44091}, {"actionTab7", 44092}, {"actionTab8", 44093},
+        {"actionTab9", 44094}, {"actionFirstTab", 44116}, {"actionLastTab", 44117}, {"actionTabToStart", 10005},
+        {"actionTabToEnd", 10006}, {"actionTabForward", 44098}, {"actionTabBackward", 44099}, {"actionPinTab", 44048},
+        {"actionTabColor1", 44111}, {"actionTabColor2", 44112}, {"actionTabColor3", 44113}, {"actionTabColor4", 44114},
+        {"actionTabColor5", 44115}, {"actionTabColorNone", 44110}, {"actionSummary", 44049}, {"actionMonitoring", 44097},
+        {"actionCopyFullPath", 42029}, {"actionCopyFileName", 42030}, {"actionCopyDirPath", 42031},
+        {"actionCopyAllNames", 42087}, {"actionCopyAllPaths", 42088}, {"actionDebugInfo", 47012},
+        {"actionMd5Text", 48501}, {"actionMd5Files", 48502}, {"actionMd5Selection", 48503},
+        {"actionSha256Text", 48504}, {"actionSha256Files", 48505}, {"actionSha256Selection", 48506},
+        {"actionSha1Text", 48507}, {"actionSha1Files", 48508}, {"actionSha1Selection", 48509},
+        {"actionSha512Text", 48510}, {"actionSha512Files", 48511}, {"actionSha512Selection", 48512},
         {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionCheckForUpdates", 47006},          {"actionEol0", 45001},
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
         {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
@@ -270,6 +291,12 @@ int nppCommandFor(const char* actionName)
         {"actionSaveAs", 41008},      {"actionCut", 42001},        {"actionCopy", 42002},
         {"actionUndo", 42003},        {"actionRedo", 42004},       {"actionPaste", 42005},
         {"actionDelete", 42006},      {"actionSelectAll", 42007},  {"actionDuplicateLine", 42010},
+        // Fase 68: insertar la fecha y la selección múltiple (IDM_EDIT_INSERT_DATETIME_*, IDM_EDIT_MULTISELECT*)
+        {"actionDateTimeShort", 42084}, {"actionDateTimeLong", 42085}, {"actionDateTimeCustom", 42086},
+        {"actionMultiSelectAll", 42090}, {"actionMultiSelectAllCase", 42091}, {"actionMultiSelectAllWord", 42092},
+        {"actionMultiSelectAllCaseWord", 42093}, {"actionMultiSelectNext", 42094}, {"actionMultiSelectNextCase", 42095},
+        {"actionMultiSelectNextWord", 42096}, {"actionMultiSelectNextCaseWord", 42097}, {"actionMultiSelectUndo", 42098},
+        {"actionMultiSelectSkip", 42099},
         {"actionJoinLines", 42013},   {"actionLineUp", 42014},     {"actionLineDown", 42015},
         {"actionUpperCase", 42016},   {"actionLowerCase", 42017},  {"actionTrimTrailing", 42024},
         {"actionFindNext", 43002},    {"actionFindPrevious", 43010}, {"actionFindSelectedNext", 43014},
@@ -982,6 +1009,40 @@ void MainWindow::createMenus()
     addAction(edit, tr("&Delete"), "actionDelete", QKeySequence(), sci(SCI_CLEAR));
     addAction(edit, tr("Select A&ll"), "actionSelectAll", QKeySequence::SelectAll, sci(SCI_SELECTALL));
     edit->addSeparator();
+    // Editar › Insertar (IDM_EDIT_INSERT_DATETIME_*)
+    QMenu* insert = edit->addMenu(tr("I&nsert"));
+    addAction(insert, tr("Date Time (&short)"), "actionDateTimeShort", QKeySequence(), [this] {
+        insertText(localDateTime(QDateTime::currentDateTime(), false, _prefs.dateTimeReverseOrder));
+    });
+    addAction(insert, tr("Date Time (&long)"), "actionDateTimeLong", QKeySequence(), [this] {
+        insertText(localDateTime(QDateTime::currentDateTime(), true, _prefs.dateTimeReverseOrder));
+    });
+    addAction(insert, tr("Date Time (&customized)"), "actionDateTimeCustom", QKeySequence(), [this] {
+        insertText(formatDateTime(_prefs.dateTimeFormat, QDateTime::currentDateTime()));
+    });
+    // Editar › Copiar al portapapeles (IDM_EDIT_*TOCLIP, IDM_EDIT_COPY_ALL_*)
+    QMenu* copyTo = edit->addMenu(tr("Cop&y to Clipboard"));
+    auto copyText = [](const QString& text) { QApplication::clipboard()->setText(text); };
+    addAction(copyTo, tr("Copy Current Full File &Path"), "actionCopyFullPath", QKeySequence(), [this, copyText] {
+        if (const Buffer* buf = _documents.buffer(currentBuffer()))
+            copyText(buf->isUntitled() ? buf->displayName() : buf->filePath());
+    });
+    addAction(copyTo, tr("Copy Current &Filename"), "actionCopyFileName", QKeySequence(), [this, copyText] {
+        if (const Buffer* buf = _documents.buffer(currentBuffer()))
+            copyText(buf->displayName());
+    });
+    addAction(copyTo, tr("Copy Current &Dir. Path"), "actionCopyDirPath", QKeySequence(), [this, copyText] {
+        if (const Buffer* buf = _documents.buffer(currentBuffer()); buf && !buf->isUntitled())
+            copyText(QFileInfo(buf->filePath()).absolutePath());
+    });
+    copyTo->addSeparator();
+    addAction(copyTo, tr("Copy All File&names"), "actionCopyAllNames", QKeySequence(), [this, copyText] {
+        copyText(openDocumentNames(false).join(QLatin1Char('\n')));
+    });
+    addAction(copyTo, tr("Copy All File P&aths"), "actionCopyAllPaths", QKeySequence(), [this, copyText] {
+        copyText(openDocumentNames(true).join(QLatin1Char('\n')));
+    });
+    edit->addSeparator();
     // Operaciones con líneas (Editar > Line Operations de N++)
     QMenu* lines = edit->addMenu(tr("&Line Operations"));
     addAction(lines, tr("&Duplicate Current Line"), "actionDuplicateLine", QKeySequence(Qt::CTRL | Qt::Key_D), sci(SCI_LINEDUPLICATE));
@@ -1126,6 +1187,36 @@ void MainWindow::createMenus()
     addAction(edit, tr("Code &Actions…"), "actionCodeActions", QKeySequence(Qt::CTRL | Qt::Key_Period), [this] { showCodeActions(); });
     edit->addSeparator();
     // IDM_EDIT_COLUMNMODE: Editor de columnas (Alt+C)
+    // Selección múltiple (IDM_EDIT_MULTISELECT*): la palabra o la selección, en todo el documento o la siguiente
+    QMenu* multiAll = edit->addMenu(tr("Multi-select &All"));
+    QMenu* multiNext = edit->addMenu(tr("Multi-select Ne&xt"));
+    const std::pair<const char*, int> multiFlags[] = {
+        {"", 0}, {"Case", SCFIND_MATCHCASE}, {"Word", SCFIND_WHOLEWORD}, {"CaseWord", SCFIND_MATCHCASE | SCFIND_WHOLEWORD}};
+    const QString multiTexts[] = {tr("Ignore Case && Whole Word"), tr("Match Case Only"), tr("Match Whole Word Only"),
+                                  tr("Match Case && Whole Word")};
+    for (int i = 0; i < 4; ++i) {
+        const int flags = multiFlags[i].second;
+        addAction(multiAll, multiTexts[i], QByteArray(QByteArray("actionMultiSelectAll") + multiFlags[i].first).constData(),
+                  QKeySequence(), [this, flags] { multiSelect(flags, true); });
+        addAction(multiNext, multiTexts[i], QByteArray(QByteArray("actionMultiSelectNext") + multiFlags[i].first).constData(),
+                  QKeySequence(), [this, flags] { multiSelect(flags, false); });
+    }
+    addAction(edit, tr("&Undo the Latest Added Multi-Select"), "actionMultiSelectUndo", QKeySequence(), [this] {
+        // IDM_EDIT_MULTISELECTUNDO: quita la última añadida
+        EditorView* view = editor();
+        if (const sptr_t n = view->sci(SCI_GETSELECTIONS); n > 0)
+            view->sci(SCI_DROPSELECTIONN, static_cast<uptr_t>(n - 1));
+    });
+    addAction(edit, tr("S&kip Current && Go to Next Multi-select"), "actionMultiSelectSkip", QKeySequence(), [this] {
+        // IDM_EDIT_MULTISELECTSSKIP: añade la siguiente con las mismas opciones y quita la actual
+        EditorView* view = editor();
+        view->sci(SCI_TARGETWHOLEDOCUMENT);
+        view->sci(SCI_SETSEARCHFLAGS, static_cast<uptr_t>(_multiSelectFlags));
+        view->sci(SCI_MULTIPLESELECTADDNEXT);
+        if (const sptr_t n = view->sci(SCI_GETSELECTIONS); n > 1)
+            view->sci(SCI_DROPSELECTIONN, static_cast<uptr_t>(n - 2));
+    });
+    edit->addSeparator();
     addAction(edit, tr("Colu&mn Editor…"), "actionColumnEditor", QKeySequence(Qt::ALT | Qt::Key_C), [this] {
         ColumnEditorDialog dialog(*editor(), _syntax.config(), this);
         dialog.exec();
@@ -1294,6 +1385,14 @@ void MainWindow::createMenus()
                                [this] { setScrollSync(false); });
     syncH->setCheckable(true);
     view->addSeparator();
+    // IDM_VIEW_SUMMARY, IDM_VIEW_MONITORING
+    addAction(view, tr("S&ummary…"), "actionSummary", QKeySequence(), [this] {
+        _prompter->inform(this, tr("Summary"), documentSummary());
+    });
+    QAction* monitoring = addAction(view, tr("Monitoring (tail -&f)"), "actionMonitoring", QKeySequence(),
+                                    [this] { toggleMonitoring(); });
+    monitoring->setCheckable(true);
+    view->addSeparator();
     // El submenú «Pestaña» de N++ (IDM_VIEW_TAB*)
     QMenu* tab = view->addMenu(tr("Ta&b"));
     tab->setObjectName(QStringLiteral("menuTab"));
@@ -1388,6 +1487,27 @@ void MainWindow::createMenus()
         editor()->sci(SCI_SETSAVEPOINT);
     });
 
+    // Herramientas (IDM_TOOL_*): MD5, SHA-1, SHA-256 y SHA-512
+    QMenu* tools = menuBar()->addMenu(tr("T&ools"));
+    tools->setObjectName(QStringLiteral("menuTools"));
+    const std::tuple<const char*, QCryptographicHash::Algorithm> hashes[] = {
+        {"Md5", QCryptographicHash::Md5}, {"Sha1", QCryptographicHash::Sha1},
+        {"Sha256", QCryptographicHash::Sha256}, {"Sha512", QCryptographicHash::Sha512}};
+    for (const auto& [key, algorithm] : hashes) {
+        QMenu* sub = tools->addMenu(HashDialog::algorithmName(algorithm));
+        const QByteArray base = QByteArray("action") + key;
+        addAction(sub, tr("&Generate…"), QByteArray(base + "Text").constData(), QKeySequence(), [this, a = algorithm] {
+            HashDialog dialog(HashDialog::Mode::Text, a, *_prompter, this);
+            dialog.exec();
+        });
+        addAction(sub, tr("Generate from &files…"), QByteArray(base + "Files").constData(), QKeySequence(), [this, a = algorithm] {
+            HashDialog dialog(HashDialog::Mode::Files, a, *_prompter, this);
+            dialog.exec();
+        });
+        addAction(sub, tr("Generate from &selection into clipboard"), QByteArray(base + "Selection").constData(),
+                  QKeySequence(), [this, a = algorithm] { hashSelectionToClipboard(a); });
+    }
+
     createMacroMenu();
     createRunMenu();
     createWindowMenu();
@@ -1406,6 +1526,7 @@ void MainWindow::createMenus()
             _prompter->warn(this, tr("Report a Problem"),
                             tr("Could not open the browser. Report the problem at\n%1").arg(issueReportUrl().toString()));
     });
+    addAction(help, tr("&Debug Info…"), "actionDebugInfo", QKeySequence(), [this] { showDebugInfo(); });
     help->addSeparator();
     QAction* about = help->addAction(tr("&About %1").arg(QString::fromUtf8(kAppName)), this, [this] {
         QMessageBox box(this);
@@ -5304,6 +5425,14 @@ void MainWindow::handleFileState(BufferId id, DocumentManager::FileState state)
     };
 
     if (state == DocumentManager::FileState::Modified) {
+        if (buf->isMonitoring()) { // tail -f: sin preguntar, y al final
+            reloadFromDisk(id);
+            for (EditorPane* pane : {_mainPane, _subPane}) {
+                if (pane->currentBuffer() == id)
+                    pane->editor()->sci(SCI_DOCUMENTEND);
+            }
+            return;
+        }
         if (_prefs.autoUpdates() && !buf->isDirty()) {
             reloadFromDisk(id); // sin preguntar
             return;
@@ -5638,6 +5767,218 @@ void MainWindow::syncScroll(EditorView* source)
     if (_syncScrollH)
         target->sci(SCI_SETXOFFSET, static_cast<uptr_t>(std::max<sptr_t>(0, source->sci(SCI_GETXOFFSET) + sign * _syncXOffset)));
     _syncingScroll = false;
+}
+
+void MainWindow::insertText(const QString& text)
+{
+    EditorView* view = editor();
+    view->sci(SCI_BEGINUNDOACTION);
+    view->sends(SCI_REPLACESEL, 0, text.toUtf8().constData());
+    view->sci(SCI_ENDUNDOACTION);
+}
+
+QStringList MainWindow::openDocumentNames(bool paths) const
+{
+    QStringList names;
+    std::vector<BufferId> seen;
+    for (EditorPane* pane : {_mainPane, _subPane}) {
+        for (const BufferId id : pane->buffers()) {
+            const Buffer* buf = _documents.buffer(id);
+            if (!buf || std::find(seen.begin(), seen.end(), id) != seen.end())
+                continue;
+            seen.push_back(id);
+            names << (paths && !buf->isUntitled() ? buf->filePath() : buf->displayName());
+        }
+    }
+    return names;
+}
+
+void MainWindow::multiSelect(int searchFlags, bool all)
+{
+    EditorView* view = editor();
+    _multiSelectFlags = searchFlags;
+    view->sci(SCI_TARGETWHOLEDOCUMENT);
+    view->sci(SCI_SETSEARCHFLAGS, static_cast<uptr_t>(searchFlags));
+    if (!all) {
+        view->sci(SCI_MULTIPLESELECTADDNEXT);
+        return;
+    }
+    // Sin selección, la palabra del cursor (expandWordSelection). Con GETSELECTIONSTART/END y no
+    // con «hay selección»: si la principal está vacía, SCI_MULTIPLESELECTADDEACH no termina nunca
+    if (view->sci(SCI_GETSELECTIONSTART) == view->sci(SCI_GETSELECTIONEND)) {
+        const sptr_t caret = view->sci(SCI_GETCURRENTPOS);
+        const sptr_t start = view->sci(SCI_WORDSTARTPOSITION, static_cast<uptr_t>(caret), 1);
+        const sptr_t end = view->sci(SCI_WORDENDPOSITION, static_cast<uptr_t>(caret), 1);
+        if (start == end)
+            return;
+        view->sci(SCI_SETSEL, static_cast<uptr_t>(start), end);
+    }
+    view->sci(SCI_MULTIPLESELECTADDEACH);
+}
+
+QString MainWindow::documentSummary() const
+{
+    // IDM_VIEW_SUMMARY de N++, con sus mismas cuentas
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    EditorView* view = editor();
+    if (!buf)
+        return {};
+    const QLocale locale = QLocale::system();
+    auto number = [&locale](qint64 n) { return locale.toString(n); };
+    QStringList lines;
+    if (!buf->isUntitled() && QFileInfo::exists(buf->filePath())) {
+        const QFileInfo info(buf->filePath());
+        lines << tr("Full file path: %1").arg(buf->filePath());
+        const QDateTime created = info.birthTime();
+        lines << tr("Created: %1").arg(created.isValid() ? locale.toString(created, QLocale::ShortFormat) : tr("unknown"));
+        lines << tr("Modified: %1").arg(locale.toString(info.lastModified(), QLocale::ShortFormat));
+    }
+    const QString text = QString::fromStdString(_documents.text(currentBuffer()));
+    qint64 chars = 0;
+    for (const QChar c : text) {
+        if (c != QLatin1Char('\r') && c != QLatin1Char('\n') && !c.isLowSurrogate())
+            ++chars;
+    }
+    // wordCount: lo que no es espacio ni puntuación
+    static const QRegularExpression word(QStringLiteral("[^ \\t\\\\.,;:!?()+\\r\\n\\-*/=\\][{}&~\"'`|@$%<>^]+"));
+    qint64 words = 0;
+    for (QRegularExpressionMatchIterator it = word.globalMatch(text); it.hasNext(); it.next())
+        ++words;
+    lines << tr("Characters (without line endings): %1").arg(number(chars));
+    lines << tr("Words: %1").arg(number(words));
+    lines << tr("Lines: %1").arg(number(view->sci(SCI_GETLINECOUNT)));
+    lines << tr("Document length: %1").arg(number(view->sci(SCI_GETLENGTH)));
+    qint64 selChars = 0, selBytes = 0, ranges = 0;
+    const sptr_t selections = view->sci(SCI_GETSELECTIONS);
+    for (sptr_t i = 0; i < selections; ++i) {
+        const sptr_t start = view->sci(SCI_GETSELECTIONNSTART, static_cast<uptr_t>(i));
+        const sptr_t end = view->sci(SCI_GETSELECTIONNEND, static_cast<uptr_t>(i));
+        if (start == end)
+            continue;
+        ++ranges;
+        selBytes += end - start;
+        selChars += view->sci(SCI_COUNTCHARACTERS, static_cast<uptr_t>(start), end);
+    }
+    lines << tr("%1 selected characters (%2 bytes) in %3 ranges").arg(number(selChars), number(selBytes), number(ranges));
+    return lines.join(QLatin1Char('\n'));
+}
+
+void MainWindow::toggleMonitoring()
+{
+    // IDM_VIEW_MONITORING: el archivo, en solo lectura, se vuelve a leer al cambiar y va al final
+    Buffer* buf = _documents.buffer(currentBuffer());
+    if (!buf)
+        return;
+    if (buf->isMonitoring()) {
+        buf->setMonitoring(false);
+        buf->setUserReadOnly(false);
+    } else if (buf->isUntitled() || !QFileInfo::exists(buf->filePath())) {
+        _prompter->warn(this, tr("Monitoring problem"), tr("The file should exist to be monitored."));
+    } else if (buf->isDirty()) {
+        _prompter->warn(this, tr("Monitoring problem"),
+                        tr("The document is dirty. Please save the modification before monitoring it."));
+    } else {
+        buf->setMonitoring(true);
+        buf->setUserReadOnly(true);
+        editor()->sci(SCI_DOCUMENTEND);
+        checkMonitoredDocuments(); // por si cambió justo ahora
+    }
+    if (!_monitorTimer) {
+        // Además del aviso del sistema de archivos: una comprobación por segundo de los seguidos,
+        // también con Edita en segundo plano (un registro sigue creciendo)
+        _monitorTimer = new QTimer(this);
+        _monitorTimer->setInterval(1000);
+        connect(_monitorTimer, &QTimer::timeout, this, &MainWindow::checkMonitoredDocuments);
+    }
+    bool any = false;
+    for (std::size_t i = 0; i < _documents.count(); ++i)
+        any = any || _documents.bufferAt(i)->isMonitoring();
+    if (any)
+        _monitorTimer->start();
+    else
+        _monitorTimer->stop();
+    refreshMenuChecks();
+}
+
+void MainWindow::checkMonitoredDocuments()
+{
+    for (std::size_t i = 0; i < _documents.count(); ++i) {
+        const Buffer* buf = _documents.bufferAt(i);
+        if (!buf->isMonitoring())
+            continue;
+        const BufferId id = buf->id();
+        if (_documents.checkFileState(id) != DocumentManager::FileState::Modified)
+            continue;
+        reloadFromDisk(id);
+        for (EditorPane* pane : {_mainPane, _subPane}) {
+            if (pane->currentBuffer() == id)
+                pane->editor()->sci(SCI_DOCUMENTEND);
+        }
+    }
+}
+
+bool MainWindow::hashSelectionToClipboard(QCryptographicHash::Algorithm algorithm)
+{
+    // IDM_TOOL_*_GENERATEINTOCLIPBOARD: con una sola selección, no vacía
+    EditorView* view = editor();
+    if (view->sci(SCI_GETSELECTIONS) != 1 || view->sci(SCI_GETSELECTIONEMPTY))
+        return false;
+    const sptr_t start = view->sci(SCI_GETSELECTIONSTART);
+    const sptr_t end = view->sci(SCI_GETSELECTIONEND);
+    const std::string text = _documents.text(currentBuffer()).substr(static_cast<std::size_t>(start),
+                                                                     static_cast<std::size_t>(end - start));
+    QApplication::clipboard()->setText(HashDialog::digest(QByteArray::fromStdString(text), algorithm));
+    return true;
+}
+
+QString MainWindow::debugInfo() const
+{
+    // AboutDlg de N++ (Debug Info): lo que hace falta para reproducir un problema
+    QStringList lines;
+    lines << QStringLiteral("Edita %1 (%2)").arg(QString::fromUtf8(kAppVersion), QSysInfo::buildCpuArchitecture());
+#if defined(__clang__)
+    lines << QStringLiteral("Built with: Clang %1").arg(QString::fromLatin1(__clang_version__));
+#elif defined(__GNUC__)
+    lines << QStringLiteral("Built with: GCC %1").arg(QString::fromLatin1(__VERSION__));
+#endif
+    lines << QStringLiteral("Qt: %1 (built with %2)").arg(QString::fromLatin1(qVersion()), QStringLiteral(QT_VERSION_STR));
+    lines << QStringLiteral("Path: %1").arg(QCoreApplication::applicationFilePath());
+    if (const QString appImage = qEnvironmentVariable("APPIMAGE"); !appImage.isEmpty())
+        lines << QStringLiteral("AppImage: %1").arg(appImage);
+    lines << QStringLiteral("Command line: %1").arg(QCoreApplication::arguments().mid(1).join(QLatin1Char(' ')));
+    lines << QStringLiteral("Configuration: %1").arg(paths::configDir());
+    lines << QStringLiteral("Session: %1, snapshot mode: %2")
+                 .arg(_prefs.rememberLastSession ? QStringLiteral("ON") : QStringLiteral("OFF"),
+                      isSnapshotMode() ? QStringLiteral("ON") : QStringLiteral("OFF"));
+    lines << QStringLiteral("System: %1")
+                 .arg(issue_report::describe(issue_report::currentSystem(QGuiApplication::platformName())));
+    lines << QStringLiteral("Locale: %1, interface: %2").arg(QLocale::system().name(), QLocale().name());
+    QStringList plugins;
+    if (_plugins) {
+        for (const auto& p : _plugins->plugins())
+            plugins << (p->version.isEmpty() ? p->name : QStringLiteral("%1 (%2)").arg(p->name, p->version));
+    }
+    lines << QStringLiteral("Plugins: %1").arg(plugins.isEmpty() ? QStringLiteral("none") : plugins.join(QStringLiteral(", ")));
+    return lines.join(QLatin1Char('\n'));
+}
+
+void MainWindow::showDebugInfo()
+{
+    QDialog dialog(this);
+    dialog.setObjectName(QStringLiteral("debugInfo"));
+    dialog.setWindowTitle(tr("Debug Info"));
+    auto* layout = new QVBoxLayout(&dialog);
+    auto* text = new QPlainTextEdit(debugInfo(), &dialog);
+    text->setReadOnly(true);
+    text->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+    layout->addWidget(text);
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
+    QPushButton* copy = buttons->addButton(tr("&Copy Debug Info into Clipboard"), QDialogButtonBox::ActionRole);
+    connect(copy, &QPushButton::clicked, &dialog, [text] { QApplication::clipboard()->setText(text->toPlainText()); });
+    connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+    dialog.resize(640, 380);
+    dialog.exec();
 }
 
 bool MainWindow::closeAllToLeft(BufferId id)
@@ -7673,6 +8014,8 @@ void MainWindow::refreshMenuChecks()
     _readOnlyAction->setChecked(buf->isUserReadOnly());
     if (QAction* pin = findChild<QAction*>(QStringLiteral("actionPinTab")))
         pin->setChecked(buf->isPinned());
+    if (QAction* monitoring = findChild<QAction*>(QStringLiteral("actionMonitoring")))
+        monitoring->setChecked(buf->isMonitoring());
 }
 
 } // namespace edita

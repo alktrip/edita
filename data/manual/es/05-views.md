@@ -66,6 +66,14 @@ archivo línea a línea.
   adhesiva; la misma tecla vuelve.
 - {{actionAlwaysOnTop}} mantiene la ventana de Edita encima de las demás.
 
+## Resumen y seguimiento
+
+- {{actionSummary}} muestra la ruta y las fechas del archivo, y cuenta sus caracteres (sin los
+  fines de línea), palabras, líneas y bytes, y lo seleccionado.
+- {{actionMonitoring}} sigue un archivo que crece, como un registro: se pone en solo lectura y,
+  cada vez que cambia en el disco, se vuelve a leer sin preguntar y va al final, también con
+  Edita en segundo plano. Para seguirlo, el archivo tiene que estar guardado.
+
 ## El menú Ventana
 
 El menú **Ventana** muestra los documentos de la vista actual, numerados (Alt+N y el número abre

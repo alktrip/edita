@@ -67,6 +67,11 @@ void DialogPrompter::warn(QWidget* parent, const QString& title, const QString& 
     QMessageBox::warning(parent, title, text);
 }
 
+void DialogPrompter::inform(QWidget* parent, const QString& title, const QString& text)
+{
+    QMessageBox::information(parent, title, text);
+}
+
 QStringList DialogPrompter::openFileNames(QWidget* parent, const QString& directory, const QString& filters)
 {
     return QFileDialog::getOpenFileNames(parent, QCoreApplication::translate("Prompter", "Open"), directory, filters);

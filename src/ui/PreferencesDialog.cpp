@@ -21,6 +21,7 @@
 
 #include "AppInfo.h"
 
+#include "core/DateTimeFormat.h"
 #include "core/Encoding.h"
 #include "ui/Icons.h"
 #include "ui/TerminalPanel.h"
@@ -541,6 +542,20 @@ void PreferencesDialog::buildMisc()
     _terminalShell->setPlaceholderText(TerminalPanel::resolveShell(QString()));
     _terminalShell->setToolTip(tr("Program and arguments, e.g. \"zsh -l\". Empty: the login shell ($SHELL)"));
     form->addRow(tr("Shell:"), _terminalShell);
+    // Editar › Insertar › Fecha y hora (la página «Multi-Instance & Date» de N++)
+    form->addRow(new QLabel(tr("<b>Insert Date Time</b>")));
+    _dateTimeReverse = addCheck(form, tr("Date before time (short and long formats)"), "dateTimeReverseOrder");
+    _dateTimeFormat = new QLineEdit;
+    _dateTimeFormat->setObjectName(QStringLiteral("dateTimeFormat"));
+    _dateTimeFormat->setToolTip(tr("yyyy year, MM month, dd day, HH hour, mm minutes, ss seconds; ddd/dddd and "
+                                   "MMM/MMMM the name of the day and the month, tt AM/PM"));
+    form->addRow(tr("Customized format:"), _dateTimeFormat);
+    _dateTimePreview = new QLabel;
+    _dateTimePreview->setObjectName(QStringLiteral("dateTimePreview"));
+    form->addRow(QString(), _dateTimePreview);
+    connect(_dateTimeFormat, &QLineEdit::textChanged, this, [this](const QString& format) {
+        _dateTimePreview->setText(formatDateTime(format, QDateTime::currentDateTime()));
+    });
     // El actualizador de N++ («Auto-updater»): aquí solo avisa, y lleva a la página de la versión
     form->addRow(new QLabel(tr("<b>New Versions</b>")));
     _updateOnStartup = addCheck(form, tr("Check for a new version of Edita at startup"), "updateOnStartup");
@@ -777,6 +792,8 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _detectEncoding->setChecked(p.detectEncoding);
     setComboValue(_fallbackCodepage, p.fallbackCodepage);
     _terminalShell->setText(p.terminalShell);
+    _dateTimeFormat->setText(p.dateTimeFormat);
+    _dateTimeReverse->setChecked(p.dateTimeReverseOrder);
     _updateOnStartup->setChecked(p.updateOnStartup);
     _updateInterval->setValue(p.updateIntervalDays);
     _updateInterval->setEnabled(p.updateOnStartup && kUpdateCheck);
@@ -855,6 +872,8 @@ Preferences PreferencesDialog::preferences() const
     p.openSaveDir = static_cast<OpenSaveDir>(comboValue(_openSaveDir));
     p.defaultDirPath = _defaultDir->text().trimmed();
     p.terminalShell = _terminalShell->text().trimmed();
+    p.dateTimeFormat = _dateTimeFormat->text().isEmpty() ? QStringLiteral("yyyy-MM-dd HH:mm:ss") : _dateTimeFormat->text();
+    p.dateTimeReverseOrder = _dateTimeReverse->isChecked();
     p.updateOnStartup = _updateOnStartup->isChecked();
     p.updateIntervalDays = _updateInterval->value();
     p.lspEnabled = _lspEnabled->isChecked();
