@@ -2,21 +2,21 @@
 
 Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
 
-**Resultado: Edita tiene unas 220 de las 339 órdenes. Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
+**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md)). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
 
 ## Faltan, y tienen sentido en Linux
 
 ### Archivo y pestañas
 | Orden de N++ | Qué hace |
 |---|---|
-| Close All Unchanged | Cierra los documentos sin cambios |
-| Pin Tab / Close All BUT Pinned | Fijar pestañas (N++ 8.6) y cerrar todas menos las fijadas |
+| ✅ Close All Unchanged | Cierra los documentos sin cambios |
+| ✅ Pin Tab / Close All BUT Pinned | Fijar pestañas (N++ 8.6) y cerrar todas menos las fijadas |
 | Rename… | Cambia el nombre del archivo en disco |
 | Move to Recycle Bin | Lo manda a la papelera (en Linux, la de freedesktop) |
 | Open in Default Viewer | Lo abre con la aplicación del sistema |
-| Move Tab Forward/Backward, Move to Start/End | Mover la pestaña |
-| 1st…9th Tab, First Tab, Last Tab | Ir a la pestaña N (Ctrl+1…9 en N++) |
-| Apply Color 1…5 / Remove Color | Colores de pestaña |
+| ✅ Move Tab Forward/Backward, Move to Start/End | Mover la pestaña |
+| ✅ 1st…9th Tab, First Tab, Last Tab | Ir a la pestaña N (Ctrl+1…9 en N++) |
+| ✅ Apply Color 1…5 / Remove Color | Colores de pestaña |
 | Open/Move in New Instance | Abrir el documento en otra ventana de Edita |
 
 ### Editar
@@ -45,10 +45,10 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 ### Ver
 | Orden de N++ | Qué hace |
 |---|---|
-| Toggle Full Screen Mode (F11) | Pantalla completa |
-| Post-It (F12) | Ventana sin barras ni bordes |
-| Always on Top | Siempre visible |
-| Synchronize Vertical/Horizontal Scrolling | Desplazar las dos vistas juntas |
+| ✅ Toggle Full Screen Mode (F11) | Pantalla completa |
+| ✅ Post-It (F12) | Ventana sin barras ni bordes |
+| ✅ Always on Top | Siempre visible |
+| ✅ Synchronize Vertical/Horizontal Scrolling | Desplazar las dos vistas juntas |
 | Summary… | Líneas, palabras, caracteres, tamaño, fechas del documento |
 | Monitoring (tail -f) | Seguir un archivo de registro que crece |
 | Show Non-Printing Characters, Show Control Characters & Unicode EOL | Las opciones de símbolos nuevas de N++ 8.x |

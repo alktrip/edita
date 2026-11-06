@@ -20,8 +20,19 @@ El mismo campo hace otras cosas según el primer carácter:
 
 ## Pestañas
 
-- {{actionNextTab}} y {{actionPreviousTab}} van a la pestaña siguiente o anterior.
-- Arrastra una pestaña para cambiarla de lugar.
+El submenú **Ver › Pestaña** tiene todo lo de las pestañas:
+
+- {{actionNextTab}} y {{actionPreviousTab}} van a la pestaña siguiente o anterior;
+  {{actionFirstTab}} y {{actionLastTab}}, a la primera o la última; {{actionTab1}} y las
+  siguientes, a la pestaña de ese número (con Ctrl y el número del teclado numérico).
+- Arrastra una pestaña para cambiarla de lugar, o usa {{actionTabForward}}, {{actionTabBackward}},
+  {{actionTabToStart}} y {{actionTabToEnd}}.
+- {{actionPinTab}} la fija: las pestañas fijadas van al principio, llevan un alfiler en vez del
+  botón de cerrar (pulsarlo la desfija) y {{actionCloseAllButPinned}} no las cierra. Una
+  pestaña no pasa arrastrándola de las fijadas a las demás, ni al revés.
+- {{actionTabColor1}} y los siguientes marcan la pestaña con uno de cinco colores, para
+  distinguir grupos de documentos; {{actionTabColorNone}} lo quita.
+- La sesión recuerda qué pestañas están fijadas y sus colores.
 - El clic derecho en una pestaña muestra un menú: cerrarla, cerrar las demás o las de un lado,
   moverla o clonarla en la otra vista, guardarla, volver a cargarla, copiar su ruta, su nombre o
   su carpeta, abrir su carpeta en el administrador de archivos o en una terminal, y hacerla de
@@ -43,6 +54,17 @@ Edita puede mostrar dos documentos uno al lado del otro (o uno encima del otro):
 | {{actionRotateSplit}} | Pone las vistas una al lado de la otra o una encima de la otra. |
 
 La otra vista se cierra cuando se cierra su último documento. La división se puede arrastrar.
+
+Con {{actionSyncScrollV}} y {{actionSyncScrollH}}, las dos vistas se desplazan juntas,
+manteniendo la diferencia que tenían al activarlo: sirve para comparar dos versiones de un
+archivo línea a línea.
+
+## Pantalla completa, Post-It y siempre visible
+
+- {{actionFullScreen}} ocupa toda la pantalla; la misma tecla vuelve.
+- {{actionPostIt}} deja solo el texto, sin marco, menús, barras ni pestañas, como una nota
+  adhesiva; la misma tecla vuelve.
+- {{actionAlwaysOnTop}} mantiene la ventana de Edita encima de las demás.
 
 ## El menú Ventana
 

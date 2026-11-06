@@ -76,6 +76,7 @@ signals:
     void closeRequested(edita::BufferId id);
     void newDocumentRequested();
     void tabContextMenuRequested(edita::BufferId id, const QPoint& globalPos);
+    void unpinRequested(edita::BufferId id);
 
 protected:
     void showEvent(QShowEvent* event) override;
@@ -83,6 +84,8 @@ protected:
 private:
     void onTabActivated(int index);
     void onBufferChanged(BufferId id, int mask);
+    // Las fijadas, siempre al principio (tras arrastrar una pestaña, por ejemplo)
+    void keepPinnedFirst();
 
     DocumentManager& _documents;
     DocTabBar* _tabs;

@@ -41,11 +41,16 @@ de cada archivo. Para cambiarlos, ver [Codificaciones](#codificaciones) y
 
 ## Cerrar
 
-{{actionClose}} cierra el documento actual; {{actionCloseAll}} los cierra todos y
-{{actionCloseAllBut}}, todos menos el actual. Si un documento tiene cambios sin guardar, Edita
-pregunta si quieres guardarlo. El menú de las pestañas (clic derecho en una pestaña) también
-tiene **Cerrar todo a la izquierda** y **Cerrar todo a la derecha**. {{actionQuit}} cierra la
-ventana.
+{{actionClose}} cierra el documento actual y {{actionCloseAll}} los cierra todos. **Cerrar
+varios documentos** tiene más formas:
+
+- {{actionCloseAllBut}}: todos menos el actual;
+- {{actionCloseAllButPinned}}: todos menos las pestañas fijadas (ver [Pestañas](05-views.md#pestanas));
+- {{actionCloseAllToLeft}} y {{actionCloseAllToRight}}: los que están a un lado del actual;
+- {{actionCloseAllUnchanged}}: los que no tienen cambios sin guardar.
+
+Si un documento tiene cambios sin guardar, Edita pregunta si quieres guardarlo. {{actionQuit}}
+cierra la ventana.
 
 Con **Salir al cerrar el último documento** (página General), al cerrar el último documento se
 cierra Edita.

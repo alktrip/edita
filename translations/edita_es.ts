@@ -833,7 +833,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Falta &lt;NotepadPlus&gt;&lt;Session&gt;</translation>
     </message>
     <message>
-        <location line="+96"/>
+        <location line="+100"/>
         <source>%1 does not exist</source>
         <translation>No existe %1</translation>
     </message>
@@ -1205,6 +1205,14 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+0"/>
         <source>INS</source>
         <translation>INS</translation>
+    </message>
+</context>
+<context>
+    <name>edita::DocTabBar</name>
+    <message>
+        <location filename="../src/ui/DocTabBar.cpp" line="+157"/>
+        <source>Unpin Tab</source>
+        <translation>Desfijar la pestaña</translation>
     </message>
 </context>
 <context>
@@ -1768,23 +1776,23 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     <name>edita::MainWindow</name>
     <message>
         <location filename="../src/ui/MainWindow.cpp" line="+428"/>
-        <location line="+3861"/>
+        <location line="+3974"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-3861"/>
-        <location line="+1448"/>
+        <location line="-3974"/>
+        <location line="+1536"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1354"/>
+        <location line="-1442"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+375"/>
+        <location line="+383"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -1839,12 +1847,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cerrar t&amp;odo</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Close All but Acti&amp;ve Document</source>
         <translation>Cerrar todo &amp;menos el actual</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+35"/>
         <source>&amp;Print…</source>
         <translation>&amp;Imprimir…</translation>
     </message>
@@ -2079,7 +2087,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location line="+64"/>
+        <location line="+76"/>
         <source>&amp;Word wrap</source>
         <translation>&amp;Ajuste de línea</translation>
     </message>
@@ -2195,7 +2203,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Girar la división</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+25"/>
         <source>&amp;Next Tab</source>
         <translation>Pestaña &amp;siguiente</translation>
     </message>
@@ -2205,7 +2213,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Pestaña &amp;anterior</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+49"/>
         <source>Se&amp;ttings</source>
         <translation>Con&amp;figuración</translation>
     </message>
@@ -2281,12 +2289,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+11"/>
-        <location line="+851"/>
+        <location line="+872"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-825"/>
+        <location line="-846"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2458,12 +2466,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2031"/>
+        <location line="-2100"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-847"/>
+        <location line="-866"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2543,13 +2551,38 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+734"/>
-        <location line="+863"/>
+        <location line="+742"/>
+        <location line="+943"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-842"/>
+        <location line="-926"/>
+        <source>Close &amp;Multiple Documents</source>
+        <translation>Cerrar &amp;varios documentos</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Close All but &amp;Pinned Documents</source>
+        <translation>Cerrar todo menos las &amp;fijadas</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Close All to the &amp;Left</source>
+        <translation>Cerrar todo a la &amp;izquierda</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Close All to the &amp;Right</source>
+        <translation>Cerrar todo a la &amp;derecha</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Close All &amp;Unchanged</source>
+        <translation>Cerrar todo lo que no tiene &amp;cambios</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
@@ -2719,7 +2752,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Paleta de órdenes…</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
+        <source>Always on &amp;Top</source>
+        <translation>Si&amp;empre visible</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>To&amp;ggle Full Screen Mode</source>
+        <translation>Pantalla comp&amp;leta</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Post-&amp;It</source>
+        <translation>Post-&amp;It</translation>
+    </message>
+    <message>
+        <location line="+8"/>
         <source>Document &amp;Map</source>
         <translation>Mapa del doc&amp;umento</translation>
     </message>
@@ -2815,7 +2863,112 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ocultar líneas</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+14"/>
+        <source>Sy&amp;nchronize Vertical Scrolling</source>
+        <translation>Sincronizar el desplazamiento &amp;vertical</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Syn&amp;chronize Horizontal Scrolling</source>
+        <translation>Sincronizar el desplazamiento &amp;horizontal</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Ta&amp;b</source>
+        <translation>Pesta&amp;ña</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>1st Tab</source>
+        <translation>Pestaña 1</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>2nd Tab</source>
+        <translation>Pestaña 2</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>3rd Tab</source>
+        <translation>Pestaña 3</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>4th Tab</source>
+        <translation>Pestaña 4</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>5th Tab</source>
+        <translation>Pestaña 5</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>6th Tab</source>
+        <translation>Pestaña 6</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>7th Tab</source>
+        <translation>Pestaña 7</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>8th Tab</source>
+        <translation>Pestaña 8</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>9th Tab</source>
+        <translation>Pestaña 9</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>&amp;First Tab</source>
+        <translation>P&amp;rimera pestaña</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Last Tab</source>
+        <translation>Ú&amp;ltima pestaña</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Move to &amp;Start</source>
+        <translation>Mover al pr&amp;incipio</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Move to &amp;End</source>
+        <translation>Mover al &amp;final</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Move Tab &amp;Forward</source>
+        <translation>Mover a la &amp;derecha</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Move Tab &amp;Backward</source>
+        <translation>Mover a la i&amp;zquierda</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Pi&amp;n Tab</source>
+        <translation>Fi&amp;jar la pestaña</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Apply Color &amp;%1</source>
+        <translation>Aplicar el color &amp;%1</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>&amp;Remove Color</source>
+        <translation>&amp;Quitar el color</translation>
+    </message>
+    <message>
+        <location line="+17"/>
         <source>&amp;Style Configurator…</source>
         <translation>Configurador de &amp;estilos…</translation>
     </message>
@@ -3381,7 +3534,32 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cerrar todo a la derecha</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Unpin Tab</source>
+        <translation>Desfijar la pestaña</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Pin Tab</source>
+        <translation>Fijar la pestaña</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Apply Color</source>
+        <translation>Aplicar color</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Color %1</source>
+        <translation>Color %1</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Remove Color</source>
+        <translation>Quitar el color</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Move to Other View</source>
         <translation>Mover a la otra vista</translation>
     </message>
@@ -3405,12 +3583,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1763"/>
+        <location line="+1767"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2042"/>
+        <location line="-2046"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3539,7 +3717,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+183"/>
+        <location line="+187"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -3878,7 +4056,7 @@ Keep this file in editor?</source>
 ¿Desea mantenerlo en el editor?</translation>
     </message>
     <message>
-        <location line="+264"/>
+        <location line="+401"/>
         <source>Save modifications</source>
         <translation>Guardar las modificaciones</translation>
     </message>
@@ -4239,7 +4417,7 @@ Continue?</source>
         <translation>¿Reemplazar todas las apariciones de «%1» por «%2» en los archivos «%3» de %4?</translation>
     </message>
     <message>
-        <location line="+290"/>
+        <location line="+294"/>
         <location line="+14"/>
         <source>Load Session</source>
         <translation>Cargar una sesión</translation>

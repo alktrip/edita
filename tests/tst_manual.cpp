@@ -110,9 +110,10 @@ private slots:
     void everyMenuCommandIsInTheManual()
     {
         auto w = window();
-        // actionExternalLang:<nombre>: los lenguajes de los plugins de lexer (su texto es del plugin)
+        // actionExternalLang:<nombre>: los lenguajes de los plugins de lexer (su texto es del plugin).
+        // actionTab2…9 y actionTabColor2…5: series; el manual cita la primera de cada una
         static const QRegularExpression generated(
-            QStringLiteral("^action((Lang[1-9]|Macro[1-9]|RunCommand|WindowDocument|Charset)[0-9]*|ExternalLang:.*)$"));
+            QStringLiteral("^action((Lang[1-9]|Macro[1-9]|RunCommand|WindowDocument|Charset|Tab[2-9]|TabColor[2-5])[0-9]*|ExternalLang:.*)$"));
         for (const QString& language : kLanguages) {
             QSet<QString> cited;
             const QDir dir(sourceDir(language));

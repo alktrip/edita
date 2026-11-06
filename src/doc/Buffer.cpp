@@ -96,6 +96,23 @@ void Buffer::setUserReadOnly(bool readOnly)
     notify(BufferChange::ReadOnly);
 }
 
+void Buffer::setPinned(bool pinned)
+{
+    if (pinned == _pinned)
+        return;
+    _pinned = pinned;
+    notify(BufferChange::Tab);
+}
+
+void Buffer::setTabColor(int color)
+{
+    color = color < 0 || color > 4 ? -1 : color;
+    if (color == _tabColor)
+        return;
+    _tabColor = color;
+    notify(BufferChange::Tab);
+}
+
 Position Buffer::position(const void* view) const
 {
     const auto it = _positions.find(view);

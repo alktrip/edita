@@ -36,6 +36,8 @@ struct SessionFile
     QString languageName;   // texto del menú Lenguaje de N++ ("C++", "None (Normal Text)")
     int encoding = -1;      // codepage forzado; -1 = detectar
     bool userReadOnly = false;
+    bool tabPinned = false;  // la pestaña está fijada (tabPinned)
+    int tabColor = -1;       // color de la pestaña: 0…4, -1 sin color (tabColourId)
     Position position;
     std::vector<std::size_t> foldedLines; // <Fold line="…"/> (se leen y se conservan)
     std::vector<std::size_t> bookmarks;   // <Mark line="…"/> (se leen y se conservan)

@@ -30,7 +30,10 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPixmap>
+#include <QToolButton>
 #include <QVariantMap>
+
+#include <algorithm>
 
 namespace edita {
 
@@ -39,6 +42,10 @@ namespace {
 const QString kIdKey = QStringLiteral("id");
 const QString kStateKey = QStringLiteral("state");
 const QString kNameKey = QStringLiteral("name");
+const QString kPinnedKey = QStringLiteral("pinned");
+const QString kColorKey = QStringLiteral("color");
+const char* const kPinButton = "editaPinButton";
+const char* const kCloseButton = "editaCloseButton"; // el de cerrar, mientras la pestaña está fijada
 
 // Indicador del estado de la pestaña: un punto si hay cambios sin guardar, un
 // candado si es de solo lectura y un hueco del mismo tamaño si está guardada (para
@@ -123,7 +130,94 @@ void DocTabBar::applyBuffer(int index, const Buffer& buffer)
     const QString name = buffer.isUntitled() ? QString() : QFileInfo(buffer.filePath()).fileName();
     setTabIcon(index, fileTabIcon(name, state));
     setTabToolTip(index, buffer.isUntitled() ? buffer.displayName() : buffer.filePath());
-    setTabData(index, QVariantMap{{kIdKey, QVariant::fromValue(buffer.id())}, {kStateKey, static_cast<int>(state)}, {kNameKey, name}});
+    setTabData(index, QVariantMap{{kIdKey, QVariant::fromValue(buffer.id())},
+                                  {kStateKey, static_cast<int>(state)},
+                                  {kNameKey, name},
+                                  {kPinnedKey, buffer.isPinned()},
+                                  {kColorKey, buffer.tabColor()}});
+    applyPin(index, buffer.isPinned(), buffer.id());
+    update(tabRect(index));
+}
+
+void DocTabBar::applyPin(int index, bool pinned, BufferId id)
+{
+    // A la izquierda, el alfiler (pulsarlo desfija). El botón de cerrar sale de la pestaña mientras
+    // está fijada (oculto seguiría ocupando su sitio) y se guarda en el alfiler para devolverlo
+    auto* pin = qobject_cast<QToolButton*>(tabButton(index, QTabBar::LeftSide));
+    if (pin && !pin->property(kPinButton).toBool())
+        pin = nullptr;
+    if (pinned) {
+        if (!pin) {
+            pin = new QToolButton(this);
+            pin->setProperty(kPinButton, true);
+            pin->setAutoRaise(true);
+            pin->setIcon(icons::icon(QStringLiteral("pin")));
+            pin->setIconSize(QSize(14, 14));
+            pin->setFixedSize(18, 18);
+            pin->setToolTip(tr("Unpin Tab"));
+            pin->setObjectName(QStringLiteral("tabPin"));
+            connect(pin, &QToolButton::clicked, this, [this, id] { emit unpinRequested(id); });
+            setTabButton(index, QTabBar::LeftSide, pin);
+        }
+        // También uno nuevo, si setTabsClosable volvió a crear los botones de cerrar
+        if (QWidget* close = tabButton(index, QTabBar::RightSide)) {
+            setTabButton(index, QTabBar::RightSide, nullptr); // lo oculta, no lo borra
+            if (auto* old = pin->property(kCloseButton).value<QObject*>(); old && old != close)
+                old->deleteLater();
+            pin->setProperty(kCloseButton, QVariant::fromValue<QObject*>(close));
+        }
+    } else if (pin) {
+        auto* close = qobject_cast<QWidget*>(pin->property(kCloseButton).value<QObject*>());
+        setTabButton(index, QTabBar::LeftSide, nullptr);
+        pin->deleteLater();
+        if (close && tabsClosable() && !tabButton(index, QTabBar::RightSide)) {
+            setTabButton(index, QTabBar::RightSide, close);
+            close->show();
+        } else if (close) {
+            close->deleteLater();
+        }
+    }
+}
+
+bool DocTabBar::isPinnedAt(int index) const
+{
+    return tabData(index).toMap().value(kPinnedKey).toBool();
+}
+
+int DocTabBar::colorAt(int index) const
+{
+    return tabData(index).toMap().value(kColorKey, -1).toInt();
+}
+
+QColor DocTabBar::tabColor(int color, bool dark)
+{
+    // Los de stylers.model.xml de N++ («Tab color N» y «Tab color dark mode N»), con la
+    // saturación y la luminosidad de su versión «saturated»
+    static const char* const kLight[] = {"#F3F0CB", "#DBF3CB", "#CBDBF3", "#F3DBCB", "#F3CBEE"};
+    static const char* const kDark[] = {"#807848", "#568048", "#507094", "#804849", "#754880"};
+    if (color < 0 || color > 4)
+        return {};
+    const QColor base(dark ? kDark[color] : kLight[color]);
+    const float sat = std::min(1.0f, base.hslSaturationF() + (dark ? 100.0f : 30.0f) / 240.0f);
+    return QColor::fromHslF(base.hslHueF(), sat, (dark ? 146.0f : 140.0f) / 240.0f);
+}
+
+void DocTabBar::paintEvent(QPaintEvent* event)
+{
+    QTabBar::paintEvent(event);
+    // El color de cada pestaña: una franja arriba
+    const bool dark = palette().color(QPalette::Window).lightness() < 128;
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    for (int i = 0; i < count(); ++i) {
+        const int color = colorAt(i);
+        if (color < 0)
+            continue;
+        const QRect r = tabRect(i);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(tabColor(color, dark));
+        painter.drawRoundedRect(QRectF(r.left() + 2, r.top() + 1, r.width() - 4, 3), 1.5, 1.5);
+    }
 }
 
 int DocTabBar::indexOf(BufferId id) const
@@ -179,6 +273,8 @@ void DocTabBar::mouseReleaseEvent(QMouseEvent* event)
         }
     }
     QTabBar::mouseReleaseEvent(event);
+    if (event->button() == Qt::LeftButton)
+        emit dragFinished();
 }
 
 QIcon DocTabBar::iconForState(TabState state)

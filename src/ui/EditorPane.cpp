@@ -24,6 +24,7 @@
 #include "ui/EditorView.h"
 
 #include <QSignalBlocker>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace edita {
@@ -47,6 +48,11 @@ EditorPane::EditorPane(DocumentManager& documents, QWidget* parent)
     connect(_tabs, &DocTabBar::newDocumentRequested, this, &EditorPane::newDocumentRequested);
     connect(_tabs, &DocTabBar::tabContextMenuRequested, this, [this](int index, const QPoint& pos) {
         emit tabContextMenuRequested(_tabs->bufferAt(index), pos);
+    });
+    connect(_tabs, &DocTabBar::unpinRequested, this, &EditorPane::unpinRequested);
+    // Al soltar una pestaña arrastrada (la animación de QTabBar termina después: en cola)
+    connect(_tabs, &DocTabBar::dragFinished, this, [this] {
+        QTimer::singleShot(0, this, &EditorPane::keepPinnedFirst);
     });
     connect(&_documents, &DocumentManager::bufferChanged, this, &EditorPane::onBufferChanged);
 
@@ -133,6 +139,17 @@ void EditorPane::activateBuffer(BufferId id)
     emit currentBufferChanged(id);
 }
 
+void EditorPane::keepPinnedFirst()
+{
+    // Una pestaña no cruza la frontera entre las fijadas y las demás (TabBar::exchangeTabItemData)
+    std::vector<BufferId> pinned, others;
+    for (int i = 0; i < count(); ++i)
+        (_tabs->isPinnedAt(i) ? pinned : others).push_back(_tabs->bufferAt(i));
+    pinned.insert(pinned.end(), others.begin(), others.end());
+    if (pinned != buffers())
+        reorder(pinned);
+}
+
 void EditorPane::reorder(const std::vector<BufferId>& order)
 {
     const QSignalBlocker blocker(_tabs);
@@ -201,7 +218,22 @@ void EditorPane::onBufferChanged(BufferId id, int mask)
     const Buffer* buf = _documents.buffer(id);
     if (!buf || !contains(id))
         return;
+    const int before = _tabs->indexOf(id);
+    const bool wasPinned = _tabs->isPinnedAt(before);
     _tabs->updateBuffer(*buf);
+    if (buf->isPinned() != wasPinned) {
+        // TCN_TABPINNED: la fijada pasa a la zona de las fijadas (al final de ellas, para que
+        // una sesión conserve su orden); la desfijada, al final
+        int target = count() - 1;
+        if (buf->isPinned()) {
+            target = 0;
+            for (int i = 0; i < count(); ++i)
+                if (i != before && _tabs->isPinnedAt(i))
+                    ++target;
+        }
+        const QSignalBlocker blocker(_tabs);
+        _tabs->moveTab(before, target);
+    }
     if (id == _current && (mask & BufferChange::ReadOnly))
         _editor->sci(SCI_SETREADONLY, buf->isReadOnly() ? 1 : 0);
     if (id == _current && (mask & BufferChange::Language))

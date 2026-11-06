@@ -59,7 +59,8 @@ enum : int
     Filename = 0x080,
     RecentTag = 0x100,
     Lexing = 0x200,
-    Mask = 0x3FF,
+    Tab = 0x400,      // fijada o color de la pestaña (propio de Edita)
+    Mask = 0x7FF,
 };
 }
 
@@ -121,6 +122,13 @@ public:
     bool isFileReadOnly() const { return _fileReadOnly; }
     bool isUserReadOnly() const { return _userReadOnly; }
     void setUserReadOnly(bool readOnly);
+    // La pestaña fijada (Buffer::_isPinned de N++): va al principio y no se cierra con
+    // «Cerrar todo menos las fijadas»
+    bool isPinned() const { return _pinned; }
+    void setPinned(bool pinned);
+    // El color de la pestaña (IDM_VIEW_TAB_COLOUR_*): 0…4, -1 sin color
+    int tabColor() const { return _tabColor; }
+    void setTabColor(int color);
     bool isReadOnly() const { return _fileReadOnly || _userReadOnly; }
 
     // Archivos de más de 200 MB: sin estilos (N++: _largeFileRestriction)
@@ -164,6 +172,8 @@ private:
     bool _dirty = false;
     bool _fileReadOnly = false;
     bool _userReadOnly = false;
+    bool _pinned = false;
+    int _tabColor = -1;
     bool _largeFile = false;
     QDateTime _lastModified;
     std::uint64_t _contentVersion = 0;

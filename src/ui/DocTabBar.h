@@ -20,6 +20,7 @@
 
 #include "doc/Buffer.h"
 
+#include <QColor>
 #include <QTabBar>
 
 #include <vector>
@@ -56,20 +57,30 @@ public:
     static QIcon iconFor(const QString& fileName, TabState state);
     // Al cambiar la preferencia de los iconos o el tema
     void refreshIcons();
+    bool isPinnedAt(int index) const;
+    int colorAt(int index) const; // -1 sin color
+    // Los colores de pestaña de N++ (getIndividualTabColor, «saturated»): 0…4
+    static QColor tabColor(int color, bool dark);
 
 signals:
     // Doble clic en la zona vacía de la barra (N++: nuevo documento)
     void newDocumentRequested();
     void tabContextMenuRequested(int index, const QPoint& globalPos);
+    // El alfiler de una pestaña fijada: pulsarlo la desfija (como en N++)
+    void unpinRequested(edita::BufferId id);
+    // Se soltó el botón tras pulsar (y quizá arrastrar) una pestaña
+    void dragFinished();
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
     void contextMenuEvent(QContextMenuEvent* event) override;
     void changeEvent(QEvent* event) override;
+    void paintEvent(QPaintEvent* event) override;
 
 private:
     void applyBuffer(int index, const Buffer& buffer);
+    void applyPin(int index, bool pinned, BufferId id);
 
     bool _doubleClickCloses = false;
 };

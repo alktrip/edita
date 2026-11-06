@@ -555,6 +555,14 @@ void MainWindow::connectPane(EditorPane* pane)
         paneLayout->insertWidget(1, _breadcrumbs[index]);
     _sticky[index] = new StickyScroll(pane->editor());
     _findBar[index] = new FindBar(pane->editor(), pane);
+    // Desplazamiento sincronizado de las dos vistas (IDM_VIEW_SYNSCROLLV/H)
+    connect(pane->editor(), &ScintillaEditBase::verticalScrolled, this, [this, pane] { syncScroll(pane->editor()); });
+    connect(pane->editor(), &ScintillaEditBase::horizontalScrolled, this, [this, pane] { syncScroll(pane->editor()); });
+    // El alfiler de una pestaña fijada
+    connect(pane, &EditorPane::unpinRequested, this, [this](BufferId id) {
+        if (Buffer* buf = _documents.buffer(id))
+            buf->setPinned(false);
+    });
     connect(_findBar[index], &FindBar::searched, this, [this](const SearchOptions& options) {
         _lastOptions = options;
         _findBarUsedLast = true;
@@ -914,8 +922,19 @@ void MainWindow::createMenus()
     file->addSeparator();
     addAction(file, tr("&Close"), "actionClose", QKeySequence(Qt::CTRL | Qt::Key_W), [this] { closeBuffer(currentBuffer()); });
     addAction(file, tr("Clos&e All"), "actionCloseAll", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_W), [this] { closeAll(); });
-    addAction(file, tr("Close All but Acti&ve Document"), "actionCloseAllBut", QKeySequence(),
+    // IDM_FILE_CLOSEALL_*: el submenú «Cerrar varios documentos» de N++
+    QMenu* closeMultiple = file->addMenu(tr("Close &Multiple Documents"));
+    closeMultiple->setObjectName(QStringLiteral("menuCloseMultiple"));
+    addAction(closeMultiple, tr("Close All but Acti&ve Document"), "actionCloseAllBut", QKeySequence(),
               [this] { closeAllBut(currentBuffer()); });
+    addAction(closeMultiple, tr("Close All but &Pinned Documents"), "actionCloseAllButPinned", QKeySequence(),
+              [this] { closeAllButPinned(); });
+    addAction(closeMultiple, tr("Close All to the &Left"), "actionCloseAllToLeft", QKeySequence(),
+              [this] { closeAllToLeft(currentBuffer()); });
+    addAction(closeMultiple, tr("Close All to the &Right"), "actionCloseAllToRight", QKeySequence(),
+              [this] { closeAllToRight(currentBuffer()); });
+    addAction(closeMultiple, tr("Close All &Unchanged"), "actionCloseAllUnchanged", QKeySequence(),
+              [this] { closeAllUnchanged(); });
     file->addSeparator();
     // IDM_FILE_LOADSESSION, IDM_FILE_SAVESESSION
     auto sessionFilters = [this] {
@@ -1127,6 +1146,18 @@ void MainWindow::createMenus()
     addAction(view, tr("Command &Palette…"), "actionCommandPalette", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_A),
               [this] { showCommandPalette(QStringLiteral(">")); });
     view->addSeparator();
+    // IDM_VIEW_ALWAYSONTOP, IDM_VIEW_FULLSCREENTOGGLE, IDM_VIEW_POSTIT
+    QAction* onTop = addAction(view, tr("Always on &Top"), "actionAlwaysOnTop", QKeySequence(), [this] { toggleAlwaysOnTop(); });
+    onTop->setCheckable(true);
+    QAction* fullScreen = addAction(view, tr("To&ggle Full Screen Mode"), "actionFullScreen", QKeySequence(Qt::Key_F11),
+                                    [this] { toggleFullScreen(); });
+    fullScreen->setCheckable(true);
+    QAction* postIt = addAction(view, tr("Post-&It"), "actionPostIt", QKeySequence(Qt::Key_F12), [this] { togglePostIt(); });
+    postIt->setCheckable(true);
+    // Siguen respondiendo con la barra de menús oculta (Post-It)
+    QWidget::addAction(fullScreen);
+    QWidget::addAction(postIt);
+    view->addSeparator();
     // IDM_VIEW_DOC_MAP, IDM_VIEW_DOCLIST, IDM_VIEW_FUNC_LIST, IDM_VIEW_FILEBROWSER
     const std::pair<const char*, QString> panelEntries[] = {
         {"documentMap", tr("Document &Map")}, {"documentList", tr("Document &List")},
@@ -1255,15 +1286,72 @@ void MainWindow::createMenus()
     addAction(view, tr("Switch to &Other View"), "actionSwitchView", QKeySequence(Qt::Key_F8), [this] { switchToOtherView(); });
     addAction(view, tr("&Rotate Split"), "actionRotateSplit", QKeySequence(), [this] { toggleSplitOrientation(); });
     view->addSeparator();
-    addAction(view, tr("&Next Tab"), "actionNextTab", QKeySequence(Qt::CTRL | Qt::Key_PageDown), [this] {
+    // IDM_VIEW_SYNSCROLLV, IDM_VIEW_SYNSCROLLH
+    QAction* syncV = addAction(view, tr("Sy&nchronize Vertical Scrolling"), "actionSyncScrollV", QKeySequence(),
+                               [this] { setScrollSync(true); });
+    syncV->setCheckable(true);
+    QAction* syncH = addAction(view, tr("Syn&chronize Horizontal Scrolling"), "actionSyncScrollH", QKeySequence(),
+                               [this] { setScrollSync(false); });
+    syncH->setCheckable(true);
+    view->addSeparator();
+    // El submenú «Pestaña» de N++ (IDM_VIEW_TAB*)
+    QMenu* tab = view->addMenu(tr("Ta&b"));
+    tab->setObjectName(QStringLiteral("menuTab"));
+    const QString ordinals[] = {tr("1st Tab"), tr("2nd Tab"), tr("3rd Tab"), tr("4th Tab"), tr("5th Tab"),
+                                tr("6th Tab"), tr("7th Tab"), tr("8th Tab"), tr("9th Tab")};
+    for (int n = 1; n <= 9; ++n) {
+        // Ctrl + el número del teclado numérico, como N++
+        addAction(tab, ordinals[n - 1],
+                  QByteArray("actionTab" + QByteArray::number(n)).constData(),
+                  QKeySequence(QKeyCombination(Qt::ControlModifier | Qt::KeypadModifier, static_cast<Qt::Key>(Qt::Key_0 + n))),
+                  [this, n] { goToTab(n - 1); });
+    }
+    tab->addSeparator();
+    addAction(tab, tr("&First Tab"), "actionFirstTab", QKeySequence(), [this] { goToTab(0); });
+    addAction(tab, tr("&Last Tab"), "actionLastTab", QKeySequence(), [this] { goToTab(_activePane->count() - 1); });
+    addAction(tab, tr("&Next Tab"), "actionNextTab", QKeySequence(Qt::CTRL | Qt::Key_PageDown), [this] {
         DocTabBar* tabs = _activePane->tabBar();
         if (tabs->count() > 1)
             tabs->setCurrentIndex((tabs->currentIndex() + 1) % tabs->count());
     });
-    addAction(view, tr("&Previous Tab"), "actionPreviousTab", QKeySequence(Qt::CTRL | Qt::Key_PageUp), [this] {
+    addAction(tab, tr("&Previous Tab"), "actionPreviousTab", QKeySequence(Qt::CTRL | Qt::Key_PageUp), [this] {
         DocTabBar* tabs = _activePane->tabBar();
         if (tabs->count() > 1)
             tabs->setCurrentIndex((tabs->currentIndex() + tabs->count() - 1) % tabs->count());
+    });
+    tab->addSeparator();
+    addAction(tab, tr("Move to &Start"), "actionTabToStart", QKeySequence(), [this] { moveCurrentTab(-1000000); });
+    addAction(tab, tr("Move to &End"), "actionTabToEnd", QKeySequence(), [this] { moveCurrentTab(1000000); });
+    addAction(tab, tr("Move Tab &Forward"), "actionTabForward", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_PageDown),
+              [this] { moveCurrentTab(1); });
+    addAction(tab, tr("Move Tab &Backward"), "actionTabBackward", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_PageUp),
+              [this] { moveCurrentTab(-1); });
+    tab->addSeparator();
+    QAction* pin = addAction(tab, tr("Pi&n Tab"), "actionPinTab", QKeySequence(), [this] {
+        if (Buffer* buf = _documents.buffer(currentBuffer()))
+            buf->setPinned(!buf->isPinned());
+    });
+    pin->setCheckable(true);
+    tab->addSeparator();
+    for (int c = 0; c < 5; ++c) {
+        QAction* color = addAction(tab, tr("Apply Color &%1").arg(c + 1),
+                                   QByteArray("actionTabColor" + QByteArray::number(c + 1)).constData(), QKeySequence(),
+                                   [this, c] {
+                                       if (Buffer* buf = _documents.buffer(currentBuffer()))
+                                           buf->setTabColor(c);
+                                   });
+        QPixmap swatch(12, 12);
+        swatch.fill(Qt::transparent);
+        QPainter painter(&swatch);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setBrush(DocTabBar::tabColor(c, false));
+        painter.setPen(Qt::NoPen);
+        painter.drawRoundedRect(QRectF(1, 1, 10, 10), 2, 2);
+        color->setIcon(QIcon(swatch));
+    }
+    addAction(tab, tr("&Remove Color"), "actionTabColorNone", QKeySequence(), [this] {
+        if (Buffer* buf = _documents.buffer(currentBuffer()))
+            buf->setTabColor(-1);
     });
 
     // Codificación
@@ -3149,6 +3237,27 @@ void MainWindow::showTabContextMenu(BufferId id, const QPoint& globalPos)
     menu.addAction(tr("Close All to the Left"), this, [this, id] { closeAllToLeft(id); });
     menu.addAction(tr("Close All to the Right"), this, [this, id] { closeAllToRight(id); });
     menu.addSeparator();
+    // IDM_PINTAB y los colores (el menú contextual de la pestaña de N++)
+    menu.addAction(buf->isPinned() ? tr("Unpin Tab") : tr("Pin Tab"), this, [this, id] {
+        if (Buffer* b = _documents.buffer(id))
+            b->setPinned(!b->isPinned());
+    });
+    QMenu* colors = menu.addMenu(tr("Apply Color"));
+    for (int c = 0; c < 5; ++c) {
+        if (QAction* source = findChild<QAction*>(QStringLiteral("actionTabColor%1").arg(c + 1))) {
+            QAction* a = colors->addAction(source->icon(), tr("Color %1").arg(c + 1), this, [this, id, c] {
+                if (Buffer* b = _documents.buffer(id))
+                    b->setTabColor(c);
+            });
+            a->setCheckable(true);
+            a->setChecked(buf->tabColor() == c);
+        }
+    }
+    colors->addAction(tr("Remove Color"), this, [this, id] {
+        if (Buffer* b = _documents.buffer(id))
+            b->setTabColor(-1);
+    })->setEnabled(buf->tabColor() >= 0);
+    menu.addSeparator();
     menu.addAction(tr("Move to Other View"), this, [this] { moveToOtherView(); });
     menu.addAction(tr("Clone to Other View"), this, [this] { cloneToOtherView(); });
     menu.addSeparator();
@@ -3580,6 +3689,10 @@ void MainWindow::applyPreferences()
     for (EditorPane* pane : {_mainPane, _subPane}) {
         pane->tabBar()->setVisible(!p.tabBarHide);
         pane->tabBar()->setTabsClosable(p.tabCloseButton);
+        // setTabsClosable rehace los botones de cerrar: las fijadas, otra vez con el alfiler
+        for (const BufferId id : pane->buffers())
+            if (const Buffer* buf = _documents.buffer(id))
+                pane->tabBar()->updateBuffer(*buf);
         pane->tabBar()->setDoubleClickCloses(p.tabDoubleClickCloses);
         pane->editor()->applyPreferences(p);
     }
@@ -5390,6 +5503,143 @@ bool MainWindow::closeAllBut(BufferId keep)
     return closeBuffers(ids, false);
 }
 
+bool MainWindow::closeAllButPinned()
+{
+    // fileCloseAllButPinned: en las dos vistas, las que no están fijadas
+    std::vector<BufferId> ids;
+    for (EditorPane* pane : {_mainPane, _subPane}) {
+        for (const BufferId id : pane->buffers()) {
+            const Buffer* buf = _documents.buffer(id);
+            if (buf && !buf->isPinned() && std::find(ids.begin(), ids.end(), id) == ids.end())
+                ids.push_back(id);
+        }
+    }
+    return closeBuffers(ids, false);
+}
+
+bool MainWindow::closeAllUnchanged()
+{
+    // fileCloseAllUnchanged: en la vista activa, las que no tienen cambios (y las nuevas vacías)
+    std::vector<BufferId> ids;
+    for (const BufferId id : _activePane->buffers()) {
+        const Buffer* buf = _documents.buffer(id);
+        if (buf && (!buf->isDirty() || (buf->isUntitled() && _documents.text(id).empty())))
+            ids.push_back(id);
+    }
+    return closeBuffers(ids, false, _activePane);
+}
+
+void MainWindow::goToTab(int index)
+{
+    DocTabBar* tabs = _activePane->tabBar();
+    if (index >= 0 && index < tabs->count())
+        tabs->setCurrentIndex(index);
+}
+
+void MainWindow::moveCurrentTab(int delta)
+{
+    // IDM_VIEW_TAB_MOVEFORWARD/BACKWARD, IDM_VIEW_GOTO_START/END: sin cruzar la frontera de las fijadas
+    DocTabBar* tabs = _activePane->tabBar();
+    const int from = tabs->currentIndex();
+    if (from < 0)
+        return;
+    // Las fijadas van primero: [0, fijadas) y [fijadas, total)
+    int pinnedCount = 0;
+    for (int i = 0; i < tabs->count(); ++i)
+        pinnedCount += tabs->isPinnedAt(i) ? 1 : 0;
+    const bool pinned = tabs->isPinnedAt(from);
+    const int first = pinned ? 0 : pinnedCount;
+    const int last = pinned ? pinnedCount - 1 : tabs->count() - 1;
+    const int to = std::clamp(from + delta, first, last);
+    if (to != from)
+        tabs->moveTab(from, to);
+}
+
+void MainWindow::toggleAlwaysOnTop()
+{
+    const bool on = !(windowFlags() & Qt::WindowStaysOnTopHint);
+    setWindowFlag(Qt::WindowStaysOnTopHint, on);
+    show(); // cambiar las banderas oculta la ventana
+    if (QAction* a = findChild<QAction*>(QStringLiteral("actionAlwaysOnTop")))
+        a->setChecked(on);
+}
+
+void MainWindow::toggleFullScreen()
+{
+    if (isFullScreen()) {
+        if (_wasMaximized)
+            showMaximized();
+        else
+            showNormal();
+    } else {
+        _wasMaximized = isMaximized();
+        showFullScreen();
+    }
+    if (QAction* a = findChild<QAction*>(QStringLiteral("actionFullScreen")))
+        a->setChecked(isFullScreen());
+}
+
+void MainWindow::togglePostIt()
+{
+    // IDM_VIEW_POSTIT: solo el texto, sin marco, menús, barras ni pestañas; F12 vuelve
+    _postIt = !_postIt;
+    if (_postIt) {
+        // isHidden y no isVisible: con la página de inicio delante, las pestañas no se ven pero no están ocultas
+        _postItState = {!menuBar()->isHidden(), _toolBar && !_toolBar->isHidden(), !_statusBar->isHidden(),
+                        !_mainPane->tabBar()->isHidden(), !_subPane->tabBar()->isHidden()};
+        menuBar()->hide();
+        if (_toolBar)
+            _toolBar->hide();
+        _statusBar->hide();
+        _mainPane->tabBar()->hide();
+        _subPane->tabBar()->hide();
+    } else {
+        menuBar()->setVisible(_postItState.menu);
+        if (_toolBar)
+            _toolBar->setVisible(_postItState.toolBar);
+        _statusBar->setVisible(_postItState.statusBar);
+        _mainPane->tabBar()->setVisible(_postItState.mainTabs);
+        _subPane->tabBar()->setVisible(_postItState.subTabs);
+    }
+    setWindowFlag(Qt::FramelessWindowHint, _postIt);
+    show();
+    if (QAction* a = findChild<QAction*>(QStringLiteral("actionPostIt")))
+        a->setChecked(_postIt);
+}
+
+void MainWindow::setScrollSync(bool vertical)
+{
+    // IDM_VIEW_SYNSCROLLV/H: la diferencia de ahora entre las dos vistas se mantiene al desplazar una
+    QAction* action = findChild<QAction*>(QString::fromLatin1(vertical ? "actionSyncScrollV" : "actionSyncScrollH"));
+    const bool on = action && action->isChecked();
+    EditorView* main = _mainPane->editor();
+    EditorView* sub = _subPane->editor();
+    if (vertical) {
+        _syncScrollV = on;
+        _syncLineOffset = sub->sci(SCI_GETFIRSTVISIBLELINE) - main->sci(SCI_GETFIRSTVISIBLELINE);
+    } else {
+        _syncScrollH = on;
+        _syncXOffset = sub->sci(SCI_GETXOFFSET) - main->sci(SCI_GETXOFFSET);
+    }
+}
+
+void MainWindow::syncScroll(EditorView* source)
+{
+    if (_syncingScroll || (!_syncScrollV && !_syncScrollH) || !_subPane->isVisible() || !_mainPane->isVisible())
+        return;
+    EditorView* main = _mainPane->editor();
+    EditorView* sub = _subPane->editor();
+    EditorView* target = source == main ? sub : main;
+    const sptr_t sign = source == main ? 1 : -1;
+    _syncingScroll = true;
+    if (_syncScrollV)
+        target->sci(SCI_SETFIRSTVISIBLELINE,
+                    static_cast<uptr_t>(std::max<sptr_t>(0, source->sci(SCI_GETFIRSTVISIBLELINE) + sign * _syncLineOffset)));
+    if (_syncScrollH)
+        target->sci(SCI_SETXOFFSET, static_cast<uptr_t>(std::max<sptr_t>(0, source->sci(SCI_GETXOFFSET) + sign * _syncXOffset)));
+    _syncingScroll = false;
+}
+
 bool MainWindow::closeAllToLeft(BufferId id)
 {
     std::vector<BufferId> ids = _activePane->buffers();
@@ -7139,6 +7389,8 @@ Session MainWindow::captureSession(bool named, bool withFolders)
                 : QString::fromUtf8(menuName ? menuName : languageInfo(buf->language()).name);
             f.encoding = buf->encoding().codepage;
             f.userReadOnly = buf->isUserReadOnly();
+            f.tabPinned = buf->isPinned();
+            f.tabColor = buf->tabColor();
             f.position = buf->position(pane->editor());
             withSearchView(*buf, [&f](ScintillaEditBase& view) {
                 for (const sptr_t line : bookmarkedLines(view))
@@ -7217,6 +7469,8 @@ void MainWindow::restoreSession(const Session& session, QStringList* missing)
                      && buf->userLanguage() != f.languageName)
                 buf->setExternalLanguage(f.languageName, /*fromMenu*/ true);
             buf->setUserReadOnly(f.userReadOnly);
+            buf->setPinned(f.tabPinned);
+            buf->setTabColor(f.tabColor);
             buf->setPosition(pane->editor(), f.position);
             if (!f.bookmarks.empty()) {
                 withSearchView(*buf, [&f](ScintillaEditBase& view) {
@@ -7417,6 +7671,8 @@ void MainWindow::refreshMenuChecks()
         current->setChecked(false); // también con un lenguaje del usuario
 
     _readOnlyAction->setChecked(buf->isUserReadOnly());
+    if (QAction* pin = findChild<QAction*>(QStringLiteral("actionPinTab")))
+        pin->setChecked(buf->isPinned());
 }
 
 } // namespace edita

@@ -20,8 +20,19 @@ The same field does other things depending on the first character:
 
 ## Tabs
 
-- {{actionNextTab}} and {{actionPreviousTab}} go to the next or previous tab.
-- Drag a tab to change its position.
+The **View › Tab** submenu has everything about tabs:
+
+- {{actionNextTab}} and {{actionPreviousTab}} go to the next or previous tab; {{actionFirstTab}}
+  and {{actionLastTab}}, to the first or last one; {{actionTab1}} and the following ones, to the
+  tab with that number (with Ctrl and the number of the numeric keypad).
+- Drag a tab to change its position, or use {{actionTabForward}}, {{actionTabBackward}},
+  {{actionTabToStart}} and {{actionTabToEnd}}.
+- {{actionPinTab}} pins it: pinned tabs go first, have a pin instead of the close button
+  (clicking it unpins) and {{actionCloseAllButPinned}} does not close them. Dragging does not
+  move a tab between the pinned ones and the others.
+- {{actionTabColor1}} and the following ones mark the tab with one of five colors, to tell groups
+  of documents apart; {{actionTabColorNone}} removes it.
+- The session remembers which tabs are pinned and their colors.
 - Right click on a tab shows a menu: close it, close the others or those on one side, move or
   clone it to the other view, save it, reload it, copy its path, name or folder, open its folder
   in the file manager or in a terminal, and make it read-only.
@@ -41,6 +52,16 @@ Edita can show two documents side by side (or one above the other):
 | {{actionRotateSplit}} | Places the views side by side or one above the other. |
 
 The other view closes when its last document is closed. The divider can be dragged.
+
+With {{actionSyncScrollV}} and {{actionSyncScrollH}}, both views scroll together, keeping the
+difference they had when it was turned on: useful to compare two versions of a file line by line.
+
+## Full screen, Post-It and always on top
+
+- {{actionFullScreen}} fills the screen; the same key goes back.
+- {{actionPostIt}} leaves only the text, without frame, menus, bars or tabs, like a sticky note;
+  the same key goes back.
+- {{actionAlwaysOnTop}} keeps the Edita window above the others.
 
 ## The Window menu
 

@@ -63,6 +63,10 @@ bool parseSession(const pugi::xml_document& doc, Session& session, QString* erro
             f.languageName = QString::fromUtf8(node.attribute("lang").as_string(""));
             f.encoding = node.attribute("encoding").as_int(-1);
             f.userReadOnly = std::string_view(node.attribute("userReadOnly").as_string("no")) == "yes";
+            f.tabPinned = std::string_view(node.attribute("tabPinned").as_string("no")) == "yes";
+            f.tabColor = node.attribute("tabColourId").as_int(-1);
+            if (f.tabColor < -1 || f.tabColor > 4)
+                f.tabColor = -1;
             f.backupFilePath = QString::fromUtf8(node.attribute("backupFilePath").as_string("")).replace(QLatin1Char('\\'), QLatin1Char('/'));
             f.originalLastModified = fromFileTime({node.attribute("originalFileLastModifTimestamp").as_int(0),
                                                    node.attribute("originalFileLastModifTimestampHigh").as_int(0)});
@@ -121,9 +125,9 @@ void writeFileNode(pugi::xml_node parent, const SessionFile& f)
     const FileTimeParts time = toFileTime(f.originalLastModified);
     node.append_attribute("originalFileLastModifTimestamp") = time.low;
     node.append_attribute("originalFileLastModifTimestampHigh") = time.high;
-    node.append_attribute("tabColourId") = -1;
+    node.append_attribute("tabColourId") = f.tabColor;
     node.append_attribute("RTL") = "no";
-    node.append_attribute("tabPinned") = "no";
+    node.append_attribute("tabPinned") = f.tabPinned ? "yes" : "no";
     for (const std::size_t line : f.bookmarks)
         node.append_child("Mark").append_attribute("line") = static_cast<unsigned long long>(line);
     for (const std::size_t line : f.foldedLines)

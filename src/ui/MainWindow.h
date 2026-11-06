@@ -172,6 +172,19 @@ public:
     bool closeBuffer(BufferId id);
     bool closeAll();
     bool closeAllBut(BufferId keep);
+    // Archivo › Cerrar varios documentos: todos menos los fijados; los que no tienen cambios
+    bool closeAllButPinned();
+    bool closeAllUnchanged();
+    // Ver › Pestaña: ir a la pestaña N (desde 0) y mover la actual (sin cruzar las fijadas)
+    void goToTab(int index);
+    void moveCurrentTab(int delta);
+    // Ver: siempre visible, pantalla completa (F11), Post-It (F12)
+    void toggleAlwaysOnTop();
+    void toggleFullScreen();
+    void togglePostIt();
+    bool isPostIt() const { return _postIt; }
+    // Ver › Sincronizar el desplazamiento vertical/horizontal de las dos vistas
+    void setScrollSync(bool vertical);
     bool closeAllToLeft(BufferId id);
     bool closeAllToRight(BufferId id);
 
@@ -641,6 +654,15 @@ private:
     CommandPalette* _palette = nullptr;
     // Cambios de Git en el margen y marcas en la barra de desplazamiento, de cada vista
     QPointer<GitChanges> _git[2];
+    bool _wasMaximized = false;
+    bool _postIt = false;
+    struct { bool menu = true, toolBar = true, statusBar = true, mainTabs = true, subTabs = true; } _postItState;
+    bool _syncScrollV = false;
+    bool _syncScrollH = false;
+    bool _syncingScroll = false;
+    sptr_t _syncLineOffset = 0;
+    sptr_t _syncXOffset = 0;
+    void syncScroll(EditorView* source);
     QNetworkAccessManager* _updateNetwork = nullptr;
     QPointer<QNetworkReply> _updateReply;
     void updateCheckFinished(QNetworkReply* reply, bool manual);

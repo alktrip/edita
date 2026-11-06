@@ -38,10 +38,16 @@ changed). {{actionReload}} discards the changes and reads the file again.
 
 ## Closing
 
-{{actionClose}} closes the current document; {{actionCloseAll}} closes all of them and
-{{actionCloseAllBut}} all but the current one. If a document has unsaved changes, Edita asks
-whether to save it. The tab menu (right click on a tab) also has **Close All to the Left** and
-**Close All to the Right**. {{actionQuit}} closes the window.
+{{actionClose}} closes the current document and {{actionCloseAll}} closes all of them. **Close
+Multiple Documents** has more ways:
+
+- {{actionCloseAllBut}}: all but the current one;
+- {{actionCloseAllButPinned}}: all but the pinned tabs (see [Tabs](05-views.md#tabs));
+- {{actionCloseAllToLeft}} and {{actionCloseAllToRight}}: those on one side of the current one;
+- {{actionCloseAllUnchanged}}: those without unsaved changes.
+
+If a document has unsaved changes, Edita asks whether to save it. {{actionQuit}} closes the
+window.
 
 With **Exit on close the last tab** (General page), closing the last document closes Edita.
 
