@@ -43,6 +43,7 @@
 
 #include <QCryptographicHash>
 #include <QDesktopServices>
+#include <QFile>
 #include <QIcon>
 #include <QMainWindow>
 #include <QNetworkReply> // QPointer<QNetworkReply>: con Qt 6.8 hace falta el tipo completo
@@ -71,6 +72,8 @@ class QDockWidget;
 namespace edita {
 struct InstanceRequest;
 class DocumentListPanel;
+class CharacterPanel;
+class ClipboardHistoryPanel;
 class DocumentMapPanel;
 class RegexTesterPanel;
 class TerminalPanel;
@@ -198,6 +201,24 @@ public:
     void toggleMonitoring();
     // Herramientas › … › Generar desde la selección al portapapeles
     bool hashSelectionToClipboard(QCryptographicHash::Algorithm algorithm);
+    // Archivo › Renombrar: el archivo en disco (con el diálogo de guardar) o, sin archivo, el
+    // nombre de la pestaña (fileRename)
+    bool renameBuffer(BufferId id);
+    // Archivo › Mover a la papelera (fileDelete): pregunta, lo manda a la papelera y lo cierra
+    bool moveBufferToTrash(BufferId id);
+    // Archivo › Abrir con la aplicación predeterminada
+    bool openInDefaultViewer(BufferId id);
+    // La papelera (QFile::moveToTrash; las pruebas ponen otra)
+    void setFileTrasher(std::function<bool(const QString&)> trasher) { _trashFile = std::move(trasher); }
+    // Editar › Sobre la selección: la ruta seleccionada o la que está junto al cursor
+    // (NPPM_GETFILENAMEATCURSOR), ya resuelta (resolveSelectedPath)
+    QString selectedPath() const;
+    // Abrirla en Edita o abrir su carpeta. false (con aviso) si no existe
+    bool openSelectedPath(bool folder);
+    // Tapar la selección con █ (o ● con `bullet`, Mayús en N++)
+    void redactSelection(bool bullet);
+    // Buscar la selección (o la palabra del cursor) en internet; false sin nada que buscar
+    bool searchOnInternet();
     // Ayuda › Información de depuración
     QString debugInfo() const;
     void showDebugInfo();
@@ -259,7 +280,8 @@ public:
     // Aplica y guarda en config.xml
     void setPreferences(const Preferences& prefs);
     // Configuración > Preferencias…
-    void showPreferences();
+    // Con `page`, la página de Preferencias que se abre (p. ej. "searchEngine")
+    void showPreferences(const QString& page = QString());
     // Configuración > Configurador de estilos…
     void showStyleConfigurator();
     // Configuración > Shortcut Mapper… (ShortcutMapper de N++)
@@ -607,6 +629,8 @@ private:
     SyntaxManager _syntax;
     std::unique_ptr<Prompter> _prompter;
     std::function<bool(const QUrl&)> _openUrl = [](const QUrl& url) { return QDesktopServices::openUrl(url); };
+    std::function<bool(const QString&)> _trashFile = [](const QString& path) { return QFile::moveToTrash(path); };
+    bool _discardOnClose = false; // cerrar sin preguntar por los cambios (al mandarlo a la papelera)
     QSplitter* _splitter = nullptr;
     EditorPane* _mainPane = nullptr;
     EditorPane* _subPane = nullptr;
@@ -734,6 +758,8 @@ private:
     FileBrowserPanel* _folderPanel = nullptr;
     RegexTesterPanel* _regexTester = nullptr;
     TerminalPanel* _terminal = nullptr;
+    CharacterPanel* _charPanel = nullptr;
+    ClipboardHistoryPanel* _clipboardPanel = nullptr;
     std::unique_ptr<LspManager> _lsp;
     ProblemsPanel* _problems = nullptr;
     std::unique_ptr<CompareSession> _compare;

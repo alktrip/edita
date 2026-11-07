@@ -2,7 +2,7 @@
 
 Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
 
-**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md)). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
+**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
 
 ## Faltan, y tienen sentido en Linux
 
@@ -11,9 +11,9 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 |---|---|
 | ✅ Close All Unchanged | Cierra los documentos sin cambios |
 | ✅ Pin Tab / Close All BUT Pinned | Fijar pestañas (N++ 8.6) y cerrar todas menos las fijadas |
-| Rename… | Cambia el nombre del archivo en disco |
-| Move to Recycle Bin | Lo manda a la papelera (en Linux, la de freedesktop) |
-| Open in Default Viewer | Lo abre con la aplicación del sistema |
+| ✅ Rename… | Cambia el nombre del archivo en disco |
+| ✅ Move to Recycle Bin | Lo manda a la papelera (en Linux, la de freedesktop) |
+| ✅ Open in Default Viewer | Lo abre con la aplicación del sistema |
 | ✅ Move Tab Forward/Backward, Move to Start/End | Mover la pestaña |
 | ✅ 1st…9th Tab, First Tab, Last Tab | Ir a la pestaña N (Ctrl+1…9 en N++) |
 | ✅ Apply Color 1…5 / Remove Color | Colores de pestaña |
@@ -29,13 +29,13 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | ✅ Copy All Filenames / File Paths | De todos los documentos abiertos |
 | ✅ Multi-select: seleccionar la siguiente coincidencia (4 variantes ×2), deshacer la última añadida, saltar la actual | Selección múltiple como en VS Code (Ctrl+D) |
 | Read-Only for All Documents / Clear | Solo lectura para todos |
-| Search on Internet / Change Search Engine | Buscar la selección en la web (y página de Preferencias «Search Engine») |
-| Open File / Open Containing Folder (de la selección) | Abrir la ruta seleccionada |
-| Character Panel | Panel con la tabla ASCII y sus códigos |
-| Clipboard History | Panel con lo último copiado |
+| ✅ Search on Internet / Change Search Engine | Buscar la selección en la web (y página de Preferencias «Search Engine») |
+| ✅ Open File / Open Containing Folder (de la selección) | Abrir la ruta seleccionada |
+| ✅ Character Panel | Panel con la tabla ASCII y sus códigos |
+| ✅ Clipboard History | Panel con lo último copiado |
 | Paste HTML/RTF Content, Copy/Cut/Paste Binary Content | Pegar el formato enriquecido como texto, y copiar texto con caracteres NUL |
 | Text Direction RTL/LTR | Texto de derecha a izquierda (árabe, hebreo) |
-| Redact Selection | Tapar la selección con █ |
+| ✅ Redact Selection | Tapar la selección con █ |
 
 ### Buscar
 | Orden de N++ | Qué hace |
@@ -72,18 +72,18 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 |---|---|
 | Toolbar | Ocultar la barra, tamaño de los iconos |
 | Language | Menú de lenguajes compacto y lenguajes ocultos del menú |
-| Multi-Instance & Date | El formato de la fecha y hora personalizada |
+| ✅ Multi-Instance & Date | El formato de la fecha y hora personalizada |
 | Delimiter | Qué caracteres forman una palabra (doble clic, resaltado) |
 | Performance | Los límites para archivos grandes (Edita los tiene, sin página) |
 | Cloud & Link | Configuración en una carpeta de la nube; enlaces que se pueden pulsar |
-| Search Engine | El buscador de «Search on Internet» |
+| ✅ Search Engine | El buscador de «Search on Internet» |
 | File Association | Asociar extensiones con Edita (en Linux, el tipo MIME del escritorio) |
 
 ## No aplican en Linux, o se descartaron
 
 | Orden de N++ | Por qué |
 |---|---|
-| Explorer, cmd, PowerShell (abrir la carpeta del archivo) | De Windows; Edita tiene la carpeta contenedora y la terminal |
+| Explorer, cmd, PowerShell (abrir la carpeta del archivo) | De Windows; en Edita, Archivo › Abrir la carpeta contenedora tiene el administrador de archivos y la terminal ([fase 69](fase69.md)) |
 | Read-Only Attribute in Windows | El atributo de Windows; en Linux son los permisos |
 | Set Updater Proxy… | Edita usa el proxy del sistema |
 | Get More Plugins, Notepad++ User Defined Languages Collection | Enlaces al sitio de N++ (los plugins de Edita llegan por su catálogo) |

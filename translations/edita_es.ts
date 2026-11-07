@@ -977,6 +977,39 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::CharacterPanel</name>
+    <message>
+        <location filename="../src/ui/EditPanels.cpp" line="+85"/>
+        <source>Value</source>
+        <translation>Valor</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Hex</source>
+        <translation>Hex</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Character</source>
+        <translation>Carácter</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>HTML Name</source>
+        <translation>Nombre HTML</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>HTML Decimal</source>
+        <translation>HTML decimal</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>HTML Hexadecimal</source>
+        <translation>HTML hexadecimal</translation>
+    </message>
+</context>
+<context>
     <name>edita::ColorPreview</name>
     <message>
         <location filename="../src/ui/ColorPreview.cpp" line="+308"/>
@@ -1237,19 +1270,25 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+68"/>
-        <location line="+213"/>
+        <location line="+252"/>
         <source>Scintilla could not create the document</source>
         <translation>Scintilla no pudo crear el documento</translation>
     </message>
     <message>
-        <location line="-187"/>
+        <location line="-226"/>
         <source>The document has no associated file</source>
         <translation>El documento no tiene archivo asociado</translation>
     </message>
     <message>
         <location line="+21"/>
+        <location line="+42"/>
         <source>Nonexistent document</source>
         <translation>Documento inexistente</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Cannot replace %1</source>
+        <translation>No se puede sustituir %1</translation>
     </message>
 </context>
 <context>
@@ -1818,19 +1857,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+455"/>
-        <location line="+4068"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+464"/>
+        <location line="+4153"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4068"/>
-        <location line="+1630"/>
+        <location line="-4153"/>
+        <location line="+1713"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1536"/>
+        <location line="-1619"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -1855,7 +1894,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Abrir carpeta como espacio de tra&amp;bajo…</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+28"/>
         <source>Re&amp;load from Disk</source>
         <translation>&amp;Recargar desde el disco</translation>
     </message>
@@ -1880,7 +1919,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Guardar &amp;todo</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+4"/>
         <source>&amp;Close</source>
         <translation>C&amp;errar</translation>
     </message>
@@ -1895,7 +1934,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cerrar todo &amp;menos el actual</translation>
     </message>
     <message>
-        <location line="+35"/>
+        <location line="+36"/>
         <source>&amp;Print…</source>
         <translation>&amp;Imprimir…</translation>
     </message>
@@ -2120,7 +2159,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Completar &amp;ruta</translation>
     </message>
     <message>
-        <location line="+47"/>
+        <location line="+83"/>
         <source>Read-&amp;Only</source>
         <translation>Solo &amp;lectura</translation>
     </message>
@@ -2286,7 +2325,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1285"/>
+        <location line="+1307"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2509,12 +2548,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2160"/>
+        <location line="-2218"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-922"/>
+        <location line="-954"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2594,13 +2633,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+764"/>
-        <location line="+1037"/>
+        <location line="+771"/>
+        <location line="+1120"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1020"/>
+        <location line="-1079"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2625,12 +2664,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cerrar todo lo que no tiene &amp;cambios</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
+        <location line="+5037"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-5036"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -2835,7 +2875,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Acciones de código…</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="+20"/>
         <source>Multi-select &amp;All</source>
         <translation>Seleccionar to&amp;das las coincidencias</translation>
     </message>
@@ -2880,7 +2920,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Editor de colu&amp;mnas…</translation>
     </message>
     <message>
-        <location line="+17"/>
+        <location line="+37"/>
         <source>Command &amp;Palette…</source>
         <translation>&amp;Paleta de órdenes…</translation>
     </message>
@@ -2915,7 +2955,8 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Lista de &amp;funciones</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-359"/>
+        <location line="+359"/>
         <source>Folder as &amp;Workspace</source>
         <translation>&amp;Explorador de carpetas</translation>
     </message>
@@ -2925,12 +2966,78 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>P&amp;roblemas</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="-365"/>
+        <location line="+381"/>
         <source>&amp;Terminal</source>
         <translation>&amp;Terminal</translation>
     </message>
     <message>
+        <location line="-391"/>
+        <source>Open Containing &amp;Folder</source>
+        <translation>Abrir la &amp;carpeta contenedora</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>File &amp;Manager</source>
+        <translation>&amp;Administrador de archivos</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Open in &amp;Default Viewer</source>
+        <translation>Abrir con la aplicación &amp;predeterminada</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Re&amp;name…</source>
+        <translation>Re&amp;nombrar…</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Move to &amp;Trash</source>
+        <translation>&amp;Mover a la papelera</translation>
+    </message>
+    <message>
+        <location line="+228"/>
+        <source>&amp;On Selection</source>
+        <translation>S&amp;obre la selección</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Open &amp;File</source>
+        <translation>Abrir el &amp;archivo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Open Containing F&amp;older</source>
+        <translation>Abrir la &amp;carpeta contenedora</translation>
+    </message>
+    <message>
         <location line="+3"/>
+        <source>&amp;Redact Selection █ (Shift: ●)</source>
+        <translation>&amp;Tapar la selección █ (Mayús: ●)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>&amp;Search on Internet</source>
+        <translation>&amp;Buscar en internet</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Change Search Engine…</source>
+        <translation>Cambiar el busca&amp;dor…</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>Character &amp;Panel</source>
+        <translation>&amp;Panel de caracteres</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clipboard &amp;History</source>
+        <translation>&amp;Historial del portapapeles</translation>
+    </message>
+    <message>
+        <location line="+68"/>
         <source>New Te&amp;rminal</source>
         <translation>Nueva te&amp;rminal</translation>
     </message>
@@ -3275,12 +3382,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4187"/>
+        <location line="+4211"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4186"/>
+        <location line="-4210"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3305,7 +3412,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+27"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -3340,7 +3447,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Problemas</translation>
     </message>
     <message>
-        <location line="+141"/>
+        <location line="+1"/>
+        <source>Character Panel</source>
+        <translation>Panel de caracteres</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clipboard History</source>
+        <translation>Historial del portapapeles</translation>
+    </message>
+    <message>
+        <location line="+159"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+10"/>
@@ -3757,12 +3874,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1775"/>
+        <location line="+1777"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2054"/>
+        <location line="-2056"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3891,7 +4008,7 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+187"/>
+        <location line="+189"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -4286,7 +4403,99 @@ Keep this file in editor?</source>
         <translation>El documento tiene cambios sin guardar. Guárdalos antes de seguirlo.</translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+63"/>
+        <location line="+7"/>
+        <location line="+8"/>
+        <source>Rename</source>
+        <translation>Renombrar</translation>
+    </message>
+    <message>
+        <location line="-15"/>
+        <source>The file %1 no longer exists.</source>
+        <translation>El archivo %1 ya no existe.</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>%1 is open in Edita. Close it first.</source>
+        <translation>%1 está abierto en Edita. Ciérralo primero.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Cannot rename %1:
+%2</source>
+        <translation>No se puede renombrar %1:
+%2</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Rename Current Tab</source>
+        <translation>Renombrar la pestaña</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>New name:</source>
+        <translation>Nombre nuevo:</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>The specified name cannot be empty, or it cannot contain only space(s) or TAB(s).</source>
+        <translation>El nombre no puede estar vacío ni tener solo espacios o tabuladores.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The name cannot contain a slash (/).</source>
+        <translation>El nombre no puede llevar una diagonal (/).</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>The specified name is already in use on another tab.</source>
+        <translation>Ese nombre ya lo tiene otra pestaña.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Rename failed</source>
+        <translation>No se pudo renombrar</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <location line="+6"/>
+        <source>Move to Trash</source>
+        <translation>Mover a la papelera</translation>
+    </message>
+    <message>
+        <location line="-5"/>
+        <source>Are you sure you want to move %1 to the trash?</source>
+        <translation>¿Seguro que quieres mover %1 a la papelera?</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Could not move %1 to the trash.</source>
+        <translation>No se pudo mover %1 a la papelera.</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Open in Default Viewer</source>
+        <translation>Abrir con la aplicación predeterminada</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>There is no application to open %1.</source>
+        <translation>No hay ninguna aplicación para abrir %1.</translation>
+    </message>
+    <message>
+        <location line="+36"/>
+        <source>Open Path</source>
+        <translation>Abrir la ruta</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>The path you&apos;re trying to open doesn&apos;t exist.
+%1</source>
+        <translation>La ruta que quieres abrir no existe.
+%1</translation>
+    </message>
+    <message>
+        <location line="+78"/>
         <source>Debug Info</source>
         <translation>Información de depuración</translation>
     </message>
@@ -5064,12 +5273,12 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+137"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+140"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+22"/>
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
@@ -5084,7 +5293,7 @@ Continue?</source>
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location line="+88"/>
+        <location line="+89"/>
         <source>General</source>
         <translation>General</translation>
     </message>
@@ -5462,12 +5671,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+295"/>
+        <location line="+322"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-295"/>
+        <location line="-322"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -5956,12 +6165,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+49"/>
+        <location line="+76"/>
         <source>Every:</source>
         <translation>Cada:</translation>
     </message>
     <message>
-        <location line="-49"/>
+        <location line="-76"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -5996,7 +6205,27 @@ Continue?</source>
         <translation>Extensión de los archivos de sesión:</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+6"/>
+        <source>Search Engine</source>
+        <translation>Buscador</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&lt;b&gt;Search Engine (for command &quot;Search on Internet&quot;)&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Buscador (para la orden «Buscar en internet»)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Set your search engine here:</source>
+        <translation>Otro buscador:</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Example: https://www.google.com/search?q=$(CURRENT_WORD)</source>
+        <translation>Ejemplo: https://www.google.com/search?q=$(CURRENT_WORD)</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>MISC.</source>
         <translation>Varios</translation>
     </message>

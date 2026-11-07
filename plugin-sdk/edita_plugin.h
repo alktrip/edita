@@ -260,6 +260,12 @@ typedef struct EditaDockData   /* DockedWidgetData (tTbData) */
 #define NPPN_READONLYCHANGED    (NPPN_FIRST + 16)
 #define NPPN_BEFORESHUTDOWN     (NPPN_FIRST + 19)
 #define NPPN_CANCELSHUTDOWN     (NPPN_FIRST + 20)
+#define NPPN_FILEBEFORERENAME   (NPPN_FIRST + 21)
+#define NPPN_FILERENAMECANCEL   (NPPN_FIRST + 22)
+#define NPPN_FILERENAMED        (NPPN_FIRST + 23)
+#define NPPN_FILEBEFOREDELETE   (NPPN_FIRST + 24)
+#define NPPN_FILEDELETEFAILED   (NPPN_FIRST + 25)
+#define NPPN_FILEDELETED        (NPPN_FIRST + 26)
 
 /* Las notificaciones de Scintilla (SCN_*) llegan tal cual, con
  * nmhdr.hwndFrom = data.mainEditor o data.subEditor. */

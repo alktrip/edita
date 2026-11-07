@@ -23,6 +23,7 @@
 #include "core/Codec.h"
 #include "core/CrashReport.h"
 #include "core/DateTimeFormat.h"
+#include "core/OnSelection.h"
 #include "core/IssueReport.h"
 #include "core/UpdateCheck.h"
 #include "core/Paths.h"
@@ -32,6 +33,7 @@
 #include "ui/DocStatusBar.h"
 #include "ui/DocTabBar.h"
 #include "ui/HashDialog.h"
+#include "ui/EditPanels.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
 #include "ui/FileIcons.h"
@@ -213,6 +215,12 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionSha256Text", 48504}, {"actionSha256Files", 48505}, {"actionSha256Selection", 48506},
         {"actionSha1Text", 48507}, {"actionSha1Files", 48508}, {"actionSha1Selection", 48509},
         {"actionSha512Text", 48510}, {"actionSha512Files", 48511}, {"actionSha512Selection", 48512},
+        // Fase 69 (Archivo, Editar › Sobre la selección, los paneles de Editar)
+        {"actionOpenFolderInFileManager", 41019}, {"actionOpenFolderInTerminal", 41020},
+        {"actionContainingFolderAsWorkspace", 41025}, {"actionOpenDefaultViewer", 41023}, {"actionRename", 41017},
+        {"actionMoveToTrash", 41016}, {"actionOpenSelectedFile", 42073}, {"actionOpenSelectedFolder", 42074},
+        {"actionSearchOnInternet", 42075}, {"actionChangeSearchEngine", 42076}, {"actionCharPanel", 42051},
+        {"actionClipboardHistory", 42052},
         {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionCheckForUpdates", 47006},          {"actionEol0", 45001},
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
         {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
@@ -297,6 +305,7 @@ int nppCommandFor(const char* actionName)
         {"actionMultiSelectAllCaseWord", 42093}, {"actionMultiSelectNext", 42094}, {"actionMultiSelectNextCase", 42095},
         {"actionMultiSelectNextWord", 42096}, {"actionMultiSelectNextCaseWord", 42097}, {"actionMultiSelectUndo", 42098},
         {"actionMultiSelectSkip", 42099},
+        {"actionRedactSelection", 42106}, // IDM_EDIT_REDACT_SELECTION (fase 69)
         {"actionJoinLines", 42013},   {"actionLineUp", 42014},     {"actionLineDown", 42015},
         {"actionUpperCase", 42016},   {"actionLowerCase", 42017},  {"actionTrimTrailing", 42024},
         {"actionFindNext", 43002},    {"actionFindPrevious", 43010}, {"actionFindSelectedNext", 43014},
@@ -937,6 +946,29 @@ void MainWindow::createMenus()
         if (!dir.isEmpty())
             addFolderToWorkspace(dir);
     });
+    // IDM_FILE_OPEN_FOLDER, IDM_FILE_OPEN_CMD, IDM_FILE_CONTAININGFOLDERASWORKSPACE: la carpeta del
+    // documento en el administrador de archivos, en una terminal o en «Carpeta como espacio de trabajo»
+    QMenu* containing = file->addMenu(tr("Open Containing &Folder"));
+    containing->setObjectName(QStringLiteral("menuOpenContainingFolder"));
+    auto currentDir = [this] {
+        const Buffer* buf = _documents.buffer(currentBuffer());
+        return buf && !buf->isUntitled() ? QFileInfo(buf->filePath()).absolutePath() : QString();
+    };
+    addAction(containing, tr("File &Manager"), "actionOpenFolderInFileManager", QKeySequence(), [this, currentDir] {
+        if (const QString dir = currentDir(); !dir.isEmpty())
+            _openUrl(QUrl::fromLocalFile(dir));
+    });
+    addAction(containing, tr("&Terminal"), "actionOpenFolderInTerminal", QKeySequence(), [this, currentDir] {
+        if (const QString dir = currentDir(); !dir.isEmpty())
+            openTerminal(dir);
+    });
+    containing->addSeparator();
+    addAction(containing, tr("Folder as &Workspace"), "actionContainingFolderAsWorkspace", QKeySequence(), [this, currentDir] {
+        if (const QString dir = currentDir(); !dir.isEmpty())
+            addFolderToWorkspace(dir);
+    });
+    addAction(file, tr("Open in &Default Viewer"), "actionOpenDefaultViewer", QKeySequence(),
+              [this] { openInDefaultViewer(currentBuffer()); });
     addAction(file, tr("Re&load from Disk"), "actionReload", QKeySequence(), [this] { reloadBuffer(currentBuffer()); });
     file->addSeparator();
     addAction(file, tr("&Save"), "actionSave", QKeySequence::Save, [this] { saveBuffer(currentBuffer()); });
@@ -946,6 +978,7 @@ void MainWindow::createMenus()
               [this] { saveBufferAs(currentBuffer(), true); });
     addAction(file, tr("Sa&ve All"), "actionSaveAll", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S),
               [this] { saveAll(); });
+    addAction(file, tr("Re&name…"), "actionRename", QKeySequence(), [this] { renameBuffer(currentBuffer()); });
     file->addSeparator();
     addAction(file, tr("&Close"), "actionClose", QKeySequence(Qt::CTRL | Qt::Key_W), [this] { closeBuffer(currentBuffer()); });
     addAction(file, tr("Clos&e All"), "actionCloseAll", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_W), [this] { closeAll(); });
@@ -962,6 +995,7 @@ void MainWindow::createMenus()
               [this] { closeAllToRight(currentBuffer()); });
     addAction(closeMultiple, tr("Close All &Unchanged"), "actionCloseAllUnchanged", QKeySequence(),
               [this] { closeAllUnchanged(); });
+    addAction(file, tr("Move to &Trash"), "actionMoveToTrash", QKeySequence(), [this] { moveBufferToTrash(currentBuffer()); });
     file->addSeparator();
     // IDM_FILE_LOADSESSION, IDM_FILE_SAVESESSION
     auto sessionFilters = [this] {
@@ -1187,6 +1221,22 @@ void MainWindow::createMenus()
     addAction(edit, tr("Code &Actions…"), "actionCodeActions", QKeySequence(Qt::CTRL | Qt::Key_Period), [this] { showCodeActions(); });
     edit->addSeparator();
     // IDM_EDIT_COLUMNMODE: Editor de columnas (Alt+C)
+    // Editar › Sobre la selección (IDM_EDIT_OPENSELECTEDFILE*, IDM_EDIT_REDACT_SELECTION,
+    // IDM_EDIT_SEARCHONINTERNET, IDM_EDIT_CHANGESEARCHENGINE)
+    QMenu* onSelection = edit->addMenu(tr("&On Selection"));
+    onSelection->setObjectName(QStringLiteral("menuOnSelection"));
+    addAction(onSelection, tr("Open &File"), "actionOpenSelectedFile", QKeySequence(), [this] { openSelectedPath(false); });
+    addAction(onSelection, tr("Open Containing F&older"), "actionOpenSelectedFolder", QKeySequence(),
+              [this] { openSelectedPath(true); });
+    onSelection->addSeparator();
+    addAction(onSelection, tr("&Redact Selection █ (Shift: ●)"), "actionRedactSelection", QKeySequence(), [this] {
+        redactSelection(QGuiApplication::queryKeyboardModifiers().testFlag(Qt::ShiftModifier));
+    });
+    onSelection->addSeparator();
+    addAction(onSelection, tr("&Search on Internet"), "actionSearchOnInternet", QKeySequence(), [this] { searchOnInternet(); });
+    addAction(onSelection, tr("&Change Search Engine…"), "actionChangeSearchEngine", QKeySequence(),
+              [this] { showPreferences(QStringLiteral("searchEngine")); });
+    edit->addSeparator();
     // Selección múltiple (IDM_EDIT_MULTISELECT*): la palabra o la selección, en todo el documento o la siguiente
     QMenu* multiAll = edit->addMenu(tr("Multi-select &All"));
     QMenu* multiNext = edit->addMenu(tr("Multi-select Ne&xt"));
@@ -1221,6 +1271,26 @@ void MainWindow::createMenus()
         ColumnEditorDialog dialog(*editor(), _syntax.config(), this);
         dialog.exec();
     });
+    // IDM_EDIT_CHAR_PANEL, IDM_EDIT_CLIPBOARDHISTORY_PANEL: los paneles se abren y se cierran
+    const std::tuple<const char*, const char*, QString> editPanels[] = {
+        {"charPanel", "actionCharPanel", tr("Character &Panel")},
+        {"clipboardHistory", "actionClipboardHistory", tr("Clipboard &History")},
+    };
+    for (const auto& [name, actionName, text] : editPanels) {
+        QDockWidget* dock = panelDock(QString::fromLatin1(name));
+        QAction* toggle = edit->addAction(text);
+        toggle->setObjectName(QString::fromLatin1(actionName));
+        toggle->setCheckable(true);
+        toggle->setChecked(dock->isVisibleTo(this));
+        connect(toggle, &QAction::toggled, dock, [dock](bool on) {
+            dock->setVisible(on);
+            if (on)
+                dock->raise();
+        });
+        connect(dock, &QDockWidget::visibilityChanged, toggle, [this, toggle, dock] {
+            toggle->setChecked(dock->isVisibleTo(this));
+        });
+    }
     edit->addSeparator();
     edit->addMenu(createEolMenu());
     edit->addSeparator();
@@ -1914,6 +1984,8 @@ void MainWindow::createPanels()
     _regexTester = new RegexTesterPanel;
     _terminal = new TerminalPanel;
     _problems = new ProblemsPanel;
+    _charPanel = new CharacterPanel;
+    _clipboardPanel = new ClipboardHistoryPanel;
     // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
     // mapa y las funciones a la derecha
     const std::tuple<QWidget*, const char*, QString, Qt::DockWidgetArea> panels[] = {
@@ -1924,6 +1996,8 @@ void MainWindow::createPanels()
         {_regexTester, "regexTester", tr("Regex Tester"), Qt::BottomDockWidgetArea}, // no existe en N++
         {_terminal, "terminal", tr("Terminal"), Qt::BottomDockWidgetArea},           // no existe en N++
         {_problems, "problems", tr("Problems"), Qt::BottomDockWidgetArea},           // no existe en N++
+        {_charPanel, "charPanel", tr("Character Panel"), Qt::RightDockWidgetArea},
+        {_clipboardPanel, "clipboardHistory", tr("Clipboard History"), Qt::RightDockWidgetArea},
     };
     // <GUIConfig name="multiInst" … documentList="yes" documentMap="no" fuctionList="no" folderAsWorkspace="no">
     // (los nombres de N++, con su "fuctionList")
@@ -1959,6 +2033,24 @@ void MainWindow::createPanels()
         setActivePane(pane);
         closeBuffer(id);
     });
+    // Editar › Panel de caracteres y Historial del portapapeles: lo elegido va al documento
+    for (QObject* panel : {static_cast<QObject*>(_charPanel), static_cast<QObject*>(_clipboardPanel)}) {
+        auto insert = [this](const QString& text) {
+            insertText(text);
+            editor()->setFocus();
+        };
+        if (auto* chars = qobject_cast<CharacterPanel*>(panel))
+            connect(chars, &CharacterPanel::insertText, this, insert);
+        else
+            connect(static_cast<ClipboardHistoryPanel*>(panel), &ClipboardHistoryPanel::insertText, this, insert);
+    }
+    // El historial sigue el portapapeles desde que se abre por primera vez (como N++)
+    connect(panelDock(QStringLiteral("clipboardHistory")), &QDockWidget::visibilityChanged, this, [this](bool visible) {
+        if (visible)
+            _clipboardPanel->startTracking();
+    });
+    if (!panelDock(QStringLiteral("clipboardHistory"))->isHidden())
+        _clipboardPanel->startTracking();
     connect(_functionListPanel, &FunctionListPanel::goToPosition, this, [this](sptr_t pos) {
         editor()->send(SCI_GOTOPOS, static_cast<uptr_t>(pos));
         editor()->send(SCI_SCROLLCARET);
@@ -3772,7 +3864,7 @@ void MainWindow::showStyleConfigurator()
     dialog.exec();
 }
 
-void MainWindow::showPreferences()
+void MainWindow::showPreferences(const QString& page)
 {
     std::vector<std::pair<int, QString>> languages;
     for (int i = 0; i < static_cast<int>(LangType::External); ++i) {
@@ -3785,6 +3877,8 @@ void MainWindow::showPreferences()
     }
     PreferencesDialog dialog(_prefs, std::move(languages), this);
     connect(&dialog, &PreferencesDialog::applyRequested, this, &MainWindow::setPreferences);
+    if (!page.isEmpty())
+        dialog.showPage(page);
     if (dialog.exec() == QDialog::Accepted)
         setPreferences(dialog.preferences());
 }
@@ -5492,7 +5586,7 @@ void MainWindow::syncWatchedFiles()
 bool MainWindow::maybeSave(BufferId id, bool offerAll, bool& saveRest, bool& discardRest)
 {
     const Buffer* buf = _documents.buffer(id);
-    if (!buf || !buf->isDirty() || discardRest)
+    if (!buf || !buf->isDirty() || discardRest || _discardOnClose)
         return true;
     if (saveRest)
         return saveBuffer(id);
@@ -5929,6 +6023,173 @@ bool MainWindow::hashSelectionToClipboard(QCryptographicHash::Algorithm algorith
                                                                      static_cast<std::size_t>(end - start));
     QApplication::clipboard()->setText(HashDialog::digest(QByteArray::fromStdString(text), algorithm));
     return true;
+}
+
+bool MainWindow::renameBuffer(BufferId id)
+{
+    Buffer* buf = _documents.buffer(id);
+    if (!buf)
+        return false;
+    if (!buf->isUntitled()) {
+        // fileRename: el archivo, con el diálogo de guardar en su carpeta y con su nombre
+        if (!QFileInfo::exists(buf->filePath())) {
+            _prompter->warn(this, tr("Rename"), tr("The file %1 no longer exists.").arg(QDir::toNativeSeparators(buf->filePath())));
+            return false;
+        }
+        const QString target = _prompter->saveFileName(this, buf->filePath(), tr("All types (*)"), QString());
+        if (target.isEmpty() || QFileInfo(target).absoluteFilePath() == buf->filePath())
+            return false;
+        if (const BufferId other = _documents.findByPath(target); other != kInvalidBuffer && other != id) {
+            _prompter->warn(this, tr("Rename"), tr("%1 is open in Edita. Close it first.").arg(QDir::toNativeSeparators(target)));
+            return false;
+        }
+        notifyPlugins(NPPN_FILEBEFORERENAME, id);
+        QString error;
+        const bool ok = _documents.moveFile(id, target, &error);
+        notifyPlugins(ok ? NPPN_FILERENAMED : NPPN_FILERENAMECANCEL, id);
+        if (!ok)
+            _prompter->warn(this, tr("Rename"), tr("Cannot rename %1:\n%2").arg(QDir::toNativeSeparators(buf->filePath()), error));
+        return ok;
+    }
+    // Sin archivo, solo la pestaña («Rename Current Tab» de N++)
+    QString name = buf->displayName();
+    if (!_prompter->askText(this, tr("Rename Current Tab"), tr("New name:"), name))
+        return false;
+    name = name.trimmed();
+    if (name == buf->displayName())
+        return false;
+    QString problem;
+    if (name.isEmpty())
+        problem = tr("The specified name cannot be empty, or it cannot contain only space(s) or TAB(s).");
+    else if (name.contains(QLatin1Char('/')))
+        problem = tr("The name cannot contain a slash (/).");
+    for (std::size_t i = 0; problem.isEmpty() && i < _documents.count(); ++i) {
+        const Buffer* other = _documents.bufferAt(i);
+        if (other->id() != id && other->displayName() == name)
+            problem = tr("The specified name is already in use on another tab.");
+    }
+    if (!problem.isEmpty()) {
+        _prompter->warn(this, tr("Rename failed"), problem);
+        return false;
+    }
+    notifyPlugins(NPPN_FILEBEFORERENAME, id);
+    _documents.setUntitledName(id, name);
+    notifyPlugins(NPPN_FILERENAMED, id);
+    return true;
+}
+
+bool MainWindow::moveBufferToTrash(BufferId id)
+{
+    // fileDelete: pregunta, lo manda a la papelera y lo cierra sin preguntar por los cambios
+    const Buffer* buf = _documents.buffer(id);
+    if (!buf || buf->isUntitled() || !QFileInfo::exists(buf->filePath()))
+        return false;
+    const QString path = buf->filePath();
+    if (!_prompter->confirm(this, tr("Move to Trash"),
+                            tr("Are you sure you want to move %1 to the trash?").arg(QDir::toNativeSeparators(path))))
+        return false;
+    notifyPlugins(NPPN_FILEBEFOREDELETE, id);
+    if (!_trashFile(path)) {
+        notifyPlugins(NPPN_FILEDELETEFAILED, id);
+        _prompter->warn(this, tr("Move to Trash"), tr("Could not move %1 to the trash.").arg(QDir::toNativeSeparators(path)));
+        return false;
+    }
+    notifyPlugins(NPPN_FILEDELETED, id);
+    _discardOnClose = true;
+    while (_documents.buffer(id) && paneContaining(id)) { // también si está clonado en la otra vista
+        if (!closeBuffer(id))
+            break;
+    }
+    _discardOnClose = false;
+    return true;
+}
+
+bool MainWindow::openInDefaultViewer(BufferId id)
+{
+    // IDM_FILE_OPEN_DEFAULT_VIEWER: como hacer doble clic en el administrador de archivos
+    const Buffer* buf = _documents.buffer(id);
+    if (!buf || buf->isUntitled() || !QFileInfo::exists(buf->filePath()))
+        return false;
+    if (_openUrl(QUrl::fromLocalFile(buf->filePath())))
+        return true;
+    _prompter->warn(this, tr("Open in Default Viewer"),
+                    tr("There is no application to open %1.").arg(QDir::toNativeSeparators(buf->filePath())));
+    return false;
+}
+
+QString MainWindow::selectedPath() const
+{
+    EditorView* view = editor();
+    if (view->sci(SCI_GETSELECTIONS) != 1) // varias selecciones o en columna: nada (como N++)
+        return {};
+    const sptr_t start = view->sci(SCI_GETSELECTIONSTART);
+    const sptr_t end = view->sci(SCI_GETSELECTIONEND);
+    ViewSearchTarget target(*view);
+    QString text;
+    if (end > start) {
+        text = QString::fromStdString(target.text(start, end));
+    } else {
+        // Sin selección: lo que parece una ruta alrededor del cursor
+        const sptr_t caret = view->sci(SCI_GETCURRENTPOS);
+        const sptr_t line = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(caret));
+        const sptr_t lineStart = view->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+        const sptr_t lineEnd = view->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line));
+        const QString before = QString::fromStdString(target.text(lineStart, caret));
+        text = fileNameAtColumn(QString::fromStdString(target.text(lineStart, lineEnd)), static_cast<int>(before.size()));
+    }
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    const QString dir = buf && !buf->isUntitled() ? QFileInfo(buf->filePath()).absolutePath() : QDir::currentPath();
+    return resolveSelectedPath(text, dir);
+}
+
+bool MainWindow::openSelectedPath(bool folder)
+{
+    const QString path = selectedPath();
+    if (path.isEmpty())
+        return false;
+    const QFileInfo info(path);
+    if (folder ? !info.exists() : !info.isFile()) {
+        _prompter->warn(this, tr("Open Path"), tr("The path you're trying to open doesn't exist.\n%1").arg(QDir::toNativeSeparators(path)));
+        return false;
+    }
+    if (folder) // la carpeta que la contiene (o ella misma, si es una carpeta)
+        return _openUrl(QUrl::fromLocalFile(info.isDir() ? info.absoluteFilePath() : info.absolutePath()));
+    return openFile(info.absoluteFilePath()) != kInvalidBuffer;
+}
+
+void MainWindow::redactSelection(bool bullet)
+{
+    EditorView* view = editor();
+    if (view->sci(SCI_GETREADONLY))
+        return;
+    ViewSearchTarget target(*view);
+    view->sci(SCI_BEGINUNDOACTION);
+    const sptr_t count = view->sci(SCI_GETSELECTIONS);
+    for (sptr_t i = 0; i < count; ++i) {
+        // Las selecciones se mueven con cada cambio: se leen cada vez
+        const sptr_t start = view->sci(SCI_GETSELECTIONNSTART, static_cast<uptr_t>(i));
+        const sptr_t end = view->sci(SCI_GETSELECTIONNEND, static_cast<uptr_t>(i));
+        if (end <= start)
+            continue;
+        const QByteArray masked = redactText(QString::fromStdString(target.text(start, end)), bullet).toUtf8();
+        view->sci(SCI_SETTARGETRANGE, static_cast<uptr_t>(start), end);
+        view->sends(SCI_REPLACETARGET, static_cast<uptr_t>(masked.size()), masked.constData());
+    }
+    view->sci(SCI_ENDUNDOACTION);
+}
+
+bool MainWindow::searchOnInternet()
+{
+    // IDM_EDIT_SEARCHONINTERNET: la selección o, sin ella, la palabra del cursor
+    EditorView* view = editor();
+    if (view->sci(SCI_GETSELECTIONS) != 1)
+        return false;
+    const sptr_t start = view->sci(SCI_GETSELECTIONSTART);
+    const sptr_t end = view->sci(SCI_GETSELECTIONEND);
+    const QString text = end > start ? QString::fromStdString(ViewSearchTarget(*view).text(start, end)) : textForFindField();
+    if (text.trimmed().isEmpty())
+        return false;
+    return _openUrl(searchOnInternetUrl(static_cast<SearchEngine>(_prefs.searchEngineChoice), _prefs.searchEngineCustom, text));
 }
 
 QString MainWindow::debugInfo() const

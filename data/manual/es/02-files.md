@@ -39,6 +39,18 @@ de cada archivo. Para cambiarlos, ver [Codificaciones](#codificaciones) y
 {{actionReadOnly}} protege el documento actual contra cambios (el archivo del disco no cambia).
 {{actionReload}} descarta los cambios y vuelve a leer el archivo.
 
+## Renombrar, borrar y abrir con otra aplicación
+
+- {{actionRename}} cambia el nombre del archivo en el disco (o lo mueve a otra carpeta) sin cerrar
+  el documento; el lenguaje se vuelve a elegir según el nombre nuevo. En un documento sin guardar
+  solo cambia el nombre de la pestaña.
+- {{actionMoveToTrash}} manda el archivo a la papelera del escritorio, después de preguntar, y
+  cierra el documento sin guardar sus cambios.
+- {{actionOpenDefaultViewer}} abre el archivo con la aplicación que el sistema tiene para ese tipo
+  (una imagen SVG, una página HTML…), como si le hicieras doble clic.
+- **Abrir la carpeta contenedora** abre la carpeta del archivo en el {{actionOpenFolderInFileManager}},
+  en una {{actionOpenFolderInTerminal}} o en el {{actionContainingFolderAsWorkspace}}.
+
 ## Cerrar
 
 {{actionClose}} cierra el documento actual y {{actionCloseAll}} los cierra todos. **Cerrar

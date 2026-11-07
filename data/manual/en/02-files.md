@@ -36,6 +36,18 @@ To change them, see [Encodings](#encodings) and [Ends of line](#ends-of-line).
 {{actionReadOnly}} protects the current document against changes (the file on disk is not
 changed). {{actionReload}} discards the changes and reads the file again.
 
+## Renaming, deleting and opening with another application
+
+- {{actionRename}} changes the name of the file on disk (or moves it to another folder) without
+  closing the document; the language is chosen again from the new name. In a document that was
+  never saved it only changes the name of the tab.
+- {{actionMoveToTrash}} sends the file to the desktop trash, after asking, and closes the document
+  without saving its changes.
+- {{actionOpenDefaultViewer}} opens the file with the application the system has for that type (an
+  SVG image, an HTML page…), as if you double-clicked it.
+- **Open Containing Folder** opens the folder of the file in the {{actionOpenFolderInFileManager}},
+  in a {{actionOpenFolderInTerminal}} or in the {{actionContainingFolderAsWorkspace}} panel.
+
 ## Closing
 
 {{actionClose}} closes the current document and {{actionCloseAll}} closes all of them. **Close

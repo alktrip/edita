@@ -342,6 +342,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 66 — Reporte de fallos | core/CrashReport (manejadores de señales con pila aparte, traza con `backtrace_symbols_fd`, reporte en `crash/last-crash.txt`), aviso al volver a abrir con Reportar/Copiar/Descartar, `formUrl` con más campos y todo codificado | ✅ [fase66.md](fase66.md) |
 | 67 — Ver y Pestañas | Pestañas fijadas (alfiler, zona propia, sesión), colores de pestaña, Ver › Pestaña (ir a N, mover), Archivo › Cerrar varios documentos, siempre visible, pantalla completa, Post-It, desplazamiento sincronizado | ✅ [fase67.md](fase67.md) |
 | 68 — Edición y Herramientas | Insertar fecha y hora (core/DateTimeFormat, `insertDateTime`), Copiar al portapapeles, selección múltiple, Resumen, Seguimiento (tail -f), menú Herramientas (ui/HashDialog), Información de depuración, `Prompter::inform`, IDM_* de las fases 67 y 68 | ✅ [fase68.md](fase68.md) |
+| 69 — Archivo y Sobre la selección | Renombrar (`DocumentManager::moveFile`, o la pestaña), Mover a la papelera, Abrir con la aplicación predeterminada, Abrir la carpeta contenedora; Editar › Sobre la selección (core/OnSelection: abrir la ruta, tapar, buscar en internet + página Buscador), panel de caracteres e historial del portapapeles (ui/EditPanels), `NPPN_FILE*RENAME*`/`*DELETE*` | ✅ [fase69.md](fase69.md) |
 
 ---
 

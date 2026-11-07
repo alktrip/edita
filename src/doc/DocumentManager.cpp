@@ -399,6 +399,45 @@ SaveResult DocumentManager::saveBuffer(BufferId id, const QString& path, bool is
     return result;
 }
 
+bool DocumentManager::moveFile(BufferId id, const QString& newPath, QString* error)
+{
+    Buffer* buf = buffer(id);
+    if (!buf || buf->isUntitled()) {
+        if (error)
+            *error = tr("Nonexistent document");
+        return false;
+    }
+    const QString target = absolutePath(newPath);
+    if (target == buf->_filePath)
+        return true;
+    // Como MoveFileEx con MOVEFILE_REPLACE_EXISTING: el diálogo ya preguntó si sustituirlo
+    if (QFileInfo::exists(target) && !QFile::remove(target)) {
+        if (error)
+            *error = tr("Cannot replace %1").arg(QDir::toNativeSeparators(target));
+        return false;
+    }
+    QFile file(buf->_filePath);
+    if (!file.rename(target)) {
+        if (error)
+            *error = file.errorString();
+        return false;
+    }
+    const QFileInfo info(target);
+    int mask = BufferChange::Filename | BufferChange::Timestamp | BufferChange::ReadOnly;
+    buf->_filePath = target;
+    buf->_fileReadOnly = !info.isWritable();
+    buf->_lastModified = info.lastModified();
+    if (!buf->_languageFromMenu) {
+        const LangType oldLang = buf->_language;
+        const QString oldUser = buf->_userLanguage;
+        assignDetectedLanguage(*buf, target);
+        if (buf->_language != oldLang || buf->_userLanguage != oldUser)
+            mask |= BufferChange::Language;
+    }
+    notify(buf, mask);
+    return true;
+}
+
 void DocumentManager::closeBuffer(BufferId id, bool keepBackup)
 {
     const auto it = std::find_if(_buffers.begin(), _buffers.end(),

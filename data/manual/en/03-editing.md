@@ -172,6 +172,31 @@ Edita completes words and functions while you type, and inserts snippets with Ta
   of the current document, or the names ({{actionCopyAllNames}}) and paths
   ({{actionCopyAllPaths}}) of all the open ones, one per line.
 
+## On selection
+
+The **Edit › On Selection** submenu works with the selection or, without one, with what is next to
+the cursor:
+
+- {{actionOpenSelectedFile}} opens in Edita the selected path, or the one around the cursor (for
+  example, in `#include "util/text.h"`). It understands `~`, environment variables (`$HOME`,
+  `${XDG_CONFIG_HOME}`) and paths relative to the folder of the document.
+  {{actionOpenSelectedFolder}} opens its folder in the file manager.
+- {{actionRedactSelection}} changes every selected character into █, or into ● if you hold Shift,
+  to share a text without private data (a password, an email). It keeps the ends of line and is
+  undone with a single {{actionUndo}}.
+- {{actionSearchOnInternet}} searches the selection (or the word at the cursor) in the browser.
+  {{actionChangeSearchEngine}} opens the **Search Engine** page of the Preferences: DuckDuckGo,
+  Google (the default), Yahoo!, Stack Overflow or another one, with `$(CURRENT_WORD)` where the
+  text goes.
+
+## Character panel and clipboard history
+
+- {{actionCharPanel}} shows the 256 characters of the ANSI table (Windows-1252) with their decimal
+  and hexadecimal value and their HTML entities. Double-clicking the character (or Enter) writes it
+  in the document; in another column, it writes what it says, like `&ntilde;` or `&#8364;`.
+- {{actionClipboardHistory}} keeps what you copy, in Edita or in other applications, since you open
+  it (the 100 most recent, without repeating). Double-clicking (or Enter) pastes it.
+
 ## Tools: MD5 and SHA
 
 The **Tools** menu computes MD5, SHA-1, SHA-256 and SHA-512 digests (to check a download, for

@@ -176,6 +176,30 @@ Edita completa palabras y funciones mientras escribes, e inserta fragmentos con 
   {{actionCopyDirPath}} del documento actual, o los nombres ({{actionCopyAllNames}}) y las rutas
   ({{actionCopyAllPaths}}) de todos los abiertos, uno por línea.
 
+## Sobre la selección
+
+El submenú **Editar › Sobre la selección** trabaja con lo seleccionado o, si no hay selección, con
+lo que está junto al cursor:
+
+- {{actionOpenSelectedFile}} abre en Edita la ruta seleccionada, o la que hay alrededor del cursor
+  (por ejemplo, en `#include "util/texto.h"`). Entiende `~`, las variables de entorno (`$HOME`,
+  `${XDG_CONFIG_HOME}`) y las rutas relativas a la carpeta del documento.
+  {{actionOpenSelectedFolder}} abre su carpeta en el administrador de archivos.
+- {{actionRedactSelection}} cambia cada carácter seleccionado por █, o por ● si mantienes Mayús,
+  para compartir un texto sin datos privados (una contraseña, un correo). Respeta los fines de línea
+  y se deshace con un solo {{actionUndo}}.
+- {{actionSearchOnInternet}} busca la selección (o la palabra del cursor) en el navegador.
+  {{actionChangeSearchEngine}} abre la página **Buscador** de las Preferencias: DuckDuckGo, Google
+  (el de serie), Yahoo!, Stack Overflow u otro, con `$(CURRENT_WORD)` donde va el texto.
+
+## Panel de caracteres e historial del portapapeles
+
+- {{actionCharPanel}} muestra los 256 caracteres de la tabla ANSI (Windows-1252) con su valor
+  decimal y hexadecimal y sus entidades HTML. Doble clic en el carácter (o Intro) lo escribe en el
+  documento; en otra columna, escribe lo que pone, como `&ntilde;` o `&#8364;`.
+- {{actionClipboardHistory}} guarda lo último que copias, en Edita o en otras aplicaciones, desde
+  que lo abres (los 100 más recientes, sin repetir). Doble clic (o Intro) lo pega.
+
 ## Herramientas: MD5 y SHA
 
 El menú **Herramientas** calcula resúmenes MD5, SHA-1, SHA-256 y SHA-512 (para comprobar una

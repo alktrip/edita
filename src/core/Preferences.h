@@ -280,6 +280,10 @@ struct Preferences
     // ss, ddd, MMMM, tt…); por defecto, la hora va antes que la fecha (como el Bloc de notas)
     QString dateTimeFormat = QStringLiteral("yyyy-MM-dd HH:mm:ss");
     bool dateTimeReverseOrder = false;
+    // Editar › Sobre la selección › Buscar en internet: <GUIConfig name="searchEngine"
+    // searchEngineChoice="2" searchEngineCustom=""> (SearchEngine de core/OnSelection.h; 2, Google)
+    int searchEngineChoice = 2;
+    QString searchEngineCustom;
     // Avisar de las versiones nuevas (AutoUpdateOptions de N++): <GUIConfig name="noUpdate"
     // autoUpdateMode="1" intervalDays="15">. En una beta, cada día
     bool updateOnStartup = true;

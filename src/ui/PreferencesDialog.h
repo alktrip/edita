@@ -26,6 +26,7 @@
 #include <utility>
 #include <vector>
 
+class QButtonGroup;
 class QCheckBox;
 class QComboBox;
 class QLabel;
@@ -72,6 +73,7 @@ private:
     void buildSearching();
     void buildPrinting();
     void buildBackup();
+    void buildSearchEngine();
     void buildMisc();
     void buildLanguageServers();
     void updateEnabledState();
@@ -211,6 +213,8 @@ private:
     QLabel* _dateTimePreview = nullptr;
     QCheckBox* _dateTimeReverse = nullptr;
     QSpinBox* _updateInterval = nullptr;
+    QButtonGroup* _searchEngine = nullptr;
+    QLineEdit* _searchEngineCustom = nullptr;
 };
 
 } // namespace edita

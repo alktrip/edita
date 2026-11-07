@@ -105,6 +105,9 @@ public:
     // cambiado de documento antes. Borra su copia "snapshot" salvo con
     // `keepBackup` (al salir en modo snapshot, para restaurarla en el próximo arranque).
     void closeBuffer(BufferId id, bool keepBackup = false);
+    // Archivo › Renombrar (FileManager::moveFile): mueve el archivo en disco a `newPath` (si
+    // ya existe uno, lo sustituye) y el documento pasa a tener esa ruta. false si falla
+    bool moveFile(BufferId id, const QString& newPath, QString* error = nullptr);
 
     // --- Modo "snapshot" (FileManager::backupCurrentBuffer…) -----------------------
     // Escribe la copia de un documento con cambios que la copia aún no tiene; si

@@ -40,6 +40,8 @@ add_library(edita_core STATIC
     core/CrashReport.h
     core/DateTimeFormat.cpp
     core/DateTimeFormat.h
+    core/OnSelection.cpp
+    core/OnSelection.h
     core/IssueReport.cpp
     core/IssueReport.h
     core/Minisign.cpp
@@ -160,6 +162,8 @@ add_library(edita_ui STATIC
     ui/ColumnEditorDialog.cpp
     ui/HashDialog.cpp
     ui/HashDialog.h
+    ui/EditPanels.cpp
+    ui/EditPanels.h
     ui/ColorPreview.cpp
     ui/CompareSession.cpp
     ui/CommandPalette.cpp

@@ -317,6 +317,9 @@ Preferences loadPreferences(const ConfigXml& config)
     if (const QString format = r.get("insertDateTime", "customizedFormat"); !format.isEmpty())
         p.dateTimeFormat = format;
     r.boolAttr("insertDateTime", "reverseDefaultOrder", p.dateTimeReverseOrder);
+    r.intAttr("searchEngine", "searchEngineChoice", p.searchEngineChoice, 0, 5);
+    if (const QString custom = r.get("searchEngine", "searchEngineCustom"); !custom.isEmpty())
+        p.searchEngineCustom = custom;
     // autoUpdateMode: 0 desactivado, 1 al arrancar, 2 al salir (aquí, como al arrancar)
     int updateMode = p.updateOnStartup ? 1 : 0;
     r.intAttr("noUpdate", "autoUpdateMode", updateMode, 0, 2);
@@ -465,6 +468,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaSystemMonospaceFont", yesNo(p.systemMonospaceFont));
     w.attr("insertDateTime", "customizedFormat", p.dateTimeFormat);
     w.attr("insertDateTime", "reverseDefaultOrder", p.dateTimeReverseOrder);
+    w.attr("searchEngine", "searchEngineChoice", p.searchEngineChoice);
+    w.attr("searchEngine", "searchEngineCustom", p.searchEngineCustom);
     w.attr("noUpdate", "autoUpdateMode", p.updateOnStartup ? 1 : 0);
     w.attr("noUpdate", "intervalDays", p.updateIntervalDays);
     w.text("EditaQtFileDialog", yesNo(p.qtFileDialog));

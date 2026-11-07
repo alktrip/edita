@@ -23,11 +23,13 @@
 
 #include "core/DateTimeFormat.h"
 #include "core/Encoding.h"
+#include "core/OnSelection.h"
 #include "ui/Icons.h"
 #include "ui/TerminalPanel.h"
 #include "lsp/LspServers.h"
 #include "ui/Translations.h"
 
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -42,6 +44,7 @@
 #include <QTableWidget>
 #include <QListWidget>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QScreen>
 #include <QSpinBox>
 #include <QStackedWidget>
@@ -148,6 +151,7 @@ PreferencesDialog::PreferencesDialog(const Preferences& prefs, std::vector<std::
     buildSearching();
     buildPrinting();
     buildBackup();
+    buildSearchEngine();
     buildMisc();
     buildLanguageServers();
 
@@ -215,7 +219,8 @@ QWidget* PreferencesDialog::addPage(const QString& name, const QString& title)
         {"general", "general"},     {"editing", "editing"},           {"margins", "margins"},
         {"newDocument", "new"},     {"recentFiles", "recent"},        {"indentation", "tabs"},
         {"autoCompletion", "autocompletion"}, {"highlighting", "highlighting"}, {"searching", "find"},
-        {"printing", "print"},      {"backup", "backup"},             {"misc", "misc"},
+        {"printing", "print"},      {"backup", "backup"},             {"searchEngine", "web"},
+        {"misc", "misc"},
         {"languageServers", "language"},
     };
     for (const auto& [pageName, icon] : kPageIcons) {
@@ -522,6 +527,33 @@ void PreferencesDialog::buildBackup()
     form->addRow(tr("Session file extension:"), _sessionExt);
 }
 
+void PreferencesDialog::buildSearchEngine()
+{
+    // La página «Search Engine» de N++: el buscador de Editar › Sobre la selección › Buscar en internet
+    auto* form = new QFormLayout(addPage(QStringLiteral("searchEngine"), tr("Search Engine")));
+    form->addRow(new QLabel(tr("<b>Search Engine (for command \"Search on Internet\")</b>")));
+    _searchEngine = new QButtonGroup(this);
+    const std::pair<SearchEngine, QString> engines[] = {
+        {SearchEngine::DuckDuckGo, QStringLiteral("DuckDuckGo")},
+        {SearchEngine::Google, QStringLiteral("Google")},
+        {SearchEngine::Yahoo, QStringLiteral("Yahoo!")},
+        {SearchEngine::StackOverflow, QStringLiteral("Stack Overflow")},
+        {SearchEngine::Custom, tr("Set your search engine here:")},
+    };
+    for (const auto& [engine, name] : engines) {
+        auto* radio = new QRadioButton(name);
+        radio->setObjectName(QStringLiteral("searchEngine%1").arg(static_cast<int>(engine)));
+        _searchEngine->addButton(radio, static_cast<int>(engine));
+        form->addRow(radio);
+    }
+    _searchEngineCustom = new QLineEdit;
+    _searchEngineCustom->setObjectName(QStringLiteral("searchEngineCustom"));
+    _searchEngineCustom->setPlaceholderText(QStringLiteral("https://www.google.com/search?q=$(CURRENT_WORD)"));
+    form->addRow(_searchEngineCustom);
+    form->addRow(new QLabel(tr("Example: https://www.google.com/search?q=$(CURRENT_WORD)")));
+    connect(_searchEngine, &QButtonGroup::idToggled, this, [this] { updateEnabledState(); });
+}
+
 void PreferencesDialog::buildMisc()
 {
     auto* form = new QFormLayout(addPage(QStringLiteral("misc"), tr("MISC.")));
@@ -629,6 +661,7 @@ void PreferencesDialog::buildLanguageServers()
 void PreferencesDialog::updateEnabledState()
 {
     _frameWidth->setEnabled(comboValue(_currentLine) == static_cast<int>(CurrentLineMode::Frame));
+    _searchEngineCustom->setEnabled(_searchEngine->checkedId() == static_cast<int>(SearchEngine::Custom));
     _dynamicWidth->setEnabled(_lineNumbers->isChecked());
     _wrapIndent->setEnabled(_wrap->isChecked());
     _wrapSymbol->setEnabled(_wrap->isChecked());
@@ -794,6 +827,14 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _terminalShell->setText(p.terminalShell);
     _dateTimeFormat->setText(p.dateTimeFormat);
     _dateTimeReverse->setChecked(p.dateTimeReverseOrder);
+    // Bing ya no está en N++: se cambia por DuckDuckGo
+    const int engine = p.searchEngineChoice == static_cast<int>(SearchEngine::Bing) ? static_cast<int>(SearchEngine::DuckDuckGo)
+                                                                                   : p.searchEngineChoice;
+    if (QAbstractButton* radio = _searchEngine->button(engine))
+        radio->setChecked(true);
+    else
+        _searchEngine->button(static_cast<int>(SearchEngine::Google))->setChecked(true);
+    _searchEngineCustom->setText(p.searchEngineCustom);
     _updateOnStartup->setChecked(p.updateOnStartup);
     _updateInterval->setValue(p.updateIntervalDays);
     _updateInterval->setEnabled(p.updateOnStartup && kUpdateCheck);
@@ -874,6 +915,8 @@ Preferences PreferencesDialog::preferences() const
     p.terminalShell = _terminalShell->text().trimmed();
     p.dateTimeFormat = _dateTimeFormat->text().isEmpty() ? QStringLiteral("yyyy-MM-dd HH:mm:ss") : _dateTimeFormat->text();
     p.dateTimeReverseOrder = _dateTimeReverse->isChecked();
+    p.searchEngineChoice = _searchEngine->checkedId() < 0 ? static_cast<int>(SearchEngine::Google) : _searchEngine->checkedId();
+    p.searchEngineCustom = _searchEngineCustom->text().trimmed();
     p.updateOnStartup = _updateOnStartup->isChecked();
     p.updateIntervalDays = _updateInterval->value();
     p.lspEnabled = _lspEnabled->isChecked();
