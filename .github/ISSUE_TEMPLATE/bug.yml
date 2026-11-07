@@ -38,7 +38,7 @@ body:
     id: system
     attributes:
       label: Sistema / System
-      description: Distribución, escritorio, Wayland o X11, AppImage o no / Distribution, desktop, Wayland or X11, AppImage or not
+      description: Distribución, escritorio, Wayland o X11, AppImage o no. Por ahora solo Linux; la versión de macOS aún no está lista / Distribution, desktop, Wayland or X11, AppImage or not. Linux only for now; the macOS version is not ready yet
   - type: textarea
     id: extra
     attributes:

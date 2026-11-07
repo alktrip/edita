@@ -14,6 +14,7 @@
   <a href="https://github.com/alktrip/edita/actions/workflows/linux.yml"><img alt="CI de Linux" src="https://github.com/alktrip/edita/actions/workflows/linux.yml/badge.svg"></a>
   <a href="COPYING"><img alt="Licencia GPL v3" src="https://img.shields.io/badge/licencia-GPL%20v3-blue"></a>
   <img alt="Linux x86_64" src="https://img.shields.io/badge/Linux-x86__64-informational?logo=linux&logoColor=white">
+  <img alt="macOS: aún no disponible" src="https://img.shields.io/badge/macOS-a%C3%BAn%20no%20disponible-lightgrey?logo=apple&logoColor=white">
 </p>
 
 <p align="center">
@@ -31,6 +32,9 @@ Edita lleva a Linux la forma de trabajar de Notepad++: abre tus archivos tal com
 Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git en el margen, terminal integrada, servidores de lenguaje (LSP), comparación de archivos y un manual integrado en español e inglés.
 
 > **Estado:** beta pública (0.9.0). Casi todo está hecho; falta que lo use gente real. Si lo pruebas, [cuéntanos qué encuentras](https://github.com/alktrip/edita/issues/new/choose).
+
+> [!WARNING]
+> **La versión para macOS todavía no está lista.** Por limitaciones en el desarrollo (no hay una Mac para probarla a fondo y falta la firma y notarización de Apple), por ahora Edita solo se publica para **Linux x86_64**. El `.dmg` del release 0.0.1 es una prueba temprana: está desactualizado, sin firmar y no se mantiene. La versión de macOS se retomará más adelante; mientras tanto, los reportes de macOS no se pueden atender.
 
 ## Capturas
 
@@ -111,7 +115,7 @@ ctest --test-dir build --output-on-failure      # -LE perf para saltar el de ren
 
 **AppImage:** `packaging/appimage/build-portable.sh` genera `dist/Edita-<versión>-x86_64.AppImage` en Ubuntu 22.04, con Qt, los plugins y Python incluidos ([empaquetado](docs/empaquetado.md)). La CI de Linux lo genera en cada cambio.
 
-**macOS:** en pausa. Hay una CI (`.github/workflows/macos.yml`, a mano) que genera un `.dmg` universal sin notarizar, todavía sin Python Script.
+**macOS: todavía no está lista** (ver el aviso al principio). Se conserva una CI (`.github/workflows/macos.yml`, solo a mano) que generaba un `.dmg` universal sin notarizar; no se ha probado desde la fase 55 y no forma parte de los releases.
 
 **Capturas:** las de esta página y las del manual se generan con la aplicación real: `cmake --build build --target edita_readme_images` y `edita_manual_images`.
 

@@ -12,6 +12,8 @@ Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. 
 
 Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, en x86_64. Tu configuración se guarda en `~/.config/edita/`.
 
+> **macOS: todavía no hay versión.** Por limitaciones en el desarrollo, por ahora Edita es solo para Linux. El `.dmg` del release 0.0.1 es una prueba temprana que no se mantiene: no lo uses para probar ni reportes sus fallos.
+
 Si al abrirlo dice que falta una biblioteca:
 
 - **`libOpenGL.so.0`** (beta 5 o anterior, en Ubuntu 26.10 y otros sistemas sin `libopengl0`): está corregido desde la beta 6. Con una beta anterior, `sudo apt install libopengl0`.
@@ -80,6 +82,8 @@ Thank you for testing Edita, a text editor for Linux inspired by Notepad++. This
 3. Open it with a double click or from a terminal: `./Edita-*.AppImage`.
 
 It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, on x86_64. Your settings are stored in `~/.config/edita/`.
+
+> **macOS: there is no version yet.** Because of development limitations, for now Edita is only for Linux. The `.dmg` of release 0.0.1 is an early test that is not maintained: do not use it for testing and do not report its bugs.
 
 If it says that a library is missing when opening it:
 
