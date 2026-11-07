@@ -29,6 +29,7 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 | Varios | Detección de cambios hechos por otros programas, detección de la codificación, juego de caracteres por defecto, la shell de la terminal y la búsqueda de versiones nuevas de Edita al arrancar. |
 | Servidores de lenguaje | Activarlos o desactivarlos, las pistas al final de las líneas y la orden de cada servidor. |
 | Formato | Dar formato al guardar y la herramienta de formato de cada lenguaje (ver [Dar formato](03-editing.md#dar-formato)). |
+| Ortografía | El corrector ortográfico, sus diccionarios y si en el código se revisan solo los comentarios y las cadenas (ver [Ortografía](03-editing.md#ortografia)). |
 
 ## Asignación de atajos
 
@@ -76,6 +77,7 @@ Edita guarda su configuración en `~/.config/edita/` (en macOS, sin `XDG_CONFIG_
 | `stylers.xml`, `themes/` | El tema de serie y los temas que cambiaste. |
 | `shortcuts.xml` | Atajos y macros. |
 | `contextMenu.xml` | El menú del clic derecho en el editor. |
+| `personalDictionary.txt` | Las palabras que añadiste al diccionario. |
 | `userDefineLang.xml`, `userDefineLangs/` | Los lenguajes definidos por el usuario. |
 | `autoCompletion/` | Tus archivos de API para el autocompletado. |
 | `snippets/` | Tus fragmentos. |

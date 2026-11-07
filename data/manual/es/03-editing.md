@@ -217,6 +217,22 @@ lenguaje, si sabe.
   se escribe otra orden (que lea el documento y escriba el resultado; `$(FILE_PATH)` es la ruta del
   archivo) u `off` para no formatear un lenguaje, y se activa **dar formato al guardar**.
 
+## Ortografía
+
+{{actionSpellCheck}} subraya en rojo las palabras mal escritas: en el texto normal y en Markdown,
+todo; en el código, solo los comentarios y las cadenas (no los nombres de variables y funciones).
+Con el clic derecho sobre una palabra subrayada aparecen las sugerencias (pulsa una para
+cambiarla), **Añadir al diccionario** (se guarda en `personalDictionary.txt` de la configuración) y
+**Pasar por alto** (hasta cerrar Edita).
+
+No se revisan las palabras con dígitos, las siglas en mayúsculas, los nombres de código
+(`camelCase`, `snake_case`) ni las direcciones, los correos y las rutas.
+
+Edita usa los diccionarios de Hunspell del sistema; de serie, el del idioma del sistema y el inglés.
+En **Preferencias › Ortografía** se eligen otros y se decide si en el código se revisa todo. Para
+tener más diccionarios, instala su paquete (`sudo apt install hunspell-es hunspell-en-us`, por
+ejemplo) o copia sus archivos `.dic` y `.aff` a `~/.local/share/hunspell`.
+
 ## Herramientas: MD5 y SHA
 
 El menú **Herramientas** calcula resúmenes MD5, SHA-1, SHA-256 y SHA-512 (para comprobar una

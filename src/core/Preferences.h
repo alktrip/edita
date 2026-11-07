@@ -157,6 +157,12 @@ struct Preferences
     // con «id=orden» por línea (vacío: las conocidas; «off», ninguna)
     bool formatOnSave = false;
     QString formatters;
+    // Corrector ortográfico (core/SpellChecker; no existe en N++): <GUIConfig
+    // name="EditaSpellCheck" enabled="yes" dictionaries="" onlyCommentsAndStrings="yes">. Los
+    // diccionarios, separados por comas («es_MX,en_US»); vacío, los del idioma del sistema y el inglés
+    bool spellCheck = true;
+    QString spellDictionaries;
+    bool spellOnlyCommentsAndStrings = true;
     // Página de inicio mientras el único documento es uno nuevo y vacío (EditaWelcomePage)
     bool showWelcome = true;
     // <GUIConfig name="multiInst" setting="0" …/>

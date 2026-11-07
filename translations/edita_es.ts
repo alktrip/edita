@@ -1870,24 +1870,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+478"/>
-        <location line="+4338"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+480"/>
+        <location line="+4356"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4338"/>
-        <location line="+1755"/>
+        <location line="-4356"/>
+        <location line="+1767"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1658"/>
+        <location line="-1670"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+406"/>
+        <location line="+408"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2298,7 +2298,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Girar la división</translation>
     </message>
     <message>
-        <location line="+33"/>
+        <location line="+38"/>
         <source>&amp;Next Tab</source>
         <translation>Pestaña &amp;siguiente</translation>
     </message>
@@ -2338,7 +2338,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1389"/>
+        <location line="+1394"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2561,12 +2561,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2341"/>
+        <location line="-2351"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-983"/>
+        <location line="-985"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2646,13 +2646,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+800"/>
-        <location line="+1136"/>
+        <location line="+802"/>
+        <location line="+1141"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1095"/>
+        <location line="-1100"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2678,12 +2678,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5202"/>
+        <location line="+5218"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5201"/>
+        <location line="-5217"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3136,7 +3136,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Resumen</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+3"/>
+        <source>Check S&amp;pelling</source>
+        <translation>Revisar la &amp;ortografía</translation>
+    </message>
+    <message>
+        <location line="+4"/>
         <source>Monitoring (tail -&amp;f)</source>
         <translation>Seguimiento (tail -&amp;f)</translation>
     </message>
@@ -3435,12 +3440,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4360"/>
+        <location line="+4371"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4359"/>
+        <location line="-4370"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3510,7 +3515,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Historial del portapapeles</translation>
     </message>
     <message>
-        <location line="+159"/>
+        <location line="+164"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+10"/>
@@ -3922,12 +3927,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+266"/>
         <location line="+20"/>
-        <location line="+1816"/>
+        <location line="+1822"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2098"/>
+        <location line="-2104"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4067,7 +4072,7 @@ Do you want to save the file anyway?</source>
         <translation>Reinicia Edita para que se aplique.</translation>
     </message>
     <message>
-        <location line="+157"/>
+        <location line="+163"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -4261,7 +4266,7 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-2169"/>
+        <location line="-2175"/>
         <source>Format Document</source>
         <translation>Dar formato al documento</translation>
     </message>
@@ -4293,7 +4298,7 @@ Do you want to save the file anyway?</source>
         <translation>Formateado con %1</translation>
     </message>
     <message>
-        <location line="+2104"/>
+        <location line="+2110"/>
         <source> times</source>
         <translation> veces</translation>
     </message>
@@ -4591,7 +4596,7 @@ Keep this file in editor?</source>
 %1</translation>
     </message>
     <message>
-        <location line="+171"/>
+        <location line="+225"/>
         <source>Style all occurrences of token</source>
         <translation>Estilo para todas las apariciones</translation>
     </message>
@@ -4611,7 +4616,22 @@ Keep this file in editor?</source>
         <translation>Órdenes de plugins</translation>
     </message>
     <message>
-        <location line="+80"/>
+        <location line="+25"/>
+        <source>(No suggestions)</source>
+        <translation>(Sin sugerencias)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add «%1» to the Dictionary</source>
+        <translation>Añadir «%1» al diccionario</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Ignore «%1»</source>
+        <translation>Pasar por alto «%1»</translation>
+    </message>
+    <message>
+        <location line="+83"/>
         <source>%1: cannot read it</source>
         <translation>%1: no se puede leer</translation>
     </message>
@@ -5447,12 +5467,12 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+142"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+143"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+29"/>
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
@@ -6616,7 +6636,37 @@ Continue?</source>
         <translation>Editar › Dar formato al documento usa la primera herramienta instalada del lenguaje; si no hay, el servidor de lenguaje. Escribe otra orden para usarla en su lugar (lee el documento y escribe el resultado; $(FILE_PATH) es el archivo), u «off» para no formatear ese lenguaje.</translation>
     </message>
     <message>
-        <location line="-163"/>
+        <location line="+49"/>
+        <source>Spelling</source>
+        <translation>Ortografía</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Check the spelling (misspelled words are underlined; right click for suggestions)</source>
+        <translation>Revisar la ortografía (las palabras mal escritas se subrayan; clic derecho para ver sugerencias)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>In code, only comments and strings</source>
+        <translation>En el código, solo los comentarios y las cadenas</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Dictionaries (none checked: the one of the system language and English):</source>
+        <translation>Diccionarios (sin marcar ninguno: el del idioma del sistema y el inglés):</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Edita uses the Hunspell dictionaries of the system. To add one, install its package (for example, hunspell-es or hunspell-en-us) or copy its .dic and .aff files to ~/.local/share/hunspell.</source>
+        <translation>Edita usa los diccionarios de Hunspell del sistema. Para añadir uno, instala su paquete (por ejemplo, hunspell-es o hunspell-en-us) o copia sus archivos .dic y .aff a ~/.local/share/hunspell.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>This copy of Edita was built without Hunspell: there is no spell checker.</source>
+        <translation>Esta copia de Edita se compiló sin Hunspell: no hay corrector ortográfico.</translation>
+    </message>
+    <message>
+        <location line="-233"/>
         <location line="+54"/>
         <source>Enable</source>
         <translation>Avisar</translation>

@@ -29,6 +29,7 @@ Most options are described in the chapter of their feature; this is a summary.
 | MISC. | Detection of changes made by other programs, encoding detection, default character set, the shell of the terminal and checking for new versions of Edita at startup. |
 | Language Servers | Turning them on or off, the hints at the end of the lines and the command of each server. |
 | Formatting | Format on save and the formatting tool of each language (see [Formatting](03-editing.md#formatting)). |
+| Spelling | The spell checker, its dictionaries and whether only comments and strings are checked in code (see [Spelling](03-editing.md#spelling)). |
 
 ## Shortcut Mapper
 
@@ -76,6 +77,7 @@ Edita keeps its configuration in `~/.config/edita/` (on macOS, without `XDG_CONF
 | `stylers.xml`, `themes/` | The default theme and the themes you changed. |
 | `shortcuts.xml` | Shortcuts and macros. |
 | `contextMenu.xml` | The menu of the right click in the editor. |
+| `personalDictionary.txt` | The words you added to the dictionary. |
 | `userDefineLang.xml`, `userDefineLangs/` | The user defined languages. |
 | `autoCompletion/` | Your API files for autocompletion. |
 | `snippets/` | Your snippets. |

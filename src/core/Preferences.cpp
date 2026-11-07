@@ -384,6 +384,9 @@ Preferences loadPreferences(const ConfigXml& config)
     p.lspServers = r.text("EditaLspServers");
     r.boolText("EditaFormatOnSave", p.formatOnSave);
     p.formatters = r.text("EditaFormatters");
+    r.boolAttr("EditaSpellCheck", "enabled", p.spellCheck);
+    p.spellDictionaries = r.get("EditaSpellCheck", "dictionaries");
+    r.boolAttr("EditaSpellCheck", "onlyCommentsAndStrings", p.spellOnlyCommentsAndStrings);
     r.boolText("EditaWelcomePage", p.showWelcome);
     return p;
 }
@@ -557,6 +560,9 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaLspServers", p.lspServers);
     w.text("EditaFormatOnSave", yesNo(p.formatOnSave));
     w.text("EditaFormatters", p.formatters);
+    w.attr("EditaSpellCheck", "enabled", p.spellCheck);
+    w.attr("EditaSpellCheck", "dictionaries", p.spellDictionaries);
+    w.attr("EditaSpellCheck", "onlyCommentsAndStrings", p.spellOnlyCommentsAndStrings);
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }
 

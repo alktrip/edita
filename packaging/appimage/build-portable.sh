@@ -73,7 +73,7 @@ if [[ ! -f $ROOT/.edita-ready ]]; then
         set -e
         apt-get update
         apt-get install -y --no-install-recommends ca-certificates curl file git g++-12 make ninja-build pkg-config \
-            python3-dev python3-pip python3-venv libzip-dev zlib1g-dev libssl-dev \
+            python3-dev python3-pip python3-venv libzip-dev zlib1g-dev libssl-dev libhunspell-dev \
             libgl-dev libegl-dev libglx-dev libopengl-dev libxkbcommon-dev libxkbcommon-x11-0 \
             libfontconfig1-dev libfreetype-dev libdbus-1-3 libglib2.0-0 \
             libxcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
@@ -88,6 +88,10 @@ fi
 if [[ ! -f $ROOT/usr/include/openssl/evp.h ]]; then
     log "Añadiendo OpenSSL (libssl-dev) al sistema base"
     inside "apt-get update && apt-get install -y --no-install-recommends libssl-dev"
+fi
+if [[ ! -f $ROOT/usr/include/hunspell/hunspell.h ]]; then
+    log "Añadiendo Hunspell (libhunspell-dev) al sistema base"
+    inside "apt-get update && apt-get install -y --no-install-recommends libhunspell-dev"
 fi
 
 # --- 3. El AppImage ---------------------------------------------------------------------

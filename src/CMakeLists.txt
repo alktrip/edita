@@ -42,6 +42,8 @@ add_library(edita_core STATIC
     core/DateTimeFormat.h
     core/ContextMenuXml.cpp
     core/Formatters.cpp
+    core/SpellChecker.cpp
+    core/SpellChecker.h
     core/Formatters.h
     core/ContextMenuXml.h
     core/NppCommandNames.inc
@@ -86,6 +88,11 @@ target_link_libraries(edita_core
     PRIVATE uchardet_npp pugixml edita_warnings OpenSSL::Crypto)
 # Builds de desarrollo: los datos se buscan también en el árbol de fuentes
 target_compile_definitions(edita_core PRIVATE EDITA_SOURCE_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
+# Corrector ortográfico (Hunspell, opcional; se busca en el CMakeLists principal)
+if(HUNSPELL_FOUND)
+    target_link_libraries(edita_core PRIVATE PkgConfig::HUNSPELL)
+    target_compile_definitions(edita_core PRIVATE EDITA_HUNSPELL)
+endif()
 # Paquetes .zip del administrador de plugins (libzip, opcional; se busca en el CMakeLists principal)
 if(LIBZIP_FOUND)
     target_link_libraries(edita_core PRIVATE PkgConfig::LIBZIP)
@@ -169,6 +176,8 @@ add_library(edita_ui STATIC
     ui/HashDialog.h
     ui/EditPanels.cpp
     ui/EditPanels.h
+    ui/SpellCheck.cpp
+    ui/SpellCheck.h
     ui/UrlLinks.cpp
     ui/UrlLinks.h
     ui/ColorPreview.cpp

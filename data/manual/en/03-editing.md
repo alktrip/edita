@@ -214,6 +214,21 @@ the cursor:
   `$(FILE_PATH)` is the path of the file) or `off` to not format a language, and turn on
   **format on save**.
 
+## Spelling
+
+{{actionSpellCheck}} underlines misspelled words in red: in plain text and in Markdown, everything;
+in code, only comments and strings (not the names of variables and functions). Right-clicking an
+underlined word shows the suggestions (click one to replace it), **Add to the Dictionary** (it is
+kept in `personalDictionary.txt` of the configuration) and **Ignore** (until Edita is closed).
+
+Words with digits, acronyms in capitals, code names (`camelCase`, `snake_case`), addresses,
+emails and paths are not checked.
+
+Edita uses the Hunspell dictionaries of the system; by default, the one of the system language and
+English. **Preferences › Spelling** chooses others and whether everything is checked in code. To
+have more dictionaries, install their package (`sudo apt install hunspell-es hunspell-en-us`, for
+example) or copy their `.dic` and `.aff` files to `~/.local/share/hunspell`.
+
 ## Tools: MD5 and SHA
 
 The **Tools** menu computes MD5, SHA-1, SHA-256 and SHA-512 digests (to check a download, for

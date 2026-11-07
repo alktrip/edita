@@ -51,6 +51,8 @@
 #include <QSet>
 #include <QUrl>
 
+#include <array>
+
 #include <atomic>
 #include <functional>
 #include <map>
@@ -73,6 +75,7 @@ namespace edita {
 struct InstanceRequest;
 class DocumentListPanel;
 class CharacterPanel;
+class SpellChecker;
 class ClipboardHistoryPanel;
 class DocumentMapPanel;
 class RegexTesterPanel;
@@ -223,6 +226,9 @@ public:
     // no hay ninguna para ese lenguaje (entonces va el servidor de lenguaje)
     enum class FormatOutcome { NoTool, Formatted, Unchanged, Failed };
     FormatOutcome formatWithTool(EditorView& view, BufferId id, bool useSelection, QString* error = nullptr);
+    // El corrector ortográfico: revisar ya lo que se ve (sin esperar) y el que usa
+    void checkSpellingNow();
+    SpellChecker* spellChecker() const { return _spell.get(); }
     // contextMenu.xml del usuario (lo crea con el de serie si no está)
     QString contextMenuPath() const;
     // El menú del clic derecho en el editor, según contextMenu.xml (el que llama lo borra)
@@ -559,6 +565,9 @@ private:
     // Sus lenguajes, agrupados por inicial o no (langMenuCompact) y sin los ocultos
     void populateLanguageMenu();
     void formatBeforeSave(BufferId id); // Preferencias › Formato › Al guardar
+    void loadSpellDictionaries();
+    void scheduleSpelling(EditorPane* pane);
+    void checkSpelling(EditorPane* pane);
     void addExternalLanguageActions(); // los de los plugins de lexer, antes de «Lenguaje de usuario»
     // Lo que depende del documento de la vista: caracteres de palabra, paréntesis y enlaces
     // (con las limitaciones de los archivos grandes)
@@ -655,6 +664,10 @@ private:
     std::unique_ptr<Prompter> _prompter;
     std::function<bool(const QUrl&)> _openUrl = [](const QUrl& url) { return QDesktopServices::openUrl(url); };
     std::function<bool(const QString&)> _trashFile = [](const QString& path) { return QFile::moveToTrash(path); };
+    std::unique_ptr<SpellChecker> _spell;
+    QStringList _spellCodes;                         // los diccionarios cargados
+    QTimer* _spellTimer[2] = {};
+    std::map<QString, std::array<bool, 256>> _spellStyles; // los estilos que se revisan, por lenguaje
     bool _discardOnClose = false; // cerrar sin preguntar por los cambios (al mandarlo a la papelera)
     QSplitter* _splitter = nullptr;
     EditorPane* _mainPane = nullptr;

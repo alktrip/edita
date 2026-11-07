@@ -39,6 +39,8 @@
 #include "ui/HashDialog.h"
 #include "ui/EditPanels.h"
 #include "ui/UrlLinks.h"
+#include "ui/SpellCheck.h"
+#include "core/SpellChecker.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
 #include "ui/FileIcons.h"
@@ -715,8 +717,10 @@ void MainWindow::connectPane(EditorPane* pane)
     });
     // Los enlaces de lo que se ve, en las dos vistas (addHotSpot al desplazarse o al cambiar)
     connect(view, &ScintillaEditBase::updateUi, this, [this, pane](Scintilla::Update updated) {
-        if (static_cast<int>(updated) & (SC_UPDATE_CONTENT | SC_UPDATE_V_SCROLL))
+        if (static_cast<int>(updated) & (SC_UPDATE_CONTENT | SC_UPDATE_V_SCROLL)) {
             refreshUrls(pane);
+            scheduleSpelling(pane);
+        }
     });
     connect(view, &ScintillaEditBase::updateUi, this, [this, pane](Scintilla::Update updated) {
         if (pane != _activePane)
@@ -1499,6 +1503,11 @@ void MainWindow::createMenus()
     addAction(view, tr("S&ummary…"), "actionSummary", QKeySequence(), [this] {
         _prompter->inform(this, tr("Summary"), documentSummary());
     });
+    // El corrector ortográfico (no existe en N++): Preferencias › Ortografía
+    QAction* spelling = addAction(view, tr("Check S&pelling"), "actionSpellCheck", QKeySequence(), [this] {
+        toggleViewOption(&Preferences::spellCheck, !_prefs.spellCheck);
+    });
+    spelling->setCheckable(true);
     QAction* monitoring = addAction(view, tr("Monitoring (tail -&f)"), "actionMonitoring", QKeySequence(),
                                     [this] { toggleMonitoring(); });
     monitoring->setCheckable(true);
@@ -2142,6 +2151,11 @@ void MainWindow::createPanels()
         editor()->setFocus();
     });
     connect(&_syntax, &SyntaxManager::stylesChanged, this, [this] { QTimer::singleShot(0, this, [this] { applyTerminalStyle(); }); });
+    connect(&_syntax, &SyntaxManager::stylesChanged, this, [this] {
+        _spellStyles.clear(); // otros nombres de estilo
+        for (EditorPane* pane : {_mainPane, _subPane})
+            scheduleSpelling(pane);
+    });
     connect(_folderPanel, &FileBrowserPanel::openTerminal, this, [this](const QString& dir) { openTerminal(dir); });
     connect(_problems, &ProblemsPanel::activated, this, &MainWindow::goToLspPosition);
     // Git en el explorador: el estado de cada archivo, al cambiar algo
@@ -4143,6 +4157,12 @@ void MainWindow::applyPreferences()
     options.systemMonospaceFont = p.systemMonospaceFont;
     options.sqlBackslashEscapes = p.sqlBackslashEscapes;
     _syntax.setOptions(options);
+    loadSpellDictionaries();
+    _spellStyles.clear();
+    if (QAction* spelling = findChild<QAction*>(QStringLiteral("actionSpellCheck"))) {
+        const QSignalBlocker blocker(spelling);
+        spelling->setChecked(p.spellCheck);
+    }
 
     // Documentos nuevos y cómo se abren
     DocumentSettings& docs = _documents.settings();
@@ -5290,7 +5310,8 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
         // Mismos rangos que N++; se agotan como en N++ (FALSE y 0)
         int& next = message == NPPM_ALLOCATECMDID ? _nextDynamicCommand
                   : message == NPPM_ALLOCATEMARKER ? _nextMarker : _nextIndicator;
-        const int limit = message == NPPM_ALLOCATECMDID ? 25000 : message == NPPM_ALLOCATEMARKER ? 11 : 21; // marcadores 1–10 (N++: 1–14; Edita usa 11–14)
+        // Marcadores 1–10 (N++: 1–14; Edita usa 11–14); indicadores 9–19 (N++: 9–20; Edita usa el 20, la ortografía)
+        const int limit = message == NPPM_ALLOCATECMDID ? 25000 : message == NPPM_ALLOCATEMARKER ? 11 : 20;
         auto* out = reinterpret_cast<int*>(lParam);
         const int requested = static_cast<int>(wParam);
         if (!out || requested <= 0 || next + requested > limit) {
@@ -6424,6 +6445,60 @@ void MainWindow::applyDocumentOptions(EditorPane* pane)
     const bool large = isLargeFileIn(pane);
     view->setBraceMatchEnabled(!large || _prefs.largeFileBraceMatch);
     refreshUrls(pane);
+    scheduleSpelling(pane);
+}
+
+void MainWindow::loadSpellDictionaries()
+{
+    // Preferencias › Ortografía: los elegidos o, sin elegir, los del idioma del sistema y el inglés
+    if (!_spell)
+        _spell = std::make_unique<SpellChecker>();
+    QStringList codes = _prefs.spellDictionaries.split(QLatin1Char(','), Qt::SkipEmptyParts);
+    if (codes.isEmpty())
+        codes = SpellChecker::defaultDictionaries(QLocale::system().name(), SpellChecker::availableDictionaries());
+    if (codes != _spellCodes || !_spell->isLoaded()) {
+        _spellCodes = codes;
+        _spell->load(codes);
+    }
+    _spell->setPersonalDictionary(QDir(paths::configDir()).filePath(QStringLiteral("personalDictionary.txt")));
+}
+
+void MainWindow::scheduleSpelling(EditorPane* pane)
+{
+    // Al escribir o desplazarse, un momento después (no en cada tecla)
+    const int index = pane == _subPane ? 1 : 0;
+    if (!_spellTimer[index]) {
+        _spellTimer[index] = new QTimer(this);
+        _spellTimer[index]->setSingleShot(true);
+        _spellTimer[index]->setInterval(200);
+        connect(_spellTimer[index], &QTimer::timeout, this, [this, pane] { checkSpelling(pane); });
+    }
+    _spellTimer[index]->start();
+}
+
+void MainWindow::checkSpelling(EditorPane* pane)
+{
+    if (!_spell)
+        loadSpellDictionaries();
+    const Buffer* buf = _documents.buffer(pane->currentBuffer());
+    const bool enabled = _prefs.spellCheck && buf && !buf->isLargeFile();
+    std::array<bool, 256> styles{};
+    if (enabled) {
+        const QString key = QString::fromLatin1(languageInfo(buf->language()).name) + QLatin1Char('/') + buf->userLanguage()
+                          + (_prefs.spellOnlyCommentsAndStrings ? QStringLiteral("/c") : QStringLiteral("/a"));
+        auto it = _spellStyles.find(key);
+        if (it == _spellStyles.end())
+            it = _spellStyles.emplace(key, spellCheckedStyles(*pane->editor(), _syntax.styles().lexer(languageInfo(buf->language()).name),
+                                                             _prefs.spellOnlyCommentsAndStrings)).first;
+        styles = it->second;
+    }
+    highlightMisspellings(*pane->editor(), *_spell, styles, enabled);
+}
+
+void MainWindow::checkSpellingNow()
+{
+    for (EditorPane* pane : {_mainPane, _subPane})
+        checkSpelling(pane);
 }
 
 void MainWindow::refreshUrls(EditorPane* pane)
@@ -6536,6 +6611,40 @@ QMenu* MainWindow::buildEditorContextMenu()
     };
     std::map<QString, QMenu*> folders;
     bool pendingSeparator = false;
+    // Una palabra mal escrita bajo el cursor: las sugerencias, añadirla al diccionario o pasarla por alto
+    if (_prefs.spellCheck && _spell) {
+        EditorView* view = editor();
+        sptr_t start = 0;
+        sptr_t end = 0;
+        const QString word = misspelledWordAt(*view, view->sci(SCI_GETCURRENTPOS), &start, &end);
+        if (!word.isEmpty()) {
+            const QStringList suggestions = _spell->suggest(word);
+            for (const QString& suggestion : suggestions) {
+                QAction* replace = menu->addAction(suggestion);
+                QFont bold = replace->font();
+                bold.setBold(true);
+                replace->setFont(bold);
+                connect(replace, &QAction::triggered, this, [view, start, end, suggestion] {
+                    const QByteArray text = suggestion.toUtf8();
+                    view->sci(SCI_SETTARGETRANGE, static_cast<uptr_t>(start), end);
+                    view->sends(SCI_REPLACETARGET, static_cast<uptr_t>(text.size()), text.constData());
+                });
+            }
+            if (suggestions.isEmpty())
+                menu->addAction(tr("(No suggestions)"))->setEnabled(false);
+            QAction* add = menu->addAction(tr("Add «%1» to the Dictionary").arg(word), this, [this, word] {
+                _spell->addToPersonal(word);
+                checkSpellingNow();
+            });
+            add->setObjectName(QStringLiteral("spellAdd"));
+            QAction* ignore = menu->addAction(tr("Ignore «%1»").arg(word), this, [this, word] {
+                _spell->ignore(word);
+                checkSpellingNow();
+            });
+            ignore->setObjectName(QStringLiteral("spellIgnore"));
+            menu->addSeparator();
+        }
+    }
     for (const ContextMenuItem& item : readContextMenu(contextMenuPath())) {
         if (item.isSeparator()) {
             if (item.folder.isEmpty())

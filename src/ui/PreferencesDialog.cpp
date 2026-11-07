@@ -24,6 +24,7 @@
 #include "core/DateTimeFormat.h"
 #include "core/Encoding.h"
 #include "core/Formatters.h"
+#include "core/SpellChecker.h"
 #include "core/OnSelection.h"
 #include "ui/Icons.h"
 #include "ui/TerminalPanel.h"
@@ -162,6 +163,7 @@ PreferencesDialog::PreferencesDialog(const Preferences& prefs, std::vector<std::
     buildMisc();
     buildLanguageServers();
     buildFormatting();
+    buildSpelling();
 
     connect(_categories, &QListWidget::currentRowChanged, _pages, &QStackedWidget::setCurrentIndex);
     _categories->setCurrentRow(0);
@@ -231,7 +233,7 @@ QWidget* PreferencesDialog::addPage(const QString& name, const QString& title)
         {"autoCompletion", "autocompletion"}, {"highlighting", "highlighting"}, {"searching", "find"},
         {"printing", "print"},      {"backup", "backup"},             {"searchEngine", "web"},
         {"misc", "misc"},
-        {"languageServers", "language-server"}, {"formatting", "format"},
+        {"languageServers", "language-server"}, {"formatting", "format"}, {"spelling", "spelling"},
     };
     for (const auto& [pageName, icon] : kPageIcons) {
         if (name == QLatin1String(pageName))
@@ -858,6 +860,38 @@ void PreferencesDialog::buildFormatting()
     layout->addWidget(_formatters, 1);
 }
 
+// El corrector ortográfico (no existe en N++; allí es el plugin DSpellCheck)
+void PreferencesDialog::buildSpelling()
+{
+    QWidget* page = addPage(QStringLiteral("spelling"), tr("Spelling"));
+    auto* layout = new QVBoxLayout(page);
+    _spellCheck = new QCheckBox(tr("Check the spelling (misspelled words are underlined; right click for suggestions)"));
+    _spellCheck->setObjectName(QStringLiteral("spellCheck"));
+    layout->addWidget(_spellCheck);
+    _spellOnlyComments = new QCheckBox(tr("In code, only comments and strings"));
+    _spellOnlyComments->setObjectName(QStringLiteral("spellOnlyCommentsAndStrings"));
+    layout->addWidget(_spellOnlyComments);
+    layout->addWidget(new QLabel(tr("Dictionaries (none checked: the one of the system language and English):")));
+    _spellDictionaries = new QListWidget;
+    _spellDictionaries->setObjectName(QStringLiteral("spellDictionaries"));
+    for (const QString& code : SpellChecker::availableDictionaries()) {
+        auto* item = new QListWidgetItem(code, _spellDictionaries);
+        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Unchecked);
+    }
+    layout->addWidget(_spellDictionaries, 1);
+    auto* hint = new QLabel(SpellChecker::available()
+                                ? tr("Edita uses the Hunspell dictionaries of the system. To add one, install its package "
+                                     "(for example, hunspell-es or hunspell-en-us) or copy its .dic and .aff files to "
+                                     "~/.local/share/hunspell.")
+                                : tr("This copy of Edita was built without Hunspell: there is no spell checker."));
+    hint->setWordWrap(true);
+    layout->addWidget(hint);
+    if (!SpellChecker::available())
+        for (QWidget* w : std::initializer_list<QWidget*>{_spellCheck, _spellOnlyComments, _spellDictionaries})
+            w->setEnabled(false);
+}
+
 void PreferencesDialog::updateEnabledState()
 {
     _frameWidth->setEnabled(comboValue(_currentLine) == static_cast<int>(CurrentLineMode::Frame));
@@ -1086,6 +1120,11 @@ void PreferencesDialog::setPreferences(const Preferences& p)
         command->setText(overrides.value(id));
     }
     _formatOnSave->setChecked(p.formatOnSave);
+    _spellCheck->setChecked(p.spellCheck);
+    _spellOnlyComments->setChecked(p.spellOnlyCommentsAndStrings);
+    const QStringList dictionaries = p.spellDictionaries.split(QLatin1Char(','), Qt::SkipEmptyParts);
+    for (int i = 0; i < _spellDictionaries->count(); ++i)
+        _spellDictionaries->item(i)->setCheckState(dictionaries.contains(_spellDictionaries->item(i)->text()) ? Qt::Checked : Qt::Unchecked);
     const QMap<QString, QString> formatterOverrides = lsp::parseOverrides(p.formatters);
     for (int row = 0; row < _formatters->rowCount(); ++row) {
         const QString id = _formatters->item(row, 0)->data(Qt::UserRole).toString();
@@ -1203,6 +1242,19 @@ Preferences PreferencesDialog::preferences() const
         overrides.insert(_lspServers->item(row, 0)->data(Qt::UserRole).toString(), _lspServers->item(row, 1)->text().trimmed());
     p.lspServers = lsp::formatOverrides(overrides);
     p.formatOnSave = _formatOnSave->isChecked();
+    p.spellCheck = _spellCheck->isChecked();
+    p.spellOnlyCommentsAndStrings = _spellOnlyComments->isChecked();
+    QStringList dictionaries;
+    for (int i = 0; i < _spellDictionaries->count(); ++i) {
+        if (_spellDictionaries->item(i)->checkState() == Qt::Checked)
+            dictionaries << _spellDictionaries->item(i)->text();
+    }
+    // Los que no están instalados ahora se conservan (un diccionario que se quitó un rato)
+    for (const QString& code : _base.spellDictionaries.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        if (_spellDictionaries->findItems(code, Qt::MatchExactly).isEmpty() && !dictionaries.contains(code))
+            dictionaries << code;
+    }
+    p.spellDictionaries = dictionaries.join(QLatin1Char(','));
     QMap<QString, QString> formatterOverrides;
     for (int row = 0; row < _formatters->rowCount(); ++row)
         formatterOverrides.insert(_formatters->item(row, 0)->data(Qt::UserRole).toString(), _formatters->item(row, 1)->text().trimmed());

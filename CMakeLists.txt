@@ -49,6 +49,8 @@ find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Widgets PrintSupport Network C
 find_package(PkgConfig)
 if(PkgConfig_FOUND)
     pkg_check_modules(LIBZIP IMPORTED_TARGET GLOBAL libzip)
+    # Corrector ortográfico (opcional): Hunspell, con los diccionarios del sistema
+    pkg_check_modules(HUNSPELL IMPORTED_TARGET GLOBAL hunspell)
 endif()
 
 add_subdirectory(third_party)

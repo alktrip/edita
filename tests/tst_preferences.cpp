@@ -103,6 +103,9 @@ Preferences nonDefault()
     p.uriSchemes = QStringLiteral("git:// news:");
     p.formatOnSave = true;
     p.formatters = QStringLiteral("python=off");
+    p.spellCheck = false;
+    p.spellDictionaries = QStringLiteral("no_instalado");
+    p.spellOnlyCommentsAndStrings = false;
     p.lspEnabled = false;
     p.lspServers = QStringLiteral("clangd=clangd --log=error\npython=off");
     p.statusBarShow = false;
@@ -322,7 +325,7 @@ private slots:
         QCOMPARE(dialog.pageNames(), (QStringList{"general", "toolbar", "editing", "margins", "newDocument", "recentFiles",
                                                   "indentation", "language", "autoCompletion", "highlighting", "searching", "printing",
                                                   "backup", "delimiter", "performance", "cloudLink", "searchEngine", "misc",
-                                                  "languageServers", "formatting"}));
+                                                  "languageServers", "formatting", "spelling"}));
         QVERIFY(dialog.preferences() == Preferences{});
         dialog.setPreferences(p);
         QVERIFY(dialog.preferences() == p);

@@ -86,6 +86,7 @@ private:
     void buildMisc();
     void buildLanguageServers();
     void buildFormatting();
+    void buildSpelling();
     void updateEnabledState();
 
     QListWidget* _categories;
@@ -171,6 +172,9 @@ private:
     QTableWidget* _lspServers = nullptr;
     QCheckBox* _formatOnSave = nullptr;
     QTableWidget* _formatters = nullptr;
+    QCheckBox* _spellCheck = nullptr;
+    QCheckBox* _spellOnlyComments = nullptr;
+    QListWidget* _spellDictionaries = nullptr;
     QCheckBox* _scrollBarMarks = nullptr;
     QComboBox* _changeHistory = nullptr;
     // Documento nuevo y directorio

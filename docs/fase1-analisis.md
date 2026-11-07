@@ -346,6 +346,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 70 — Páginas de Preferencias | Barra de herramientas, Lenguaje (`langsExcluded`, menú rehecho), Delimitadores (`SCI_SETWORDCHARS` por documento, Ctrl + doble clic con `delimiterRange`), Rendimiento (`largeFileRestriction`), Nube y enlaces (`cloud/choice`, `paths::baseConfigDir`, ui/UrlLinks con `URL_INDIC` 8; fragmentos al 30) | ✅ [fase70.md](fase70.md) |
 | 71 — Importar y menú contextual | Configuración › Importar plugins y temas, `contextMenu.xml` (core/ContextMenuXml, `NppCommandNames.inc` de english.xml, `EditorView::setContextMenuHandler`), Editar el menú contextual, Macro › Modificar atajo/Borrar macro | ✅ [fase71.md](fase71.md) |
 | 72 — Dar formato | core/Formatters (herramientas por lenguaje, `runFormatter`), `replaceChangedLines` con LineDiff, Dar formato con herramienta y luego servidor, al guardar, Preferencias › Formato | ✅ [fase72.md](fase72.md) |
+| 73 — Ortografía | core/SpellChecker (Hunspell opcional, diccionarios del sistema, personal, iconv), `wordsToCheck`, ui/SpellCheck (indicador 20, estilos de comentario y cadena), sugerencias en el clic derecho, Ver › Revisar la ortografía, Preferencias › Ortografía | ✅ [fase73.md](fase73.md) |
 
 ---
 
