@@ -241,5 +241,15 @@ example). For each one:
 
 ## Read-only and end of line
 
-{{actionReadOnly}} prevents changes to the document. The end of line commands are described in
-[Ends of line](02-files.md#ends-of-line).
+{{actionReadOnly}} prevents changes to the document; {{actionReadOnlyAll}} does it with all the open
+ones and {{actionReadOnlyClearAll}} removes it from all of them. The end of line commands are
+described in [Ends of line](02-files.md#ends-of-line).
+
+## Indentation and long selections
+
+- {{actionIndentIncrease}} and {{actionIndentDecrease}} (in **Edit › Indent**) move the line one tab
+  width; with several lines selected, all of them (like Tab and Shift+Tab).
+- {{actionBeginEndSelect}} marks the start of a selection; go somewhere else (with the keyboard,
+  with {{actionGoTo}} or with the scroll bar) and use it again: everything in between is selected,
+  without dragging. {{actionBeginEndSelectColumn}} does the same with a rectangular selection. While
+  it waits for the end, the command shows checked.

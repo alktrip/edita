@@ -40,6 +40,8 @@ add_library(edita_core STATIC
     core/CrashReport.h
     core/DateTimeFormat.cpp
     core/DateTimeFormat.h
+    core/CommandLine.cpp
+    core/CommandLine.h
     core/ContextMenuXml.cpp
     core/Formatters.cpp
     core/SpellChecker.cpp
@@ -172,12 +174,15 @@ add_library(edita_ui STATIC
     ui/AutoCompletion.cpp
     ui/AutoCompletion.h
     ui/ColumnEditorDialog.cpp
+    ui/FindCharsDialog.cpp
+    ui/FindCharsDialog.h
     ui/HashDialog.cpp
     ui/HashDialog.h
     ui/EditPanels.cpp
     ui/EditPanels.h
     ui/SpellCheck.cpp
     ui/SpellCheck.h
+    ui/NonPrintingChars.inc
     ui/UrlLinks.cpp
     ui/UrlLinks.h
     ui/ColorPreview.cpp

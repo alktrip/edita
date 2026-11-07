@@ -47,4 +47,10 @@ QString redactText(const QString& text, bool bullet);
 // los más cercanos, sin contar \" ; si no, la pareja más interior (para «f(a, g(b))»)
 std::pair<qsizetype, qsizetype> delimiterRange(std::string_view text, std::size_t click, char left, char right);
 
+// Buscar › Buscar caracteres en un rango (FindCharsInRangeDlg de N++): el siguiente carácter
+// (código Unicode) entre `low` y `high` desde `from` (en unidades de QString), hacia delante o
+// hacia atrás, y con `wrap`, dando la vuelta. {inicio, longitud} o {-1, 0}
+std::pair<qsizetype, qsizetype> findCharInRange(const QString& text, qsizetype from, char32_t low, char32_t high, bool forward,
+                                                bool wrap);
+
 } // namespace edita

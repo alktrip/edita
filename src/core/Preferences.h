@@ -192,6 +192,10 @@ struct Preferences
     bool smoothFont = false;
     bool whiteSpaceShow = false;
     bool eolShow = false;
+    // Ver › Mostrar símbolo › Caracteres no imprimibles (NBSP, ZWSP…) y de control y fines de línea
+    // Unicode (los C0, C1, NEL, LS y PS): npcShow="hide" ccShow="yes" en ScintillaPrimaryView
+    bool npcShow = false;
+    bool ccShow = true;
     bool indentGuideLine = true;
     bool wrap = false;
     WrapIndent wrapIndent = WrapIndent::Aligned;

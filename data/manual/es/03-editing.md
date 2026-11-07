@@ -245,5 +245,15 @@ descarga, por ejemplo). Para cada uno:
 
 ## Solo lectura y fin de línea
 
-{{actionReadOnly}} impide cambiar el documento. Las órdenes de fin de línea se describen en
+{{actionReadOnly}} impide cambiar el documento; {{actionReadOnlyAll}} lo hace con todos los abiertos
+y {{actionReadOnlyClearAll}} se lo quita a todos. Las órdenes de fin de línea se describen en
 [Fines de línea](02-files.md#fines-de-linea).
+
+## Sangría y selecciones largas
+
+- {{actionIndentIncrease}} y {{actionIndentDecrease}} (en **Editar › Sangría**) mueven la línea un
+  ancho de tabulación; con varias líneas seleccionadas, todas (como Tab y Mayús+Tab).
+- {{actionBeginEndSelect}} marca el inicio de una selección; ve a otro lugar (con el teclado, con
+  {{actionGoTo}} o con la barra de desplazamiento) y úsala otra vez: queda seleccionado todo lo que
+  hay en medio, sin arrastrar. {{actionBeginEndSelectColumn}} hace lo mismo con una selección
+  rectangular. Mientras espera el final, la orden se ve marcada.

@@ -104,7 +104,9 @@ or Shift) and:
 | {{actionShowEol}} | Shows the end of line characters (CR, LF). |
 | {{actionShowIndentGuides}} | Shows vertical lines at each indentation level. |
 | {{actionShowWrapSymbol}} | Marks the lines that continue on the next row. |
-| {{actionShowAll}} | Shows spaces, tabs and ends of line at once. |
+| {{actionShowNpc}} | Shows the invisible characters that are not normal spaces (no-break space, zero-width space, direction marks…) with their abbreviation in a box: NBSP, ZWSP, RLM… |
+| {{actionShowControlChars}} | Shows the control characters (NUL, ESC, the C1 ones…) and the Unicode ends of line (NEL, LS, PS) with their abbreviation; without it, they are not seen. On by default. |
+| {{actionShowAll}} | Shows all of the above at once: spaces, tabs, ends of line and non-printing and control characters. |
 | {{actionZoomIn}} / {{actionZoomOut}} | Makes the text larger or smaller (also Ctrl+mouse wheel). |
 | {{actionZoomRestore}} | Restores the normal size. |
 

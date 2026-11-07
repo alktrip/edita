@@ -2,7 +2,7 @@
 
 Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
 
-**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar, la [70](fase70.md), cinco páginas de Preferencias, y la [71](fase71.md), importar, el menú contextual y las macros). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
+**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar, la [70](fase70.md), cinco páginas de Preferencias, la [71](fase71.md), importar, el menú contextual y las macros, y la [74](fase74.md), las órdenes cortas). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
 
 ## Faltan, y tienen sentido en Linux
 
@@ -22,13 +22,13 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 ### Editar
 | Orden de N++ | Qué hace |
 |---|---|
-| Increase/Decrease Line Indent | En el menú (Tab y Mayús+Tab ya lo hacen en el editor) |
-| Begin/End Select (y en modo columna) | Marcar el inicio y el fin de una selección larga sin arrastrar |
+| ✅ Increase/Decrease Line Indent | En el menú (Tab y Mayús+Tab ya lo hacen en el editor) |
+| ✅ Begin/End Select (y en modo columna) | Marcar el inicio y el fin de una selección larga sin arrastrar |
 | ✅ Date Time (short, long, customized) | Insertar fecha y hora; el formato se elige en Preferencias |
 | ✅ Copy Current File Path/Filename/Dir. Path | En el menú Editar (hoy solo en el menú de la pestaña) |
 | ✅ Copy All Filenames / File Paths | De todos los documentos abiertos |
 | ✅ Multi-select: seleccionar la siguiente coincidencia (4 variantes ×2), deshacer la última añadida, saltar la actual | Selección múltiple como en VS Code (Ctrl+D) |
-| Read-Only for All Documents / Clear | Solo lectura para todos |
+| ✅ Read-Only for All Documents / Clear | Solo lectura para todos |
 | ✅ Search on Internet / Change Search Engine | Buscar la selección en la web (y página de Preferencias «Search Engine») |
 | ✅ Open File / Open Containing Folder (de la selección) | Abrir la ruta seleccionada |
 | ✅ Character Panel | Panel con la tabla ASCII y sus códigos |
@@ -40,7 +40,7 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 ### Buscar
 | Orden de N++ | Qué hace |
 |---|---|
-| Find characters in range… | Buscar caracteres por rango de código (no ASCII, de control…) |
+| ✅ Find characters in range… | Buscar caracteres por rango de código (no ASCII, de control…) |
 
 ### Ver
 | Orden de N++ | Qué hace |
@@ -51,7 +51,7 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | ✅ Synchronize Vertical/Horizontal Scrolling | Desplazar las dos vistas juntas |
 | ✅ Summary… | Líneas, palabras, caracteres, tamaño, fechas del documento |
 | ✅ Monitoring (tail -f) | Seguir un archivo de registro que crece |
-| Show Non-Printing Characters, Show Control Characters & Unicode EOL | Las opciones de símbolos nuevas de N++ 8.x |
+| ✅ Show Non-Printing Characters, Show Control Characters & Unicode EOL | Las opciones de símbolos nuevas de N++ 8.x |
 | Project Panel 1…3 | Los paneles de proyecto (`.workspace` de N++) |
 
 ### Configuración, Macro, Ayuda
@@ -61,11 +61,11 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | ✅ Modify Shortcut/Delete Macro… | Editar las macros guardadas (para el menú Ejecutar ya existe) |
 | ✅ Edit Popup ContextMenu | Personalizar el menú contextual (`contextMenu.xml`) |
 | ✅ Generate MD5/SHA-1/SHA-256/SHA-512 | Calcular hashes del texto, de archivos o de la selección |
-| Toggle macro record | Empezar y parar con una sola orden |
-| Function Parameters Previous/Next Hint | Recorrer las sobrecargas en la ayuda de parámetros |
+| ✅ Toggle macro record | Empezar y parar con una sola orden |
+| ✅ Function Parameters Previous/Next Hint | Recorrer las sobrecargas en la ayuda de parámetros |
 | ✅ Debug Info… | La versión, el sistema, los plugins y la configuración, para copiar en un reporte |
-| Command Line Arguments… | La ayuda de la línea de órdenes |
-| Home / Project Page / Online Manual / Forum | Enlaces (en Edita: el repositorio, las discusiones y los reportes) |
+| ✅ Command Line Arguments… | La ayuda de la línea de órdenes |
+| ✅ Home / Project Page / Online Manual / Forum | Enlaces (en Edita: el repositorio, las discusiones y los reportes) |
 
 ### Páginas de Preferencias que faltan
 | Página de N++ | Qué tiene |

@@ -80,4 +80,6 @@ con todo eso ya escrito: revísalo y añade qué estabas haciendo), **Copiar det
 {{actionDebugInfo}} reúne la versión, cómo se compiló, el sistema, la configuración y los plugins
 cargados, con un botón para copiarlo: pégalo en el reporte si te lo piden.
 
-Los errores y las sugerencias están en <https://github.com/alktrip/edita/issues>.
+Los errores y las sugerencias están en <https://github.com/alktrip/edita/issues>;
+{{actionHomePage}} abre la página del proyecto. {{actionCommandLineArguments}} muestra las opciones
+para abrir Edita desde una terminal (`edita -n10 archivo`, `--nosession`, `--multiInst`…).

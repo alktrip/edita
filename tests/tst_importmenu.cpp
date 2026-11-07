@@ -111,7 +111,8 @@ private slots:
         QVERIFY(ok);
         const std::unique_ptr<QMenu> menu(w->buildEditorContextMenu());
         const QStringList items = contents(menu.get());
-        QCOMPARE(items.mid(0, 6), (QStringList{"actionCut", "actionCopy", "actionPaste", "actionDelete", "actionSelectAll", "-"}));
+        QCOMPARE(items.mid(0, 8), (QStringList{"actionCut", "actionCopy", "actionPaste", "actionDelete", "actionSelectAll",
+                                               "actionBeginEndSelect", "actionBeginEndSelectColumn", "-"}));
         QVERIFY(items.contains(QStringLiteral(">Style all occurrences of token")));
         QVERIFY(items.contains(QStringLiteral("actionUpperCase")));
         QVERIFY(items.contains(QStringLiteral("actionOpenSelectedFile")));

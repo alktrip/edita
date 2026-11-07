@@ -73,6 +73,9 @@ public:
     void matchBraces();
     // En un archivo grande, solo si Rendimiento lo permite (allowBraceMatch)
     void setBraceMatchEnabled(bool on);
+    // Editar › Marcar inicio/fin de la selección (IDM_EDIT_BEGINENDSELECT[_COLUMNMODE])
+    void beginOrEndSelect(bool columnMode);
+    bool beginEndSelectStarted() const { return _beginSelectPosition >= 0; }
     // El menú del clic derecho en el texto (contextMenu.xml): quien lo muestra. Sin él, el de
     // Scintilla
     void setContextMenuHandler(std::function<void(const QPoint& globalPos)> handler) { _contextMenu = std::move(handler); }
@@ -110,6 +113,7 @@ private:
     sptr_t _markedLine = -1;
     sptr_t _markedDocument = 0;
     bool _lineNumberDynamicWidth = true;
+    sptr_t _beginSelectPosition = -1;
     bool _braceMatchEnabled = true;
     std::function<void(const QPoint&)> _contextMenu;
 };

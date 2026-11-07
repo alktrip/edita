@@ -107,7 +107,9 @@ Mayús) y:
 | {{actionShowEol}} | Muestra los caracteres de fin de línea (CR, LF). |
 | {{actionShowIndentGuides}} | Muestra líneas verticales en cada nivel de sangría. |
 | {{actionShowWrapSymbol}} | Marca las líneas que siguen en la fila siguiente. |
-| {{actionShowAll}} | Muestra espacios, tabulaciones y fines de línea a la vez. |
+| {{actionShowNpc}} | Muestra los caracteres invisibles que no son espacios normales (espacio de no separación, espacio de ancho cero, marcas de dirección…) con su abreviatura en un recuadro: NBSP, ZWSP, RLM… |
+| {{actionShowControlChars}} | Muestra los caracteres de control (NUL, ESC, los C1…) y los fines de línea Unicode (NEL, LS, PS) con su abreviatura; sin ella, no se ven. De serie, sí. |
+| {{actionShowAll}} | Muestra todo lo anterior a la vez: espacios, tabulaciones, fines de línea y caracteres no imprimibles y de control. |
 | {{actionZoomIn}} / {{actionZoomOut}} | Agranda o achica el texto (también Ctrl+rueda del ratón). |
 | {{actionZoomRestore}} | Vuelve al tamaño normal. |
 

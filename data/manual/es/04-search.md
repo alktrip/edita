@@ -142,6 +142,13 @@ opciones; dentro, cada archivo con sus líneas, y el texto encontrado resaltado.
 El probador usa el mismo motor que el diálogo Buscar, así que lo que coincide aquí coincide igual
 en el documento.
 
+## Buscar caracteres en un rango
+
+{{actionFindCharsInRange}} busca el siguiente carácter que no es ASCII (útil para encontrar comillas
+tipográficas o espacios raros en un código), el siguiente ASCII o uno de un rango de códigos
+Unicode que elijas, hacia arriba o hacia abajo y dando la vuelta al documento si quieres. El que
+encuentra queda seleccionado; **Buscar** otra vez va al siguiente.
+
 ## Ir a
 
 | Orden | Qué hace |

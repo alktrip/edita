@@ -168,6 +168,8 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolAttr(kView, "smoothFont", p.smoothFont);
     r.boolAttr(kView, "whiteSpaceShow", p.whiteSpaceShow);
     r.boolAttr(kView, "eolShow", p.eolShow);
+    r.boolAttr(kView, "npcShow", p.npcShow);
+    r.boolAttr(kView, "ccShow", p.ccShow);
     r.boolAttr(kView, "indentGuideLine", p.indentGuideLine);
     r.boolAttr(kView, "Wrap", p.wrap);
     r.boolAttr(kView, "wrapSymbolShow", p.wrapSymbolShow);
@@ -418,6 +420,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.attr(kView, "isChangeHistoryEnabled", p.changeHistory);
     w.showHide(kView, "whiteSpaceShow", p.whiteSpaceShow);
     w.showHide(kView, "eolShow", p.eolShow);
+    w.showHide(kView, "npcShow", p.npcShow);
+    w.attr(kView, "ccShow", p.ccShow);
     w.attr(kView, "smoothFont", p.smoothFont);
     w.attr(kView, "lineCopyCutWithoutSelection", p.lineCopyCutWithoutSelection);
     w.attr(kView, "multiSelection", p.multiSelection);

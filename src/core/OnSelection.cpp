@@ -161,4 +161,52 @@ std::pair<qsizetype, qsizetype> delimiterRange(std::string_view text, std::size_
     return first >= 0 && last >= 0 ? std::pair{first, last} : std::pair<qsizetype, qsizetype>{-1, -1};
 }
 
+std::pair<qsizetype, qsizetype> findCharInRange(const QString& text, qsizetype from, char32_t low, char32_t high, bool forward,
+                                                bool wrap)
+{
+    // El carácter (con los pares sustitutos) que empieza en i
+    auto at = [&text](qsizetype i, qsizetype* length) -> char32_t {
+        const QChar c = text.at(i);
+        if (c.isHighSurrogate() && i + 1 < text.size() && text.at(i + 1).isLowSurrogate()) {
+            *length = 2;
+            return QChar::surrogateToUcs4(c, text.at(i + 1));
+        }
+        *length = 1;
+        return c.unicode();
+    };
+    auto inRange = [&](char32_t code) { return code >= low && code <= high; };
+    const qsizetype n = text.size();
+    from = std::clamp<qsizetype>(from, 0, n);
+    auto scanForward = [&](qsizetype begin, qsizetype end) -> std::pair<qsizetype, qsizetype> {
+        for (qsizetype i = begin; i < end;) {
+            qsizetype length = 1;
+            if (inRange(at(i, &length)))
+                return {i, length};
+            i += length;
+        }
+        return {-1, 0};
+    };
+    auto scanBackward = [&](qsizetype begin, qsizetype end) -> std::pair<qsizetype, qsizetype> {
+        // De end-1 hacia begin (saltando la mitad baja de un par)
+        for (qsizetype i = end - 1; i >= begin; --i) {
+            if (text.at(i).isLowSurrogate() && i > 0 && text.at(i - 1).isHighSurrogate())
+                continue;
+            qsizetype length = 1;
+            if (inRange(at(i, &length)))
+                return {i, length};
+        }
+        return {-1, 0};
+    };
+    if (forward) {
+        auto found = scanForward(from, n);
+        if (found.first < 0 && wrap)
+            found = scanForward(0, from);
+        return found;
+    }
+    auto found = scanBackward(0, from);
+    if (found.first < 0 && wrap)
+        found = scanBackward(from, n);
+    return found;
+}
+
 } // namespace edita

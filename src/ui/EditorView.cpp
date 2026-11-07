@@ -20,6 +20,10 @@
 
 #include <QContextMenuEvent>
 
+namespace {
+#include "ui/NonPrintingChars.inc"
+} // namespace
+
 #include "syntax/DesktopFonts.h"
 #include "syntax/SyntaxStyler.h"
 #include "ui/EditCommands.h"
@@ -128,6 +132,23 @@ void EditorView::applyBaseConfiguration()
         updateLineNumberWidth();
     });
     applyPreferences(Preferences{});
+}
+
+void EditorView::beginOrEndSelect(bool columnMode)
+{
+    // ScintillaEditView::beginOrEndSelect: la primera vez marca el inicio; la segunda selecciona
+    // de ahí al cursor (en columna, rectangular)
+    const sptr_t caret = sci(SCI_GETCURRENTPOS);
+    if (_beginSelectPosition < 0) {
+        _beginSelectPosition = caret;
+        return;
+    }
+    sci(SCI_CHANGESELECTIONMODE, columnMode ? SC_SEL_RECTANGLE : SC_SEL_STREAM);
+    if (columnMode)
+        sci(SCI_SETANCHOR, static_cast<uptr_t>(_beginSelectPosition));
+    else
+        sci(SCI_SETSEL, static_cast<uptr_t>(_beginSelectPosition), caret);
+    _beginSelectPosition = -1;
 }
 
 void EditorView::contextMenuEvent(QContextMenuEvent* event)
@@ -330,6 +351,23 @@ void EditorView::applyPreferences(const Preferences& p)
     // Símbolos de espacios y fin de línea
     sci(SCI_SETVIEWWS, p.whiteSpaceShow ? SCWS_VISIBLEALWAYS : SCWS_INVISIBLE);
     sci(SCI_SETVIEWEOL, p.eolShow ? 1 : 0);
+    // ScintillaEditView::showNpc y showCcUniEol: su abreviatura en un recuadro, o nada. Los de
+    // control, ocultos, son un espacio de ancho cero (como N++)
+    for (const NonPrintingChar& c : kControlChars) {
+        if (!*c.utf8)
+            continue; // NUL: Scintilla ya lo muestra
+        sends(SCI_SETREPRESENTATION, reinterpret_cast<uptr_t>(c.utf8), p.ccShow ? c.abbreviation : "\xE2\x80\x8B");
+        sci(SCI_SETREPRESENTATIONAPPEARANCE, reinterpret_cast<uptr_t>(c.utf8),
+            p.ccShow ? SC_REPRESENTATION_BLOB : SC_REPRESENTATION_PLAIN);
+    }
+    for (const NonPrintingChar& c : kNonPrintingChars) {
+        if (p.npcShow) {
+            sends(SCI_SETREPRESENTATION, reinterpret_cast<uptr_t>(c.utf8), c.abbreviation);
+            sci(SCI_SETREPRESENTATIONAPPEARANCE, reinterpret_cast<uptr_t>(c.utf8), SC_REPRESENTATION_BLOB);
+        } else {
+            sci(SCI_CLEARREPRESENTATION, reinterpret_cast<uptr_t>(c.utf8));
+        }
+    }
 
     // Cursor ("Caret"): ancho 0 = bloque
     if (p.caretWidth == 0) {

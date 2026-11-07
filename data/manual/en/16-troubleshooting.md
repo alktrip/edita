@@ -76,4 +76,6 @@ of the three.
 {{actionDebugInfo}} gathers the version, how it was built, the system, the configuration and the
 loaded plugins, with a button to copy it: paste it in the report if you are asked for it.
 
-Errors and suggestions are at <https://github.com/alktrip/edita/issues>.
+Errors and suggestions are at <https://github.com/alktrip/edita/issues>; {{actionHomePage}}
+opens the page of the project. {{actionCommandLineArguments}} shows the options to open Edita from a
+terminal (`edita -n10 file`, `--nosession`, `--multiInst`…).

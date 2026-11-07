@@ -236,6 +236,9 @@ public:
     // Configuración › Importar: copia los plugins (.so o paquetes .zip) y los temas; cuántos
     int importPlugins(const QStringList& files);
     int importThemes(const QStringList& files);
+    // Buscar › Buscar caracteres en un rango: el siguiente (o el anterior) con código Unicode entre
+    // `low` y `high`, seleccionado. false si no hay
+    bool findCharInRange(char32_t low, char32_t high, bool forward, bool wrap);
     // Doble clic en un enlace (URL_INDIC): lo abre. false si en esa posición no hay enlace
     bool openLinkAt(sptr_t position);
     // Ctrl + doble clic: selecciona lo que hay entre los delimitadores de Preferencias ›
@@ -566,6 +569,7 @@ private:
     void populateLanguageMenu();
     void formatBeforeSave(BufferId id); // Preferencias › Formato › Al guardar
     void loadSpellDictionaries();
+    void refreshBeginEndSelect(bool column);
     void scheduleSpelling(EditorPane* pane);
     void checkSpelling(EditorPane* pane);
     void addExternalLanguageActions(); // los de los plugins de lexer, antes de «Lenguaje de usuario»
@@ -668,6 +672,7 @@ private:
     QStringList _spellCodes;                         // los diccionarios cargados
     QTimer* _spellTimer[2] = {};
     std::map<QString, std::array<bool, 256>> _spellStyles; // los estilos que se revisan, por lenguaje
+    class FindCharsDialog* _findCharsDialog = nullptr;
     bool _discardOnClose = false; // cerrar sin preguntar por los cambios (al mandarlo a la papelera)
     QSplitter* _splitter = nullptr;
     EditorPane* _mainPane = nullptr;

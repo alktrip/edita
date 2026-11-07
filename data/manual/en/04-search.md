@@ -140,6 +140,13 @@ its options; inside, each file with its matching lines, and the matched text hig
 
 The tester uses the same engine as the Find dialog, so what matches here matches in the document.
 
+## Find characters in range
+
+{{actionFindCharsInRange}} finds the next character that is not ASCII (useful to find typographic
+quotes or odd spaces in code), the next ASCII one, or one of a range of Unicode codes you choose,
+up or down and wrapping around the document if you want. The one found is selected; **Find** again
+goes to the next one.
+
 ## Go to
 
 | Command | What it does |

@@ -24,6 +24,7 @@
 #include "core/CrashReport.h"
 #include "core/DateTimeFormat.h"
 #include "core/OnSelection.h"
+#include "core/CommandLine.h"
 #include "core/ContextMenuXml.h"
 #include "core/Formatters.h"
 #include "lsp/LspServers.h"
@@ -37,6 +38,7 @@
 #include "ui/DocStatusBar.h"
 #include "ui/DocTabBar.h"
 #include "ui/HashDialog.h"
+#include "ui/FindCharsDialog.h"
 #include "ui/EditPanels.h"
 #include "ui/UrlLinks.h"
 #include "ui/SpellCheck.h"
@@ -237,6 +239,12 @@ int shortcutOnlyCommandFor(const QString& actionName)
         // Fase 71 (Configuración › Importar, el menú contextual, Macro)
         {"actionImportPlugins", 48005}, {"actionImportThemes", 48006}, {"actionEditContextMenu", 48018},
         {"actionEditMacros", 48016},
+        // Fase 74
+        {"actionBeginEndSelect", 42020}, {"actionBeginEndSelectColumn", 42089}, {"actionReadOnlyAll", 42102},
+        {"actionReadOnlyClearAll", 42103}, {"actionShowNpc", 44130}, {"actionShowControlChars", 44131},
+        {"actionFindCharsInRange", 43052}, {"actionCommandLineArguments", 47010}, {"actionHomePage", 47001},
+        {"actionUserManual", 47003}, {"actionToggleMacroRecord", 50005}, {"actionFunctionHintPrevious", 50010},
+        {"actionFunctionHintNext", 50011},
         {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionCheckForUpdates", 47006},          {"actionEol0", 45001},
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
         {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
@@ -322,6 +330,7 @@ int nppCommandFor(const char* actionName)
         {"actionMultiSelectNextWord", 42096}, {"actionMultiSelectNextCaseWord", 42097}, {"actionMultiSelectUndo", 42098},
         {"actionMultiSelectSkip", 42099},
         {"actionRedactSelection", 42106}, // IDM_EDIT_REDACT_SELECTION (fase 69)
+        {"actionIndentIncrease", 42008}, {"actionIndentDecrease", 42009}, // IDM_EDIT_INS_TAB, RMV_TAB (fase 74)
         {"actionJoinLines", 42013},   {"actionLineUp", 42014},     {"actionLineDown", 42015},
         {"actionUpperCase", 42016},   {"actionLowerCase", 42017},  {"actionTrimTrailing", 42024},
         {"actionFindNext", 43002},    {"actionFindPrevious", 43010}, {"actionFindSelectedNext", 43014},
@@ -1086,6 +1095,15 @@ void MainWindow::createMenus()
     addAction(edit, tr("&Paste"), "actionPaste", QKeySequence::Paste, sci(SCI_PASTE));
     addAction(edit, tr("&Delete"), "actionDelete", QKeySequence(), sci(SCI_CLEAR));
     addAction(edit, tr("Select A&ll"), "actionSelectAll", QKeySequence::SelectAll, sci(SCI_SELECTALL));
+    // IDM_EDIT_BEGINENDSELECT[_COLUMNMODE]: marcada mientras se espera el final; la otra, sin poder usarse
+    for (const bool column : {false, true}) {
+        QAction* select = addAction(edit, column ? tr("Begin/End Select in Column &Mode") : tr("&Begin/End Select"),
+                                    column ? "actionBeginEndSelectColumn" : "actionBeginEndSelect", QKeySequence(), [this, column] {
+                                        editor()->beginOrEndSelect(column);
+                                        refreshBeginEndSelect(column);
+                                    });
+        select->setCheckable(true);
+    }
     edit->addSeparator();
     // Editar › Insertar (IDM_EDIT_INSERT_DATETIME_*)
     QMenu* insert = edit->addMenu(tr("I&nsert"));
@@ -1121,6 +1139,25 @@ void MainWindow::createMenus()
         copyText(openDocumentNames(true).join(QLatin1Char('\n')));
     });
     edit->addSeparator();
+    // Editar › Sangría (IDM_EDIT_INS_TAB, IDM_EDIT_RMV_TAB): con varias líneas o selecciones, como
+    // Tab y Mayús+Tab; con una, un ancho de tabulación más o menos (como N++)
+    QMenu* indent = edit->addMenu(tr("&Indent"));
+    for (const bool forward : {true, false}) {
+        addAction(indent, forward ? tr("&Increase Line Indent") : tr("&Decrease Line Indent"),
+                  forward ? "actionIndentIncrease" : "actionIndentDecrease", QKeySequence(), [this, forward] {
+                      EditorView* v = editor();
+                      const sptr_t start = v->sci(SCI_GETSELECTIONSTART);
+                      const sptr_t end = v->sci(SCI_GETSELECTIONEND);
+                      const sptr_t line = v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(start));
+                      if (v->sci(SCI_GETSELECTIONS) > 1 || line != v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(end))) {
+                          v->sci(forward ? SCI_TAB : SCI_BACKTAB);
+                          return;
+                      }
+                      const sptr_t width = v->sci(SCI_GETTABWIDTH);
+                      const sptr_t current = v->sci(SCI_GETLINEINDENTATION, static_cast<uptr_t>(line));
+                      setLineIndent(*v, line, std::max<sptr_t>(0, current + (forward ? width : -width)));
+                  });
+    }
     // Operaciones con líneas (Editar > Line Operations de N++)
     QMenu* lines = edit->addMenu(tr("&Line Operations"));
     addAction(lines, tr("&Duplicate Current Line"), "actionDuplicateLine", QKeySequence(Qt::CTRL | Qt::Key_D), sci(SCI_LINEDUPLICATE));
@@ -1343,6 +1380,15 @@ void MainWindow::createMenus()
             buf->setUserReadOnly(checked);
     });
     _readOnlyAction->setCheckable(true);
+    // IDM_EDIT_SETREADONLYFORALLDOCS, IDM_EDIT_CLEARREADONLYFORALLDOCS
+    for (const bool on : {true, false}) {
+        addAction(edit, on ? tr("Read-Only for &All Documents") : tr("Clear Read-Only for All Doc&uments"),
+                  on ? "actionReadOnlyAll" : "actionReadOnlyClearAll", QKeySequence(), [this, on] {
+                      for (std::size_t i = 0; i < _documents.count(); ++i)
+                          _documents.bufferAt(i)->setUserReadOnly(on);
+                      refreshMenuChecks();
+                  });
+    }
 
     createSearchMenu();
 
@@ -1434,6 +1480,8 @@ void MainWindow::createMenus()
         {&Preferences::eolShow, {tr("Show &End of Line"), "actionShowEol"}},
         {&Preferences::indentGuideLine, {tr("Show &Indent Guide"), "actionShowIndentGuides"}},
         {&Preferences::wrapSymbolShow, {tr("Show &Wrap Symbol"), "actionShowWrapSymbol"}},
+        {&Preferences::npcShow, {tr("Show &Non-Printing Characters"), "actionShowNpc"}},
+        {&Preferences::ccShow, {tr("Show &Control Characters && Unicode EOL"), "actionShowControlChars"}},
     };
     for (const auto& [option, label] : symbolOptions) {
         QAction* action = addAction(symbols, label.first, label.second, QKeySequence(),
@@ -1445,6 +1493,8 @@ void MainWindow::createMenus()
         Preferences p = _prefs;
         p.whiteSpaceShow = checked;
         p.eolShow = checked;
+        p.npcShow = checked; // como IDM_VIEW_ALL_CHARACTERS
+        p.ccShow = checked;
         setPreferences(p);
     });
     _showAllAction->setCheckable(true);
@@ -1663,6 +1713,14 @@ void MainWindow::createMenus()
     });
     addAction(help, tr("&Debug Info…"), "actionDebugInfo", QKeySequence(), [this] { showDebugInfo(); });
     help->addSeparator();
+    // IDM_CMDLINEARGUMENTS e IDM_HOMESWEETHOME (el sitio de Edita es su repositorio)
+    addAction(help, tr("Command &Line Arguments…"), "actionCommandLineArguments", QKeySequence(), [this] {
+        _prompter->inform(this, tr("Command Line Arguments"), commandLineHelp());
+    });
+    addAction(help, tr("Edita &Home Page"), "actionHomePage", QKeySequence(), [this] {
+        _openUrl(QUrl(QStringLiteral("https://github.com/alktrip/edita")));
+    });
+    help->addSeparator();
     QAction* about = help->addAction(tr("&About %1").arg(QString::fromUtf8(kAppName)), this, [this] {
         QMessageBox box(this);
         box.setObjectName(QStringLiteral("aboutBox"));
@@ -1676,6 +1734,20 @@ void MainWindow::createMenus()
     });
     about->setObjectName(QStringLiteral("actionAbout"));
     help->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
+    // Órdenes sin menú, solo para darles un atajo (las «shortcut only» de N++)
+    const std::tuple<QString, const char*, std::function<void()>> shortcutOnly[] = {
+        {tr("Toggle Macro Recording"), "actionToggleMacroRecord", [this] { toggleMacroRecording(); }},
+        {tr("Function Parameters Previous Hint"), "actionFunctionHintPrevious",
+         [this] { autoCompletion(_activePane)->callTipClick(1); }},
+        {tr("Function Parameters Next Hint"), "actionFunctionHintNext", [this] { autoCompletion(_activePane)->callTipClick(2); }},
+    };
+    for (const auto& [text, name, slot] : shortcutOnly) {
+        auto* action = new QAction(text, this);
+        action->setObjectName(QString::fromLatin1(name));
+        action->setProperty("defaultShortcut", QKeySequence());
+        connect(action, &QAction::triggered, this, slot);
+        QWidget::addAction(action);
+    }
     createToolBar();
     applyShortcuts();
 }
@@ -1874,6 +1946,15 @@ std::vector<ShortcutEntry> MainWindow::shortcutEntries() const
     for (QAction* top : menuBar()->actions()) {
         if (top->menu())
             walk(top->menu(), plainMenuText(top->text()));
+    }
+    // Las que no están en un menú (solo atajo)
+    for (QAction* action : actions()) {
+        const QString name = action->objectName();
+        if (!name.startsWith(QLatin1String("action")) || seen.contains(action))
+            continue;
+        seen.insert(action);
+        entries.push_back({Kind::Menu, name, plainMenuText(action->text()), tr("Shortcut only"), combos(action->shortcut()),
+                           combos(action->property("defaultShortcut").value<QKeySequence>())});
     }
     // Macros
     for (std::size_t i = 0; i < _savedMacros.size(); ++i) {
@@ -3444,6 +3525,19 @@ void MainWindow::createSearchMenu()
     });
     add(tr("Find in &Files…"), "actionFindInFiles", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F),
         [this] { showFindDialog(Tab::FindInFiles); });
+    add(tr("Find Characters in &Range…"), "actionFindCharsInRange", QKeySequence(), [this] {
+        if (!_findCharsDialog) {
+            _findCharsDialog = new FindCharsDialog(this);
+            connect(_findCharsDialog, &FindCharsDialog::findRequested, this, [this] {
+                if (!findCharInRange(_findCharsDialog->low(), _findCharsDialog->high(), _findCharsDialog->forward(),
+                                     _findCharsDialog->wrap()))
+                    statusBar()->showMessage(tr("Find Characters in Range: no character in that range"), 5000);
+            });
+        }
+        _findCharsDialog->show();
+        _findCharsDialog->raise();
+        _findCharsDialog->activateWindow();
+    });
     add(tr("Find &Next"), "actionFindNext", QKeySequence(Qt::Key_F3), [this] {
         SearchOptions o = _findDialog && !_findBarUsedLast ? _findDialog->options() : _lastOptions;
         o.searchUp = false;
@@ -4156,6 +4250,7 @@ void MainWindow::applyPreferences()
     options.changeHistory = static_cast<ChangeHistoryMode>(std::clamp(p.changeHistory, 0, 3));
     options.systemMonospaceFont = p.systemMonospaceFont;
     options.sqlBackslashEscapes = p.sqlBackslashEscapes;
+    options.showControlChars = p.ccShow;
     _syntax.setOptions(options);
     loadSpellDictionaries();
     _spellStyles.clear();
@@ -4183,7 +4278,7 @@ void MainWindow::applyPreferences()
 
     for (const auto& [option, action] : _viewOptionActions)
         action->setChecked(p.*option);
-    _showAllAction->setChecked(p.whiteSpaceShow && p.eolShow);
+    _showAllAction->setChecked(p.whiteSpaceShow && p.eolShow && p.npcShow && p.ccShow);
     rebuildRecentFilesMenu();
     updateBackupTimer();
 }
@@ -6802,6 +6897,42 @@ int MainWindow::importThemes(const QStringList& files)
     if (!imported.isEmpty())
         statusBar()->showMessage(tr("Imported themes: %1").arg(imported.join(QStringLiteral(", "))), 5000);
     return static_cast<int>(imported.size());
+}
+
+void MainWindow::refreshBeginEndSelect(bool column)
+{
+    // N++: la orden empezada, marcada; la otra no se puede usar hasta terminar
+    QAction* used = findChild<QAction*>(column ? QStringLiteral("actionBeginEndSelectColumn") : QStringLiteral("actionBeginEndSelect"));
+    QAction* other = findChild<QAction*>(column ? QStringLiteral("actionBeginEndSelect") : QStringLiteral("actionBeginEndSelectColumn"));
+    const bool started = editor()->beginEndSelectStarted();
+    if (used)
+        used->setChecked(started);
+    if (other)
+        other->setEnabled(!started);
+}
+
+bool MainWindow::findCharInRange(char32_t low, char32_t high, bool forward, bool wrap)
+{
+    // FindCharsInRangeDlg::findCharInRange: desde la selección; lo encontrado queda seleccionado
+    EditorView* view = editor();
+    const bool utf8 = view->sci(SCI_GETCODEPAGE) == SC_CP_UTF8;
+    const std::string bytes = _documents.text(currentBuffer());
+    const QString text = utf8 ? QString::fromUtf8(bytes) : QString::fromLatin1(bytes);
+    const sptr_t fromByte = forward ? view->sci(SCI_GETSELECTIONEND) : view->sci(SCI_GETSELECTIONSTART);
+    auto unitsOf = [&](sptr_t byte) {
+        return utf8 ? QString::fromUtf8(bytes.data(), static_cast<qsizetype>(byte)).size() : static_cast<qsizetype>(byte);
+    };
+    const auto [at, length] = edita::findCharInRange(text, unitsOf(fromByte), low, high, forward, wrap);
+    if (at < 0)
+        return false;
+    auto bytesOf = [&](qsizetype units) {
+        return utf8 ? static_cast<sptr_t>(QStringView(text).left(units).toUtf8().size()) : static_cast<sptr_t>(units);
+    };
+    const sptr_t start = bytesOf(at);
+    const sptr_t end = bytesOf(at + length);
+    view->sci(SCI_SETSEL, static_cast<uptr_t>(start), end);
+    view->sci(SCI_SCROLLCARET);
+    return true;
 }
 
 QString MainWindow::debugInfo() const
