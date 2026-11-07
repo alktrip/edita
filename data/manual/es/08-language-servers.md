@@ -71,7 +71,7 @@ documentos abiertos; pulsa uno para ir a él.
 | Orden | Qué hace |
 |---|---|
 | {{actionRenameSymbol}} | Pide un nombre nuevo y renombra el símbolo en todos los archivos del proyecto. Los abiertos se cambian en su sitio; los demás se abren sin guardar, para revisarlos. Cada archivo se deshace en un solo paso. |
-| {{actionFormatDocument}} | Da formato al documento (o a la selección, si el servidor puede) con la sangría del documento. |
+| {{actionFormatDocument}} | Da formato al documento (o a la selección, si el servidor puede) con la sangría del documento, si el lenguaje no tiene una herramienta de formato instalada (ver [Dar formato](03-editing.md#dar-formato)). |
 | {{actionCodeActions}} | Los arreglos y refactorizaciones que ofrece el servidor para la línea o la selección (añadir un include que falta, corregir un nombre mal escrito, extraer una función…). Las preferidas salen primero. |
 
 Cuando hay acciones para la línea del cursor, aparece una **bombilla** en el margen; púlsala para

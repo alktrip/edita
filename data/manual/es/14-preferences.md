@@ -28,6 +28,7 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 | Buscador | El buscador de **Editar › Sobre la selección › Buscar en internet**. |
 | Varios | Detección de cambios hechos por otros programas, detección de la codificación, juego de caracteres por defecto, la shell de la terminal y la búsqueda de versiones nuevas de Edita al arrancar. |
 | Servidores de lenguaje | Activarlos o desactivarlos, las pistas al final de las líneas y la orden de cada servidor. |
+| Formato | Dar formato al guardar y la herramienta de formato de cada lenguaje (ver [Dar formato](03-editing.md#dar-formato)). |
 
 ## Asignación de atajos
 

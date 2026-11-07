@@ -18,6 +18,8 @@
 
 #include "ui/EditCommands.h"
 
+#include "core/LineDiff.h"
+
 #include <algorithm>
 #include <cctype>
 #include <string_view>
@@ -1338,6 +1340,64 @@ void columnInsert(ScintillaEditBase& view, const std::vector<std::string>& texts
         view.send(SCI_GOTOPOS, U(caret));
     }
     view.send(SCI_ENDUNDOACTION);
+}
+
+namespace {
+
+// Las líneas con su fin de línea (así también cuenta añadir o quitar el último salto)
+std::vector<std::string_view> linesWithEnds(std::string_view text)
+{
+    std::vector<std::string_view> lines;
+    std::size_t start = 0;
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == '\n' || text[i] == '\r') {
+            if (text[i] == '\r' && i + 1 < text.size() && text[i + 1] == '\n')
+                ++i;
+            lines.push_back(text.substr(start, i + 1 - start));
+            start = i + 1;
+        }
+    }
+    if (start < text.size())
+        lines.push_back(text.substr(start));
+    return lines;
+}
+
+} // namespace
+
+int replaceChangedLines(ScintillaEditBase& view, std::string_view text)
+{
+    const auto length = view.send(SCI_GETLENGTH);
+    std::string current(static_cast<std::size_t>(length), '\0');
+    if (length > 0)
+        view.send(SCI_GETTEXT, static_cast<uptr_t>(length + 1), reinterpret_cast<sptr_t>(current.data()));
+    if (current == text)
+        return 0;
+    const std::vector<std::string_view> oldLines = linesWithEnds(current);
+    const std::vector<std::string_view> newLines = linesWithEnds(text);
+    bool complete = true;
+    std::vector<LineChange> changes = diffLines(oldLines, newLines, 20000, &complete);
+    view.send(SCI_BEGINUNDOACTION);
+    if (!complete) { // demasiado distintos: todo de una vez
+        view.send(SCI_SETTARGETRANGE, 0, length);
+        view.send(SCI_REPLACETARGET, static_cast<uptr_t>(text.size()), reinterpret_cast<sptr_t>(text.data()));
+        view.send(SCI_ENDUNDOACTION);
+        return 1;
+    }
+    // Dónde empieza cada línea del texto de ahora (y el final)
+    std::vector<sptr_t> starts{0};
+    for (const std::string_view line : oldLines)
+        starts.push_back(starts.back() + static_cast<sptr_t>(line.size()));
+    for (auto it = changes.rbegin(); it != changes.rend(); ++it) {
+        const auto first = static_cast<std::size_t>(it->oldLine);
+        const auto last = static_cast<std::size_t>(it->oldLine + it->oldCount);
+        std::string replacement;
+        for (int i = it->line; i < it->line + it->count; ++i)
+            replacement += newLines[static_cast<std::size_t>(i)];
+        view.send(SCI_SETTARGETRANGE, static_cast<uptr_t>(starts[first]), starts[last]);
+        view.send(SCI_REPLACETARGET, replacement.size(), reinterpret_cast<sptr_t>(replacement.c_str()));
+    }
+    view.send(SCI_ENDUNDOACTION);
+    return static_cast<int>(changes.size());
 }
 
 } // namespace edita

@@ -382,6 +382,8 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolText("EditaInlayHints", p.inlayHints);
     r.boolText("EditaGitBlameInline", p.gitBlameInline);
     p.lspServers = r.text("EditaLspServers");
+    r.boolText("EditaFormatOnSave", p.formatOnSave);
+    p.formatters = r.text("EditaFormatters");
     r.boolText("EditaWelcomePage", p.showWelcome);
     return p;
 }
@@ -553,6 +555,8 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.text("EditaInlayHints", yesNo(p.inlayHints));
     w.text("EditaGitBlameInline", yesNo(p.gitBlameInline));
     w.text("EditaLspServers", p.lspServers);
+    w.text("EditaFormatOnSave", yesNo(p.formatOnSave));
+    w.text("EditaFormatters", p.formatters);
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }
 

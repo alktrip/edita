@@ -219,6 +219,10 @@ public:
     void redactSelection(bool bullet);
     // Buscar la selección (o la palabra del cursor) en internet; false sin nada que buscar
     bool searchOnInternet();
+    // Editar › Formatear documento con la herramienta del lenguaje (core/Formatters). NoTool si
+    // no hay ninguna para ese lenguaje (entonces va el servidor de lenguaje)
+    enum class FormatOutcome { NoTool, Formatted, Unchanged, Failed };
+    FormatOutcome formatWithTool(EditorView& view, BufferId id, bool useSelection, QString* error = nullptr);
     // contextMenu.xml del usuario (lo crea con el de serie si no está)
     QString contextMenuPath() const;
     // El menú del clic derecho en el editor, según contextMenu.xml (el que llama lo borra)
@@ -554,6 +558,7 @@ private:
     QMenu* createLanguageMenu();
     // Sus lenguajes, agrupados por inicial o no (langMenuCompact) y sin los ocultos
     void populateLanguageMenu();
+    void formatBeforeSave(BufferId id); // Preferencias › Formato › Al guardar
     void addExternalLanguageActions(); // los de los plugins de lexer, antes de «Lenguaje de usuario»
     // Lo que depende del documento de la vista: caracteres de palabra, paréntesis y enlaces
     // (con las limitaciones de los archivos grandes)

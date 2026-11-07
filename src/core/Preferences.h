@@ -152,6 +152,11 @@ struct Preferences
     bool gitExplorer = true;   // el estado de Git en el explorador de carpetas
     bool gitBlameInline = true; // quién cambió la línea del cursor, al final de la línea
     QString lspServers;    // «id=orden» por línea (vacío: las órdenes conocidas)
+    // Formatear con herramientas externas (core/Formatters; no existe en N++):
+    // <GUIConfig name="EditaFormatOnSave">no</GUIConfig> y <GUIConfig name="EditaFormatters">
+    // con «id=orden» por línea (vacío: las conocidas; «off», ninguna)
+    bool formatOnSave = false;
+    QString formatters;
     // Página de inicio mientras el único documento es uno nuevo y vacío (EditaWelcomePage)
     bool showWelcome = true;
     // <GUIConfig name="multiInst" setting="0" …/>

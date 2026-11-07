@@ -70,7 +70,7 @@ one to go to it.
 | Command | What it does |
 |---|---|
 | {{actionRenameSymbol}} | Asks for a new name and renames the symbol in every file of the project. Open files are changed in place; the others are opened unsaved, to review them. Each file is undone in one step. |
-| {{actionFormatDocument}} | Formats the document (or the selection, if the server can) with the indentation of the document. |
+| {{actionFormatDocument}} | Formats the document (or the selection, if the server can) with the indentation of the document, when the language has no formatting tool installed (see [Formatting](03-editing.md#formatting)). |
 | {{actionCodeActions}} | The fixes and refactorings the server offers for the line or the selection (add a missing include, fix a spelling, extract a function…). The preferred ones are listed first. |
 
 When there are actions for the line of the cursor, a **lightbulb** appears in the margin; click it

@@ -85,6 +85,7 @@ private:
     void buildSearchEngine();
     void buildMisc();
     void buildLanguageServers();
+    void buildFormatting();
     void updateEnabledState();
 
     QListWidget* _categories;
@@ -168,6 +169,8 @@ private:
     QCheckBox* _lspEnabled = nullptr;
     QCheckBox* _inlayHints = nullptr;
     QTableWidget* _lspServers = nullptr;
+    QCheckBox* _formatOnSave = nullptr;
+    QTableWidget* _formatters = nullptr;
     QCheckBox* _scrollBarMarks = nullptr;
     QComboBox* _changeHistory = nullptr;
     // Documento nuevo y directorio

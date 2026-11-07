@@ -41,6 +41,8 @@ add_library(edita_core STATIC
     core/DateTimeFormat.cpp
     core/DateTimeFormat.h
     core/ContextMenuXml.cpp
+    core/Formatters.cpp
+    core/Formatters.h
     core/ContextMenuXml.h
     core/NppCommandNames.inc
     core/OnSelection.cpp

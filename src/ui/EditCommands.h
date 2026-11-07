@@ -23,6 +23,7 @@
 #include <ScintillaEditBase.h>
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -163,5 +164,10 @@ std::size_t columnInsertCount(ScintillaEditBase& view);
 // inserta en la columna del cursor rellenando con espacios las líneas más cortas.
 // Una sola acción de deshacer.
 void columnInsert(ScintillaEditBase& view, const std::vector<std::string>& texts);
+
+// Sustituye el texto del documento por `text` cambiando solo los bloques de líneas distintos
+// (LineDiff), de abajo arriba y en un paso de deshacer: los marcadores, los plegados y el
+// historial de cambios de las demás líneas se quedan. Devuelve cuántos bloques cambió
+int replaceChangedLines(ScintillaEditBase& view, std::string_view text);
 
 } // namespace edita

@@ -25,6 +25,8 @@
 #include "core/DateTimeFormat.h"
 #include "core/OnSelection.h"
 #include "core/ContextMenuXml.h"
+#include "core/Formatters.h"
+#include "lsp/LspServers.h"
 #include "core/PluginInstaller.h"
 #include "core/IssueReport.h"
 #include "core/UpdateCheck.h"
@@ -2671,8 +2673,90 @@ void MainWindow::renameSymbol()
 
 void MainWindow::formatDocument()
 {
-    if (!_lsp->format(*editor(), currentBuffer()))
-        statusBar()->showMessage(tr("The language server of this document cannot format it"), 5000);
+    // Primero la herramienta del lenguaje (Preferencias › Formato); si no hay, el servidor
+    const BufferId id = currentBuffer();
+    QString error;
+    switch (formatWithTool(*editor(), id, true, &error)) {
+    case FormatOutcome::Formatted:
+    case FormatOutcome::Unchanged:
+        return;
+    case FormatOutcome::Failed:
+        _prompter->warn(this, tr("Format Document"), error);
+        return;
+    case FormatOutcome::NoTool:
+        break;
+    }
+    if (_lsp->format(*editor(), id))
+        return;
+    const Buffer* buf = _documents.buffer(id);
+    const FormatterSpec* spec = buf ? formatterForLanguage(lsp::languageIdFor(buf->language(), buf->userLanguage(), buf->filePath()))
+                                    : nullptr;
+    statusBar()->showMessage(
+        spec ? tr("No formatter for this document: install %1 or choose one in Preferences › Formatting")
+                   .arg(QProcess::splitCommand(spec->candidates.front()).value(0))
+             : tr("No formatter for this document"),
+        8000);
+}
+
+MainWindow::FormatOutcome MainWindow::formatWithTool(EditorView& view, BufferId id, bool useSelection, QString* error)
+{
+    const Buffer* buf = _documents.buffer(id);
+    if (!buf)
+        return FormatOutcome::NoTool;
+    const FormatterSpec* spec = formatterForLanguage(lsp::languageIdFor(buf->language(), buf->userLanguage(), buf->filePath()));
+    const auto formatter = spec ? resolveFormatter(*spec, lsp::parseOverrides(_prefs.formatters)) : std::nullopt;
+    if (!formatter)
+        return FormatOutcome::NoTool;
+    FormatRequest request;
+    request.filePath = buf->isUntitled() ? QString() : buf->filePath();
+    request.tabSize = static_cast<int>(view.sci(SCI_GETTABWIDTH));
+    request.useTabs = view.sci(SCI_GETUSETABS) != 0;
+    // Solo las líneas seleccionadas, si la herramienta sabe (clang-format)
+    const sptr_t selStart = view.sci(SCI_GETSELECTIONSTART);
+    const sptr_t selEnd = view.sci(SCI_GETSELECTIONEND);
+    if (useSelection && selEnd > selStart && formatter->supportsLines) {
+        request.firstLine = static_cast<int>(view.sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(selStart))) + 1;
+        request.lastLine = static_cast<int>(view.sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(selEnd))) + 1;
+    }
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    const FormatResult result = runFormatter(*formatter, QByteArray::fromStdString(_documents.text(id)), request);
+    QApplication::restoreOverrideCursor();
+    const QString tool = QFileInfo(formatter->program).fileName();
+    if (!result.ok) {
+        if (error)
+            *error = tr("%1 could not format the document:\n%2").arg(tool, result.error);
+        return FormatOutcome::Failed;
+    }
+    // El cursor, en la misma línea y columna (lo más parecido); solo cambian las líneas distintas
+    const sptr_t caret = view.sci(SCI_GETCURRENTPOS);
+    const sptr_t line = view.sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(caret));
+    const sptr_t column = view.sci(SCI_GETCOLUMN, static_cast<uptr_t>(caret));
+    const sptr_t firstVisible = view.sci(SCI_GETFIRSTVISIBLELINE);
+    const int changed = replaceChangedLines(view, std::string_view(result.output.constData(), static_cast<std::size_t>(result.output.size())));
+    if (changed == 0) {
+        statusBar()->showMessage(tr("Already formatted (%1)").arg(tool), 5000);
+        return FormatOutcome::Unchanged;
+    }
+    view.sci(SCI_GOTOPOS, static_cast<uptr_t>(view.sci(SCI_FINDCOLUMN, static_cast<uptr_t>(line), column)));
+    view.sci(SCI_SETFIRSTVISIBLELINE, static_cast<uptr_t>(firstVisible));
+    statusBar()->showMessage(tr("Formatted with %1").arg(tool), 5000);
+    return FormatOutcome::Formatted;
+}
+
+void MainWindow::formatBeforeSave(BufferId id)
+{
+    // Preferencias › Formato › Al guardar: con la herramienta, si el documento está a la vista
+    // (el de una vista que no se ve se guarda tal cual); si falla, se guarda igual
+    if (!_prefs.formatOnSave)
+        return;
+    for (EditorPane* pane : {_mainPane, _subPane}) {
+        if (pane->currentBuffer() != id)
+            continue;
+        QString error;
+        if (formatWithTool(*pane->editor(), id, false, &error) == FormatOutcome::Failed)
+            statusBar()->showMessage(error.section(QLatin1Char('\n'), 0, 0), 8000);
+        return;
+    }
 }
 
 int MainWindow::applyWorkspaceEdit(const QJsonObject& edit, lsp::PositionEncoding encoding)
@@ -3722,6 +3806,7 @@ bool MainWindow::saveBuffer(BufferId id)
     const QString path = buf->filePath();
     if (!backupBeforeSave(path))
         return false;
+    formatBeforeSave(id);
     notifyPlugins(NPPN_FILEBEFORESAVE, id);
     const SaveResult result = _documents.saveBuffer(id, path);
     if (result.ok()) {
@@ -3768,6 +3853,8 @@ bool MainWindow::saveBufferTo(BufferId id, const QString& absPath, bool isCopy)
     }
     if (!confirmEncodable(id) || !backupBeforeSave(absPath))
         return false;
+    if (!isCopy)
+        formatBeforeSave(id);
     notifyPlugins(NPPN_FILEBEFORESAVE, id);
     const SaveResult result = _documents.saveBuffer(id, absPath, isCopy);
     if (result.ok())

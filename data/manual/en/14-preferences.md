@@ -28,6 +28,7 @@ Most options are described in the chapter of their feature; this is a summary.
 | Search Engine | The search engine of **Edit › On Selection › Search on Internet**. |
 | MISC. | Detection of changes made by other programs, encoding detection, default character set, the shell of the terminal and checking for new versions of Edita at startup. |
 | Language Servers | Turning them on or off, the hints at the end of the lines and the command of each server. |
+| Formatting | Format on save and the formatting tool of each language (see [Formatting](03-editing.md#formatting)). |
 
 ## Shortcut Mapper
 

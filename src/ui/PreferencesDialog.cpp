@@ -23,6 +23,7 @@
 
 #include "core/DateTimeFormat.h"
 #include "core/Encoding.h"
+#include "core/Formatters.h"
 #include "core/OnSelection.h"
 #include "ui/Icons.h"
 #include "ui/TerminalPanel.h"
@@ -160,6 +161,7 @@ PreferencesDialog::PreferencesDialog(const Preferences& prefs, std::vector<std::
     buildSearchEngine();
     buildMisc();
     buildLanguageServers();
+    buildFormatting();
 
     connect(_categories, &QListWidget::currentRowChanged, _pages, &QStackedWidget::setCurrentIndex);
     _categories->setCurrentRow(0);
@@ -229,7 +231,7 @@ QWidget* PreferencesDialog::addPage(const QString& name, const QString& title)
         {"autoCompletion", "autocompletion"}, {"highlighting", "highlighting"}, {"searching", "find"},
         {"printing", "print"},      {"backup", "backup"},             {"searchEngine", "web"},
         {"misc", "misc"},
-        {"languageServers", "language-server"},
+        {"languageServers", "language-server"}, {"formatting", "format"},
     };
     for (const auto& [pageName, icon] : kPageIcons) {
         if (name == QLatin1String(pageName))
@@ -801,6 +803,61 @@ void PreferencesDialog::buildLanguageServers()
     layout->addWidget(_lspServers, 1);
 }
 
+// Formatear con herramientas externas (no existe en N++): cuál usa cada lenguaje y si está
+// instalada, como la página de los servidores de lenguaje
+void PreferencesDialog::buildFormatting()
+{
+    QWidget* page = addPage(QStringLiteral("formatting"), tr("Formatting"));
+    auto* layout = new QVBoxLayout(page);
+    _formatOnSave = new QCheckBox(tr("Format the document when saving it (with the tool of its language)"));
+    _formatOnSave->setObjectName(QStringLiteral("formatOnSave"));
+    layout->addWidget(_formatOnSave);
+    auto* hint = new QLabel(tr("Edit › Format Document uses the first installed tool of the language; if there is none, "
+                               "the language server. Write another command to use it instead (it reads the document "
+                               "and writes the result; $(FILE_PATH) is the file), or «off» to disable that language."));
+    hint->setWordWrap(true);
+    layout->addWidget(hint);
+    _formatters = new QTableWidget(0, 3);
+    _formatters->setObjectName(QStringLiteral("formatters"));
+    _formatters->setHorizontalHeaderLabels({tr("Languages"), tr("Command"), tr("Found")});
+    _formatters->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    _formatters->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    _formatters->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    _formatters->verticalHeader()->hide();
+    _formatters->setSelectionMode(QAbstractItemView::NoSelection);
+    for (const FormatterSpec& spec : knownFormatters()) {
+        const int row = _formatters->rowCount();
+        _formatters->insertRow(row);
+        auto* languages = new QTableWidgetItem(spec.languages);
+        languages->setFlags(Qt::ItemIsEnabled);
+        languages->setData(Qt::UserRole, spec.id);
+        _formatters->setItem(row, 0, languages);
+        auto* command = new QTableWidgetItem;
+        command->setToolTip(tr("Empty: %1").arg(spec.candidates.join(QStringLiteral(" | "))));
+        _formatters->setItem(row, 1, command);
+        auto* found = new QTableWidgetItem;
+        found->setFlags(Qt::ItemIsEnabled);
+        _formatters->setItem(row, 2, found);
+    }
+    connect(_formatters, &QTableWidget::itemChanged, this, [this](QTableWidgetItem* item) {
+        if (item->column() != 1)
+            return;
+        const QString id = _formatters->item(item->row(), 0)->data(Qt::UserRole).toString();
+        const FormatterSpec* spec = nullptr;
+        for (const FormatterSpec& s : knownFormatters())
+            spec = s.id == id ? &s : spec;
+        QTableWidgetItem* found = _formatters->item(item->row(), 2);
+        if (!spec || !found)
+            return;
+        const auto formatter = resolveFormatter(*spec, {{id, item->text()}});
+        const QSignalBlocker blocker(_formatters);
+        found->setText(formatter ? QStringLiteral("✓ ") + formatter->program
+                                 : (item->text().trimmed().compare(QLatin1String("off"), Qt::CaseInsensitive) == 0 ? tr("Disabled")
+                                                                                                                   : tr("Not installed")));
+    });
+    layout->addWidget(_formatters, 1);
+}
+
 void PreferencesDialog::updateEnabledState()
 {
     _frameWidth->setEnabled(comboValue(_currentLine) == static_cast<int>(CurrentLineMode::Frame));
@@ -1028,6 +1085,14 @@ void PreferencesDialog::setPreferences(const Preferences& p)
         command->setText(QStringLiteral("x")); // fuerza itemChanged (y la búsqueda)
         command->setText(overrides.value(id));
     }
+    _formatOnSave->setChecked(p.formatOnSave);
+    const QMap<QString, QString> formatterOverrides = lsp::parseOverrides(p.formatters);
+    for (int row = 0; row < _formatters->rowCount(); ++row) {
+        const QString id = _formatters->item(row, 0)->data(Qt::UserRole).toString();
+        QTableWidgetItem* command = _formatters->item(row, 1);
+        command->setText(QStringLiteral("x")); // fuerza itemChanged (y la búsqueda)
+        command->setText(formatterOverrides.value(id));
+    }
     updateEnabledState();
 }
 
@@ -1137,6 +1202,11 @@ Preferences PreferencesDialog::preferences() const
     for (int row = 0; row < _lspServers->rowCount(); ++row)
         overrides.insert(_lspServers->item(row, 0)->data(Qt::UserRole).toString(), _lspServers->item(row, 1)->text().trimmed());
     p.lspServers = lsp::formatOverrides(overrides);
+    p.formatOnSave = _formatOnSave->isChecked();
+    QMap<QString, QString> formatterOverrides;
+    for (int row = 0; row < _formatters->rowCount(); ++row)
+        formatterOverrides.insert(_formatters->item(row, 0)->data(Qt::UserRole).toString(), _formatters->item(row, 1)->text().trimmed());
+    p.formatters = lsp::formatOverrides(formatterOverrides);
 
     p.recentFilesMax = _recentMax->value();
     p.recentFilesInSubMenu = _recentSubMenu->isChecked();

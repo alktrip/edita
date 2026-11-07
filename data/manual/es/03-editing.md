@@ -202,6 +202,21 @@ lo que está junto al cursor:
 - {{actionClipboardHistory}} guarda lo último que copias, en Edita o en otras aplicaciones, desde
   que lo abres (los 100 más recientes, sin repetir). Doble clic (o Intro) lo pega.
 
+## Dar formato
+
+{{actionFormatDocument}} ordena el código con la herramienta de su lenguaje, si está instalada:
+`clang-format` (C, C++, Java, C#), `prettier` (JavaScript, TypeScript, CSS, HTML, Markdown, YAML),
+`ruff` o `black` (Python), `rustfmt`, `gofmt`, `shfmt` (shell), `xmllint` (XML), `prettier` o `jq`
+(JSON), `stylua` (Lua) y otras. Cada herramienta usa su configuración del proyecto
+(`.clang-format`, `pyproject.toml`, `.editorconfig`…). Si no hay ninguna, lo hace el servidor de
+lenguaje, si sabe.
+
+- Solo cambian las líneas que la herramienta cambió: los marcadores y el resto se quedan, y se
+  deshace en un solo paso. Con una selección, `clang-format` formatea solo esas líneas.
+- En **Preferencias › Formato** se ve qué herramienta usa cada lenguaje y si está instalada; ahí
+  se escribe otra orden (que lea el documento y escriba el resultado; `$(FILE_PATH)` es la ruta del
+  archivo) u `off` para no formatear un lenguaje, y se activa **dar formato al guardar**.
+
 ## Herramientas: MD5 y SHA
 
 El menú **Herramientas** calcula resúmenes MD5, SHA-1, SHA-256 y SHA-512 (para comprobar una

@@ -88,7 +88,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+2277"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+2279"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -112,7 +112,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+31"/>
+        <location line="+113"/>
         <source>%n file operation(s) not applied (create, rename or delete files)</source>
         <translation>
             <numerusform>%n file operation not applied (create, rename or delete files)</numerusform>
@@ -120,7 +120,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+5206"/>
+        <location line="+5209"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>

@@ -1870,13 +1870,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+476"/>
-        <location line="+4253"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+478"/>
+        <location line="+4338"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4253"/>
+        <location line="-4338"/>
         <location line="+1755"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
@@ -2338,7 +2338,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1307"/>
+        <location line="+1389"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2384,12 +2384,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+27"/>
-        <location line="+882"/>
+        <location line="+885"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-852"/>
+        <location line="-855"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2561,7 +2561,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2259"/>
+        <location line="-2341"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
@@ -2678,12 +2678,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5117"/>
+        <location line="+5202"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5116"/>
+        <location line="-5201"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3435,12 +3435,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4275"/>
+        <location line="+4360"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4274"/>
+        <location line="-4359"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3653,12 +3653,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+7"/>
-        <source>The language server of this document cannot format it</source>
-        <translation>El servidor de lenguaje de este documento no puede darle formato</translation>
-    </message>
-    <message>
-        <location line="+24"/>
+        <location line="+113"/>
         <source>Language Server</source>
         <translation>Servidor de lenguaje</translation>
     </message>
@@ -3914,25 +3909,25 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+184"/>
+        <location line="+185"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-183"/>
+        <location line="-184"/>
         <source>Save As…</source>
         <translation>Guardar como…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+263"/>
+        <location line="+266"/>
         <location line="+20"/>
         <location line="+1816"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2095"/>
+        <location line="-2098"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -3993,18 +3988,18 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 %2</translation>
     </message>
     <message>
-        <location line="+110"/>
-        <location line="+11"/>
+        <location line="+111"/>
+        <location line="+13"/>
         <source>Save As</source>
         <translation>Guardar como</translation>
     </message>
     <message>
-        <location line="-10"/>
+        <location line="-12"/>
         <source>&quot;%1&quot; is already open in another tab. Close it before overwriting it.</source>
         <translation>«%1» ya está abierto en otra pestaña. Ciérrelo antes de sobrescribirlo.</translation>
     </message>
     <message>
-        <location line="+44"/>
+        <location line="+46"/>
         <source>Backup</source>
         <translation>Copia de seguridad</translation>
     </message>
@@ -4266,7 +4261,39 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-7"/>
+        <location line="-2169"/>
+        <source>Format Document</source>
+        <translation>Dar formato al documento</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>No formatter for this document: install %1 or choose one in Preferences › Formatting</source>
+        <translation>No hay formateador para este documento: instala %1 o elige uno en Preferencias › Formato</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No formatter for this document</source>
+        <translation>No hay formateador para este documento</translation>
+    </message>
+    <message>
+        <location line="+30"/>
+        <source>%1 could not format the document:
+%2</source>
+        <translation>%1 no pudo formatear el documento:
+%2</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Already formatted (%1)</source>
+        <translation>Ya tenía formato (%1)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Formatted with %1</source>
+        <translation>Formateado con %1</translation>
+    </message>
+    <message>
+        <location line="+2104"/>
         <source> times</source>
         <translation> veces</translation>
     </message>
@@ -5420,12 +5447,12 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+141"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+142"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+28"/>
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
@@ -5825,11 +5852,12 @@ Continue?</source>
     <message>
         <location line="+1"/>
         <location line="+449"/>
+        <location line="+57"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-449"/>
+        <location line="-506"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -6573,7 +6601,22 @@ Continue?</source>
         <translation>&lt;b&gt;Cambios hechos por otros programas&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="-53"/>
+        <location line="+105"/>
+        <source>Formatting</source>
+        <translation>Formato</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Format the document when saving it (with the tool of its language)</source>
+        <translation>Formatear el documento al guardarlo (con la herramienta de su lenguaje)</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Edit › Format Document uses the first installed tool of the language; if there is none, the language server. Write another command to use it instead (it reads the document and writes the result; $(FILE_PATH) is the file), or «off» to disable that language.</source>
+        <translation>Editar › Dar formato al documento usa la primera herramienta instalada del lenguaje; si no hay, el servidor de lenguaje. Escribe otra orden para usarla en su lugar (lee el documento y escribe el resultado; $(FILE_PATH) es el archivo), u «off» para no formatear ese lenguaje.</translation>
+    </message>
+    <message>
+        <location line="-163"/>
         <location line="+54"/>
         <source>Enable</source>
         <translation>Avisar</translation>
@@ -6690,26 +6733,31 @@ Continue?</source>
     </message>
     <message>
         <location line="+6"/>
+        <location line="+58"/>
         <source>Languages</source>
         <translation>Lenguajes</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-58"/>
+        <location line="+58"/>
         <source>Command</source>
         <translation>Orden</translation>
     </message>
     <message>
-        <location line="+0"/>
+        <location line="-58"/>
+        <location line="+58"/>
         <source>Found</source>
         <translation>Encontrado</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="-44"/>
+        <location line="+58"/>
         <source>Empty: %1</source>
         <translation>Vacío: %1</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="-37"/>
+        <location line="+57"/>
         <source>Not installed</source>
         <translation>No instalado</translation>
     </message>

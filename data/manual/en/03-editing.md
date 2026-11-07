@@ -199,6 +199,21 @@ the cursor:
 - {{actionClipboardHistory}} keeps what you copy, in Edita or in other applications, since you open
   it (the 100 most recent, without repeating). Double-clicking (or Enter) pastes it.
 
+## Formatting
+
+{{actionFormatDocument}} tidies the code with the tool of its language, if it is installed:
+`clang-format` (C, C++, Java, C#), `prettier` (JavaScript, TypeScript, CSS, HTML, Markdown, YAML),
+`ruff` or `black` (Python), `rustfmt`, `gofmt`, `shfmt` (shell), `xmllint` (XML), `prettier` or `jq`
+(JSON), `stylua` (Lua) and others. Each tool uses its project configuration (`.clang-format`,
+`pyproject.toml`, `.editorconfig`…). If there is none, the language server does it, if it can.
+
+- Only the lines the tool changed are changed: bookmarks and the rest stay, and it is undone in a
+  single step. With a selection, `clang-format` formats only those lines.
+- **Preferences › Formatting** shows which tool each language uses and whether it is installed;
+  there you can write another command (one that reads the document and writes the result;
+  `$(FILE_PATH)` is the path of the file) or `off` to not format a language, and turn on
+  **format on save**.
+
 ## Tools: MD5 and SHA
 
 The **Tools** menu computes MD5, SHA-1, SHA-256 and SHA-512 digests (to check a download, for
