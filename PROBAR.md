@@ -12,6 +12,11 @@ Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. 
 
 Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, en x86_64. Tu configuración se guarda en `~/.config/edita/`.
 
+Si al abrirlo dice que falta una biblioteca:
+
+- **`libOpenGL.so.0`** (beta 5 o anterior, en Ubuntu 26.10 y otros sistemas sin `libopengl0`): está corregido desde la beta 6. Con una beta anterior, `sudo apt install libopengl0`.
+- **Otra**: repórtalo con el mensaje completo. Para ver todas las que faltan de una vez: `./Edita-*.AppImage --appimage-extract >/dev/null && ldd squashfs-root/usr/bin/edita | grep "not found"`.
+
 ## Reportar un problema
 
 **Ayuda › Reportar un problema…** abre el formulario de GitHub con tu versión y tu sistema ya escritos. Solo hace falta una cuenta de GitHub. Puedes escribir en español o en inglés. Un buen reporte dice:
@@ -75,6 +80,11 @@ Thank you for testing Edita, a text editor for Linux inspired by Notepad++. This
 3. Open it with a double click or from a terminal: `./Edita-*.AppImage`.
 
 It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, on x86_64. Your settings are stored in `~/.config/edita/`.
+
+If it says that a library is missing when opening it:
+
+- **`libOpenGL.so.0`** (beta 5 or earlier, on Ubuntu 26.10 and other systems without `libopengl0`): fixed since beta 6. With an earlier beta, `sudo apt install libopengl0`.
+- **Another one**: report it with the full message. To see all the missing ones at once: `./Edita-*.AppImage --appimage-extract >/dev/null && ldd squashfs-root/usr/bin/edita | grep "not found"`.
 
 ## Report a problem
 

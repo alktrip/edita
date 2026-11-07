@@ -31,6 +31,8 @@
 #include <QLibraryInfo>
 #include <QPlainTextEdit>
 #include <QProcess>
+#include <QUrl>
+#include <QCryptographicHash>
 #include <QPushButton>
 #include <QSettings>
 #include <QSignalSpy>
@@ -1247,8 +1249,6 @@ private slots:
         QFETCH(QString, repository);
         QFETCH(QString, tag);
         QFETCH(QString, prefix);
-        if (folder == QLatin1String("XMLTools") && !missingRequirements({"pkg-config:libxml-2.0"}).isEmpty())
-            QSKIP("falta libxml2");
         const QString recipePath = QStringLiteral(EDITA_SOURCE_DIR "/../edita-plugins/recipes/") + folder + "/recipe.json";
         if (!QFileInfo::exists(recipePath))
             QSKIP("no está ../edita-plugins (el catálogo de plugins)");
@@ -1271,10 +1271,28 @@ private slots:
             recipe.sourceSha256.clear(); // el zip de git archive no es byte a byte el de GitHub
         }
         QVERIFY(!source.isEmpty());
+        // Las fuentes extra (libxml2 y libxslt de XML Tools): de EDITA_TEST_PLUGIN_ARCHIVES o
+        // descargadas, siempre con su SHA-256
+        std::vector<QByteArray> extras;
+        for (const RecipeSource& extra : recipe.extraSources) {
+            const QString name = QUrl(extra.url).fileName();
+            QString path = archives + '/' + QUrl(extra.url).path().section('/', 2, 2) + '-' + name;
+            if (archives.isEmpty() || !QFileInfo::exists(path)) {
+                path = _tmp.filePath(QStringLiteral("extra-%1-%2").arg(extras.size()).arg(name));
+                QProcess curl;
+                curl.start(QStringLiteral("curl"), {QStringLiteral("-sSfLo"), path, extra.url});
+                if (!curl.waitForFinished(300000) || curl.exitCode() != 0)
+                    QSKIP(qPrintable(QStringLiteral("no se pudo descargar %1").arg(extra.url)));
+            }
+            const QByteArray data = readFile(path);
+            QCOMPARE(QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex()), extra.sha256);
+            extras.push_back(data);
+        }
         RecipeBuilder builder(recipe, findPluginSdk(), _tmp.filePath("cache/") + folder);
         QSignalSpy finished(&builder, &RecipeBuilder::finished);
-        builder.start(source);
-        QVERIFY(finished.wait(300000));
+        builder.start(source, extras);
+        // Si falla al empezar, avisa dentro de start(): no hay que esperar otra señal
+        QTRY_VERIFY_WITH_TIMEOUT(!finished.isEmpty(), 900000);
         QVERIFY2(finished.first().at(0).toBool(), qPrintable(builder.log().right(3000)));
         QVERIFY(plugin_installer::installPackage(readFile(builder.packagePath()), folder, builder.packageSha256(), userPlugins(), false));
 

@@ -68,6 +68,9 @@ function(_edita_link_qt name)
         find_package(Qt6 REQUIRED COMPONENTS Widgets)
         target_link_libraries(${name} PRIVATE Qt6::Widgets)
     endif()
+    # Solo lo que usa: Qt6::Gui arrastra libOpenGL.so.0 y libGLX.so.0, que no todos los
+    # sistemas tienen (Ubuntu 26.10 de escritorio, sin libopengl0)
+    target_link_options(${name} PRIVATE LINKER:--as-needed)
 endfunction()
 
 # Sin las rutas de la máquina dentro del .so (__FILE__ de los assert, de Qt…): las de
