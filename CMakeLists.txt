@@ -24,7 +24,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Solo las bibliotecas que se usan: Qt6::Gui arrastra libOpenGL.so.0 y libGLX.so.0 (glvnd)
 # aunque Edita no llama a OpenGL, y hay Ubuntu de escritorio sin libopengl0 (26.10)
-add_link_options(LINKER:--as-needed)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux") # el enlazador de Apple no lo conoce
+    add_link_options(LINKER:--as-needed)
+endif()
 # …y que FindOpenGL (por Qt6::Gui) dé libGL.so.1, la que ya pide el libQt6Gui oficial, y no
 # libOpenGL + libGLX: el enlazador las conserva aunque no se usen, porque resuelven símbolos
 # de libQt6Gui que este no declara como suyas

@@ -26,7 +26,8 @@ cmake -S "$SRC" -B "$BUILD" -G Ninja \
     -DCMAKE_OSX_ARCHITECTURES="$ARCHS" \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
     -DEDITA_BUILD_TESTS=$TESTS \
-    -DEDITA_PYTHONSCRIPT=OFF
+    -DEDITA_PYTHONSCRIPT=OFF \
+    ${OPENSSL_ROOT_DIR:+-DOPENSSL_ROOT_DIR="$OPENSSL_ROOT_DIR"}
 cmake --build "$BUILD" -- -k 0 # todos los errores de una vez
 if [ "$TESTS" = ON ]; then
     log "Pruebas"
