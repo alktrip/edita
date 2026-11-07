@@ -105,7 +105,7 @@ void handler(int signal)
 
 QString defaultDirectory()
 {
-    return QDir(paths::configDir()).filePath(QStringLiteral("crash"));
+    return QDir(paths::baseConfigDir()).filePath(QStringLiteral("crash"));
 }
 
 QString reportPath(const QString& directory)

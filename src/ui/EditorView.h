@@ -69,6 +69,8 @@ public:
     // Notepad_plus::braceMatch: resalta la llave pareja de la que está junto al
     // cursor, o la marca en rojo si no tiene pareja
     void matchBraces();
+    // En un archivo grande, solo si Rendimiento lo permite (allowBraceMatch)
+    void setBraceMatchEnabled(bool on);
 
     // El número de la línea del cursor, resaltado (un marcador translúcido sobre el
     // margen de números; N++ deja libre el 15: los de los plugins son 1–14)
@@ -98,6 +100,7 @@ private:
     sptr_t _markedLine = -1;
     sptr_t _markedDocument = 0;
     bool _lineNumberDynamicWidth = true;
+    bool _braceMatchEnabled = true;
 };
 
 } // namespace edita

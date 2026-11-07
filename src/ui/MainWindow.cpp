@@ -34,6 +34,7 @@
 #include "ui/DocTabBar.h"
 #include "ui/HashDialog.h"
 #include "ui/EditPanels.h"
+#include "ui/UrlLinks.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
 #include "ui/FileIcons.h"
@@ -138,6 +139,7 @@
 #include <QVBoxLayout>
 
 #include <algorithm>
+#include <limits>
 #include <functional>
 #include <cstring>
 #include <vector>
@@ -501,6 +503,9 @@ MainWindow::MainWindow(QWidget* parent)
     connect(&_documents, &DocumentManager::bufferAdded, this, [this](BufferId id) {
         scheduleWelcomeUpdate();
         syncWatchedFiles();
+        // Rendimiento › Desactivar el ajuste de línea: al abrir un archivo grande, para todos
+        if (const Buffer* buf = _documents.buffer(id); buf && buf->isLargeFile() && _prefs.largeFileNoWordWrap && _prefs.wrap)
+            QTimer::singleShot(0, this, [this] { toggleViewOption(&Preferences::wrap, false); });
         // Un archivo abierto deja de estar en "recientes" (como N++)
         if (const Buffer* buf = _documents.buffer(id); buf && !buf->isUntitled()) {
             removeRecentFile(buf->filePath());
@@ -649,6 +654,7 @@ void MainWindow::connectPane(EditorPane* pane)
         if (_compare && pane->currentBuffer() != _compareBuffers[0] && pane->currentBuffer() != _compareBuffers[1])
             stopCompare();
         applyIndentOverride(pane);
+        applyDocumentOptions(pane);
         _lsp->paintDiagnostics(*pane->editor(), pane->currentBuffer());
         updateProblemsField();
         updateSnippetContext(pane);
@@ -689,6 +695,11 @@ void MainWindow::connectPane(EditorPane* pane)
         if (focused)
             setActivePane(pane);
     });
+    // Los enlaces de lo que se ve, en las dos vistas (addHotSpot al desplazarse o al cambiar)
+    connect(view, &ScintillaEditBase::updateUi, this, [this, pane](Scintilla::Update updated) {
+        if (static_cast<int>(updated) & (SC_UPDATE_CONTENT | SC_UPDATE_V_SCROLL))
+            refreshUrls(pane);
+    });
     connect(view, &ScintillaEditBase::updateUi, this, [this, pane](Scintilla::Update updated) {
         if (pane != _activePane)
             return;
@@ -707,7 +718,7 @@ void MainWindow::connectPane(EditorPane* pane)
         // SmartHighlighter: al cambiar la selección o desplazarse (solo se marcan las líneas visibles)
         if (static_cast<int>(updated) & (SC_UPDATE_SELECTION | SC_UPDATE_CONTENT | SC_UPDATE_V_SCROLL)) {
             SmartHighlightOptions options;
-            options.enabled = _prefs.smartHighlight;
+            options.enabled = _prefs.smartHighlight && (!isLargeFileIn(pane) || _prefs.largeFileSmartHighlight);
             options.otherView = _prefs.smartHighlightOtherView;
             if (_prefs.smartHighlightUseFindSettings) {
                 const SearchOptions find = _findDialog ? _findDialog->options() : _lastOptions;
@@ -730,8 +741,10 @@ void MainWindow::connectPane(EditorPane* pane)
         AutoCompletion* ac = autoCompletion(pane);
         if (pane->editor()->sci(SCI_GETSELECTIONS) == 1)
             ac->insertMatchedChars(ch);
-        // Con servidor de lenguaje, su lista; si no, la de N++
-        if (!_playingMacro && !_lsp->complete(*pane->editor(), pane->currentBuffer(), ch))
+        // Con servidor de lenguaje, su lista; si no, la de N++. En un archivo grande, solo si
+        // Rendimiento lo permite
+        const bool autocAllowed = !isLargeFileIn(pane) || _prefs.largeFileAutoCompletion;
+        if (!_playingMacro && autocAllowed && !_lsp->complete(*pane->editor(), pane->currentBuffer(), ch))
             ac->update(ch);
         if (!_playingMacro)
             _lsp->signatureHelp(*pane->editor(), pane->currentBuffer(), ch);
@@ -746,6 +759,15 @@ void MainWindow::connectPane(EditorPane* pane)
         switch (static_cast<int>(n->nmhdr.code)) {
         case SCN_CALLTIPCLICK:
             autoCompletion(pane)->callTipClick(static_cast<int>(n->position));
+            break;
+        case SCN_DOUBLECLICK:
+            // Ctrl + doble clic: entre los delimitadores; sin teclas, sobre un enlace: abrirlo
+            if (pane != _activePane)
+                setActivePane(pane);
+            if (static_cast<int>(n->modifiers) == SCMOD_CTRL)
+                selectDelimitedAt(n->position >= 0 ? n->position : pane->editor()->sci(SCI_GETCURRENTPOS));
+            else if (static_cast<int>(n->modifiers) == SCMOD_NORM && n->position >= 0)
+                openLinkAt(n->position);
             break;
         case SCN_AUTOCSELECTION:
             if (n->text)
@@ -2988,10 +3010,25 @@ QMenu* MainWindow::createEncodingMenu()
 
 QMenu* MainWindow::createLanguageMenu()
 {
-    // Como el menú Lenguaje de N++ en su forma compacta: agrupado por inicial
     auto* menu = new QMenu(tr("&Language"), this);
+    _languageMenu = menu;
     _languageGroup = new QActionGroup(this);
     _languageGroup->setExclusionPolicy(QActionGroup::ExclusionPolicy::ExclusiveOptional);
+    populateLanguageMenu();
+    return menu;
+}
+
+void MainWindow::populateLanguageMenu()
+{
+    // El menú Lenguaje de N++: compacto (agrupado por inicial) o con todos seguidos, y sin
+    // los lenguajes ocultos en Preferencias › Lenguaje (langsExcluded)
+    QMenu* menu = _languageMenu;
+    for (QAction* action : _languageGroup->actions())
+        _languageGroup->removeAction(action);
+    _languageActions.clear();
+    menu->clear();
+    for (QMenu* sub : menu->findChildren<QMenu*>(Qt::FindDirectChildrenOnly))
+        delete sub; // las letras y el de los lenguajes de usuario: se vuelven a hacer
     auto addLanguage = [this](QMenu* target, LangType lang, const QString& text) {
         QAction* action = target->addAction(text);
         action->setCheckable(true);
@@ -3007,8 +3044,8 @@ QMenu* MainWindow::createLanguageMenu()
     for (int i = 0; i < kLangTypeCount; ++i) {
         const auto lang = static_cast<LangType>(i);
         const LanguageInfo& info = languageInfo(lang);
-        // Los lenguajes definidos por el usuario (UDL) quedan fuera del MVP
-        if (info.menuName && lang != LangType::Text && lang != LangType::User)
+        // Los lenguajes definidos por el usuario (UDL) van en su submenú
+        if (info.menuName && lang != LangType::Text && lang != LangType::User && !_prefs.excludedLanguages.contains(i))
             entries.emplace_back(lang == LangType::Pascal ? QStringLiteral("Pascal / Delphi") // su lexer es el de Delphi
                                                           : QString::fromUtf8(info.menuName),
                                  lang);
@@ -3018,6 +3055,10 @@ QMenu* MainWindow::createLanguageMenu()
     QMenu* letterMenu = nullptr;
     QChar letter;
     for (const auto& [name, lang] : entries) {
+        if (!_prefs.langMenuCompact) {
+            addLanguage(menu, lang, name);
+            continue;
+        }
         const QChar first = name.at(0).toUpper();
         if (!letterMenu || first != letter) {
             letter = first;
@@ -3030,7 +3071,7 @@ QMenu* MainWindow::createLanguageMenu()
     _userLanguageMenu->setObjectName(QStringLiteral("menuUserLanguages"));
     connect(_userLanguageMenu, &QMenu::aboutToShow, this, &MainWindow::populateUserLanguageMenu);
     populateUserLanguageMenu();
-    return menu;
+    addExternalLanguageActions();
 }
 
 void MainWindow::populateThemeMenu(QMenu* menu)
@@ -3117,9 +3158,17 @@ void MainWindow::registerExternalLexers()
     }
     if (_syntax.externalLexers().empty())
         return;
+    addExternalLanguageActions();
+    // Los estilos del plugin ya están en la hoja: los documentos abiertos los usan
+    _syntax.notifyUserLanguagesChanged();
+}
+
+void MainWindow::addExternalLanguageActions()
+{
     // Como en N++, después de los lenguajes de Edita, por orden de carga
+    _externalLanguageActions.clear();
     auto* menu = qobject_cast<QMenu*>(_userLanguageMenu->parent()); // el menú Lenguaje
-    if (!menu)
+    if (!menu || _syntax.externalLexers().empty())
         return;
     QAction* before = _userLanguageMenu->menuAction();
     for (const ExternalLanguage& lang : _syntax.externalLexers().languages()) {
@@ -3134,8 +3183,6 @@ void MainWindow::registerExternalLexers()
         _externalLanguageActions[name] = action;
     }
     menu->insertSeparator(before);
-    // Los estilos del plugin ya están en la hoja: los documentos abiertos los usan
-    _syntax.notifyUserLanguagesChanged();
 }
 
 void MainWindow::setUserLanguage(const QString& name)
@@ -3876,11 +3923,30 @@ void MainWindow::showPreferences(const QString& page)
                                                      : QString::fromUtf8(info.menuName ? info.menuName : info.name));
     }
     PreferencesDialog dialog(_prefs, std::move(languages), this);
-    connect(&dialog, &PreferencesDialog::applyRequested, this, &MainWindow::setPreferences);
+    dialog.setCloudFolder(paths::cloudChoice());
+    // Nube y enlaces: la carpeta va en cloud/choice y vale al reiniciar (como en N++)
+    auto applyCloud = [this, &dialog] {
+        const QString folder = dialog.cloudFolder();
+        if (folder == paths::cloudChoice())
+            return;
+        QString error;
+        if (!paths::setCloudChoice(folder, &error)) {
+            _prompter->warn(this, tr("Settings on cloud"), error);
+            dialog.setCloudFolder(paths::cloudChoice());
+            return;
+        }
+        _prompter->inform(this, tr("Settings on cloud"), tr("Please restart Edita to take effect."));
+    };
+    connect(&dialog, &PreferencesDialog::applyRequested, this, [this, applyCloud](const Preferences& prefs) {
+        setPreferences(prefs);
+        applyCloud();
+    });
     if (!page.isEmpty())
         dialog.showPage(page);
-    if (dialog.exec() == QDialog::Accepted)
+    if (dialog.exec() == QDialog::Accepted) {
         setPreferences(dialog.preferences());
+        applyCloud();
+    }
 }
 
 void MainWindow::applyPreferences()
@@ -3910,6 +3976,7 @@ void MainWindow::applyPreferences()
                 pane->tabBar()->updateBuffer(*buf);
         pane->tabBar()->setDoubleClickCloses(p.tabDoubleClickCloses);
         pane->editor()->applyPreferences(p);
+        applyDocumentOptions(pane);
     }
     scheduleWelcomeUpdate();
     // Iconos por tipo de archivo: las pestañas, los paneles y la paleta
@@ -3955,10 +4022,14 @@ void MainWindow::applyPreferences()
     options.bookmarkMargin = p.bookmarkMargin;
     options.changeHistory = static_cast<ChangeHistoryMode>(std::clamp(p.changeHistory, 0, 3));
     options.systemMonospaceFont = p.systemMonospaceFont;
+    options.sqlBackslashEscapes = p.sqlBackslashEscapes;
     _syntax.setOptions(options);
 
     // Documentos nuevos y cómo se abren
     DocumentSettings& docs = _documents.settings();
+    // Preferencias › Rendimiento: desde qué tamaño un archivo es grande (al abrirlo)
+    docs.largeFileThreshold = p.largeFileRestriction ? static_cast<std::int64_t>(p.largeFileSizeMB) * 1024 * 1024
+                                                     : std::numeric_limits<std::int64_t>::max();
     docs.load.defaultEol = static_cast<EolType>(std::clamp(p.newDocEol, 0, 2));
     const auto mode = static_cast<UniMode>(p.newDocUnicodeMode);
     docs.newDocEncoding = (mode == UniMode::Ansi && p.newDocCodepage > 0) ? TextEncoding::fromCodepage(p.newDocCodepage)
@@ -4674,7 +4745,7 @@ QStringList MainWindow::pluginDirectories() const
     QStringList dirs;
     for (const QString& dir : qEnvironmentVariable("EDITA_PLUGIN_PATH").split(QLatin1Char(':'), Qt::SkipEmptyParts))
         dirs << dir;
-    dirs << QDir(paths::configDir()).filePath(QStringLiteral("plugins"));
+    dirs << QDir(paths::baseConfigDir()).filePath(QStringLiteral("plugins"));
     // Junto al binario (build de desarrollo) y en <prefijo>/<libdir>/<id>/plugins (instalado)
     const QDir app(QCoreApplication::applicationDirPath());
     dirs << app.filePath(QStringLiteral("plugins"));
@@ -4733,7 +4804,7 @@ void MainWindow::loadPlugins()
     if (!_plugins->plugins().empty())
         _pluginsMenu->addSeparator();
     _pluginsMenu->addAction(tr("Open Plugins &Folder"), this, [] {
-        const QString dir = QDir(paths::configDir()).filePath(QStringLiteral("plugins"));
+        const QString dir = QDir(paths::baseConfigDir()).filePath(QStringLiteral("plugins"));
         QDir().mkpath(dir);
         QDesktopServices::openUrl(QUrl::fromLocalFile(dir));
     });
@@ -5105,7 +5176,7 @@ intptr_t MainWindow::handlePluginMessage(unsigned int message, uintptr_t wParam,
     }
     case NPPM_GETPLUGINHOMEPATH: {
         // La carpeta del usuario donde se instalan los plugins
-        const QByteArray dir = QDir(paths::configDir()).filePath(QStringLiteral("plugins")).toUtf8();
+        const QByteArray dir = QDir(paths::baseConfigDir()).filePath(QStringLiteral("plugins")).toUtf8();
         if (auto* out = reinterpret_cast<char*>(lParam)) {
             if (wParam <= static_cast<uintptr_t>(dir.size()))
                 return 0;
@@ -5213,7 +5284,7 @@ PluginsAdminContext MainWindow::pluginsAdminContext() const
 {
     PluginsAdminContext context;
     context.pluginDirectories = pluginDirectories();
-    context.userPluginsDir = QDir(paths::configDir()).filePath(QStringLiteral("plugins"));
+    context.userPluginsDir = QDir(paths::baseConfigDir()).filePath(QStringLiteral("plugins"));
     context.appVersion = PluginVersion::parse(QString::fromUtf8(kAppVersionNumber));
 
     // La lista de plugins (nppPluginList.json en N++): la de pruebas, la del usuario o la de Edita
@@ -5420,7 +5491,13 @@ void MainWindow::setSessionEnabled(bool enabled)
 void MainWindow::setPreferences(const Preferences& prefs)
 {
     const bool languageChanged = prefs.language != _prefs.language;
+    const bool languageMenuChanged = prefs.langMenuCompact != _prefs.langMenuCompact
+                                  || prefs.excludedLanguages != _prefs.excludedLanguages;
     _prefs = prefs;
+    if (languageMenuChanged && _languageMenu) {
+        populateLanguageMenu();
+        refreshMenuChecks();
+    }
     storePreferences(_syntax.config(), _prefs);
     _syntax.config().save();
     applyPreferences();
@@ -6190,6 +6267,80 @@ bool MainWindow::searchOnInternet()
     if (text.trimmed().isEmpty())
         return false;
     return _openUrl(searchOnInternetUrl(static_cast<SearchEngine>(_prefs.searchEngineChoice), _prefs.searchEngineCustom, text));
+}
+
+bool MainWindow::isLargeFileIn(const EditorPane* pane) const
+{
+    const Buffer* buf = pane ? _documents.buffer(pane->currentBuffer()) : nullptr;
+    return buf && buf->isLargeFile();
+}
+
+void MainWindow::applyDocumentOptions(EditorPane* pane)
+{
+    EditorView* view = pane->editor();
+    // Preferencias › Delimitadores: los caracteres de palabra son del documento (CharClassify),
+    // así que van cada vez que la vista cambia de documento. Los de serie de Scintilla son las
+    // letras, los dígitos, _ y todo lo que no es ASCII (sin lista, SCI_SETWORDCHARS no los
+    // deja así sino sin ninguno: se dan siempre), más los ASCII elegidos
+    QByteArray chars = "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    for (int c = 0x80; c < 0x100; ++c)
+        chars += static_cast<char>(c);
+    if (!_prefs.wordCharsDefault) {
+        for (const QChar c : _prefs.wordCharsAdded) {
+            if (c.unicode() > ' ' && c.unicode() < 0x7F && !chars.contains(static_cast<char>(c.unicode())))
+                chars += static_cast<char>(c.unicode());
+        }
+    }
+    view->sends(SCI_SETWORDCHARS, 0, chars.constData());
+    // Preferencias › Rendimiento: en un archivo grande, los paréntesis y los enlaces si se permiten
+    const bool large = isLargeFileIn(pane);
+    view->setBraceMatchEnabled(!large || _prefs.largeFileBraceMatch);
+    refreshUrls(pane);
+}
+
+void MainWindow::refreshUrls(EditorPane* pane)
+{
+    UrlLinkOptions options;
+    options.mode = _prefs.urlMode;
+    options.extraSchemes = _prefs.uriSchemes;
+    options.allowed = !isLargeFileIn(pane) || _prefs.largeFileClickableLink;
+    highlightUrls(*pane->editor(), options);
+}
+
+bool MainWindow::openLinkAt(sptr_t position)
+{
+    // SCN_DOUBLECLICK sobre URL_INDIC (NppNotification.cpp): se quita la palabra que seleccionó
+    // el doble clic y se abre la dirección
+    EditorView* view = editor();
+    const QString url = urlAt(*view, position);
+    if (url.isEmpty())
+        return false;
+    view->sci(SCI_SETSEL, static_cast<uptr_t>(position), position);
+    return _openUrl(QUrl(url));
+}
+
+bool MainWindow::selectDelimitedAt(sptr_t position)
+{
+    // Ctrl + doble clic: en la línea del clic o, con «Varias líneas», en todo el documento
+    EditorView* view = editor();
+    const char left = static_cast<char>(_prefs.leftDelimiter.unicode());
+    const char right = static_cast<char>(_prefs.rightDelimiter.unicode());
+    sptr_t base = 0;
+    std::string text;
+    if (_prefs.delimiterSeveralLines) {
+        text = _documents.text(currentBuffer());
+    } else {
+        const sptr_t line = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(position));
+        base = view->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+        text = ViewSearchTarget(*view).text(base, view->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line)));
+    }
+    if (position < base)
+        return false;
+    const auto [open, close] = delimiterRange(text, static_cast<std::size_t>(position - base), left, right);
+    if (open < 0)
+        return false;
+    view->sci(SCI_SETSEL, static_cast<uptr_t>(base + open + 1), base + close);
+    return true;
 }
 
 QString MainWindow::debugInfo() const

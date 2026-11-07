@@ -32,6 +32,7 @@ class QComboBox;
 class QLabel;
 class QLineEdit;
 class QListWidget;
+class QPlainTextEdit;
 class QSpinBox;
 class QStackedWidget;
 class QTableWidget;
@@ -55,6 +56,9 @@ public:
 
     // Muestra la página con ese nombre de objeto ("general", "backup"…)
     void showPage(const QString& name);
+    // Nube y enlaces: la carpeta de la nube (no está en config.xml sino en cloud/choice)
+    void setCloudFolder(const QString& dir);
+    QString cloudFolder() const;
     QStringList pageNames() const;
 
 signals:
@@ -63,16 +67,21 @@ signals:
 private:
     QWidget* addPage(const QString& name, const QString& title);
     void buildGeneral();
+    void buildToolbar();
     void buildEditing();
     void buildMargins();
     void buildNewDocument();
     void buildRecentFiles();
     void buildIndentation();
+    void buildLanguage();
     void buildAutoCompletion();
     void buildHighlighting();
     void buildSearching();
     void buildPrinting();
     void buildBackup();
+    void buildDelimiter();
+    void buildPerformance();
+    void buildCloudLink();
     void buildSearchEngine();
     void buildMisc();
     void buildLanguageServers();
@@ -93,6 +102,29 @@ private:
     QComboBox* _appearance = nullptr;
     QComboBox* _multiInst = nullptr;
     QComboBox* _toolbar = nullptr;
+    QCheckBox* _toolbarHide = nullptr;
+    QCheckBox* _langMenuCompact = nullptr;
+    QListWidget* _langAvailable = nullptr;
+    QListWidget* _langExcluded = nullptr;
+    QCheckBox* _sqlBackslash = nullptr;
+    QCheckBox* _wordCharsCustom = nullptr;
+    QLineEdit* _wordCharsAdded = nullptr;
+    QLineEdit* _leftDelimiter = nullptr;
+    QLineEdit* _rightDelimiter = nullptr;
+    QCheckBox* _delimiterLines = nullptr;
+    QCheckBox* _largeFile = nullptr;
+    QSpinBox* _largeFileSize = nullptr;
+    QCheckBox* _largeFileNoWrap = nullptr;
+    QCheckBox* _largeFileAutoc = nullptr;
+    QCheckBox* _largeFileSmart = nullptr;
+    QCheckBox* _largeFileBrace = nullptr;
+    QCheckBox* _largeFileLinks = nullptr;
+    QCheckBox* _cloud = nullptr;
+    QLineEdit* _cloudFolder = nullptr;
+    QCheckBox* _links = nullptr;
+    QCheckBox* _linksNoUnderline = nullptr;
+    QCheckBox* _linksFullBox = nullptr;
+    QPlainTextEdit* _uriSchemes = nullptr;
     QCheckBox* _systemMonospace = nullptr;
     QCheckBox* _qtFileDialog = nullptr;
     // Edición

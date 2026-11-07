@@ -164,6 +164,8 @@ add_library(edita_ui STATIC
     ui/HashDialog.h
     ui/EditPanels.cpp
     ui/EditPanels.h
+    ui/UrlLinks.cpp
+    ui/UrlLinks.h
     ui/ColorPreview.cpp
     ui/CompareSession.cpp
     ui/CommandPalette.cpp

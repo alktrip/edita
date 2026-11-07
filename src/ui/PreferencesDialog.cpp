@@ -43,6 +43,7 @@
 #include <QHeaderView>
 #include <QTableWidget>
 #include <QListWidget>
+#include <QPlainTextEdit>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QScreen>
@@ -141,16 +142,21 @@ PreferencesDialog::PreferencesDialog(const Preferences& prefs, std::vector<std::
     _categories->setObjectName(QStringLiteral("categories"));
 
     buildGeneral();
+    buildToolbar();
     buildEditing();
     buildMargins();
     buildNewDocument();
     buildRecentFiles();
     buildIndentation();
+    buildLanguage();
     buildAutoCompletion();
     buildHighlighting();
     buildSearching();
     buildPrinting();
     buildBackup();
+    buildDelimiter();
+    buildPerformance();
+    buildCloudLink();
     buildSearchEngine();
     buildMisc();
     buildLanguageServers();
@@ -217,11 +223,13 @@ QWidget* PreferencesDialog::addPage(const QString& name, const QString& title)
     // Un icono por página, de los de la interfaz
     static const std::pair<const char*, const char*> kPageIcons[] = {
         {"general", "general"},     {"editing", "editing"},           {"margins", "margins"},
+        {"toolbar", "toolbar"},     {"language", "language"},         {"delimiter", "delimiter"},
+        {"performance", "performance"}, {"cloudLink", "cloud"},
         {"newDocument", "new"},     {"recentFiles", "recent"},        {"indentation", "tabs"},
         {"autoCompletion", "autocompletion"}, {"highlighting", "highlighting"}, {"searching", "find"},
         {"printing", "print"},      {"backup", "backup"},             {"searchEngine", "web"},
         {"misc", "misc"},
-        {"languageServers", "language"},
+        {"languageServers", "language-server"},
     };
     for (const auto& [pageName, icon] : kPageIcons) {
         if (name == QLatin1String(pageName))
@@ -264,8 +272,6 @@ void PreferencesDialog::buildGeneral()
     // Multi-Instance de N++ (la sesión en una instancia nueva no aplica: como una sola)
     _multiInst = addCombo(form, tr("Instances:"), "multiInst",
                           {{tr("Open files in the running window"), 0}, {tr("Always open a new window"), 2}});
-    _toolbar = addCombo(form, tr("Toolbar:"), "toolbar",
-                        {{tr("Hide"), -1}, {tr("Small icons"), 0}, {tr("Standard icons"), 1}, {tr("Large icons"), 2}});
     _qtFileDialog = addCheck(form, tr("Use Edita's file dialogs (in the language of Edita, not of the desktop)"),
                              "qtFileDialog");
     _statusBar = addCheck(form, tr("Show status bar"), "statusBarShow");
@@ -276,6 +282,16 @@ void PreferencesDialog::buildGeneral()
     _tabDoubleClick = addCheck(form, tr("Double click to close document"), "tabDoubleClickCloses");
     _fileTypeIcons = addCheck(form, tr("File type icons (tabs, Document List, Folder as Workspace, Go to File)"), "fileTypeIcons");
     _quitOnEmpty = addCheck(form, tr("Exit on close the last tab"), "quitOnEmpty");
+}
+
+void PreferencesDialog::buildToolbar()
+{
+    // La página «Toolbar» de N++: ocultarla y el tamaño de los iconos (los colores son de sus
+    // iconos Fluent; los de Edita siguen al tema)
+    auto* form = new QFormLayout(addPage(QStringLiteral("toolbar"), tr("Toolbar")));
+    _toolbarHide = addCheck(form, tr("Hide"), "toolbarHide");
+    _toolbar = addCombo(form, tr("Icons:"), "toolbar",
+                        {{tr("Small icons"), 0}, {tr("Standard icons"), 1}, {tr("Large icons"), 2}});
 }
 
 void PreferencesDialog::buildEditing()
@@ -388,6 +404,56 @@ void PreferencesDialog::buildIndentation()
     auto* note = new QLabel(tr("Languages with their own tab settings in langs.xml keep them."));
     note->setWordWrap(true);
     form->addRow(note);
+}
+
+void PreferencesDialog::buildLanguage()
+{
+    // La página «Language» de N++: el menú Lenguaje (agrupado por inicial o no, y los lenguajes
+    // que no salen en él) y la barra invertida en SQL
+    auto* page = addPage(QStringLiteral("language"), tr("Language"));
+    auto* layout = new QVBoxLayout(page);
+    layout->addWidget(new QLabel(tr("<b>Language Menu</b>")));
+    _langMenuCompact = new QCheckBox(tr("Make language menu compact"));
+    _langMenuCompact->setObjectName(QStringLiteral("langMenuCompact"));
+    layout->addWidget(_langMenuCompact);
+    auto* lists = new QHBoxLayout;
+    auto column = [lists](const QString& title, const char* name) {
+        auto* box = new QVBoxLayout;
+        box->addWidget(new QLabel(title));
+        auto* list = new QListWidget;
+        list->setObjectName(QString::fromLatin1(name));
+        list->setSelectionMode(QAbstractItemView::ExtendedSelection);
+        list->setSortingEnabled(true);
+        box->addWidget(list);
+        lists->addLayout(box, 1);
+        return list;
+    };
+    _langAvailable = column(tr("Available items:"), "langAvailable");
+    auto* buttons = new QVBoxLayout;
+    buttons->addStretch();
+    auto* hide = new QPushButton(QStringLiteral("→"));
+    hide->setObjectName(QStringLiteral("langHide"));
+    hide->setToolTip(tr("Hide from the Language menu"));
+    auto* show = new QPushButton(QStringLiteral("←"));
+    show->setObjectName(QStringLiteral("langShow"));
+    show->setToolTip(tr("Show in the Language menu"));
+    buttons->addWidget(hide);
+    buttons->addWidget(show);
+    buttons->addStretch();
+    lists->addLayout(buttons);
+    _langExcluded = column(tr("Disabled items:"), "langExcluded");
+    layout->addLayout(lists, 1);
+    auto move = [](QListWidget* from, QListWidget* to) {
+        for (QListWidgetItem* item : from->selectedItems())
+            to->addItem(from->takeItem(from->row(item)));
+    };
+    connect(hide, &QPushButton::clicked, this, [this, move] { move(_langAvailable, _langExcluded); });
+    connect(show, &QPushButton::clicked, this, [this, move] { move(_langExcluded, _langAvailable); });
+    connect(_langAvailable, &QListWidget::itemDoubleClicked, this, [this, move] { move(_langAvailable, _langExcluded); });
+    connect(_langExcluded, &QListWidget::itemDoubleClicked, this, [this, move] { move(_langExcluded, _langAvailable); });
+    _sqlBackslash = new QCheckBox(tr("Treat backslash as escape character for SQL"));
+    _sqlBackslash->setObjectName(QStringLiteral("sqlBackslashEscapes"));
+    layout->addWidget(_sqlBackslash);
 }
 
 void PreferencesDialog::buildAutoCompletion()
@@ -527,6 +593,83 @@ void PreferencesDialog::buildBackup()
     form->addRow(tr("Session file extension:"), _sessionExt);
 }
 
+void PreferencesDialog::buildDelimiter()
+{
+    // La página «Delimiter» de N++
+    auto* form = new QFormLayout(addPage(QStringLiteral("delimiter"), tr("Delimiter")));
+    form->addRow(new QLabel(tr("<b>Word character list</b>")));
+    _wordCharsCustom = addCheck(form, tr("Add your characters as part of word (don't choose it unless you know what you're doing)"),
+                                "wordCharsCustom");
+    _wordCharsAdded = new QLineEdit;
+    _wordCharsAdded->setObjectName(QStringLiteral("wordCharsAdded"));
+    _wordCharsAdded->setToolTip(tr("Letters, digits and _ are always part of a word. Spaces are not allowed."));
+    form->addRow(tr("Characters:"), _wordCharsAdded);
+    form->addRow(new QLabel(tr("<b>Delimiter selection settings (Ctrl + Mouse double click)</b>")));
+    auto delimiter = [form](const QString& label, const char* name) {
+        auto* edit = new QLineEdit;
+        edit->setObjectName(QString::fromLatin1(name));
+        edit->setMaxLength(1);
+        edit->setMaximumWidth(edit->fontMetrics().horizontalAdvance(QStringLiteral("WW")) + 16);
+        form->addRow(label, edit);
+        return edit;
+    };
+    _leftDelimiter = delimiter(tr("Open:"), "leftDelimiter");
+    _rightDelimiter = delimiter(tr("Close:"), "rightDelimiter");
+    _delimiterLines = addCheck(form, tr("Allow on several lines"), "delimiterSeveralLines");
+}
+
+void PreferencesDialog::buildPerformance()
+{
+    // La página «Performance» de N++: lo que se apaga en los archivos grandes
+    auto* form = new QFormLayout(addPage(QStringLiteral("performance"), tr("Performance")));
+    form->addRow(new QLabel(tr("<b>Large File Restriction</b>")));
+    _largeFile = addCheck(form, tr("Enable Large File Restriction (no syntax highlighting)"), "largeFileRestriction");
+    _largeFileSize = addSpin(form, tr("Define Large File Size:"), "largeFileSizeMB", 1, 4096, tr(" MB"));
+    _largeFileNoWrap = addCheck(form, tr("Deactivate Word Wrap globally"), "largeFileNoWordWrap");
+    _largeFileAutoc = addCheck(form, tr("Allow Auto-Completion"), "largeFileAutoCompletion");
+    _largeFileSmart = addCheck(form, tr("Allow Smart Highlighting"), "largeFileSmartHighlight");
+    _largeFileBrace = addCheck(form, tr("Allow Brace Match"), "largeFileBraceMatch");
+    _largeFileLinks = addCheck(form, tr("Allow URL Clickable Link"), "largeFileClickableLink");
+    form->addRow(new QLabel(tr("A file this size or larger opens without colors, and also without what is not allowed here. "
+                               "The change applies to the files opened afterwards.")));
+}
+
+void PreferencesDialog::buildCloudLink()
+{
+    // La página «Cloud & Link» de N++
+    // El formulario arriba: la fila de la carpeta crecería a lo alto con el espacio que sobra
+    auto* column = new QVBoxLayout(addPage(QStringLiteral("cloudLink"), tr("Cloud and Link")));
+    auto* form = new QFormLayout;
+    column->addLayout(form);
+    column->addStretch();
+    form->addRow(new QLabel(tr("<b>Settings on cloud</b>")));
+    _cloud = addCheck(form, tr("Keep the settings in this folder (a synchronized folder, for example):"), "cloud");
+    _cloudFolder = addDirectory(form, tr("Folder:"), "cloudFolder", this);
+    form->addRow(new QLabel(tr("Edita reads and writes its settings there after restarting.")));
+    form->addRow(new QLabel(tr("<b>Clickable Link Settings</b>")));
+    _links = addCheck(form, tr("Enable"), "clickableLinks");
+    _linksNoUnderline = addCheck(form, tr("No underline"), "linksNoUnderline");
+    _linksFullBox = addCheck(form, tr("Enable fullbox mode"), "linksFullBox");
+    _uriSchemes = new QPlainTextEdit;
+    _uriSchemes->setObjectName(QStringLiteral("uriSchemes"));
+    _uriSchemes->setToolTip(tr("Besides http://, https://, ftp://, file:// and mailto:, separated by spaces"));
+    _uriSchemes->setFixedHeight(_uriSchemes->fontMetrics().lineSpacing() * 4 + 12);
+    form->addRow(tr("URI customized schemes:"), _uriSchemes);
+    form->addRow(new QLabel(tr("A double click on a link opens it.")));
+}
+
+void PreferencesDialog::setCloudFolder(const QString& dir)
+{
+    _cloud->setChecked(!dir.isEmpty());
+    _cloudFolder->setText(dir);
+    updateEnabledState();
+}
+
+QString PreferencesDialog::cloudFolder() const
+{
+    return _cloud->isChecked() ? _cloudFolder->text().trimmed() : QString();
+}
+
 void PreferencesDialog::buildSearchEngine()
 {
     // La página «Search Engine» de N++: el buscador de Editar › Sobre la selección › Buscar en internet
@@ -662,6 +805,16 @@ void PreferencesDialog::updateEnabledState()
 {
     _frameWidth->setEnabled(comboValue(_currentLine) == static_cast<int>(CurrentLineMode::Frame));
     _searchEngineCustom->setEnabled(_searchEngine->checkedId() == static_cast<int>(SearchEngine::Custom));
+    _toolbar->setEnabled(!_toolbarHide->isChecked());
+    _wordCharsAdded->setEnabled(_wordCharsCustom->isChecked());
+    for (QWidget* w : std::initializer_list<QWidget*>{_largeFileSize, _largeFileNoWrap, _largeFileAutoc, _largeFileSmart,
+                                                       _largeFileBrace, _largeFileLinks})
+        w->setEnabled(_largeFile->isChecked());
+    _largeFileLinks->setEnabled(_largeFile->isChecked() && _links->isChecked());
+    _cloudFolder->parentWidget()->setEnabled(_cloud->isChecked());
+    _linksNoUnderline->setEnabled(_links->isChecked());
+    _linksFullBox->setEnabled(_links->isChecked());
+    _uriSchemes->setEnabled(_links->isChecked());
     _dynamicWidth->setEnabled(_lineNumbers->isChecked());
     _wrapIndent->setEnabled(_wrap->isChecked());
     _wrapSymbol->setEnabled(_wrap->isChecked());
@@ -710,7 +863,35 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _systemMonospace->setChecked(p.systemMonospaceFont);
     setComboValue(_appearance, p.darkModeFollowSystem ? 0 : p.darkModeEnabled ? 2 : 1);
     setComboValue(_multiInst, p.multiInstSetting == MultiInst::Always ? 2 : 0);
-    setComboValue(_toolbar, p.toolbarVisible ? static_cast<int>(p.toolbarIcons) : -1);
+    _toolbarHide->setChecked(!p.toolbarVisible);
+    setComboValue(_toolbar, static_cast<int>(p.toolbarIcons));
+    _langMenuCompact->setChecked(p.langMenuCompact);
+    _langAvailable->clear();
+    _langExcluded->clear();
+    for (const auto& [lang, name] : _languages) {
+        if (lang == 0) // Texto normal siempre está
+            continue;
+        auto* item = new QListWidgetItem(name);
+        item->setData(Qt::UserRole, lang);
+        (p.excludedLanguages.contains(lang) ? _langExcluded : _langAvailable)->addItem(item);
+    }
+    _sqlBackslash->setChecked(p.sqlBackslashEscapes);
+    _wordCharsCustom->setChecked(!p.wordCharsDefault);
+    _wordCharsAdded->setText(p.wordCharsAdded);
+    _leftDelimiter->setText(QString(p.leftDelimiter));
+    _rightDelimiter->setText(QString(p.rightDelimiter));
+    _delimiterLines->setChecked(p.delimiterSeveralLines);
+    _largeFile->setChecked(p.largeFileRestriction);
+    _largeFileSize->setValue(p.largeFileSizeMB);
+    _largeFileNoWrap->setChecked(p.largeFileNoWordWrap);
+    _largeFileAutoc->setChecked(p.largeFileAutoCompletion);
+    _largeFileSmart->setChecked(p.largeFileSmartHighlight);
+    _largeFileBrace->setChecked(p.largeFileBraceMatch);
+    _largeFileLinks->setChecked(p.largeFileClickableLink);
+    _links->setChecked(p.urlMode != 0);
+    _linksNoUnderline->setChecked(p.urlMode == 1 || p.urlMode == 3);
+    _linksFullBox->setChecked(p.urlMode >= 3);
+    _uriSchemes->setPlainText(p.uriSchemes);
     _whiteSpace->setChecked(p.whiteSpaceShow);
     _eol->setChecked(p.eolShow);
     _indentGuides->setChecked(p.indentGuideLine);
@@ -877,9 +1058,40 @@ Preferences PreferencesDialog::preferences() const
     if (!p.darkModeFollowSystem)
         p.darkModeEnabled = comboValue(_appearance) == 2;
     p.multiInstSetting = comboValue(_multiInst) == 2 ? MultiInst::Always : MultiInst::Mono;
-    p.toolbarVisible = comboValue(_toolbar) >= 0;
-    if (p.toolbarVisible)
-        p.toolbarIcons = static_cast<ToolbarIcons>(comboValue(_toolbar));
+    p.toolbarVisible = !_toolbarHide->isChecked();
+    p.toolbarIcons = static_cast<ToolbarIcons>(comboValue(_toolbar));
+    p.langMenuCompact = _langMenuCompact->isChecked();
+    p.excludedLanguages.clear();
+    for (int i = 0; i < _langExcluded->count(); ++i)
+        p.excludedLanguages << _langExcluded->item(i)->data(Qt::UserRole).toInt();
+    std::sort(p.excludedLanguages.begin(), p.excludedLanguages.end());
+    p.sqlBackslashEscapes = _sqlBackslash->isChecked();
+    // Los añadidos, sin espacios ni repetidos (como N++); si no queda nada, la lista de serie
+    QString added;
+    for (const QChar c : _wordCharsAdded->text()) {
+        if (!c.isSpace() && !added.contains(c))
+            added += c;
+    }
+    p.wordCharsAdded = added;
+    p.wordCharsDefault = !_wordCharsCustom->isChecked() || added.isEmpty();
+    // Un solo carácter de 1 a 255; vacío, el de serie
+    auto delimiter = [](const QLineEdit* edit, QChar fallback) {
+        const QString text = edit->text();
+        return !text.isEmpty() && text.at(0).unicode() >= 1 && text.at(0).unicode() <= 255 ? text.at(0) : fallback;
+    };
+    p.leftDelimiter = delimiter(_leftDelimiter, QLatin1Char('('));
+    p.rightDelimiter = delimiter(_rightDelimiter, QLatin1Char(')'));
+    p.delimiterSeveralLines = _delimiterLines->isChecked();
+    p.largeFileRestriction = _largeFile->isChecked();
+    p.largeFileSizeMB = _largeFileSize->value();
+    p.largeFileNoWordWrap = _largeFileNoWrap->isChecked();
+    p.largeFileAutoCompletion = _largeFileAutoc->isChecked();
+    p.largeFileSmartHighlight = _largeFileSmart->isChecked();
+    p.largeFileBraceMatch = _largeFileBrace->isChecked();
+    p.largeFileClickableLink = _largeFileLinks->isChecked();
+    // urlMode: 0 no; 1/2 sin subrayar o subrayados; 3/4 igual, con recuadro al pasar el ratón
+    p.urlMode = !_links->isChecked() ? 0 : (_linksFullBox->isChecked() ? 3 : 1) + (_linksNoUnderline->isChecked() ? 0 : 1);
+    p.uriSchemes = _uriSchemes->toPlainText().simplified();
     p.whiteSpaceShow = _whiteSpace->isChecked();
     p.eolShow = _eol->isChecked();
     p.indentGuideLine = _indentGuides->isChecked();

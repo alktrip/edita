@@ -318,6 +318,44 @@ Preferences loadPreferences(const ConfigXml& config)
         p.dateTimeFormat = format;
     r.boolAttr("insertDateTime", "reverseDefaultOrder", p.dateTimeReverseOrder);
     r.intAttr("searchEngine", "searchEngineChoice", p.searchEngineChoice, 0, 5);
+    // Lenguajes
+    r.boolAttr("langsExcluded", "langMenuCompact", p.langMenuCompact);
+    for (int group = 0; group < 13; ++group) {
+        int bits = 0;
+        r.intAttr("langsExcluded", QByteArray("gr" + QByteArray::number(group)).constData(), bits, 0, 255);
+        for (int bit = 0; bit < 8; ++bit) {
+            if (bits & (1 << bit))
+                p.excludedLanguages << group * 8 + bit;
+        }
+    }
+    r.boolAttr("MISC", "backSlashIsEscapeCharacterForSql", p.sqlBackslashEscapes);
+    // Delimitadores
+    r.boolAttr("wordCharList", "useDefault", p.wordCharsDefault);
+    p.wordCharsAdded = r.get("wordCharList", "charsAdded");
+    int left = p.leftDelimiter.unicode();
+    int right = p.rightDelimiter.unicode();
+    r.intAttr("delimiterSelection", "leftmostDelimiter", left, 1, 255);
+    r.intAttr("delimiterSelection", "rightmostDelimiter", right, 1, 255);
+    p.leftDelimiter = QChar(static_cast<char16_t>(left));
+    p.rightDelimiter = QChar(static_cast<char16_t>(right));
+    r.boolAttr("delimiterSelection", "delimiterSelectionOnEntireDocument", p.delimiterSeveralLines);
+    // Rendimiento
+    r.boolAttr("largeFileRestriction", "isEnabled", p.largeFileRestriction);
+    r.intAttr("largeFileRestriction", "fileSizeMB", p.largeFileSizeMB, 1, 4096);
+    r.boolAttr("largeFileRestriction", "allowAutoCompletion", p.largeFileAutoCompletion);
+    r.boolAttr("largeFileRestriction", "allowBraceMatch", p.largeFileBraceMatch);
+    r.boolAttr("largeFileRestriction", "allowSmartHilite", p.largeFileSmartHighlight);
+    r.boolAttr("largeFileRestriction", "allowClickableLink", p.largeFileClickableLink);
+    r.boolAttr("largeFileRestriction", "deactivateWordWrap", p.largeFileNoWordWrap);
+    // Enlaces
+    {
+        bool ok = false;
+        const int mode = r.text("URL").toInt(&ok);
+        if (ok && mode >= 0 && mode <= 4)
+            p.urlMode = mode;
+    }
+    if (const QString schemes = r.text("uriCustomizedSchemes"); !schemes.isEmpty())
+        p.uriSchemes = schemes;
     if (const QString custom = r.get("searchEngine", "searchEngineCustom"); !custom.isEmpty())
         p.searchEngineCustom = custom;
     // autoUpdateMode: 0 desactivado, 1 al arrancar, 2 al salir (aquí, como al arrancar)
@@ -469,6 +507,30 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.attr("insertDateTime", "customizedFormat", p.dateTimeFormat);
     w.attr("insertDateTime", "reverseDefaultOrder", p.dateTimeReverseOrder);
     w.attr("searchEngine", "searchEngineChoice", p.searchEngineChoice);
+    w.attr("langsExcluded", "langMenuCompact", p.langMenuCompact);
+    for (int group = 0; group < 13; ++group) {
+        int bits = 0;
+        for (const int lang : p.excludedLanguages) {
+            if (lang / 8 == group)
+                bits |= 1 << (lang % 8);
+        }
+        w.attr("langsExcluded", QByteArray("gr" + QByteArray::number(group)).constData(), bits);
+    }
+    w.attr("MISC", "backSlashIsEscapeCharacterForSql", p.sqlBackslashEscapes);
+    w.attr("wordCharList", "useDefault", p.wordCharsDefault);
+    w.attr("wordCharList", "charsAdded", p.wordCharsAdded);
+    w.attr("delimiterSelection", "leftmostDelimiter", static_cast<int>(p.leftDelimiter.unicode()));
+    w.attr("delimiterSelection", "rightmostDelimiter", static_cast<int>(p.rightDelimiter.unicode()));
+    w.attr("delimiterSelection", "delimiterSelectionOnEntireDocument", p.delimiterSeveralLines);
+    w.attr("largeFileRestriction", "isEnabled", p.largeFileRestriction);
+    w.attr("largeFileRestriction", "fileSizeMB", p.largeFileSizeMB);
+    w.attr("largeFileRestriction", "allowAutoCompletion", p.largeFileAutoCompletion);
+    w.attr("largeFileRestriction", "allowBraceMatch", p.largeFileBraceMatch);
+    w.attr("largeFileRestriction", "allowSmartHilite", p.largeFileSmartHighlight);
+    w.attr("largeFileRestriction", "allowClickableLink", p.largeFileClickableLink);
+    w.attr("largeFileRestriction", "deactivateWordWrap", p.largeFileNoWordWrap);
+    w.text("URL", QString::number(p.urlMode));
+    w.text("uriCustomizedSchemes", p.uriSchemes);
     w.attr("searchEngine", "searchEngineCustom", p.searchEngineCustom);
     w.attr("noUpdate", "autoUpdateMode", p.updateOnStartup ? 1 : 0);
     w.attr("noUpdate", "intervalDays", p.updateIntervalDays);

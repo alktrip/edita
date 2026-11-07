@@ -128,8 +128,23 @@ void EditorView::applyBaseConfiguration()
     applyPreferences(Preferences{});
 }
 
+void EditorView::setBraceMatchEnabled(bool on)
+{
+    if (_braceMatchEnabled == on)
+        return;
+    _braceMatchEnabled = on;
+    if (on) {
+        matchBraces();
+    } else {
+        sci(SCI_BRACEHIGHLIGHT, static_cast<uptr_t>(-1), -1);
+        sci(SCI_SETHIGHLIGHTGUIDE, 0);
+    }
+}
+
 void EditorView::matchBraces()
 {
+    if (!_braceMatchEnabled)
+        return;
     auto isBrace = [](sptr_t c) { return c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}'; };
     const sptr_t caret = sci(SCI_GETCURRENTPOS);
     sptr_t brace = -1;

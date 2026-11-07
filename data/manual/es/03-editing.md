@@ -28,7 +28,9 @@ Scintilla**).
 ## Selección
 
 - **Mayús+flechas** seleccionan caracteres y líneas; **Ctrl+Mayús+flechas**, palabras.
-- **Doble clic** selecciona una palabra; **triple clic**, una línea. Un clic en el margen de los
+- **Doble clic** selecciona una palabra (qué caracteres cuentan se elige en la página
+  Delimitadores); sobre un enlace, lo abre. **Ctrl+doble clic** selecciona lo que hay entre
+  paréntesis (u otros delimitadores, en la misma página). **Triple clic**, una línea. Un clic en el margen de los
   números de línea selecciona la línea entera; arrastrando ahí se seleccionan varias.
 - **Selección rectangular (de columna)**: arrastra con **Alt** pulsada, o usa **Alt+Mayús+flechas**.
   Lo que escribas con una selección rectangular se escribe en todas las líneas a la vez. En

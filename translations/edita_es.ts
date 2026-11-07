@@ -555,6 +555,19 @@
     </message>
 </context>
 <context>
+    <name>Paths</name>
+    <message>
+        <location filename="../src/core/Paths.cpp" line="+80"/>
+        <source>Cannot remove %1</source>
+        <translation>No se puede borrar %1</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Invalid path.</source>
+        <translation>La ruta no es válida.</translation>
+    </message>
+</context>
+<context>
     <name>PluginCatalog</name>
     <message>
         <location filename="../src/core/PluginCatalog.cpp" line="+108"/>
@@ -1857,24 +1870,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+464"/>
-        <location line="+4153"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+466"/>
+        <location line="+4222"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4153"/>
-        <location line="+1713"/>
+        <location line="-4222"/>
+        <location line="+1733"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1619"/>
+        <location line="-1636"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+383"/>
+        <location line="+400"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2365,18 +2378,18 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Convertir a otro juego de caracteres</translation>
     </message>
     <message>
-        <location line="+15"/>
+        <location line="+14"/>
         <source>&amp;Language</source>
         <translation>Lengua&amp;je</translation>
     </message>
     <message>
-        <location line="+11"/>
-        <location line="+872"/>
+        <location line="+27"/>
+        <location line="+882"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-846"/>
+        <location line="-852"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2401,7 +2414,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Todos los archivos (*)</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+95"/>
         <source>&amp;Define your language…</source>
         <translation>&amp;Definir tu lenguaje…</translation>
     </message>
@@ -2548,12 +2561,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2218"/>
+        <location line="-2243"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-954"/>
+        <location line="-974"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2633,7 +2646,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+771"/>
+        <location line="+791"/>
         <location line="+1120"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
@@ -2665,12 +2678,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5037"/>
+        <location line="+5092"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5036"/>
+        <location line="-5091"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3382,12 +3395,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4211"/>
+        <location line="+4266"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4210"/>
+        <location line="-4265"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3623,12 +3636,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>C&amp;odificación</translation>
     </message>
     <message>
-        <location line="+190"/>
+        <location line="+217"/>
         <source>Language of the %1 plugin</source>
         <translation>Lenguaje del plugin %1</translation>
     </message>
     <message>
-        <location line="+169"/>
+        <location line="+167"/>
         <source>Go to &amp;File…</source>
         <translation>Ir a &amp;archivo…</translation>
     </message>
@@ -3874,12 +3887,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1777"/>
+        <location line="+1807"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2056"/>
+        <location line="-2086"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4008,7 +4021,18 @@ Do you want to save the file anyway?</source>
         <translation>No se pudo escribir %1</translation>
     </message>
     <message>
-        <location line="+189"/>
+        <location line="+52"/>
+        <location line="+4"/>
+        <source>Settings on cloud</source>
+        <translation>Configuración en la nube</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Please restart Edita to take effect.</source>
+        <translation>Reinicia Edita para que se aplique.</translation>
+    </message>
+    <message>
+        <location line="+157"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -4301,7 +4325,7 @@ Remove it from the list?</source>
         <translation>Vaciar la lista de archivos recientes</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+30"/>
         <source>Localization</source>
         <translation>Idioma</translation>
     </message>
@@ -4495,7 +4519,7 @@ Keep this file in editor?</source>
 %1</translation>
     </message>
     <message>
-        <location line="+78"/>
+        <location line="+152"/>
         <source>Debug Info</source>
         <translation>Información de depuración</translation>
     </message>
@@ -5273,12 +5297,12 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+140"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+141"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location line="+22"/>
+        <location line="+27"/>
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
@@ -5293,7 +5317,7 @@ Continue?</source>
         <translation>Aplicar</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+91"/>
         <source>General</source>
         <translation>General</translation>
     </message>
@@ -5308,7 +5332,7 @@ Continue?</source>
         <translation>Idioma:</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+7"/>
         <source>Use Edita&apos;s file dialogs (in the language of Edita, not of the desktop)</source>
         <translation>Usar los diálogos de archivos de Edita (en el idioma de Edita, no en el del escritorio)</translation>
     </message>
@@ -5323,13 +5347,13 @@ Continue?</source>
         <translation>&lt;b&gt;Barra de pestañas&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="-5"/>
-        <location line="+6"/>
+        <location line="+1"/>
+        <location line="+12"/>
         <source>Hide</source>
         <translation>Ocultar</translation>
     </message>
     <message>
-        <location line="-12"/>
+        <location line="-22"/>
         <source>Appearance:</source>
         <translation>Apariencia:</translation>
     </message>
@@ -5364,12 +5388,7 @@ Continue?</source>
         <translation>Abrir siempre una ventana nueva</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Toolbar:</source>
-        <translation>Barra de herramientas:</translation>
-    </message>
-    <message>
-        <location line="+1"/>
+        <location line="+20"/>
         <source>Small icons</source>
         <translation>Iconos pequeños</translation>
     </message>
@@ -5384,7 +5403,7 @@ Continue?</source>
         <translation>Iconos grandes</translation>
     </message>
     <message>
-        <location line="+4"/>
+        <location line="-16"/>
         <source>Show the welcome page when there are no documents</source>
         <translation>Mostrar la página de inicio cuando no hay documentos</translation>
     </message>
@@ -5409,7 +5428,17 @@ Continue?</source>
         <translation>Salir al cerrar el último documento</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+7"/>
+        <source>Toolbar</source>
+        <translation>Barra de herramientas</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Icons:</source>
+        <translation>Iconos:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>Editing</source>
         <translation>Edición</translation>
     </message>
@@ -5616,11 +5645,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
+        <location line="+305"/>
         <source>Folder:</source>
         <translation>Plegado:</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-304"/>
         <source>Simple</source>
         <translation>Simple</translation>
     </message>
@@ -5671,12 +5701,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+322"/>
+        <location line="+445"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-322"/>
+        <location line="-445"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -5822,12 +5852,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+22"/>
+        <location line="+72"/>
         <source> characters</source>
         <translation> caracteres</translation>
     </message>
     <message>
-        <location line="-17"/>
+        <location line="-67"/>
         <source>Indentation</source>
         <translation>Tabulación y sangría</translation>
     </message>
@@ -5865,6 +5895,46 @@ Continue?</source>
         <location line="+1"/>
         <source>Languages with their own tab settings in langs.xml keep them.</source>
         <translation>Los lenguajes con tabulación propia en langs.xml la conservan.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Language</source>
+        <translation>Lenguaje</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&lt;b&gt;Language Menu&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Menú Lenguaje&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Make language menu compact</source>
+        <translation>Menú de lenguajes compacto (agrupado por inicial)</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>Available items:</source>
+        <translation>En el menú:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Hide from the Language menu</source>
+        <translation>Quitar del menú Lenguaje</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Show in the Language menu</source>
+        <translation>Volver a poner en el menú Lenguaje</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Disabled items:</source>
+        <translation>Ocultos:</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Treat backslash as escape character for SQL</source>
+        <translation>La barra invertida escapa caracteres en SQL</translation>
     </message>
     <message>
         <location line="+7"/>
@@ -6165,12 +6235,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+76"/>
+        <location line="+149"/>
         <source>Every:</source>
         <translation>Cada:</translation>
     </message>
     <message>
-        <location line="-76"/>
+        <location line="-149"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -6206,6 +6276,151 @@ Continue?</source>
     </message>
     <message>
         <location line="+6"/>
+        <source>Delimiter</source>
+        <translation>Delimitadores</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&lt;b&gt;Word character list&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Caracteres de palabra&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Add your characters as part of word (don&apos;t choose it unless you know what you&apos;re doing)</source>
+        <translation>Añadir caracteres que también forman parte de una palabra (solo si sabes lo que haces)</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Letters, digits and _ are always part of a word. Spaces are not allowed.</source>
+        <translation>Las letras, los dígitos y _ siempre son parte de una palabra. No se admiten espacios.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Characters:</source>
+        <translation>Caracteres:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&lt;b&gt;Delimiter selection settings (Ctrl + Mouse double click)&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Seleccionar entre delimitadores (Ctrl + doble clic)&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Open:</source>
+        <translation>Apertura:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Close:</source>
+        <translation>Cierre:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Allow on several lines</source>
+        <translation>También en varias líneas</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Performance</source>
+        <translation>Rendimiento</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&lt;b&gt;Large File Restriction&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Archivos grandes&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Enable Large File Restriction (no syntax highlighting)</source>
+        <translation>Limitar los archivos grandes (sin resaltado de sintaxis)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Define Large File Size:</source>
+        <translation>Tamaño de un archivo grande:</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source> MB</source>
+        <translation> MB</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Deactivate Word Wrap globally</source>
+        <translation>Desactivar el ajuste de línea para todos</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Allow Auto-Completion</source>
+        <translation>Permitir el autocompletado</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Allow Smart Highlighting</source>
+        <translation>Permitir el resaltado inteligente</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Allow Brace Match</source>
+        <translation>Permitir resaltar el paréntesis pareja</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Allow URL Clickable Link</source>
+        <translation>Permitir los enlaces</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A file this size or larger opens without colors, and also without what is not allowed here. The change applies to the files opened afterwards.</source>
+        <translation>Un archivo de este tamaño o mayor se abre sin colores y sin lo que no se permita aquí. El cambio vale para los archivos que se abran después.</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>&lt;b&gt;Settings on cloud&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Configuración en la nube&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keep the settings in this folder (a synchronized folder, for example):</source>
+        <translation>Guardar la configuración en esta carpeta (una carpeta sincronizada, por ejemplo):</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Edita reads and writes its settings there after restarting.</source>
+        <translation>Edita lee y guarda ahí su configuración después de reiniciar.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&lt;b&gt;Clickable Link Settings&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Enlaces&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>No underline</source>
+        <translation>Sin subrayar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Enable fullbox mode</source>
+        <translation>Recuadro al pasar el ratón</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Besides http://, https://, ftp://, file:// and mailto:, separated by spaces</source>
+        <translation>Además de http://, https://, ftp://, file:// y mailto:, separados por espacios</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>URI customized schemes:</source>
+        <translation>Otros esquemas:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A double click on a link opens it.</source>
+        <translation>Un doble clic sobre un enlace lo abre.</translation>
+    </message>
+    <message>
+        <location line="+18"/>
         <source>Search Engine</source>
         <translation>Buscador</translation>
     </message>
@@ -6235,12 +6450,18 @@ Continue?</source>
         <translation>&lt;b&gt;Cambios hechos por otros programas&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-53"/>
+        <location line="+54"/>
         <source>Enable</source>
         <translation>Avisar</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-60"/>
+        <source>Cloud and Link</source>
+        <translation>Nube y enlaces</translation>
+    </message>
+    <message>
+        <location line="+61"/>
         <source>For all opened files (not only the visible one)</source>
         <translation>En todos los documentos abiertos (no solo en el visible)</translation>
     </message>

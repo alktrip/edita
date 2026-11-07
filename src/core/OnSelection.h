@@ -10,6 +10,9 @@
 #include <QString>
 #include <QUrl>
 
+#include <string_view>
+#include <utility>
+
 namespace edita {
 
 // El buscador de «Buscar en internet» (SearchEngineChoice de N++, con sus mismos números en
@@ -37,5 +40,11 @@ QString resolveSelectedPath(const QString& text, const QString& currentDir);
 // Tapar la selección (IDM_EDIT_REDACT_SELECTION): cada carácter cambia por █ (o ● con
 // `bullet`), salvo los fines de línea
 QString redactText(const QString& text, bool bullet);
+
+// Ctrl + doble clic (SCN_DOUBLECLICK de N++ con los delimitadores de Preferencias ›
+// Delimitadores): las posiciones del delimitador de apertura y del de cierre alrededor de
+// `click` en `text` (una línea o el documento), o {-1, -1}. Con los dos iguales (comillas),
+// los más cercanos, sin contar \" ; si no, la pareja más interior (para «f(a, g(b))»)
+std::pair<qsizetype, qsizetype> delimiterRange(std::string_view text, std::size_t click, char left, char right);
 
 } // namespace edita

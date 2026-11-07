@@ -9,6 +9,7 @@
 #include <QRegularExpression>
 
 #include <algorithm>
+#include <stack>
 
 namespace edita {
 
@@ -116,6 +117,48 @@ QString redactText(const QString& text, bool bullet)
             out += mask;
     }
     return out;
+}
+
+std::pair<qsizetype, qsizetype> delimiterRange(std::string_view text, std::size_t click, char left, char right)
+{
+    qsizetype first = -1;
+    qsizetype last = -1;
+    if (click > text.size())
+        return {-1, -1};
+    if (left == right) {
+        auto escaped = [&](std::size_t i) { return left == '"' && i > 0 && text[i - 1] == '\\'; };
+        if (click >= text.size())
+            return {-1, -1};
+        for (qsizetype i = static_cast<qsizetype>(click); i >= 0; --i) {
+            if (text[static_cast<std::size_t>(i)] == left && !escaped(static_cast<std::size_t>(i))) {
+                first = i;
+                break;
+            }
+        }
+        if (first < 0)
+            return {-1, -1};
+        for (std::size_t i = click; i < text.size(); ++i) {
+            if (text[i] == right && !escaped(i) && static_cast<qsizetype>(i) != first) {
+                last = static_cast<qsizetype>(i);
+                break;
+            }
+        }
+    } else {
+        std::stack<std::size_t> opened;
+        for (std::size_t i = 0; i < text.size(); ++i) {
+            if (text[i] == left) {
+                opened.push(i);
+            } else if (text[i] == right && !opened.empty()) {
+                const std::size_t open = opened.top();
+                opened.pop();
+                if (open <= click && i >= click && (first < 0 || static_cast<qsizetype>(open) > first)) {
+                    first = static_cast<qsizetype>(open);
+                    last = static_cast<qsizetype>(i);
+                }
+            }
+        }
+    }
+    return first >= 0 && last >= 0 ? std::pair{first, last} : std::pair<qsizetype, qsizetype>{-1, -1};
 }
 
 } // namespace edita

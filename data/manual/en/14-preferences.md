@@ -9,17 +9,22 @@ Most options are described in the chapter of their feature; this is a summary.
 
 | Page | Options |
 |---|---|
-| General | Language of the interface (it changes after restarting), appearance (light, dark or follow the system), instances, toolbar, Edita's file dialogs, status bar, welcome page, and the tab bar. |
+| General | Language of the interface (it changes after restarting), appearance (light, dark or follow the system), instances, Edita's file dialogs, status bar, welcome page, and the tab bar. |
+| Toolbar | Hiding it and the size of its icons. |
 | Editing | Current line highlight, caret, multi-editing, virtual space, scroll beyond the last line, copy the line without selection, the system monospace font, show spaces and ends of line, indent guides, color preview, colored brackets, breadcrumbs, sticky scroll and line wrap. |
 | Margins | Line numbers, fold margin style, vertical edge, bookmark margin, change history, current line number, Git changes, Git in the explorer, blame and marks in the scroll bar. |
 | New Document | End of line, encoding and language of new documents, and the folder of the open and save dialogs. |
 | Recent Files History | Number of recent files, submenu and how their names are shown. |
 | Indentation | Tab size, tabs or spaces, Backspace unindents and auto-indent, for all the languages or for each one. |
+| Language | The Language menu compact (grouped by initial) or with all of them in a row, the languages left out of it, and whether the backslash escapes characters in SQL. |
 | Auto-Completion | When to show the list, from how many characters, snippets with Tab, parameter hints and the automatic closing of brackets, quotes and tags. |
 | Highlighting | Smart highlighting and its options, matching HTML/XML tags, and the options of the token styles. |
 | Searching | The inline find bar, filling the search field with the selection, the confirmation of Replace All in all documents and the font of the Find dialog. |
 | Print | Line numbers, colors, page breaks, margins, header and footer. |
 | Backup | Session, snapshot mode, the backup of the previous version on save and the extension of session files. |
+| Delimiter | The characters that are also part of a word (for double-click, "match whole word only", smart highlighting…) and the delimiters of Ctrl+double-click, on one line or on several. |
+| Performance | From which size a file is large (200 MB by default): it opens without colors and, unless allowed, without auto-completion, smart highlighting, brace match or links; and whether word wrap is turned off when opening it. |
+| Cloud & Link | A folder (a synchronized one, for example) to keep all the settings, used after restarting; and the links: whether they are marked, underlined or not, with a box when the mouse is over them, and other schemes besides http, https, ftp, file and mailto. |
 | Search Engine | The search engine of **Edit › On Selection › Search on Internet**. |
 | MISC. | Detection of changes made by other programs, encoding detection, default character set, the shell of the terminal and checking for new versions of Edita at startup. |
 | Language Servers | Turning them on or off, the hints at the end of the lines and the command of each server. |

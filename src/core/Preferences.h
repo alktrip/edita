@@ -284,6 +284,46 @@ struct Preferences
     // searchEngineChoice="2" searchEngineCustom=""> (SearchEngine de core/OnSelection.h; 2, Google)
     int searchEngineChoice = 2;
     QString searchEngineCustom;
+
+    // --- Lenguajes (la página «Language» de N++) ---------------------------------------
+    // El menú Lenguaje agrupado por inicial y los lenguajes que no salen en él:
+    // <GUIConfig name="langsExcluded" gr0="0" … gr12="0" langMenuCompact="yes"> (un bit por
+    // LangType, ocho por atributo)
+    bool langMenuCompact = true;
+    QList<int> excludedLanguages;
+    // La barra invertida escapa en SQL (backSlashIsEscapeCharacterForSql de <GUIConfig name="MISC">)
+    bool sqlBackslashEscapes = true;
+
+    // --- Delimitadores ------------------------------------------------------------------
+    // Los caracteres que además cuentan como parte de una palabra: <GUIConfig
+    // name="wordCharList" useDefault="yes" charsAdded="">
+    bool wordCharsDefault = true;
+    QString wordCharsAdded;
+    // Ctrl + doble clic selecciona entre dos delimitadores: <GUIConfig name="delimiterSelection"
+    // leftmostDelimiter="40" rightmostDelimiter="41" delimiterSelectionOnEntireDocument="no">
+    QChar leftDelimiter = QLatin1Char('(');
+    QChar rightDelimiter = QLatin1Char(')');
+    bool delimiterSeveralLines = false;
+
+    // --- Rendimiento: <GUIConfig name="largeFileRestriction" fileSizeMB="200" isEnabled="yes"
+    // allowAutoCompletion="no" allowBraceMatch="no" allowSmartHilite="no" allowClickableLink="no"
+    // deactivateWordWrap="yes"> -----------------------------------------------------------
+    bool largeFileRestriction = true;
+    int largeFileSizeMB = 200; // 1 - 4096
+    bool largeFileAutoCompletion = false;
+    bool largeFileBraceMatch = false;
+    bool largeFileSmartHighlight = false;
+    bool largeFileClickableLink = false;
+    bool largeFileNoWordWrap = true;
+
+    // --- Nube y enlaces -----------------------------------------------------------------
+    // Enlaces que se pueden pulsar (urlMode de N++): <GUIConfig name="URL">2</GUIConfig>:
+    // 0 no, 1 sin subrayar, 2 subrayados, 3 y 4 igual con un recuadro al pasar el ratón
+    int urlMode = 2;
+    // Más esquemas, separados por espacios: <GUIConfig name="uriCustomizedSchemes">
+    QString uriSchemes = QStringLiteral("svn:// cvs:// git:// imap:// irc:// irc6:// ircs:// ldap:// ldaps:// news: "
+                                        "telnet:// gopher:// ssh:// sftp:// smb:// skype: snmp:// spotify: steam:// sms: "
+                                        "slack:// chrome:// bitcoin:");
     // Avisar de las versiones nuevas (AutoUpdateOptions de N++): <GUIConfig name="noUpdate"
     // autoUpdateMode="1" intervalDays="15">. En una beta, cada día
     bool updateOnStartup = true;

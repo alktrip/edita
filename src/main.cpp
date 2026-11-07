@@ -149,7 +149,7 @@ int main(int argc, char* argv[])
 
     // winmain.cpp de N++: con una sola instancia (lo normal), si ya hay una abierta se
     // le pasan los archivos y esta termina
-    const QString socket = edita::InstanceServer::socketName(edita::paths::configDir());
+    const QString socket = edita::InstanceServer::socketName(edita::paths::baseConfigDir());
     const bool multiInst = parser.isSet(multiInstOption) || prefs.multiInstSetting == edita::MultiInst::Always;
     if (!multiInst && edita::InstanceServer::send(socket, request))
         return 0;

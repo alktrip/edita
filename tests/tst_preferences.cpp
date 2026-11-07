@@ -84,6 +84,23 @@ Preferences nonDefault()
     p.terminalShell = QStringLiteral("zsh -l");
     p.searchEngineChoice = 0; // personalizado (SearchEngine::Custom)
     p.searchEngineCustom = QStringLiteral("https://example.org/?q=$(CURRENT_WORD)");
+    p.langMenuCompact = false;
+    p.excludedLanguages = {22}; // Python (el diálogo de la prueba lo tiene)
+    p.sqlBackslashEscapes = false;
+    p.wordCharsDefault = false;
+    p.wordCharsAdded = QStringLiteral("-$");
+    p.leftDelimiter = QLatin1Char('"');
+    p.rightDelimiter = QLatin1Char('"');
+    p.delimiterSeveralLines = true;
+    p.largeFileRestriction = true;
+    p.largeFileSizeMB = 50;
+    p.largeFileAutoCompletion = true;
+    p.largeFileBraceMatch = true;
+    p.largeFileSmartHighlight = true;
+    p.largeFileClickableLink = true;
+    p.largeFileNoWordWrap = false;
+    p.urlMode = 3; // sin subrayar, con recuadro
+    p.uriSchemes = QStringLiteral("git:// news:");
     p.lspEnabled = false;
     p.lspServers = QStringLiteral("clangd=clangd --log=error\npython=off");
     p.statusBarShow = false;
@@ -300,8 +317,9 @@ private slots:
     {
         const Preferences p = nonDefault();
         PreferencesDialog dialog(Preferences{}, {{0, "Normal text"}, {22, "Python"}});
-        QCOMPARE(dialog.pageNames(), (QStringList{"general", "editing", "margins", "newDocument", "recentFiles",
-                                                  "indentation", "autoCompletion", "highlighting", "searching", "printing", "backup", "searchEngine", "misc",
+        QCOMPARE(dialog.pageNames(), (QStringList{"general", "toolbar", "editing", "margins", "newDocument", "recentFiles",
+                                                  "indentation", "language", "autoCompletion", "highlighting", "searching", "printing",
+                                                  "backup", "delimiter", "performance", "cloudLink", "searchEngine", "misc",
                                                   "languageServers"}));
         QVERIFY(dialog.preferences() == Preferences{});
         dialog.setPreferences(p);

@@ -244,7 +244,7 @@ int checkPluginCommand(const QString& packagePath, const QString& recipePath, QT
         ~RestoreConfigHome() { wasSet ? qputenv("XDG_CONFIG_HOME", value) : qunsetenv("XDG_CONFIG_HOME"); }
     } restore;
     qputenv("XDG_CONFIG_HOME", QDir(home.path()).filePath(QStringLiteral("config")).toUtf8());
-    const QString userPlugins = QDir(paths::configDir()).filePath(QStringLiteral("plugins"));
+    const QString userPlugins = QDir(paths::baseConfigDir()).filePath(QStringLiteral("plugins"));
     if (!plugin_installer::installPackage(zip, recipe.info.folderName, plugin_installer::sha256Hex(zip), userPlugins, false)) {
         out << QStringLiteral("Error: the package cannot be installed as %1\n").arg(recipe.info.folderName);
         return 1;

@@ -27,7 +27,7 @@ namespace edita {
 
 namespace {
 
-constexpr int kIndicator = 8; // los marcadores del fragmento (N++ deja 0-7 libres y los plugins empiezan en 9)
+constexpr int kIndicator = 30; // los marcadores del fragmento: uno que N++ no usa (el 8 es el de los enlaces, URL_INDIC; 9-20 de los plugins)
 
 bool isWordChar(QChar c)
 {

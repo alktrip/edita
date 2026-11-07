@@ -219,6 +219,11 @@ public:
     void redactSelection(bool bullet);
     // Buscar la selección (o la palabra del cursor) en internet; false sin nada que buscar
     bool searchOnInternet();
+    // Doble clic en un enlace (URL_INDIC): lo abre. false si en esa posición no hay enlace
+    bool openLinkAt(sptr_t position);
+    // Ctrl + doble clic: selecciona lo que hay entre los delimitadores de Preferencias ›
+    // Delimitadores alrededor de la posición. false si no los hay
+    bool selectDelimitedAt(sptr_t position);
     // Ayuda › Información de depuración
     QString debugInfo() const;
     void showDebugInfo();
@@ -540,6 +545,14 @@ private:
     QMenu* createEncodingMenu();
     QMenu* createEolMenu();
     QMenu* createLanguageMenu();
+    // Sus lenguajes, agrupados por inicial o no (langMenuCompact) y sin los ocultos
+    void populateLanguageMenu();
+    void addExternalLanguageActions(); // los de los plugins de lexer, antes de «Lenguaje de usuario»
+    // Lo que depende del documento de la vista: caracteres de palabra, paréntesis y enlaces
+    // (con las limitaciones de los archivos grandes)
+    void applyDocumentOptions(EditorPane* pane);
+    void refreshUrls(EditorPane* pane);
+    bool isLargeFileIn(const EditorPane* pane) const;
     void populateThemeMenu(QMenu* menu);
     void populateUserLanguageMenu();
     // Tras cargar los plugins: sus lexers, en el menú Lenguaje (antes del de usuario)

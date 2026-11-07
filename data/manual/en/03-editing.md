@@ -27,7 +27,9 @@ All the editor keys can be changed in {{actionShortcutMapper}} (the **Scintilla 
 ## Selection
 
 - **Shift+arrows** select characters and lines; **Ctrl+Shift+arrows** select words.
-- **Double click** selects a word; **triple click** selects a line. A click in the line number
+- **Double click** selects a word (which characters count is chosen on the Delimiter page); on a
+  link, it opens it. **Ctrl+double click** selects what is between parentheses (or other
+  delimiters, on the same page). **Triple click** selects a line. A click in the line number
   margin selects the whole line; dragging there selects several lines.
 - **Rectangular (column) selection**: drag with **Alt** pressed, or use **Alt+Shift+arrows**.
   Typing with a rectangular selection writes on every line at the same time. On some desktops

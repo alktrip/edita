@@ -32,6 +32,15 @@ namespace paths {
 // Ahí irán langs.xml, stylers.xml, config.xml y session.xml.
 QString configDir();
 
+// La carpeta de configuración de siempre ($XDG_CONFIG_HOME/edita), aunque haya nube
+QString baseConfigDir();
+// Preferencias › Nube y enlaces: la carpeta de la nube elegida (cloud/choice en
+// baseConfigDir()); vacía sin nube. configDir() la usa desde el siguiente arranque
+QString cloudChoice();
+// Elegir la carpeta (vacía: sin nube). La primera vez copia allí la configuración de ahora
+// (los .xml y userDefineLangs/) que no esté ya. false con `error` si la carpeta no vale
+bool setCloudChoice(const QString& dir, QString* error = nullptr);
+
 // Crea configDir() si no existe. Devuelve false si no se pudo.
 bool ensureConfigDir();
 
