@@ -2,7 +2,7 @@
 
 Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
 
-**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar, y la [70](fase70.md), cinco páginas de Preferencias). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
+**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar, la [70](fase70.md), cinco páginas de Preferencias, y la [71](fase71.md), importar, el menú contextual y las macros). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
 
 ## Faltan, y tienen sentido en Linux
 
@@ -57,9 +57,9 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 ### Configuración, Macro, Ayuda
 | Orden de N++ | Qué hace |
 |---|---|
-| Import plugin(s)… / Import style theme(s)… | Instalar un plugin o un tema desde un archivo |
-| Modify Shortcut/Delete Macro… | Editar las macros guardadas (para el menú Ejecutar ya existe) |
-| Edit Popup ContextMenu | Personalizar el menú contextual (`contextMenu.xml`) |
+| ✅ Import plugin(s)… / Import style theme(s)… | Instalar un plugin o un tema desde un archivo |
+| ✅ Modify Shortcut/Delete Macro… | Editar las macros guardadas (para el menú Ejecutar ya existe) |
+| ✅ Edit Popup ContextMenu | Personalizar el menú contextual (`contextMenu.xml`) |
 | ✅ Generate MD5/SHA-1/SHA-256/SHA-512 | Calcular hashes del texto, de archivos o de la selección |
 | Toggle macro record | Empezar y parar con una sola orden |
 | Function Parameters Previous/Next Hint | Recorrer las sobrecargas en la ayuda de parámetros |

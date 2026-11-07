@@ -77,6 +77,10 @@ lenguaje, y se guardan en el archivo de configuración del plugin
 Las demás entradas del menú Plugins abren la carpeta de plugins y muestran información de los
 plugins cargados. Los plugins que instalas van a `~/.config/edita/plugins/`.
 
+{{actionImportPlugins}} (en **Configuración › Importar**) instala un plugin que tienes en un
+archivo: una biblioteca `.so` compilada para Linux o un paquete `.zip` como los del catálogo. Se
+copia a la carpeta de plugins y se carga al reiniciar Edita. Los `.dll` de Windows no funcionan.
+
 ## Plugins incluidos
 
 | Plugin | Qué hace |

@@ -78,6 +78,10 @@ not change with the theme.
 The other entries of the Plugins menu open the plugins folder and show information about the
 loaded plugins. The plugins you install go to `~/.config/edita/plugins/`.
 
+{{actionImportPlugins}} (in **Settings › Import**) installs a plugin you have in a file: a `.so`
+library built for Linux or a `.zip` package like those of the catalog. It is copied to the plugins
+folder and loaded when Edita restarts. Windows `.dll` files do not work.
+
 ## Included plugins
 
 | Plugin | What it does |

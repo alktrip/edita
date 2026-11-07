@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <functional>
+
 #include "core/Preferences.h"
 #include "doc/Buffer.h"
 
@@ -71,6 +73,14 @@ public:
     void matchBraces();
     // En un archivo grande, solo si Rendimiento lo permite (allowBraceMatch)
     void setBraceMatchEnabled(bool on);
+    // El menú del clic derecho en el texto (contextMenu.xml): quien lo muestra. Sin él, el de
+    // Scintilla
+    void setContextMenuHandler(std::function<void(const QPoint& globalPos)> handler) { _contextMenu = std::move(handler); }
+
+protected:
+    void contextMenuEvent(QContextMenuEvent* event) override;
+
+public:
 
     // El número de la línea del cursor, resaltado (un marcador translúcido sobre el
     // margen de números; N++ deja libre el 15: los de los plugins son 1–14)
@@ -101,6 +111,7 @@ private:
     sptr_t _markedDocument = 0;
     bool _lineNumberDynamicWidth = true;
     bool _braceMatchEnabled = true;
+    std::function<void(const QPoint&)> _contextMenu;
 };
 
 } // namespace edita

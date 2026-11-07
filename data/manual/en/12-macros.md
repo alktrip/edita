@@ -31,7 +31,8 @@ Edita includes {{actionMacro0}}, which removes the trailing spaces and saves.
 
 The macros are kept in `~/.config/edita/shortcuts.xml`, with the same format as Notepad++: the
 macros of Notepad++ can be copied to Edita and the other way round. Their shortcuts can be changed
-in {{actionShortcutMapper}} (Macros tab).
+in {{actionShortcutMapper}} (Macros tab); {{actionEditMacros}} opens it right on that tab, where
+they can also be deleted.
 
 
 ## The Run menu

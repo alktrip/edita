@@ -18,6 +18,8 @@
 
 #include "ui/EditorView.h"
 
+#include <QContextMenuEvent>
+
 #include "syntax/DesktopFonts.h"
 #include "syntax/SyntaxStyler.h"
 #include "ui/EditCommands.h"
@@ -126,6 +128,40 @@ void EditorView::applyBaseConfiguration()
         updateLineNumberWidth();
     });
     applyPreferences(Preferences{});
+}
+
+void EditorView::contextMenuEvent(QContextMenuEvent* event)
+{
+    if (!_contextMenu) {
+        ScintillaEditBase::contextMenuEvent(event);
+        return;
+    }
+    // En los márgenes, nada (como ShouldDisplayPopup con SC_POPUP_TEXT)
+    const QPoint pos = event->reason() == QContextMenuEvent::Mouse
+                           ? event->pos()
+                           : QPoint(static_cast<int>(sci(SCI_POINTXFROMPOSITION, 0, sci(SCI_GETCURRENTPOS))),
+                                    static_cast<int>(sci(SCI_POINTYFROMPOSITION, 0, sci(SCI_GETCURRENTPOS))));
+    sptr_t margins = 0;
+    for (sptr_t i = 0, n = sci(SCI_GETMARGINS); i < n; ++i)
+        margins += sci(SCI_GETMARGINWIDTHN, static_cast<uptr_t>(i));
+    if (event->reason() == QContextMenuEvent::Mouse && pos.x() < margins) {
+        event->ignore();
+        return;
+    }
+    // Como ScintillaEditBase: el cursor va al clic si no cae en la selección
+    if (event->reason() == QContextMenuEvent::Mouse) {
+        const sptr_t at = sci(SCI_POSITIONFROMPOINT, static_cast<uptr_t>(pos.x()), pos.y());
+        bool inSelection = false;
+        for (sptr_t i = 0, n = sci(SCI_GETSELECTIONS); i < n && !inSelection; ++i) {
+            const sptr_t start = sci(SCI_GETSELECTIONNSTART, static_cast<uptr_t>(i));
+            const sptr_t end = sci(SCI_GETSELECTIONNEND, static_cast<uptr_t>(i));
+            inSelection = start < end && at >= start && at <= end;
+        }
+        if (!inSelection)
+            sci(SCI_SETEMPTYSELECTION, static_cast<uptr_t>(at));
+    }
+    _contextMenu(viewport()->mapToGlobal(pos));
+    event->accept();
 }
 
 void EditorView::setBraceMatchEnabled(bool on)

@@ -40,6 +40,9 @@ add_library(edita_core STATIC
     core/CrashReport.h
     core/DateTimeFormat.cpp
     core/DateTimeFormat.h
+    core/ContextMenuXml.cpp
+    core/ContextMenuXml.h
+    core/NppCommandNames.inc
     core/OnSelection.cpp
     core/OnSelection.h
     core/IssueReport.cpp

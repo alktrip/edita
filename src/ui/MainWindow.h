@@ -219,6 +219,13 @@ public:
     void redactSelection(bool bullet);
     // Buscar la selección (o la palabra del cursor) en internet; false sin nada que buscar
     bool searchOnInternet();
+    // contextMenu.xml del usuario (lo crea con el de serie si no está)
+    QString contextMenuPath() const;
+    // El menú del clic derecho en el editor, según contextMenu.xml (el que llama lo borra)
+    QMenu* buildEditorContextMenu();
+    // Configuración › Importar: copia los plugins (.so o paquetes .zip) y los temas; cuántos
+    int importPlugins(const QStringList& files);
+    int importThemes(const QStringList& files);
     // Doble clic en un enlace (URL_INDIC): lo abre. false si en esa posición no hay enlace
     bool openLinkAt(sptr_t position);
     // Ctrl + doble clic: selecciona lo que hay entre los delimitadores de Preferencias ›

@@ -47,6 +47,21 @@ and offers to take it from that command.
 The shortcuts are saved in `~/.config/edita/shortcuts.xml` with the format of Notepad++ (only the
 ones that differ from the default). This manual always shows the current shortcuts.
 
+## The context menu
+
+The menu of the right click in the editor is the one of `contextMenu.xml`, with the same format as
+in Notepad++ (at first it has the default one of Notepad++). {{actionEditContextMenu}} opens it to
+change it; the changes appear the next time the menu opens, after saving. Each `<Item>` is a
+command:
+
+- `id="42001"`: by its Notepad++ number; `id="0"` is a separator.
+- `MenuEntryName="Edit" MenuItemName="Cut"`: by its menu and its English name (those of
+  Notepad++), or with the names of Edita's menus in the language you use.
+- `PluginEntryName="MIME Tools" PluginCommandItemName="Base64 Encode"`: a command of a plugin.
+- `FolderName="…"` puts it in a submenu, and `ItemNameAs="…"` gives it another name.
+
+Whatever Edita does not have, or plugins that are not installed, do not appear.
+
 ## Configuration files
 
 Edita keeps its configuration in `~/.config/edita/` (on macOS, without `XDG_CONFIG_HOME`,
@@ -59,6 +74,7 @@ Edita keeps its configuration in `~/.config/edita/` (on macOS, without `XDG_CONF
 | `langs.xml` | The languages: extensions, keywords and comment symbols. |
 | `stylers.xml`, `themes/` | The default theme and the themes you changed. |
 | `shortcuts.xml` | Shortcuts and macros. |
+| `contextMenu.xml` | The menu of the right click in the editor. |
 | `userDefineLang.xml`, `userDefineLangs/` | The user defined languages. |
 | `autoCompletion/` | Your API files for autocompletion. |
 | `snippets/` | Your snippets. |

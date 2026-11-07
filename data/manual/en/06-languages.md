@@ -67,6 +67,8 @@ The same menu has:
 - {{actionReloadSyntax}}: reads the configuration files again, after editing them by hand.
 - **Edit the Styles File** and **Edit langs.xml**: open the files of the current theme and of the
   languages, to edit them as text.
+- {{actionImportThemes}} (in **Settings › Import**) copies themes of Notepad++ or Edita (`.xml`
+  files) to the themes folder: they appear in the themes menu and in the Style Configurator.
 
 Edita uses the monospaced font of the system instead of the Windows fonts that many themes ask
 for (Courier New, Consolas). Turn off **Use the system monospace font** in the Editing page to use

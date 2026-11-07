@@ -24,6 +24,8 @@
 #include "core/CrashReport.h"
 #include "core/DateTimeFormat.h"
 #include "core/OnSelection.h"
+#include "core/ContextMenuXml.h"
+#include "core/PluginInstaller.h"
 #include "core/IssueReport.h"
 #include "core/UpdateCheck.h"
 #include "core/Paths.h"
@@ -100,7 +102,9 @@
 #include <QDropEvent>
 #include <QFile>
 #include <QFileInfo>
+#include <QDirIterator>
 #include <QFileSystemWatcher>
+#include <QTemporaryDir>
 #include <QFontDatabase>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -138,7 +142,10 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
+#include <pugixml.hpp>
+
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <functional>
 #include <cstring>
@@ -223,6 +230,9 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionMoveToTrash", 41016}, {"actionOpenSelectedFile", 42073}, {"actionOpenSelectedFolder", 42074},
         {"actionSearchOnInternet", 42075}, {"actionChangeSearchEngine", 42076}, {"actionCharPanel", 42051},
         {"actionClipboardHistory", 42052},
+        // Fase 71 (Configuración › Importar, el menú contextual, Macro)
+        {"actionImportPlugins", 48005}, {"actionImportThemes", 48006}, {"actionEditContextMenu", 48018},
+        {"actionEditMacros", 48016},
         {"actionRunMacro", 42032},       {"actionAbout", 47000},          {"actionCheckForUpdates", 47006},          {"actionEol0", 45001},
         {"actionEol1", 45003},           {"actionEol2", 45002},           {"actionDefineLanguage", 46250},
         {"actionPluginsAdmin", 48015},   {"actionColumnEditor", 42034},   {"actionDocumentMap", 44080},
@@ -690,6 +700,12 @@ void MainWindow::connectPane(EditorPane* pane)
         showTabContextMenu(id, pos);
     });
     EditorView* view = pane->editor();
+    // El menú del clic derecho, de contextMenu.xml (como N++)
+    view->setContextMenuHandler([this, pane](const QPoint& globalPos) {
+        setActivePane(pane);
+        const std::unique_ptr<QMenu> menu(buildEditorContextMenu());
+        menu->exec(globalPos);
+    });
     // La vista que recibe el foco pasa a ser la activa (como en N++)
     connect(view, &ScintillaEditBase::focusChanged, this, [this, pane](bool focused) {
         if (focused)
@@ -1561,6 +1577,22 @@ void MainWindow::createMenus()
               [this] { showStyleConfigurator(); });
     addAction(settings, tr("Shortcut &Mapper…"), "actionShortcutMapper", QKeySequence(), [this] { showShortcutMapper(); });
     addAction(settings, tr("Edit S&nippets…"), "actionEditSnippets", QKeySequence(), [this] { editUserSnippets(); });
+    // IDM_SETTING_IMPORTPLUGIN, IDM_SETTING_IMPORTSTYLETHEMES, IDM_SETTING_EDITCONTEXTMENU
+    settings->addSeparator();
+    QMenu* import = settings->addMenu(tr("I&mport"));
+    import->setObjectName(QStringLiteral("menuImport"));
+    addAction(import, tr("Import &plugin(s)…"), "actionImportPlugins", QKeySequence(), [this] {
+        importPlugins(_prompter->openFileNames(this, QDir::homePath(), tr("Edita plugin (*.so *.zip)")));
+    });
+    addAction(import, tr("Import style &theme(s)…"), "actionImportThemes", QKeySequence(), [this] {
+        importThemes(_prompter->openFileNames(this, QDir::homePath(), tr("Style theme (*.xml)")));
+    });
+    addAction(settings, tr("Edit Popup &ContextMenu"), "actionEditContextMenu", QKeySequence(), [this] {
+        _prompter->inform(this, tr("Editing contextMenu"),
+                          tr("Editing contextMenu.xml allows you to modify the context menu of the edit zone. "
+                             "The changes are used the next time the menu opens, after saving the file."));
+        openFile(contextMenuPath());
+    });
     // Servidores de lenguaje (no existen en N++)
     settings->addSeparator();
     QMenu* lspMenu = settings->addMenu(tr("&Language Server"));
@@ -4193,6 +4225,15 @@ void MainWindow::createMacroMenu()
     _saveMacroAction->setObjectName(QStringLiteral("actionSaveMacro"));
     _runMacroAction = _macroMenu->addAction(tr("Run a Macro &Multiple Times…"), this, &MainWindow::showRunMacroDialog);
     _runMacroAction->setObjectName(QStringLiteral("actionRunMacro"));
+    // IDM_SETTING_SHORTCUT_MAPPER_MACRO: las macros guardadas, en la Asignación de atajos
+    QAction* editMacros = _macroMenu->addAction(tr("Modify Shortcut/&Delete Macro…"), this, [this] {
+        ShortcutMapperDialog dialog(*this, *_prompter, this);
+        dialog.showKind(ShortcutEntry::Kind::Macros);
+        dialog.exec();
+        if (_manual)
+            _manual->reload();
+    });
+    editMacros->setObjectName(QStringLiteral("actionEditMacros"));
     _savedMacrosAnchor = _macroMenu->addSeparator();
     rebuildMacroMenu();
 }
@@ -6341,6 +6382,230 @@ bool MainWindow::selectDelimitedAt(sptr_t position)
         return false;
     view->sci(SCI_SETSEL, static_cast<uptr_t>(base + open + 1), base + close);
     return true;
+}
+
+QString MainWindow::contextMenuPath() const
+{
+    // contextMenu.xml del usuario; la primera vez, el de serie (NppParameters::load)
+    const QString path = QDir(paths::configDir()).filePath(QStringLiteral("contextMenu.xml"));
+    if (!QFileInfo::exists(path)) {
+        paths::ensureConfigDir();
+        if (const QString model = paths::findDataFile(QStringLiteral("contextMenu.xml")); !model.isEmpty()) {
+            QFile::copy(model, path);
+            QFile(path).setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup | QFile::ReadOther);
+        }
+    }
+    return path;
+}
+
+QMenu* MainWindow::buildEditorContextMenu()
+{
+    // NppParameters::getContextMenuFromXmlTree + ContextMenu::create: cada elemento es una orden
+    // del menú principal (por id o por su nombre en inglés), de un plugin o un separador; con
+    // FolderName, en un submenú. Lo que no existe en Edita se salta
+    auto* menu = new QMenu(this);
+    menu->setObjectName(QStringLiteral("editorContextMenu"));
+    std::map<int, QAction*> byId;
+    for (QAction* action : findChildren<QAction*>()) {
+        const QString name = action->objectName();
+        if (!name.startsWith(QLatin1String("action")))
+            continue;
+        int id = nppCommandFor(name.toLatin1().constData());
+        if (id <= 0)
+            id = shortcutOnlyCommandFor(name);
+        if (id > 0 && !byId.count(id))
+            byId[id] = action;
+    }
+    // Por el texto del menú en el idioma de ahora (sin & ni «…»), dentro de un menú
+    std::function<QAction*(const QMenu*, const QString&)> findByText = [&findByText](const QMenu* in, const QString& text) -> QAction* {
+        for (QAction* action : in->actions()) {
+            if (action->menu()) {
+                if (QAction* found = findByText(action->menu(), text))
+                    return found;
+            } else if (!action->isSeparator() && contextMenuText(action->text()).compare(text, Qt::CaseInsensitive) == 0) {
+                return action;
+            }
+        }
+        return nullptr;
+    };
+    auto topMenu = [this](const QString& title) -> QMenu* {
+        for (QAction* action : menuBar()->actions()) {
+            if (action->menu() && contextMenuText(action->text()).compare(contextMenuText(title), Qt::CaseInsensitive) == 0)
+                return action->menu();
+        }
+        return nullptr;
+    };
+    // Los TranslateID de los submenús del contextMenu.xml de serie
+    auto folderTitle = [](const QString& folder) {
+        if (folder == QLatin1String("Style all occurrences of token"))
+            return tr("Style all occurrences of token");
+        if (folder == QLatin1String("Style one token"))
+            return tr("Style one token");
+        if (folder == QLatin1String("Clear style"))
+            return tr("Clear style");
+        if (folder == QLatin1String("Plugin commands"))
+            return tr("Plugin commands");
+        return folder;
+    };
+    std::map<QString, QMenu*> folders;
+    bool pendingSeparator = false;
+    for (const ContextMenuItem& item : readContextMenu(contextMenuPath())) {
+        if (item.isSeparator()) {
+            if (item.folder.isEmpty())
+                pendingSeparator = !menu->actions().isEmpty();
+            else if (const auto it = folders.find(item.folder); it != folders.end())
+                it->second->addSeparator();
+            continue;
+        }
+        QAction* action = nullptr;
+        if (item.id > 0) {
+            if (const auto it = byId.find(item.id); it != byId.end())
+                action = it->second;
+        } else if (!item.menuEntry.isEmpty() && !item.menuItem.isEmpty()) {
+            if (const int id = nppCommandIdFromName(item.menuEntry, item.menuItem); id > 0)
+                if (const auto it = byId.find(id); it != byId.end())
+                    action = it->second;
+            if (!action) // el nombre en el idioma de Edita
+                if (const QMenu* top = topMenu(item.menuEntry))
+                    action = findByText(top, contextMenuText(item.menuItem));
+        } else if (!item.pluginEntry.isEmpty() && !item.pluginCommand.isEmpty() && _pluginsMenu) {
+            for (QAction* entry : _pluginsMenu->actions()) {
+                if (entry->menu() && contextMenuText(entry->text()).compare(contextMenuText(item.pluginEntry), Qt::CaseInsensitive) == 0) {
+                    action = findByText(entry->menu(), contextMenuText(item.pluginCommand));
+                    break;
+                }
+            }
+        }
+        if (!action)
+            continue;
+        QMenu* target = menu;
+        if (!item.folder.isEmpty()) {
+            auto it = folders.find(item.folder);
+            if (it == folders.end()) {
+                if (pendingSeparator)
+                    menu->addSeparator();
+                pendingSeparator = false;
+                it = folders.emplace(item.folder, menu->addMenu(folderTitle(item.folder))).first;
+            }
+            target = it->second;
+        } else if (pendingSeparator) {
+            menu->addSeparator();
+            pendingSeparator = false;
+        }
+        if (item.displayAs.isEmpty()) {
+            target->addAction(action);
+        } else {
+            // ItemNameAs: otro texto para la misma orden
+            QAction* alias = target->addAction(item.displayAs);
+            alias->setEnabled(action->isEnabled());
+            connect(alias, &QAction::triggered, action, &QAction::trigger);
+        }
+    }
+    if (menu->actions().isEmpty()) {
+        // Sin contextMenu.xml que valga: el de Scintilla de siempre
+        for (const char* name : {"actionUndo", "actionRedo", "", "actionCut", "actionCopy", "actionPaste", "actionDelete", "",
+                                 "actionSelectAll"}) {
+            if (!*name)
+                menu->addSeparator();
+            else if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
+                menu->addAction(action);
+        }
+    }
+    return menu;
+}
+
+int MainWindow::importPlugins(const QStringList& files)
+{
+    // IDM_SETTING_IMPORTPLUGIN (addNppPlugins): cada plugin en plugins/<nombre>/<nombre>.so; un
+    // paquete .zip (el del catálogo o el de una receta) se instala como desde el administrador
+    const QString root = QDir(paths::baseConfigDir()).filePath(QStringLiteral("plugins"));
+    QStringList imported;
+    QStringList problems;
+    for (const QString& file : files) {
+        QFile in(file);
+        if (!in.open(QIODevice::ReadOnly)) {
+            problems << tr("%1: cannot read it").arg(QFileInfo(file).fileName());
+            continue;
+        }
+        const QByteArray bytes = in.readAll();
+        QString error;
+        if (file.endsWith(QLatin1String(".zip"), Qt::CaseInsensitive)) {
+            // El nombre del plugin es el de su .so
+            QTemporaryDir temp;
+            QString folder;
+            if (temp.isValid() && plugin_installer::extractZip(bytes, temp.path(), &error)) {
+                QDirIterator it(temp.path(), {QStringLiteral("*.so")}, QDir::Files, QDirIterator::Subdirectories);
+                if (it.hasNext())
+                    folder = QFileInfo(it.next()).completeBaseName();
+            }
+            if (folder.isEmpty()) {
+                problems << tr("%1: there is no plugin (.so) in the package %2").arg(QFileInfo(file).fileName(), error);
+                continue;
+            }
+            if (!plugin_installer::installPackage(bytes, folder, QString(), root, true, &error)) {
+                problems << QStringLiteral("%1: %2").arg(QFileInfo(file).fileName(), error);
+                continue;
+            }
+            imported << folder;
+        } else {
+            if (!bytes.startsWith("\x7f" "ELF")) {
+                problems << tr("%1: it is not a Linux plugin (.so)").arg(QFileInfo(file).fileName());
+                continue;
+            }
+            const QString folder = QFileInfo(file).completeBaseName();
+            const QString dir = QDir(root).filePath(folder);
+            const QString target = QDir(dir).filePath(folder + QStringLiteral(".so"));
+            QDir().mkpath(dir);
+            QFile::remove(target);
+            QFile out(target);
+            if (!out.open(QIODevice::WriteOnly) || out.write(bytes) != bytes.size()) {
+                problems << QStringLiteral("%1: %2").arg(QFileInfo(file).fileName(), out.errorString());
+                continue;
+            }
+            imported << folder;
+        }
+    }
+    if (!problems.isEmpty())
+        _prompter->warn(this, tr("Import plugin(s)"), problems.join(QLatin1Char('\n')));
+    if (!imported.isEmpty())
+        _prompter->inform(this, tr("Edita needs to be relaunched"),
+                          tr("You have to restart Edita to load the plugins you imported:\n%1").arg(imported.join(QStringLiteral(", "))));
+    return static_cast<int>(imported.size());
+}
+
+int MainWindow::importThemes(const QStringList& files)
+{
+    // IDM_SETTING_IMPORTSTYLETHEMES: a themes/ de la configuración, donde ya los ven el menú de
+    // temas y el Configurador de estilos
+    const QString dir = QDir(paths::configDir()).filePath(QStringLiteral("themes"));
+    QDir().mkpath(dir);
+    QStringList imported;
+    QStringList problems;
+    for (const QString& file : files) {
+        pugi::xml_document doc;
+        if (!doc.load_file(file.toUtf8().constData()) || !doc.child("NotepadPlus").child("LexerStyles")) {
+            problems << tr("%1: it is not a style theme").arg(QFileInfo(file).fileName());
+            continue;
+        }
+        const QString target = QDir(dir).filePath(QFileInfo(file).fileName());
+        if (QFileInfo(target) == QFileInfo(file))
+            continue;
+        if (QFileInfo::exists(target)
+            && !_prompter->confirm(this, tr("Import style theme(s)"),
+                                   tr("The theme %1 already exists. Replace it?").arg(QFileInfo(file).completeBaseName())))
+            continue;
+        QFile::remove(target);
+        if (!QFile::copy(file, target)) {
+            problems << tr("%1: cannot copy it").arg(QFileInfo(file).fileName());
+            continue;
+        }
+        imported << QFileInfo(file).completeBaseName();
+    }
+    if (!problems.isEmpty())
+        _prompter->warn(this, tr("Import style theme(s)"), problems.join(QLatin1Char('\n')));
+    if (!imported.isEmpty())
+        statusBar()->showMessage(tr("Imported themes: %1").arg(imported.join(QStringLiteral(", "))), 5000);
+    return static_cast<int>(imported.size());
 }
 
 QString MainWindow::debugInfo() const

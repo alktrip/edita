@@ -344,6 +344,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 68 — Edición y Herramientas | Insertar fecha y hora (core/DateTimeFormat, `insertDateTime`), Copiar al portapapeles, selección múltiple, Resumen, Seguimiento (tail -f), menú Herramientas (ui/HashDialog), Información de depuración, `Prompter::inform`, IDM_* de las fases 67 y 68 | ✅ [fase68.md](fase68.md) |
 | 69 — Archivo y Sobre la selección | Renombrar (`DocumentManager::moveFile`, o la pestaña), Mover a la papelera, Abrir con la aplicación predeterminada, Abrir la carpeta contenedora; Editar › Sobre la selección (core/OnSelection: abrir la ruta, tapar, buscar en internet + página Buscador), panel de caracteres e historial del portapapeles (ui/EditPanels), `NPPN_FILE*RENAME*`/`*DELETE*` | ✅ [fase69.md](fase69.md) |
 | 70 — Páginas de Preferencias | Barra de herramientas, Lenguaje (`langsExcluded`, menú rehecho), Delimitadores (`SCI_SETWORDCHARS` por documento, Ctrl + doble clic con `delimiterRange`), Rendimiento (`largeFileRestriction`), Nube y enlaces (`cloud/choice`, `paths::baseConfigDir`, ui/UrlLinks con `URL_INDIC` 8; fragmentos al 30) | ✅ [fase70.md](fase70.md) |
+| 71 — Importar y menú contextual | Configuración › Importar plugins y temas, `contextMenu.xml` (core/ContextMenuXml, `NppCommandNames.inc` de english.xml, `EditorView::setContextMenuHandler`), Editar el menú contextual, Macro › Modificar atajo/Borrar macro | ✅ [fase71.md](fase71.md) |
 
 ---
 

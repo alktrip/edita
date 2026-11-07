@@ -68,6 +68,9 @@ El mismo menú tiene:
   mano.
 - **Editar el archivo de estilos** y **Editar langs.xml**: abren los archivos del tema actual y de
   los lenguajes, para editarlos como texto.
+- {{actionImportThemes}} (en **Configuración › Importar**) copia temas de Notepad++ o de Edita
+  (archivos `.xml`) a la carpeta de temas: aparecen en el menú de temas y en el Configurador de
+  estilos.
 
 Edita usa la letra monoespaciada del sistema en lugar de las fuentes de Windows que piden muchos
 temas (Courier New, Consolas). Desactiva **Usar la letra monoespaciada del sistema** en la página

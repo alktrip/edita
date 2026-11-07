@@ -47,6 +47,21 @@ se guardan al momento. Si otra orden ya usa la combinación, Edita avisa y ofrec
 Los atajos se guardan en `~/.config/edita/shortcuts.xml` con el formato de Notepad++ (solo los que
 difieren de los de serie). Este manual muestra siempre los atajos actuales.
 
+## El menú contextual
+
+El menú del clic derecho en el editor es el de `contextMenu.xml`, con el mismo formato que en
+Notepad++ (al principio trae el de serie de Notepad++). {{actionEditContextMenu}} lo abre para
+cambiarlo; los cambios se ven la próxima vez que se abre el menú, después de guardar. Cada
+`<Item>` es una orden:
+
+- `id="42001"`: por su número de Notepad++; `id="0"` es un separador.
+- `MenuEntryName="Edit" MenuItemName="Cut"`: por su menú y su nombre en inglés (los de Notepad++),
+  o con los nombres de los menús de Edita en el idioma que usas.
+- `PluginEntryName="MIME Tools" PluginCommandItemName="Base64 Encode"`: una orden de un plugin.
+- `FolderName="…"` la pone en un submenú, e `ItemNameAs="…"` le da otro nombre.
+
+Lo que Edita no tiene, o los plugins que no están instalados, no salen.
+
 ## Archivos de configuración
 
 Edita guarda su configuración en `~/.config/edita/` (en macOS, sin `XDG_CONFIG_HOME`,
@@ -59,6 +74,7 @@ Edita guarda su configuración en `~/.config/edita/` (en macOS, sin `XDG_CONFIG_
 | `langs.xml` | Los lenguajes: extensiones, palabras clave y símbolos de comentario. |
 | `stylers.xml`, `themes/` | El tema de serie y los temas que cambiaste. |
 | `shortcuts.xml` | Atajos y macros. |
+| `contextMenu.xml` | El menú del clic derecho en el editor. |
 | `userDefineLang.xml`, `userDefineLangs/` | Los lenguajes definidos por el usuario. |
 | `autoCompletion/` | Tus archivos de API para el autocompletado. |
 | `snippets/` | Tus fragmentos. |

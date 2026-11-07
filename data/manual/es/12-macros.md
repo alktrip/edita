@@ -32,7 +32,8 @@ Edita incluye {{actionMacro0}}, que quita los espacios del final y guarda.
 
 Las macros se guardan en `~/.config/edita/shortcuts.xml`, con el mismo formato que Notepad++: las
 macros de Notepad++ se pueden copiar a Edita y al revés. Sus atajos se cambian en
-{{actionShortcutMapper}} (pestaña Macros).
+{{actionShortcutMapper}} (pestaña Macros); {{actionEditMacros}} la abre directamente en esa
+pestaña, donde también se borran.
 
 
 ## El menú Ejecutar

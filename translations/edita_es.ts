@@ -1870,24 +1870,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+466"/>
-        <location line="+4222"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+476"/>
+        <location line="+4253"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4222"/>
-        <location line="+1733"/>
+        <location line="-4253"/>
+        <location line="+1755"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1636"/>
+        <location line="-1658"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+400"/>
+        <location line="+406"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2318,7 +2318,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+65"/>
+        <location line="+81"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2561,12 +2561,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2243"/>
+        <location line="-2259"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-974"/>
+        <location line="-983"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2646,13 +2646,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+791"/>
-        <location line="+1120"/>
+        <location line="+800"/>
+        <location line="+1136"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1079"/>
+        <location line="-1095"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2678,12 +2678,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5092"/>
+        <location line="+5117"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5091"/>
+        <location line="-5116"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3252,6 +3252,46 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+3"/>
+        <source>I&amp;mport</source>
+        <translation>I&amp;mportar</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Import &amp;plugin(s)…</source>
+        <translation>Importar &amp;plugins…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Edita plugin (*.so *.zip)</source>
+        <translation>Plugin de Edita (*.so *.zip)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Import style &amp;theme(s)…</source>
+        <translation>Importar &amp;temas…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Style theme (*.xml)</source>
+        <translation>Tema de estilos (*.xml)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Edit Popup &amp;ContextMenu</source>
+        <translation>Editar el menú &amp;contextual</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Editing contextMenu</source>
+        <translation>Editar el menú contextual</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Editing contextMenu.xml allows you to modify the context menu of the edit zone. The changes are used the next time the menu opens, after saving the file.</source>
+        <translation>En contextMenu.xml puedes cambiar el menú del clic derecho en el editor. Los cambios se ven la próxima vez que se abre el menú, después de guardar el archivo.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>&amp;Language Server</source>
         <translation>Servidor de &amp;lenguaje</translation>
     </message>
@@ -3395,12 +3435,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4266"/>
+        <location line="+4275"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4265"/>
+        <location line="-4274"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3887,12 +3927,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+263"/>
         <location line="+20"/>
-        <location line="+1807"/>
+        <location line="+1816"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2086"/>
+        <location line="-2095"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4048,12 +4088,12 @@ Do you want to save the file anyway?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+373"/>
+        <location line="+382"/>
         <source>Start &amp;Recording</source>
         <translation>&amp;Iniciar la grabación</translation>
     </message>
     <message>
-        <location line="-370"/>
+        <location line="-379"/>
         <source>&amp;Playback</source>
         <translation>&amp;Reproducir</translation>
     </message>
@@ -4068,7 +4108,12 @@ Do you want to save the file anyway?</source>
         <translation>&amp;Ejecutar una macro varias veces…</translation>
     </message>
     <message>
-        <location line="+9"/>
+        <location line="+3"/>
+        <source>Modify Shortcut/&amp;Delete Macro…</source>
+        <translation>Modificar atajo/&amp;Borrar macro…</translation>
+    </message>
+    <message>
+        <location line="+15"/>
         <source>&amp;Run</source>
         <translation>Ejecuta&amp;r</translation>
     </message>
@@ -4519,7 +4564,85 @@ Keep this file in editor?</source>
 %1</translation>
     </message>
     <message>
-        <location line="+152"/>
+        <location line="+171"/>
+        <source>Style all occurrences of token</source>
+        <translation>Estilo para todas las apariciones</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Style one token</source>
+        <translation>Estilo para esta aparición</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Clear style</source>
+        <translation>Quitar estilo</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Plugin commands</source>
+        <translation>Órdenes de plugins</translation>
+    </message>
+    <message>
+        <location line="+80"/>
+        <source>%1: cannot read it</source>
+        <translation>%1: no se puede leer</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>%1: there is no plugin (.so) in the package %2</source>
+        <translation>%1: el paquete no trae ningún plugin (.so) %2</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>%1: it is not a Linux plugin (.so)</source>
+        <translation>%1: no es un plugin para Linux (.so)</translation>
+    </message>
+    <message>
+        <location line="+17"/>
+        <source>Import plugin(s)</source>
+        <translation>Importar plugins</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Edita needs to be relaunched</source>
+        <translation>Hay que reiniciar Edita</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>You have to restart Edita to load the plugins you imported:
+%1</source>
+        <translation>Reinicia Edita para cargar los plugins que importaste:
+%1</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>%1: it is not a style theme</source>
+        <translation>%1: no es un tema de estilos</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <location line="+11"/>
+        <source>Import style theme(s)</source>
+        <translation>Importar temas</translation>
+    </message>
+    <message>
+        <location line="-10"/>
+        <source>The theme %1 already exists. Replace it?</source>
+        <translation>El tema %1 ya existe. ¿Sustituirlo?</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>%1: cannot copy it</source>
+        <translation>%1: no se puede copiar</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Imported themes: %1</source>
+        <translation>Temas importados: %1</translation>
+    </message>
+    <message>
+        <location line="+39"/>
         <source>Debug Info</source>
         <translation>Información de depuración</translation>
     </message>
@@ -5645,12 +5768,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+305"/>
+        <location line="+309"/>
         <source>Folder:</source>
         <translation>Plegado:</translation>
     </message>
     <message>
-        <location line="-304"/>
+        <location line="-308"/>
         <source>Simple</source>
         <translation>Simple</translation>
     </message>
@@ -5701,12 +5824,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+445"/>
+        <location line="+449"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-445"/>
+        <location line="-449"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -6235,12 +6358,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+149"/>
+        <location line="+153"/>
         <source>Every:</source>
         <translation>Cada:</translation>
     </message>
     <message>
-        <location line="-149"/>
+        <location line="-153"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -6375,7 +6498,7 @@ Continue?</source>
         <translation>Un archivo de este tamaño o mayor se abre sin colores y sin lo que no se permita aquí. El cambio vale para los archivos que se abran después.</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+12"/>
         <source>&lt;b&gt;Settings on cloud&lt;/b&gt;</source>
         <translation>&lt;b&gt;Configuración en la nube&lt;/b&gt;</translation>
     </message>
@@ -6456,12 +6579,12 @@ Continue?</source>
         <translation>Avisar</translation>
     </message>
     <message>
-        <location line="-60"/>
+        <location line="-63"/>
         <source>Cloud and Link</source>
         <translation>Nube y enlaces</translation>
     </message>
     <message>
-        <location line="+61"/>
+        <location line="+64"/>
         <source>For all opened files (not only the visible one)</source>
         <translation>En todos los documentos abiertos (no solo en el visible)</translation>
     </message>
