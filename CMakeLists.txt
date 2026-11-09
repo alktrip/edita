@@ -7,7 +7,7 @@ project(Edita
     LANGUAGES C CXX)
 # La versión que ve el usuario: la numérica más la etiqueta de la etapa («-beta.1»; vacía en
 # una versión estable). Los plugins y las comparaciones usan solo la numérica
-set(EDITA_VERSION_SUFFIX "-beta.6")
+set(EDITA_VERSION_SUFFIX "-beta.7")
 set(EDITA_VERSION "${PROJECT_VERSION}${EDITA_VERSION_SUFFIX}" CACHE INTERNAL "Versión de Edita")
 # Avisar de las versiones nuevas (Ayuda › Buscar actualizaciones): en el AppImage, sí; un
 # paquete de una distribución lo desactiva, porque se actualiza con su gestor de paquetes
