@@ -283,9 +283,42 @@ private slots:
         QCOMPARE(read.folderSelected, saved.folderSelected);
         Window y;
         y.window.restoreSession(read);
-        QVERIFY(y.window.panelDock(QStringLiteral("folderAsWorkspace"))->isVisibleTo(&y.window));
+        // El panel, como diga config.xml (aquí no se abrió con la ventana a la vista: cerrado)
         QCOMPARE(y.window.folderPanel()->roots(), QStringList{root});
         QCOMPARE(y.window.folderPanel()->selectedPath(), root + "/src/main.cpp");
+    }
+
+    // Un tester: si se cierra el explorador de carpetas, al volver a abrir Edita no debe abrirse
+    // solo. Las carpetas siguen en la sesión, para cuando se vuelva a abrir el panel
+    void closedFolderPanelStaysClosed()
+    {
+        const QString root = _tmp.filePath(QStringLiteral("cerrado"));
+        QDir().mkpath(root + QStringLiteral("/sub"));
+        Session saved;
+        {
+            Window x;
+            MainWindow& w = x.window;
+            w.show();
+            QVERIFY(QTest::qWaitForWindowExposed(&w));
+            QVERIFY(w.addFolderToWorkspace(root));
+            QDockWidget* dock = w.panelDock(QStringLiteral("folderAsWorkspace"));
+            QTRY_VERIFY(dock->isVisible());
+            dock->close(); // la × del panel
+            QTRY_VERIFY(!dock->isVisible());
+            saved = w.captureSession();
+        }
+        Window y;
+        MainWindow& w = y.window;
+        w.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w));
+        w.restoreSession(saved);
+        QCoreApplication::processEvents();
+        QVERIFY(!w.panelDock(QStringLiteral("folderAsWorkspace"))->isVisibleTo(&w));
+        QCOMPARE(w.folderPanel()->roots(), QStringList{root});
+        // Al abrirlo desde el menú, ahí están
+        w.findChild<QAction*>(QStringLiteral("actionFolderAsWorkspace"))->setChecked(true);
+        QTRY_VERIFY(w.panelDock(QStringLiteral("folderAsWorkspace"))->isVisible());
+        QCOMPARE(w.folderPanel()->roots(), QStringList{root});
     }
 
     void panelsHaveMenuEntriesAndRememberTheirState()

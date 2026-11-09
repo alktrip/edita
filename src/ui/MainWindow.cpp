@@ -8757,11 +8757,10 @@ Session MainWindow::captureSession(bool named, bool withFolders)
 
 void MainWindow::restoreSession(const Session& session, QStringList* missing)
 {
-    if (session.hasFileBrowser && _folderPanel) {
+    // Las carpetas vuelven, pero el panel se queda como estaba (config.xml): cerrado, si se
+    // cerró. Como N++, que solo lo abre al cargar a mano una sesión (loadSessionFile)
+    if (session.hasFileBrowser && _folderPanel)
         _folderPanel->setState(session.folderRoots, session.folderSelected);
-        if (!_folderPanel->roots().isEmpty())
-            panelDock(QStringLiteral("folderAsWorkspace"))->show();
-    }
     // Notepad_plus::loadSession. El "nuevo 1" inicial sin cambios desaparece si se abre algo.
     BufferId initialUntitled = kInvalidBuffer;
     if (_mainPane->count() == 1 && _subPane->count() == 0) {
