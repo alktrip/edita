@@ -348,6 +348,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 72 — Dar formato | core/Formatters (herramientas por lenguaje, `runFormatter`), `replaceChangedLines` con LineDiff, Dar formato con herramienta y luego servidor, al guardar, Preferencias › Formato | ✅ [fase72.md](fase72.md) |
 | 73 — Ortografía | core/SpellChecker (Hunspell opcional, diccionarios del sistema, personal, iconv), `wordsToCheck`, ui/SpellCheck (indicador 20, estilos de comentario y cadena), sugerencias en el clic derecho, Ver › Revisar la ortografía, Preferencias › Ortografía | ✅ [fase73.md](fase73.md) |
 | 74 — Órdenes cortas de N++ | Sangría, Begin/End Select (`EditorView::beginOrEndSelect`), solo lectura para todos, NPC y caracteres de control (`ui/NonPrintingChars.inc`), `ui/FindCharsDialog` + `findCharInRange`, órdenes solo de atajo, core/CommandLine y Ayuda | ✅ [fase74.md](fase74.md) |
+| 75 — Otra ventana, pegado especial, menú de pestañas | `newInstanceArguments` y `-l` (core/CommandLine, `InstanceRequest::language`), `openInNewInstance` con `setInstanceLauncher`, Editar › Pegado especial (HTML/RTF, binario con `application/x-edita-binary`), `tabContextMenu.xml` (`ContextMenuKind::Tab`, `fillMenuFromXml`, `data/tabContextMenu.xml`) | ✅ [fase75.md](fase75.md) |
 
 ---
 

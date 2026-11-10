@@ -1928,19 +1928,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+489"/>
-        <location line="+4442"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+492"/>
+        <location line="+4637"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4442"/>
-        <location line="+1839"/>
+        <location line="-4637"/>
+        <location line="+1877"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1742"/>
+        <location line="-1780"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2060,7 +2060,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Pegar</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+20"/>
         <source>&amp;Delete</source>
         <translation>&amp;Eliminar</translation>
     </message>
@@ -2346,7 +2346,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Clonar en la otra vista</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>Switch to &amp;Other View</source>
         <translation>Cambiar a la &amp;otra vista</translation>
     </message>
@@ -2376,7 +2376,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+89"/>
+        <location line="+105"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2396,7 +2396,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1417"/>
+        <location line="+1420"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2442,12 +2442,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+27"/>
-        <location line="+898"/>
+        <location line="+924"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-868"/>
+        <location line="-894"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2619,12 +2619,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2408"/>
+        <location line="-2430"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-1020"/>
+        <location line="-1041"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2704,13 +2704,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+809"/>
-        <location line="+1213"/>
+        <location line="+811"/>
+        <location line="+1251"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1172"/>
+        <location line="-1210"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2736,12 +2736,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5305"/>
+        <location line="+5500"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5304"/>
+        <location line="-5499"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -2756,7 +2756,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Guardar la ses&amp;ión…</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+65"/>
         <source>I&amp;nsert</source>
         <translation>I&amp;nsertar</translation>
     </message>
@@ -3026,8 +3026,8 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Lista de &amp;funciones</translation>
     </message>
     <message>
-        <location line="-396"/>
-        <location line="+396"/>
+        <location line="-415"/>
+        <location line="+415"/>
         <source>Folder as &amp;Workspace</source>
         <translation>&amp;Explorador de carpetas</translation>
     </message>
@@ -3037,13 +3037,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>P&amp;roblemas</translation>
     </message>
     <message>
-        <location line="-402"/>
-        <location line="+418"/>
+        <location line="-421"/>
+        <location line="+437"/>
         <source>&amp;Terminal</source>
         <translation>&amp;Terminal</translation>
     </message>
     <message>
-        <location line="-428"/>
+        <location line="-447"/>
         <source>Open Containing &amp;Folder</source>
         <translation>Abrir la &amp;carpeta contenedora</translation>
     </message>
@@ -3068,7 +3068,37 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Mover a la papelera</translation>
     </message>
     <message>
-        <location line="+49"/>
+        <location line="+46"/>
+        <source>Paste &amp;Special</source>
+        <translation>Pegado e&amp;special</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Paste &amp;HTML Content</source>
+        <translation>Pegar contenido &amp;HTML</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Paste &amp;RTF Content</source>
+        <translation>Pegar contenido &amp;RTF</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>&amp;Copy Binary Content</source>
+        <translation>&amp;Copiar contenido binario</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Cu&amp;t Binary Content</source>
+        <translation>Cor&amp;tar contenido binario</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Paste Binary Content</source>
+        <translation>&amp;Pegar contenido binario</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Begin/End Select in Column &amp;Mode</source>
         <translation>Marcar inicio/fin de la selección en &amp;columna</translation>
     </message>
@@ -3219,7 +3249,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ocultar líneas</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+11"/>
+        <source>Mo&amp;ve to New Instance</source>
+        <translation>Mo&amp;ver a otra ventana</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Open in New Instance</source>
+        <translation>A&amp;brir en otra ventana</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Sy&amp;nchronize Vertical Scrolling</source>
         <translation>Sincronizar el desplazamiento &amp;vertical</translation>
     </message>
@@ -3400,6 +3440,21 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
+        <source>Edit &amp;Tab ContextMenu</source>
+        <translation>Editar el menú de las &amp;pestañas</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Editing tabContextMenu</source>
+        <translation>Editar tabContextMenu</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>While tabContextMenu.xml exists, the menu of the tabs is built from it. The changes are used the next time the menu opens, after saving the file. Delete the file to get the usual menu back.</source>
+        <translation>Mientras exista tabContextMenu.xml, el menú de las pestañas se arma con él. Los cambios se ven la próxima vez que se abre el menú, después de guardar el archivo. Borra el archivo para volver al menú de siempre.</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>&amp;Language Server</source>
         <translation>Servidor de &amp;lenguaje</translation>
     </message>
@@ -3573,12 +3628,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4395"/>
+        <location line="+4552"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4394"/>
+        <location line="-4551"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3809,7 +3864,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+296"/>
+        <location line="+299"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -4006,7 +4061,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Mostrar el c&amp;ommit de la línea actual</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+33"/>
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
@@ -4061,7 +4116,18 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Clonar en la otra vista</translation>
     </message>
     <message>
+        <location line="+1"/>
+        <source>Move to New Instance</source>
+        <translation>Mover a otra ventana</translation>
+    </message>
+    <message>
         <location line="+2"/>
+        <location line="+678"/>
+        <source>Open in New Instance</source>
+        <translation>Abrir en otra ventana</translation>
+    </message>
+    <message>
+        <location line="-675"/>
         <location line="+185"/>
         <source>Save</source>
         <translation>Guardar</translation>
@@ -4075,12 +4141,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+266"/>
         <location line="+20"/>
-        <location line="+1824"/>
+        <location line="+1952"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2106"/>
+        <location line="-2234"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4220,7 +4286,12 @@ Do you want to save the file anyway?</source>
         <translation>Reinicia Edita para que se aplique.</translation>
     </message>
     <message>
-        <location line="+164"/>
+        <location line="+258"/>
+        <source>Could not start a new instance of Edita.</source>
+        <translation>No se pudo abrir otra ventana de Edita.</translation>
+    </message>
+    <message>
+        <location line="+34"/>
         <source>Sorting error</source>
         <translation>Error al ordenar</translation>
     </message>
@@ -4414,7 +4485,7 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-2189"/>
+        <location line="-2346"/>
         <source>Format Document</source>
         <translation>Dar formato al documento</translation>
     </message>
@@ -4446,7 +4517,7 @@ Do you want to save the file anyway?</source>
         <translation>Formateado con %1</translation>
     </message>
     <message>
-        <location line="+2124"/>
+        <location line="+2281"/>
         <source> times</source>
         <translation> veces</translation>
     </message>
@@ -4744,7 +4815,7 @@ Keep this file in editor?</source>
 %1</translation>
     </message>
     <message>
-        <location line="+225"/>
+        <location line="+223"/>
         <source>Style all occurrences of token</source>
         <translation>Estilo para todas las apariciones</translation>
     </message>
@@ -4764,7 +4835,32 @@ Keep this file in editor?</source>
         <translation>Órdenes de plugins</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+3"/>
+        <source>Close Multiple Tabs</source>
+        <translation>Cerrar varias pestañas</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Open into</source>
+        <translation>Abrir en</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Copy to Clipboard</source>
+        <translation>Copiar al portapapeles</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Move Document</source>
+        <translation>Mover el documento</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Apply Color to Tab</source>
+        <translation>Color de la pestaña</translation>
+    </message>
+    <message>
+        <location line="+83"/>
         <source>(No suggestions)</source>
         <translation>(Sin sugerencias)</translation>
     </message>
@@ -4779,7 +4875,7 @@ Keep this file in editor?</source>
         <translation>Pasar por alto «%1»</translation>
     </message>
     <message>
-        <location line="+83"/>
+        <location line="+32"/>
         <source>%1: cannot read it</source>
         <translation>%1: no se puede leer</translation>
     </message>
@@ -5208,7 +5304,7 @@ Continue?</source>
         <translation>¿Reemplazar todas las apariciones de «%1» por «%2» en los archivos «%3» de %4?</translation>
     </message>
     <message>
-        <location line="+294"/>
+        <location line="+293"/>
         <location line="+14"/>
         <source>Load Session</source>
         <translation>Cargar una sesión</translation>
@@ -8805,7 +8901,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>main</name>
     <message>
-        <location filename="../src/core/CommandLine.cpp" line="+14"/>
+        <location filename="../src/core/CommandLine.cpp" line="+15"/>
         <source>Text editor inspired by Notepad++</source>
         <translation>Editor de texto inspirado en Notepad++</translation>
     </message>
@@ -8835,7 +8931,12 @@ Do you want to save your changes before switching themes?</source>
         <translation>Abre los archivos de un archivo de sesión.</translation>
     </message>
     <message>
-        <location line="+10"/>
+        <location line="+4"/>
+        <source>Use language &lt;lang&gt; (cpp, python…) for the last file.</source>
+        <translation>Usar el lenguaje &lt;lang&gt; (cpp, python…) para el último archivo.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
         <source>Build a plugin recipe (with --output &lt;folder&gt;) and exit.</source>
         <translation>Compila una receta de plugin (con --output &lt;carpeta&gt;) y termina.</translation>
     </message>

@@ -34,6 +34,7 @@ struct InstanceRequest
     int line = -1;   // -n
     int column = -1; // -c
     QString session; // --openSession (-openSession de N++)
+    QString language; // -l: el lenguaje del último archivo (el nombre de langs.xml)
 
     QByteArray toJson() const;
     static bool fromJson(const QByteArray& json, InstanceRequest& request);

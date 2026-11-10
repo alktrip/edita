@@ -64,6 +64,11 @@ cambiarlo; los cambios se ven la próxima vez que se abre el menú, después de 
 
 Lo que Edita no tiene, o los plugins que no están instalados, no salen.
 
+El menú de las pestañas funciona igual con `tabContextMenu.xml` (dentro de `<TabContextMenu>`), como
+en Notepad++, pero solo mientras ese archivo existe: sin él, Edita usa su propio menú de pestañas.
+{{actionEditTabContextMenu}} lo crea la primera vez (con el ejemplo de Notepad++) y lo abre. Para
+volver al menú de siempre, borra el archivo.
+
 ## Archivos de configuración
 
 Edita guarda su configuración en `~/.config/edita/` (en macOS, sin `XDG_CONFIG_HOME`,
@@ -77,6 +82,7 @@ Edita guarda su configuración en `~/.config/edita/` (en macOS, sin `XDG_CONFIG_
 | `stylers.xml`, `themes/` | El tema de serie y los temas que cambiaste. |
 | `shortcuts.xml` | Atajos y macros. |
 | `contextMenu.xml` | El menú del clic derecho en el editor. |
+| `tabContextMenu.xml` | El menú del clic derecho en las pestañas (opcional). |
 | `personalDictionary.txt` | Las palabras que añadiste al diccionario. |
 | `userDefineLang.xml`, `userDefineLangs/` | Los lenguajes definidos por el usuario. |
 | `autoCompletion/` | Tus archivos de API para el autocompletado. |

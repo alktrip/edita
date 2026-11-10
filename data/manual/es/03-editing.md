@@ -257,3 +257,14 @@ y {{actionReadOnlyClearAll}} se lo quita a todos. Las órdenes de fin de línea 
   {{actionGoTo}} o con la barra de desplazamiento) y úsala otra vez: queda seleccionado todo lo que
   hay en medio, sin arrastrar. {{actionBeginEndSelectColumn}} hace lo mismo con una selección
   rectangular. Mientras espera el final, la orden se ve marcada.
+
+## Pegado especial
+
+En **Editar › Pegado especial**:
+
+- {{actionPasteHtml}} y {{actionPasteRtf}} pegan el código de lo que se copió de una página web o
+  de un procesador de textos (las etiquetas HTML o el texto RTF), en vez del texto que se ve. Solo
+  se pueden usar cuando el portapapeles tiene ese formato.
+- {{actionCopyBinary}}, {{actionCutBinary}} y {{actionPasteBinary}} copian, cortan y pegan el texto
+  tal cual, con los caracteres NUL, que las órdenes de siempre pierden. Entre ventanas de Edita se
+  conserva todo; de otros programas, {{actionPasteBinary}} pega su texto.

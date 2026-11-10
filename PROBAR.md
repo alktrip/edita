@@ -12,7 +12,7 @@ Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. 
 
 Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, en x86_64. Tu configuración se guarda en `~/.config/edita/`.
 
-> **macOS: todavía no hay versión.** Por limitaciones en el desarrollo, por ahora Edita es solo para Linux. El `.dmg` del release 0.0.1 es una prueba temprana que no se mantiene: no lo uses para probar ni reportes sus fallos.
+> **macOS: todavía no hay versión.** Por limitaciones en el desarrollo, por ahora Edita es solo para Linux. El `.dmg` del release 0.0.1 se retiró; macOS se retomará cuando haya una versión estable para Linux.
 
 Si al abrirlo dice que falta una biblioteca:
 
@@ -83,7 +83,7 @@ Thank you for testing Edita, a text editor for Linux inspired by Notepad++. This
 
 It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, on x86_64. Your settings are stored in `~/.config/edita/`.
 
-> **macOS: there is no version yet.** Because of development limitations, for now Edita is only for Linux. The `.dmg` of release 0.0.1 is an early test that is not maintained: do not use it for testing and do not report its bugs.
+> **macOS: there is no version yet.** Because of development limitations, for now Edita is only for Linux. The `.dmg` of release 0.0.1 has been removed; macOS will resume once there is a stable Linux version.
 
 If it says that a library is missing when opening it:
 

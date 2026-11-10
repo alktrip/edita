@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+The context menu of the tabs (right click on a tab), as in Notepad++. While this file exists,
+Edita builds the tab menu from it every time the menu opens: save it and right-click a tab to
+see the changes. Delete it to get Edita's own tab menu back.
+
+The format is the one of Notepad++ (same attributes; the ids are its IDM_* command ids):
+https://npp-user-manual.org/docs/config-files/#the-context-menu-tabcontextmenu-xml
+Use MenuEntryName and MenuItemName in English. FolderName makes a submenu, ItemNameAs gives
+another text and id="0" is a separator. Commands that Edita does not have are skipped.
+Edita's manual (F1), chapter Preferences, explains it too.
+-->
+<NotepadPlus>
+	<TabContextMenu>
+		<Item MenuEntryName="File" MenuItemName="Close"/>
+		<Item FolderName="Close Multiple Tabs" MenuEntryName="File" MenuItemName="Close All but Active Document" ItemNameAs="Close All BUT This"/>
+		<Item FolderName="Close Multiple Tabs" MenuEntryName="File" MenuItemName="Close All to the Left"/>
+		<Item FolderName="Close Multiple Tabs" MenuEntryName="File" MenuItemName="Close All to the Right"/>
+		<Item FolderName="Close Multiple Tabs" MenuEntryName="File" MenuItemName="Close All Unchanged"/>
+
+		<Item id="44048"/><!-- Pin Tab / Unpin Tab -->
+		<Item MenuEntryName="File" MenuItemName="Save"/>
+		<Item MenuEntryName="File" MenuItemName="Save As..."/>
+
+		<Item FolderName="Open into" MenuEntryName="File" MenuItemName="Explorer" ItemNameAs="Open Containing Folder"/>
+		<Item FolderName="Open into" MenuEntryName="File" MenuItemName="cmd" ItemNameAs="Open Containing Folder in Terminal"/>
+		<Item FolderName="Open into" MenuEntryName="File" MenuItemName="Folder as Workspace" ItemNameAs="Open Containing Folder as Workspace"/>
+		<Item FolderName="Open into" id="0"/>
+		<Item FolderName="Open into" MenuEntryName="File" MenuItemName="Open in Default Viewer"/>
+
+		<Item MenuEntryName="File" MenuItemName="Rename..."/>
+		<Item MenuEntryName="File" MenuItemName="Move to Recycle Bin"/>
+		<Item MenuEntryName="File" MenuItemName="Reload from Disk"/>
+		<Item MenuEntryName="File" MenuItemName="Print..."/>
+
+		<Item id="0"/>
+
+		<Item MenuEntryName="Edit" MenuItemName="Read-Only on Current Document"/>
+
+		<Item id="0"/>
+
+		<Item FolderName="Copy to Clipboard" MenuEntryName="Edit" MenuItemName="Copy Current Full File Path"/>
+		<Item FolderName="Copy to Clipboard" MenuEntryName="Edit" MenuItemName="Copy Current Filename"/>
+		<Item FolderName="Copy to Clipboard" MenuEntryName="Edit" MenuItemName="Copy Current Dir. Path"/>
+		<Item FolderName="Move Document" MenuEntryName="View" MenuItemName="Move to Start"/>
+		<Item FolderName="Move Document" MenuEntryName="View" MenuItemName="Move to End"/>
+		<Item FolderName="Move Document" id="0"/>
+		<Item FolderName="Move Document" MenuEntryName="View" MenuItemName="Move to Other View"/>
+		<Item FolderName="Move Document" MenuEntryName="View" MenuItemName="Clone to Other View"/>
+		<Item FolderName="Move Document" MenuEntryName="View" MenuItemName="Move to New Instance"/>
+		<Item FolderName="Move Document" MenuEntryName="View" MenuItemName="Open in New Instance"/>
+		<Item FolderName="Apply Color to Tab" MenuEntryName="View" MenuItemName="Apply Color 1"/>
+		<Item FolderName="Apply Color to Tab" MenuEntryName="View" MenuItemName="Apply Color 2"/>
+		<Item FolderName="Apply Color to Tab" MenuEntryName="View" MenuItemName="Apply Color 3"/>
+		<Item FolderName="Apply Color to Tab" MenuEntryName="View" MenuItemName="Apply Color 4"/>
+		<Item FolderName="Apply Color to Tab" MenuEntryName="View" MenuItemName="Apply Color 5"/>
+		<Item FolderName="Apply Color to Tab" MenuEntryName="View" MenuItemName="Remove Color"/>
+	</TabContextMenu>
+</NotepadPlus>

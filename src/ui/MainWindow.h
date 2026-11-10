@@ -20,6 +20,7 @@
 
 #include "lsp/LspServers.h"
 
+#include "core/ContextMenuXml.h"
 #include "core/Encoding.h"
 #include "core/Eol.h"
 #include "core/LineOperations.h"
@@ -233,6 +234,15 @@ public:
     QString contextMenuPath() const;
     // El menú del clic derecho en el editor, según contextMenu.xml (el que llama lo borra)
     QMenu* buildEditorContextMenu();
+    // tabContextMenu.xml del usuario (opcional, como en N++: solo si existe cambia el menú)
+    QString tabContextMenuPath() const;
+    // El menú del clic derecho en la pestaña de `id`: el de tabContextMenu.xml, o el de serie
+    QMenu* buildTabContextMenu(BufferId id);
+    // Ver › Abrir o Mover en otra ventana (docOpenInNewInstance): lanza Edita con el documento
+    // (guardado y con nombre); al moverlo se cierra aquí, y la ventana si se queda sin nada
+    bool openInNewInstance(bool move);
+    // Cómo se lanza la otra ventana (con QProcess; las pruebas ponen el suyo)
+    void setInstanceLauncher(std::function<bool(const QStringList&)> launcher) { _launchInstance = std::move(launcher); }
     // Configuración › Importar: copia los plugins (.so o paquetes .zip) y los temas; cuántos
     int importPlugins(const QStringList& files);
     int importThemes(const QStringList& files);
@@ -596,6 +606,15 @@ private:
     void startFileJob(const FileSearchRequest& request, int alreadyReplaced, int alreadyFiles);
     void showWarnings(const QString& title, const QStringList& warnings);
     void showTabContextMenu(BufferId id, const QPoint& globalPos);
+    // Pone en `menu` las órdenes de un contextMenu.xml o tabContextMenu.xml (las que hay)
+    void fillMenuFromXml(QMenu* menu, const std::vector<ContextMenuItem>& items);
+    // Editar › Pegado especial: el código HTML o RTF del portapapeles, y el contenido binario
+    // (con los NUL)
+    void pasteClipboardMarkup(bool html);
+    void copyBinary(bool cut);
+    void pasteBinary();
+    // Abrir o Mover en otra ventana: solo con un documento guardado y con nombre
+    void refreshTransferActions();
 
     // Pone un documento en una vista (loadBufferIntoView): si la única pestaña
     // es un "nuevo" sin cambios, ocupa su lugar
@@ -668,6 +687,7 @@ private:
     std::unique_ptr<Prompter> _prompter;
     std::function<bool(const QUrl&)> _openUrl = [](const QUrl& url) { return QDesktopServices::openUrl(url); };
     std::function<bool(const QString&)> _trashFile = [](const QString& path) { return QFile::moveToTrash(path); };
+    std::function<bool(const QStringList&)> _launchInstance;
     std::unique_ptr<SpellChecker> _spell;
     QStringList _spellCodes;                         // los diccionarios cargados
     QTimer* _spellTimer[2] = {};

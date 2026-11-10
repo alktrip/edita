@@ -51,9 +51,13 @@ Edita puede mostrar dos documentos uno al lado del otro (o uno encima del otro):
 | {{actionMoveToOtherView}} | Mueve el documento actual a la otra vista. |
 | {{actionCloneToOtherView}} | Muestra el mismo documento en las dos vistas: lo que escribes en una aparece en la otra. Sirve para ver dos partes de un archivo largo. |
 | {{actionSwitchView}} | Pasa el foco a la otra vista. |
+| {{actionOpenInNewInstance}} | Abre el documento en otra ventana de Edita, en la misma línea y con el mismo lenguaje. |
+| {{actionMoveToNewInstance}} | Lo mismo, y lo cierra aquí (y esta ventana, si era el único documento). |
 | {{actionRotateSplit}} | Pone las vistas una al lado de la otra o una encima de la otra. |
 
-La otra vista se cierra cuando se cierra su último documento. La división se puede arrastrar.
+La otra vista se cierra cuando se cierra su último documento. La división se puede arrastrar. La
+ventana nueva lee el archivo del disco, así que las dos últimas órdenes lo necesitan guardado; la
+ventana nueva no restaura ni guarda la sesión.
 
 Con {{actionSyncScrollV}} y {{actionSyncScrollH}}, las dos vistas se desplazan juntas,
 manteniendo la diferencia que tenían al activarlo: sirve para comparar dos versiones de un

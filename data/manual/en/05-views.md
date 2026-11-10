@@ -49,9 +49,13 @@ Edita can show two documents side by side (or one above the other):
 | {{actionMoveToOtherView}} | Moves the current document to the other view. |
 | {{actionCloneToOtherView}} | Shows the same document in both views: what you write in one appears in the other. Useful to see two parts of a long file. |
 | {{actionSwitchView}} | Moves the focus to the other view. |
+| {{actionOpenInNewInstance}} | Opens the document in a new Edita window, at the same line and with the same language. |
+| {{actionMoveToNewInstance}} | The same, and closes it here (and this window, if it was the only document). |
 | {{actionRotateSplit}} | Places the views side by side or one above the other. |
 
-The other view closes when its last document is closed. The divider can be dragged.
+The other view closes when its last document is closed. The divider can be dragged. The new window
+reads the file from disk, so the last two commands need it saved; the new window does not restore
+or save the session.
 
 With {{actionSyncScrollV}} and {{actionSyncScrollH}}, both views scroll together, keeping the
 difference they had when it was turned on: useful to compare two versions of a file line by line.

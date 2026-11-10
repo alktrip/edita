@@ -140,6 +140,7 @@
 #include <QScopedValueRollback>
 #include <QSpinBox>
 #include <QStackedWidget>
+#include <QStringDecoder>
 #include <QSplitter>
 #include <QStyleHints>
 #include <QSysInfo>
@@ -211,7 +212,9 @@ int shortcutOnlyCommandFor(const QString& actionName)
         {"actionGoTo", 43004},           {"actionNextResult", 43046},     {"actionPreviousResult", 43047},
         {"actionWrap", 44022},           {"actionShowWhiteSpace", 44025}, {"actionShowEol", 44026},
         {"actionShowIndentGuides", 44020}, {"actionShowWrapSymbol", 44041}, {"actionShowAll", 44019},
-        {"actionMoveToOtherView", 10001}, {"actionCloneToOtherView", 10002}, {"actionSwitchView", 44072},
+        {"actionMoveToOtherView", 10001}, {"actionCloneToOtherView", 10002},
+        {"actionMoveToNewInstance", 10003}, {"actionOpenInNewInstance", 10004}, {"actionPasteHtml", 42038},
+        {"actionPasteRtf", 42039}, {"actionCopyBinary", 42048}, {"actionCutBinary", 42049}, {"actionPasteBinary", 42050}, {"actionSwitchView", 44072},
         {"actionPreferences", 48011},    {"actionStyleConfigurator", 46001}, {"actionShortcutMapper", 48009},
         {"actionRecordMacro", 42018},    {"actionPlayMacro", 42021},      {"actionSaveMacro", 42025},
         // Fases 67 y 68 (Ver, Pestaña, Cerrar varios, Copiar al portapapeles, Herramientas, Ayuda)
@@ -1093,6 +1096,25 @@ void MainWindow::createMenus()
     addAction(edit, tr("Cu&t"), "actionCut", QKeySequence::Cut, [this] { copyOrCut(true); });
     addAction(edit, tr("&Copy"), "actionCopy", QKeySequence::Copy, [this] { copyOrCut(false); });
     addAction(edit, tr("&Paste"), "actionPaste", QKeySequence::Paste, sci(SCI_PASTE));
+    // Editar › Pegado especial (IDM_EDIT_PASTE_AS_HTML/RTF, IDM_EDIT_COPY/CUT/PASTE_BINARY)
+    QMenu* pasteSpecial = edit->addMenu(tr("Paste &Special"));
+    QAction* pasteHtml = addAction(pasteSpecial, tr("Paste &HTML Content"), "actionPasteHtml", QKeySequence(),
+                                   [this] { pasteClipboardMarkup(true); });
+    QAction* pasteRtf = addAction(pasteSpecial, tr("Paste &RTF Content"), "actionPasteRtf", QKeySequence(),
+                                  [this] { pasteClipboardMarkup(false); });
+    pasteSpecial->addSeparator();
+    addAction(pasteSpecial, tr("&Copy Binary Content"), "actionCopyBinary", QKeySequence(), [this] { copyBinary(false); });
+    addAction(pasteSpecial, tr("Cu&t Binary Content"), "actionCutBinary", QKeySequence(), [this] { copyBinary(true); });
+    addAction(pasteSpecial, tr("&Paste Binary Content"), "actionPasteBinary", QKeySequence(), [this] { pasteBinary(); });
+    // Solo con HTML o RTF en el portapapeles
+    auto refreshPasteSpecial = [pasteHtml, pasteRtf] {
+        const QMimeData* clip = QApplication::clipboard()->mimeData();
+        pasteHtml->setEnabled(clip && clip->hasHtml());
+        pasteRtf->setEnabled(clip && (clip->hasFormat(QStringLiteral("text/rtf")) || clip->hasFormat(QStringLiteral("application/rtf"))
+                                      || clip->hasFormat(QStringLiteral("text/richtext"))));
+    };
+    connect(QApplication::clipboard(), &QClipboard::dataChanged, this, refreshPasteSpecial);
+    refreshPasteSpecial();
     addAction(edit, tr("&Delete"), "actionDelete", QKeySequence(), sci(SCI_CLEAR));
     addAction(edit, tr("Select A&ll"), "actionSelectAll", QKeySequence::SelectAll, sci(SCI_SELECTALL));
     // IDM_EDIT_BEGINENDSELECT[_COLUMNMODE]: marcada mientras se espera el final; la otra, sin poder usarse
@@ -1538,6 +1560,9 @@ void MainWindow::createMenus()
     view->addSeparator();
     addAction(view, tr("&Move to Other View"), "actionMoveToOtherView", QKeySequence(), [this] { moveToOtherView(); });
     addAction(view, tr("&Clone to Other View"), "actionCloneToOtherView", QKeySequence(), [this] { cloneToOtherView(); });
+    // IDM_VIEW_GOTO_NEW_INSTANCE, IDM_VIEW_LOAD_IN_NEW_INSTANCE
+    addAction(view, tr("Mo&ve to New Instance"), "actionMoveToNewInstance", QKeySequence(), [this] { openInNewInstance(true); });
+    addAction(view, tr("&Open in New Instance"), "actionOpenInNewInstance", QKeySequence(), [this] { openInNewInstance(false); });
     addAction(view, tr("Switch to &Other View"), "actionSwitchView", QKeySequence(Qt::Key_F8), [this] { switchToOtherView(); });
     addAction(view, tr("&Rotate Split"), "actionRotateSplit", QKeySequence(), [this] { toggleSplitOrientation(); });
     view->addSeparator();
@@ -1653,6 +1678,22 @@ void MainWindow::createMenus()
                           tr("Editing contextMenu.xml allows you to modify the context menu of the edit zone. "
                              "The changes are used the next time the menu opens, after saving the file."));
         openFile(contextMenuPath());
+    });
+    // tabContextMenu.xml (N++ lo lee si existe, pero no tiene orden para editarlo): la primera
+    // vez, con el de serie
+    addAction(settings, tr("Edit &Tab ContextMenu"), "actionEditTabContextMenu", QKeySequence(), [this] {
+        const QString path = tabContextMenuPath();
+        if (!QFileInfo::exists(path)) {
+            paths::ensureConfigDir();
+            if (const QString model = paths::findDataFile(QStringLiteral("tabContextMenu.xml")); !model.isEmpty()) {
+                QFile::copy(model, path);
+                QFile(path).setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup | QFile::ReadOther);
+            }
+        }
+        _prompter->inform(this, tr("Editing tabContextMenu"),
+                          tr("While tabContextMenu.xml exists, the menu of the tabs is built from it. The changes are used "
+                             "the next time the menu opens, after saving the file. Delete the file to get the usual menu back."));
+        openFile(path);
     });
     // Servidores de lenguaje (no existen en N++)
     settings->addSeparator();
@@ -3096,6 +3137,9 @@ void MainWindow::openFromOtherInstance(const InstanceRequest& request, bool rais
     if (!request.session.isEmpty())
         loadSessionFile(request.session);
     openFiles(request.files, /*askToCreate*/ true);
+    // -l: el lenguaje del último archivo (si se conoce)
+    if (!request.language.isEmpty() && !request.files.isEmpty() && isKnownLanguageName(request.language.toStdString()))
+        setLanguage(langTypeFromName(request.language.toStdString()));
     if (request.line > 0)
         goToLine(request.line, request.column > 0 ? request.column : 1);
     if (raise) {
@@ -3710,12 +3754,34 @@ void MainWindow::createSearchMenu()
 
 void MainWindow::showTabContextMenu(BufferId id, const QPoint& globalPos)
 {
-    const Buffer* buf = _documents.buffer(id);
-    if (!buf)
+    if (!_documents.buffer(id))
         return;
     _activePane->activateBuffer(id);
+    const std::unique_ptr<QMenu> menu(buildTabContextMenu(id));
+    menu->exec(globalPos);
+}
 
-    QMenu menu(this);
+QString MainWindow::tabContextMenuPath() const
+{
+    return QDir(paths::configDir()).filePath(QStringLiteral("tabContextMenu.xml"));
+}
+
+QMenu* MainWindow::buildTabContextMenu(BufferId id)
+{
+    auto* menuPtr = new QMenu(this);
+    menuPtr->setObjectName(QStringLiteral("tabContextMenu"));
+    const Buffer* buf = _documents.buffer(id);
+    if (!buf)
+        return menuPtr;
+    // NppParameters::hasCustomTabContextMenu: con tabContextMenu.xml, sus órdenes (las del menú
+    // principal, que actúan sobre el documento activo, el de la pestaña)
+    refreshTransferActions();
+    if (QFileInfo::exists(tabContextMenuPath())) {
+        fillMenuFromXml(menuPtr, readContextMenu(tabContextMenuPath(), nullptr, ContextMenuKind::Tab));
+        if (!menuPtr->actions().isEmpty())
+            return menuPtr;
+    }
+    QMenu& menu = *menuPtr;
     menu.addAction(tr("Close"), this, [this, id] { closeBuffer(id); });
     menu.addAction(tr("Close All but This"), this, [this, id] { closeAllBut(id); });
     menu.addAction(tr("Close All to the Left"), this, [this, id] { closeAllToLeft(id); });
@@ -3744,6 +3810,10 @@ void MainWindow::showTabContextMenu(BufferId id, const QPoint& globalPos)
     menu.addSeparator();
     menu.addAction(tr("Move to Other View"), this, [this] { moveToOtherView(); });
     menu.addAction(tr("Clone to Other View"), this, [this] { cloneToOtherView(); });
+    menu.addAction(tr("Move to New Instance"), this, [this] { openInNewInstance(true); })->setEnabled(
+        !buf->isUntitled() && !buf->isDirty());
+    menu.addAction(tr("Open in New Instance"), this, [this] { openInNewInstance(false); })->setEnabled(
+        !buf->isUntitled() && !buf->isDirty());
     menu.addSeparator();
     menu.addAction(tr("Save"), this, [this, id] { saveBuffer(id); });
     menu.addAction(tr("Save As…"), this, [this, id] { saveBufferAs(id); });
@@ -3769,7 +3839,7 @@ void MainWindow::showTabContextMenu(BufferId id, const QPoint& globalPos)
         if (Buffer* b = _documents.buffer(id))
             b->setUserReadOnly(on);
     });
-    menu.exec(globalPos);
+    return menuPtr;
 }
 
 // --- Archivo --------------------------------------------------------------------
@@ -4303,6 +4373,134 @@ void MainWindow::copyOrCut(bool cut)
         return;
     }
     view->sci(cut ? SCI_CUT : SCI_COPY);
+}
+
+void MainWindow::pasteClipboardMarkup(bool html)
+{
+    // IDM_EDIT_PASTE_AS_HTML/RTF: el código tal cual (CF_HTML, CF_RTF), no el texto que se ve
+    const QMimeData* clip = QApplication::clipboard()->mimeData();
+    if (!clip)
+        return;
+    QByteArray bytes;
+    if (html) {
+        bytes = clip->data(QStringLiteral("text/html"));
+    } else {
+        for (const char* mime : {"text/rtf", "application/rtf", "text/richtext"}) {
+            if (clip->hasFormat(QString::fromLatin1(mime))) {
+                bytes = clip->data(QString::fromLatin1(mime));
+                break;
+            }
+        }
+    }
+    if (bytes.isEmpty())
+        return;
+    // Firefox pone el HTML en UTF-16 con BOM; los demás, en UTF-8
+    QString text;
+    if (bytes.startsWith("\xFF\xFE") || bytes.startsWith("\xFE\xFF"))
+        text = QStringDecoder(bytes.startsWith("\xFF\xFE") ? QStringConverter::Utf16LE : QStringConverter::Utf16BE)
+                   .decode(bytes.mid(2));
+    else
+        text = QString::fromUtf8(bytes);
+    while (text.endsWith(QChar(0)))
+        text.chop(1);
+    insertText(text);
+}
+
+namespace {
+// El formato propio para el contenido binario (CF_NPPTEXTLEN de N++: el texto con su longitud)
+const QString kBinaryMime = QStringLiteral("application/x-edita-binary");
+} // namespace
+
+void MainWindow::copyBinary(bool cut)
+{
+    // IDM_EDIT_COPY/CUT_BINARY: los bytes de la selección, NUL incluidos
+    // (SCI_GETSELTEXT cambia los NUL por espacios: cada selección con SCI_GETTEXTRANGEFULL; varias,
+    // una por línea)
+    EditorView* view = editor();
+    QByteArray bytes;
+    const auto selections = static_cast<int>(view->sci(SCI_GETSELECTIONS));
+    for (int i = 0; i < selections; ++i) {
+        const sptr_t start = view->sci(SCI_GETSELECTIONNSTART, static_cast<uptr_t>(i));
+        const sptr_t end = view->sci(SCI_GETSELECTIONNEND, static_cast<uptr_t>(i));
+        QByteArray part(static_cast<qsizetype>(end - start) + 1, '\0');
+        Sci_TextRangeFull range{{start, end}, part.data()};
+        view->sci(SCI_GETTEXTRANGEFULL, 0, reinterpret_cast<sptr_t>(&range));
+        part.truncate(static_cast<qsizetype>(end - start));
+        if (i > 0)
+            bytes += view->sci(SCI_GETEOLMODE) == SC_EOL_CRLF ? QByteArray("\r\n")
+                     : view->sci(SCI_GETEOLMODE) == SC_EOL_CR ? QByteArray("\r")
+                                                              : QByteArray("\n");
+        bytes += part;
+    }
+    if (bytes.isEmpty())
+        return;
+    auto* clip = new QMimeData;
+    clip->setData(kBinaryMime, bytes);
+    clip->setText(QString::fromUtf8(bytes)); // para los demás programas
+    QApplication::clipboard()->setMimeData(clip);
+    if (cut)
+        view->sends(SCI_REPLACESEL, 0, "");
+}
+
+void MainWindow::pasteBinary()
+{
+    // IDM_EDIT_PASTE_BINARY: con el formato propio, todos los bytes; si no, el texto
+    const QMimeData* clip = QApplication::clipboard()->mimeData();
+    if (!clip)
+        return;
+    const QByteArray bytes = clip->hasFormat(kBinaryMime) ? clip->data(kBinaryMime) : clip->text().toUtf8();
+    EditorView* view = editor();
+    view->sci(SCI_BEGINUNDOACTION);
+    view->sends(SCI_REPLACESEL, 0, "");
+    view->sci(SCI_ADDTEXT, static_cast<uptr_t>(bytes.size()), reinterpret_cast<sptr_t>(bytes.constData()));
+    view->sci(SCI_ENDUNDOACTION);
+}
+
+void MainWindow::refreshTransferActions()
+{
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    const bool can = buf && !buf->isUntitled() && !buf->isDirty();
+    for (const char* name : {"actionMoveToNewInstance", "actionOpenInNewInstance"}) {
+        if (QAction* a = findChild<QAction*>(QString::fromLatin1(name)))
+            a->setEnabled(can);
+    }
+}
+
+bool MainWindow::openInNewInstance(bool move)
+{
+    // docOpenInNewInstance: la otra ventana lee el archivo del disco, así que sin cambios
+    const BufferId id = currentBuffer();
+    const Buffer* buf = _documents.buffer(id);
+    if (!buf || buf->isUntitled() || buf->isDirty())
+        return false;
+    // El lenguaje, si no es uno del usuario (N++ deja que la otra lo detecte por la extensión)
+    const QString lang = Buffer::isNamedLanguage(buf->language()) ? QString()
+                                                                   : QString::fromLatin1(languageInfo(buf->language()).name);
+    EditorView* view = editor();
+    const sptr_t pos = view->sci(SCI_GETCURRENTPOS);
+    const int line = static_cast<int>(view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pos))) + 1;
+    const int column = static_cast<int>(view->sci(SCI_GETCOLUMN, static_cast<uptr_t>(pos))) + 1;
+    const QStringList arguments = newInstanceArguments(buf->filePath(), lang, line, column);
+    bool launched = false;
+    if (_launchInstance) {
+        launched = _launchInstance(arguments);
+    } else {
+        // Dentro de un AppImage, el AppImage (su carpeta montada se va al cerrar esta ventana)
+        const QString appImage = qEnvironmentVariable("APPIMAGE");
+        launched = QProcess::startDetached(appImage.isEmpty() ? QCoreApplication::applicationFilePath() : appImage, arguments);
+    }
+    if (!launched) {
+        _prompter->warn(this, tr("Open in New Instance"), tr("Could not start a new instance of Edita."));
+        return false;
+    }
+    if (move) {
+        closeBuffer(id);
+        // Si solo queda el documento vacío de siempre, la ventana también se cierra
+        const Buffer* only = _documents.count() == 1 ? _documents.bufferAt(0) : nullptr;
+        if (_documents.count() == 0 || (only && only->isUntitled() && !only->isDirty() && _documents.text(only->id()).empty()))
+            QTimer::singleShot(0, this, &QWidget::close);
+    }
+    return true;
 }
 
 // --- Autocompletado ------------------------------------------------------------------------
@@ -6655,13 +6853,11 @@ QString MainWindow::contextMenuPath() const
     return path;
 }
 
-QMenu* MainWindow::buildEditorContextMenu()
+void MainWindow::fillMenuFromXml(QMenu* menu, const std::vector<ContextMenuItem>& items)
 {
     // NppParameters::getContextMenuFromXmlTree + ContextMenu::create: cada elemento es una orden
     // del menú principal (por id o por su nombre en inglés), de un plugin o un separador; con
     // FolderName, en un submenú. Lo que no existe en Edita se salta
-    auto* menu = new QMenu(this);
-    menu->setObjectName(QStringLiteral("editorContextMenu"));
     std::map<int, QAction*> byId;
     for (QAction* action : findChildren<QAction*>()) {
         const QString name = action->objectName();
@@ -6702,45 +6898,22 @@ QMenu* MainWindow::buildEditorContextMenu()
             return tr("Clear style");
         if (folder == QLatin1String("Plugin commands"))
             return tr("Plugin commands");
+        // Los de tabContextMenu_example.xml
+        if (folder == QLatin1String("Close Multiple Tabs"))
+            return tr("Close Multiple Tabs");
+        if (folder == QLatin1String("Open into"))
+            return tr("Open into");
+        if (folder == QLatin1String("Copy to Clipboard"))
+            return tr("Copy to Clipboard");
+        if (folder == QLatin1String("Move Document"))
+            return tr("Move Document");
+        if (folder == QLatin1String("Apply Color to Tab"))
+            return tr("Apply Color to Tab");
         return folder;
     };
     std::map<QString, QMenu*> folders;
     bool pendingSeparator = false;
-    // Una palabra mal escrita bajo el cursor: las sugerencias, añadirla al diccionario o pasarla por alto
-    if (_prefs.spellCheck && _spell) {
-        EditorView* view = editor();
-        sptr_t start = 0;
-        sptr_t end = 0;
-        const QString word = misspelledWordAt(*view, view->sci(SCI_GETCURRENTPOS), &start, &end);
-        if (!word.isEmpty()) {
-            const QStringList suggestions = _spell->suggest(word);
-            for (const QString& suggestion : suggestions) {
-                QAction* replace = menu->addAction(suggestion);
-                QFont bold = replace->font();
-                bold.setBold(true);
-                replace->setFont(bold);
-                connect(replace, &QAction::triggered, this, [view, start, end, suggestion] {
-                    const QByteArray text = suggestion.toUtf8();
-                    view->sci(SCI_SETTARGETRANGE, static_cast<uptr_t>(start), end);
-                    view->sends(SCI_REPLACETARGET, static_cast<uptr_t>(text.size()), text.constData());
-                });
-            }
-            if (suggestions.isEmpty())
-                menu->addAction(tr("(No suggestions)"))->setEnabled(false);
-            QAction* add = menu->addAction(tr("Add «%1» to the Dictionary").arg(word), this, [this, word] {
-                _spell->addToPersonal(word);
-                checkSpellingNow();
-            });
-            add->setObjectName(QStringLiteral("spellAdd"));
-            QAction* ignore = menu->addAction(tr("Ignore «%1»").arg(word), this, [this, word] {
-                _spell->ignore(word);
-                checkSpellingNow();
-            });
-            ignore->setObjectName(QStringLiteral("spellIgnore"));
-            menu->addSeparator();
-        }
-    }
-    for (const ContextMenuItem& item : readContextMenu(contextMenuPath())) {
+    for (const ContextMenuItem& item : items) {
         if (item.isSeparator()) {
             if (item.folder.isEmpty())
                 pendingSeparator = !menu->actions().isEmpty();
@@ -6792,6 +6965,47 @@ QMenu* MainWindow::buildEditorContextMenu()
             connect(alias, &QAction::triggered, action, &QAction::trigger);
         }
     }
+}
+
+QMenu* MainWindow::buildEditorContextMenu()
+{
+    auto* menu = new QMenu(this);
+    menu->setObjectName(QStringLiteral("editorContextMenu"));
+    // Una palabra mal escrita bajo el cursor: las sugerencias, añadirla al diccionario o pasarla por alto
+    if (_prefs.spellCheck && _spell) {
+        EditorView* view = editor();
+        sptr_t start = 0;
+        sptr_t end = 0;
+        const QString word = misspelledWordAt(*view, view->sci(SCI_GETCURRENTPOS), &start, &end);
+        if (!word.isEmpty()) {
+            const QStringList suggestions = _spell->suggest(word);
+            for (const QString& suggestion : suggestions) {
+                QAction* replace = menu->addAction(suggestion);
+                QFont bold = replace->font();
+                bold.setBold(true);
+                replace->setFont(bold);
+                connect(replace, &QAction::triggered, this, [view, start, end, suggestion] {
+                    const QByteArray text = suggestion.toUtf8();
+                    view->sci(SCI_SETTARGETRANGE, static_cast<uptr_t>(start), end);
+                    view->sends(SCI_REPLACETARGET, static_cast<uptr_t>(text.size()), text.constData());
+                });
+            }
+            if (suggestions.isEmpty())
+                menu->addAction(tr("(No suggestions)"))->setEnabled(false);
+            QAction* add = menu->addAction(tr("Add «%1» to the Dictionary").arg(word), this, [this, word] {
+                _spell->addToPersonal(word);
+                checkSpellingNow();
+            });
+            add->setObjectName(QStringLiteral("spellAdd"));
+            QAction* ignore = menu->addAction(tr("Ignore «%1»").arg(word), this, [this, word] {
+                _spell->ignore(word);
+                checkSpellingNow();
+            });
+            ignore->setObjectName(QStringLiteral("spellIgnore"));
+            menu->addSeparator();
+        }
+    }
+    fillMenuFromXml(menu, readContextMenu(contextMenuPath()));
     if (menu->actions().isEmpty()) {
         // Sin contextMenu.xml que valga: el de Scintilla de siempre
         for (const char* name : {"actionUndo", "actionRedo", "", "actionCut", "actionCopy", "actionPaste", "actionDelete", "",
@@ -9015,6 +9229,7 @@ void MainWindow::refreshMenuChecks()
         current->setChecked(false); // también con un lenguaje del usuario
 
     _readOnlyAction->setChecked(buf->isUserReadOnly());
+    refreshTransferActions();
     if (QAction* pin = findChild<QAction*>(QStringLiteral("actionPinTab")))
         pin->setChecked(buf->isPinned());
     if (QAction* monitoring = findChild<QAction*>(QStringLiteral("actionMonitoring")))

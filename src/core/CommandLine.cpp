@@ -5,6 +5,7 @@
 #include "core/CommandLine.h"
 
 #include <QCoreApplication>
+#include <QStringList>
 
 namespace edita {
 
@@ -27,12 +28,17 @@ CommandLineOptions setupCommandLine(QCommandLineParser& parser)
         // -openSession de N++: el archivo es una sesión (sus archivos se abren)
         QCommandLineOption(QStringLiteral("openSession"), QCoreApplication::translate("main", "Open the files of a session file."),
                            QStringLiteral("file")),
+        // -l de N++: el lenguaje del archivo (cpp, python…), aunque su extensión diga otro
+        QCommandLineOption({QStringLiteral("l"), QStringLiteral("language")},
+                           QCoreApplication::translate("main", "Use language <lang> (cpp, python…) for the last file."),
+                           QStringLiteral("lang")),
     };
     parser.addOption(options.line);
     parser.addOption(options.column);
     parser.addOption(options.noSession);
     parser.addOption(options.multiInst);
     parser.addOption(options.session);
+    parser.addOption(options.language);
     // Las recetas de plugins (se atienden antes, sin ventana: ui/RecipeCommands.h); aquí, para --help
     parser.addOption(QCommandLineOption(QStringLiteral("build-recipe"),
         QCoreApplication::translate("main", "Build a plugin recipe (with --output <folder>) and exit."), QStringLiteral("recipe.json")));
@@ -42,6 +48,15 @@ CommandLineOptions setupCommandLine(QCommandLineParser& parser)
     parser.addPositionalArgument(QCoreApplication::translate("main", "files"), QCoreApplication::translate("main", "Files to open."),
                                  QCoreApplication::translate("main", "[files…]"));
     return options;
+}
+
+QStringList newInstanceArguments(const QString& path, const QString& langName, int line, int column)
+{
+    QStringList arguments{path, QStringLiteral("--multiInst"), QStringLiteral("--nosession")};
+    if (!langName.isEmpty())
+        arguments << QStringLiteral("-l") << langName;
+    arguments << QStringLiteral("-n") << QString::number(line) << QStringLiteral("-c") << QString::number(column);
+    return arguments;
 }
 
 QString commandLineHelp()

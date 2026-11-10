@@ -2,7 +2,7 @@
 
 Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
 
-**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar, la [70](fase70.md), cinco páginas de Preferencias, la [71](fase71.md), importar, el menú contextual y las macros, y la [74](fase74.md), las órdenes cortas). Faltan unas 95 que tienen sentido en Linux, y otras 20 no aplican o se descartaron.**
+**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar, la [70](fase70.md), cinco páginas de Preferencias, la [71](fase71.md), importar, el menú contextual y las macros, la [74](fase74.md), las órdenes cortas, y la [75](fase75.md), otra ventana, el pegado especial y `tabContextMenu.xml`). De lo que tiene sentido en Linux faltan el texto de derecha a izquierda, los paneles de proyecto y la asociación de archivos; otras 20 no aplican o se descartaron.**
 
 ## Faltan, y tienen sentido en Linux
 
@@ -17,7 +17,7 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | ✅ Move Tab Forward/Backward, Move to Start/End | Mover la pestaña |
 | ✅ 1st…9th Tab, First Tab, Last Tab | Ir a la pestaña N (Ctrl+1…9 en N++) |
 | ✅ Apply Color 1…5 / Remove Color | Colores de pestaña |
-| Open/Move in New Instance | Abrir el documento en otra ventana de Edita |
+| ✅ Open/Move in New Instance | Abrir el documento en otra ventana de Edita |
 
 ### Editar
 | Orden de N++ | Qué hace |
@@ -33,7 +33,7 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | ✅ Open File / Open Containing Folder (de la selección) | Abrir la ruta seleccionada |
 | ✅ Character Panel | Panel con la tabla ASCII y sus códigos |
 | ✅ Clipboard History | Panel con lo último copiado |
-| Paste HTML/RTF Content, Copy/Cut/Paste Binary Content | Pegar el formato enriquecido como texto, y copiar texto con caracteres NUL |
+| ✅ Paste HTML/RTF Content, Copy/Cut/Paste Binary Content | Pegar el formato enriquecido como texto, y copiar texto con caracteres NUL |
 | Text Direction RTL/LTR | Texto de derecha a izquierda (árabe, hebreo) |
 | ✅ Redact Selection | Tapar la selección con █ |
 

@@ -253,3 +253,14 @@ described in [Ends of line](02-files.md#ends-of-line).
   with {{actionGoTo}} or with the scroll bar) and use it again: everything in between is selected,
   without dragging. {{actionBeginEndSelectColumn}} does the same with a rectangular selection. While
   it waits for the end, the command shows checked.
+
+## Paste special
+
+In **Edit › Paste Special**:
+
+- {{actionPasteHtml}} and {{actionPasteRtf}} paste the code of what was copied from a web page or
+  a word processor (the HTML tags or the RTF text), instead of the text you see. They can only be
+  used when the clipboard has that format.
+- {{actionCopyBinary}}, {{actionCutBinary}} and {{actionPasteBinary}} copy, cut and paste the text
+  exactly as it is, including the NUL characters, which the usual commands lose. Between Edita
+  windows everything is kept; from other programs, {{actionPasteBinary}} pastes their text.

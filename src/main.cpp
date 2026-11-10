@@ -114,6 +114,8 @@ int main(int argc, char* argv[])
         request.line = parser.value(options.line).toInt();
     if (parser.isSet(options.column))
         request.column = parser.value(options.column).toInt();
+    if (parser.isSet(options.language))
+        request.language = parser.value(options.language);
     if (parser.isSet(options.session))
         request.session = QFileInfo(parser.value(options.session)).absoluteFilePath();
 

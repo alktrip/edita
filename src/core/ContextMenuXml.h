@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
 // El menú contextual del editor según contextMenu.xml (NppParameters::getContextMenuFromXmlTree):
-// <NotepadPlus><ScintillaContextMenu><Item …/></ScintillaContextMenu></NotepadPlus>
+// <NotepadPlus><ScintillaContextMenu><Item …/></ScintillaContextMenu></NotepadPlus>, y el de las
+// pestañas según tabContextMenu.xml (<TabContextMenu>, con los mismos elementos)
 
 #pragma once
 
@@ -26,8 +27,11 @@ struct ContextMenuItem
     bool isSeparator() const { return id == 0; }
 };
 
-// Los elementos de <ScintillaContextMenu> (vacío si el archivo no existe o no vale)
-std::vector<ContextMenuItem> readContextMenu(const QString& path, bool* ok = nullptr);
+// Qué menú: el del editor (<ScintillaContextMenu>) o el de las pestañas (<TabContextMenu>)
+enum class ContextMenuKind { Editor, Tab };
+
+// Los elementos del menú (vacío si el archivo no existe o no vale)
+std::vector<ContextMenuItem> readContextMenu(const QString& path, bool* ok = nullptr, ContextMenuKind kind = ContextMenuKind::Editor);
 
 // El id de N++ de una orden por su nombre en inglés (el de english.xml, sin & ni «...»; sin
 // distinguir mayúsculas), mirando primero las del menú `menuEntry` (File, Edit, Search…). -1

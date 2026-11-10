@@ -34,7 +34,7 @@ Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git e
 > **Estado:** beta pública (0.9.0). Casi todo está hecho; falta que lo use gente real. Si lo pruebas, [cuéntanos qué encuentras](https://github.com/alktrip/edita/issues/new/choose).
 
 > [!WARNING]
-> **La versión para macOS todavía no está lista.** Por limitaciones en el desarrollo (no hay una Mac para probarla a fondo y falta la firma y notarización de Apple), por ahora Edita solo se publica para **Linux x86_64**. El `.dmg` del release 0.0.1 es una prueba temprana: está desactualizado, sin firmar y no se mantiene. La versión de macOS se retomará más adelante; mientras tanto, los reportes de macOS no se pueden atender.
+> **La versión para macOS todavía no está lista.** Por limitaciones en el desarrollo (no hay una Mac para probarla a fondo y falta la firma y notarización de Apple), por ahora Edita solo se publica para **Linux x86_64**. El `.dmg` del release 0.0.1, una prueba temprana sin firmar, se retiró. El desarrollo para macOS se retomará cuando haya una versión estable para Linux; mientras tanto, los reportes de macOS no se pueden atender.
 
 ## Capturas
 

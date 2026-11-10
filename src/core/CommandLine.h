@@ -10,6 +10,7 @@
 #include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QString>
+#include <QStringList>
 
 namespace edita {
 
@@ -20,10 +21,15 @@ struct CommandLineOptions
     QCommandLineOption noSession;
     QCommandLineOption multiInst;
     QCommandLineOption session;
+    QCommandLineOption language;
 };
 
 // Añade al parser la ayuda, la versión, las opciones y los archivos
 CommandLineOptions setupCommandLine(QCommandLineParser& parser);
+
+// Los argumentos para abrir `path` en otra ventana de Edita (docOpenInNewInstance de N++): otra
+// instancia, sin sesión, con el lenguaje (`langName`, el de langs.xml; vacío, sin -l) y el cursor
+QStringList newInstanceArguments(const QString& path, const QString& langName, int line, int column);
 
 // El texto de --help (IDM_CMDLINEARGUMENTS de N++)
 QString commandLineHelp();

@@ -85,12 +85,12 @@ int nppCommandIdFromName(const QString& menuEntry, const QString& itemName)
     return any;
 }
 
-std::vector<ContextMenuItem> readContextMenu(const QString& path, bool* ok)
+std::vector<ContextMenuItem> readContextMenu(const QString& path, bool* ok, ContextMenuKind kind)
 {
     std::vector<ContextMenuItem> items;
     pugi::xml_document doc;
     const bool loaded = doc.load_file(path.toUtf8().constData(), pugi::parse_default, pugi::encoding_utf8);
-    const pugi::xml_node menu = doc.child("NotepadPlus").child("ScintillaContextMenu");
+    const pugi::xml_node menu = doc.child("NotepadPlus").child(kind == ContextMenuKind::Tab ? "TabContextMenu" : "ScintillaContextMenu");
     if (ok)
         *ok = loaded && menu;
     for (const pugi::xml_node node : menu.children("Item")) {

@@ -64,6 +64,11 @@ command:
 
 Whatever Edita does not have, or plugins that are not installed, do not appear.
 
+The menu of the tabs works the same way with `tabContextMenu.xml` (inside `<TabContextMenu>`), as in
+Notepad++, but only while that file exists: without it, Edita uses its own tab menu.
+{{actionEditTabContextMenu}} creates it the first time (with the example of Notepad++) and opens
+it. To get the usual menu back, delete the file.
+
 ## Configuration files
 
 Edita keeps its configuration in `~/.config/edita/` (on macOS, without `XDG_CONFIG_HOME`,
@@ -77,6 +82,7 @@ Edita keeps its configuration in `~/.config/edita/` (on macOS, without `XDG_CONF
 | `stylers.xml`, `themes/` | The default theme and the themes you changed. |
 | `shortcuts.xml` | Shortcuts and macros. |
 | `contextMenu.xml` | The menu of the right click in the editor. |
+| `tabContextMenu.xml` | The menu of the right click on the tabs (optional). |
 | `personalDictionary.txt` | The words you added to the dictionary. |
 | `userDefineLang.xml`, `userDefineLangs/` | The user defined languages. |
 | `autoCompletion/` | Your API files for autocompletion. |
