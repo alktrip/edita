@@ -41,6 +41,7 @@ class QTreeWidgetItem;
 namespace edita {
 
 class FunctionParsers;
+struct FunctionInfo;
 class GitStatus;
 
 // Lista de documentos (VerticalFileSwitcher de N++): los abiertos en las dos vistas,
@@ -120,6 +121,9 @@ public:
     explicit FunctionListPanel(FunctionParsers& parsers, QWidget* parent = nullptr);
 
     void setSource(ScintillaEditBase* editor, LangType lang, const QString& userLanguage, const QString& title);
+    // Quién analiza el documento de setSource; sin ella, el propio panel. La ventana le
+    // da sus funciones ya analizadas (guardadas por documento: un archivo grande tarda)
+    void setFunctionSource(std::function<bool(std::vector<FunctionInfo>&)> source) { _functionSource = std::move(source); }
     void reload();
     void setSorted(bool sorted);
     void setFilter(const QString& text);
@@ -132,8 +136,10 @@ private:
     void applyFilter();
 
     FunctionParsers& _parsers;
+    std::function<bool(std::vector<FunctionInfo>&)> _functionSource;
     ScintillaEditBase* _scanner = nullptr; // vista oculta con el mismo documento
     QPointer<ScintillaEditBase> _editor;
+    sptr_t _document = 0; // el de _editor cuando se analizó
     QMetaObject::Connection _modified;
     LangType _lang = LangType::Text;
     QString _userLanguage;

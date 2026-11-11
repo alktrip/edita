@@ -381,6 +381,15 @@ FunctionListPanel::FunctionListPanel(FunctionParsers& parsers, QWidget* parent)
 
 void FunctionListPanel::setSource(ScintillaEditBase* editor, LangType lang, const QString& userLanguage, const QString& title)
 {
+    // El mismo documento, con el mismo lenguaje: no hace falta volver a analizarlo (la
+    // ventana lo vuelve a dar, por ejemplo, cuando el documento pasa a tener cambios; con
+    // un archivo grande eso eran segundos en la primera tecla). Los cambios del texto los
+    // recoge _refresh
+    const sptr_t document = editor ? editor->send(SCI_GETDOCPOINTER) : 0;
+    if (editor && editor == _editor && document == _document && lang == _lang && userLanguage == _userLanguage
+        && title == _title)
+        return;
+    _document = document;
     if (_editor != editor) {
         disconnect(_modified);
         _editor = editor;
@@ -405,13 +414,17 @@ void FunctionListPanel::reload()
     _tree->clear();
     if (!_editor)
         return;
-    _scanner->send(SCI_SETDOCPOINTER, 0, _editor->send(SCI_GETDOCPOINTER));
     std::vector<FunctionInfo> found;
-    if (!_parsers.parse(*_scanner, _lang, _userLanguage, found)) {
-        _scanner->send(SCI_SETDOCPOINTER, 0, 0);
-        return;
+    if (_functionSource) {
+        if (!_functionSource(found))
+            return;
+    } else {
+        _scanner->send(SCI_SETDOCPOINTER, 0, _editor->send(SCI_GETDOCPOINTER));
+        const bool parsed = _parsers.parse(*_scanner, _lang, _userLanguage, found);
+        _scanner->send(SCI_SETDOCPOINTER, 0, 0); // no retener el documento
+        if (!parsed)
+            return;
     }
-    _scanner->send(SCI_SETDOCPOINTER, 0, 0); // no retener el documento
     // FunctionListPanel::addInTreeStateArray: la raíz es el archivo; las clases, ramas
     auto* root = new QTreeWidgetItem(_tree, {_title});
     root->setIcon(0, icons::icon(QStringLiteral("doc-list")));

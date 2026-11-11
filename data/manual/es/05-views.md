@@ -127,7 +127,8 @@ líneas demasiado largas), el estilo del margen de plegado y la vista previa de 
 
 - **Ruta de navegación encima del editor** muestra las carpetas, el archivo y la clase y la
   función del cursor. Pulsa una parte para abrir la lista de archivos de una carpeta o la de los
-  símbolos del documento.
+  símbolos del documento. En un documento de más de 2 MB, la clase y la función se actualizan al
+  volver a su pestaña, no mientras escribes, y solo cuando el cursor está en su primera línea.
 - **Encabezado fijo** deja la primera línea del bloque actual (la función, la clase, el
   encabezado) arriba del editor mientras te desplazas dentro de él.
 

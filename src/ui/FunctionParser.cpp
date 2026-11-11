@@ -24,6 +24,8 @@
 #include <QFile>
 #include <QFileInfo>
 
+#include <algorithm>
+
 #include <BoostRegexSearch.h>
 #include <pugixml.hpp>
 
@@ -162,11 +164,12 @@ void FunctionParser::getCommentZones(ScintillaEditBase& view, Zones& zones, sptr
 
 bool FunctionParser::isInZones(sptr_t pos, const Zones& zones)
 {
-    for (const auto& [first, second] : zones) {
-        if (pos >= first && pos < second)
-            return true;
-    }
-    return false;
+    // Las zonas de comentario van en orden y no se pisan (getCommentZones las busca de
+    // principio a fin): la última que empieza antes de pos. N++ las recorre todas, y con
+    // un comentario por función el análisis crece con el cuadrado del archivo
+    const auto after = std::upper_bound(zones.begin(), zones.end(), pos,
+                                        [](sptr_t p, const std::pair<sptr_t, sptr_t>& zone) { return p < zone.first; });
+    return after != zones.begin() && pos < std::prev(after)->second;
 }
 
 void FunctionParser::getInvertZones(Zones& dest, const Zones& source, sptr_t begin, sptr_t end)

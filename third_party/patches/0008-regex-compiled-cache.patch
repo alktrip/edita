@@ -1,0 +1,38 @@
+diff --git a/third_party/boostregex/BoostRegExSearch.cxx b/third_party/boostregex/BoostRegExSearch.cxx
+index 40dc35e..b4f5010 100644
+--- a/third_party/boostregex/BoostRegExSearch.cxx
++++ b/third_party/boostregex/BoostRegExSearch.cxx
+@@ -228,6 +228,10 @@ private:
+ 		Regex _regex;
+ 		std::string _lastRegexString;
+ 		int _lastCompileFlags;
++		// Edita: las últimas expresiones compiladas. Quien alterna varias (la lista de
++		// funciones: la de la función y la de su nombre) no recompila cada vez
++		struct Compiled { std::string regex; int flags; Regex compiled; };
++		std::vector<Compiled> _compiledCache;
+ 	};
+ 
+ 	class SearchParameters {
+@@ -454,7 +458,21 @@ void BoostRegexSearch::EncodingDependent<CharT, CharacterIterator>::compileRegex
+ {
+ 	if (_lastCompileFlags != compileFlags || _lastRegexString != regex)
+ 	{
+-		_regex = Regex(CharTPtr(regex), static_cast<regex_constants::syntax_option_type>(compileFlags));
++		// Edita: primero en las últimas compiladas (basic_regex se copia sin recompilar)
++		auto cached = std::find_if(_compiledCache.begin(), _compiledCache.end(),
++			[&](const Compiled& c) { return c.flags == compileFlags && c.regex == regex; });
++		if (cached != _compiledCache.end())
++		{
++			_regex = cached->compiled;
++		}
++		else
++		{
++			_regex = Regex(CharTPtr(regex), static_cast<regex_constants::syntax_option_type>(compileFlags));
++			constexpr size_t kMaxCompiled = 8;
++			if (_compiledCache.size() == kMaxCompiled)
++				_compiledCache.erase(_compiledCache.begin());
++			_compiledCache.push_back({regex, compileFlags, _regex});
++		}
+ 		_lastRegexString = regex;
+ 		_lastCompileFlags = compileFlags;
+ 	}

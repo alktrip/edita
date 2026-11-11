@@ -162,6 +162,10 @@ namespace edita {
 
 namespace {
 
+// Ruta de navegación: hasta este tamaño se rehacen los símbolos al escribir (y se calculan
+// los bloques con el plegado de todo el documento)
+constexpr sptr_t kMaxSymbolsWhileTyping = 2 * 1024 * 1024;
+
 // Submenús de "Juegos de caracteres", en el orden del menú de N++ (Notepad_plus.rc)
 struct CharsetCategory
 {
@@ -544,6 +548,7 @@ MainWindow::MainWindow(QWidget* parent)
     });
     connect(&_documents, &DocumentManager::bufferClosed, this, [this](BufferId id) {
         _indentOverrides.erase(id);
+        _symbolCache.erase(id);
         _lsp->detach(id);
         if (_compare && (id == _compareBuffers[0] || id == _compareBuffers[1]))
             stopCompare();
@@ -656,8 +661,11 @@ void MainWindow::connectPane(EditorPane* pane)
     _symbolTimer[index]->setInterval(500);
     connect(_symbolTimer[index], &QTimer::timeout, this, [this, index] { updateBreadcrumbs(index, true); });
     connect(pane->editor(), &ScintillaEditBase::modified, _symbolTimer[index],
-            [this, index](Scintilla::ModificationFlags type) {
-                if (static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))
+            [this, index, pane](Scintilla::ModificationFlags type) {
+                // En un documento grande, analizarlo en cada pausa al escribir bloquearía la
+                // ventana (segundos con 14 MB): se rehace al volver a su pestaña
+                if ((static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))
+                    && pane->editor()->sci(SCI_GETLENGTH) <= kMaxSymbolsWhileTyping)
                     _symbolTimer[index]->start();
             });
     connect(pane->editor(), &ScintillaEditBase::updateUi, _breadcrumbs[index], [this, index, pane](Scintilla::Update updated) {
@@ -2167,6 +2175,13 @@ void MainWindow::createPanels()
     _docListPanel = new DocumentListPanel;
     _docMapPanel = new DocumentMapPanel;
     _functionListPanel = new FunctionListPanel(*_functionParsers);
+    _functionListPanel->setFunctionSource([this](std::vector<FunctionInfo>& found) {
+        const SymbolCacheEntry* entry = functionsOf(currentBuffer(), editor());
+        if (!entry || !entry->parsed)
+            return false;
+        found = entry->found;
+        return true;
+    });
     _folderPanel = new FileBrowserPanel;
     _regexTester = new RegexTesterPanel;
     _terminal = new TerminalPanel;
@@ -7724,6 +7739,30 @@ void MainWindow::showFindBar(bool replace)
     bar->open(replace, _prefs.fillFindFieldWithSelected ? textForFindField() : QString());
 }
 
+const MainWindow::SymbolCacheEntry* MainWindow::functionsOf(BufferId id, const EditorView* view) const
+{
+    const Buffer* buf = _documents.buffer(id);
+    if (!buf || !view || !_functionParsers)
+        return nullptr;
+    SymbolCacheEntry key;
+    key.language = static_cast<int>(buf->language());
+    key.userLanguage = buf->userLanguage();
+    key.length = view->sci(SCI_GETLENGTH);
+    key.undoActions = view->sci(SCI_GETUNDOACTIONS);
+    key.undoCurrent = view->sci(SCI_GETUNDOCURRENT);
+    auto cached = _symbolCache.find(id);
+    if (cached == _symbolCache.end() || cached->second.language != key.language
+        || cached->second.userLanguage != key.userLanguage || cached->second.length != key.length
+        || cached->second.undoActions != key.undoActions || cached->second.undoCurrent != key.undoCurrent) {
+        ScintillaEditBase scanner;
+        scanner.send(SCI_SETDOCPOINTER, 0, view->sci(SCI_GETDOCPOINTER));
+        key.parsed = _functionParsers->parse(scanner, buf->language(), buf->userLanguage(), key.found);
+        scanner.send(SCI_SETDOCPOINTER, 0, 0);
+        cached = _symbolCache.insert_or_assign(id, std::move(key)).first;
+    }
+    return &cached->second;
+}
+
 // La ruta de navegación: el archivo y, si `symbols`, los símbolos del documento con el
 // bloque que ocupa cada uno (el plegado: del encabezado a su último hijo)
 void MainWindow::updateBreadcrumbs(int index, bool symbols)
@@ -7738,8 +7777,8 @@ void MainWindow::updateBreadcrumbs(int index, bool symbols)
     if (!symbols || !_prefs.breadcrumbs)
         return;
     EditorView* view = pane->editor();
-    constexpr sptr_t kMaxFoldScan = 2 * 1024 * 1024;
-    const bool folds = view->sci(SCI_GETLENGTH) <= kMaxFoldScan;
+    const sptr_t caretLine = view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(view->sci(SCI_GETCURRENTPOS)));
+    const bool folds = view->sci(SCI_GETLENGTH) <= kMaxSymbolsWhileTyping;
     if (folds)
         view->sci(SCI_COLOURISE, 0, -1); // el plegado de todo el documento
     const sptr_t lineCount = view->sci(SCI_GETLINECOUNT);
@@ -7755,11 +7794,12 @@ void MainWindow::updateBreadcrumbs(int index, bool symbols)
     };
     std::vector<Breadcrumbs::Symbol> list;
     if (_functionParsers) {
-        ScintillaEditBase scanner;
-        scanner.send(SCI_SETDOCPOINTER, 0, view->sci(SCI_GETDOCPOINTER));
-        std::vector<FunctionInfo> found;
-        const bool parsed = _functionParsers->parse(scanner, buf->language(), buf->userLanguage(), found);
-        scanner.send(SCI_SETDOCPOINTER, 0, 0);
+        // Lo que tarda es el análisis, que se guarda por documento. Los bloques salen del
+        // plegado, que puede no estar hecho todavía la primera vez: se calculan siempre
+        const SymbolCacheEntry* entry = functionsOf(pane->currentBuffer(), view);
+        const bool parsed = entry && entry->parsed;
+        static const std::vector<FunctionInfo> kNone;
+        const std::vector<FunctionInfo>& found = entry ? entry->found : kNone;
         if (parsed) {
             QSet<QString> classes;
             for (const FunctionInfo& fi : found) {
@@ -7800,7 +7840,7 @@ void MainWindow::updateBreadcrumbs(int index, bool symbols)
     }
     std::stable_sort(list.begin(), list.end(), [](const auto& a, const auto& b) { return a.line < b.line; });
     crumbs->setSymbols(std::move(list), fallback);
-    crumbs->setCaretLine(static_cast<int>(view->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(view->sci(SCI_GETCURRENTPOS)))));
+    crumbs->setCaretLine(static_cast<int>(caretLine));
 }
 
 void MainWindow::updateLanguageDecorations(int index)
@@ -8010,13 +8050,10 @@ std::vector<CommandPalette::Item> MainWindow::paletteSymbols() const
     const Buffer* buf = _documents.buffer(currentBuffer());
     if (!buf || !_functionParsers)
         return items;
-    ScintillaEditBase scanner;
-    scanner.send(SCI_SETDOCPOINTER, 0, editor()->sci(SCI_GETDOCPOINTER));
-    std::vector<FunctionInfo> found;
-    const bool parsed = _functionParsers->parse(scanner, buf->language(), buf->userLanguage(), found);
-    scanner.send(SCI_SETDOCPOINTER, 0, 0);
-    if (!parsed)
+    const SymbolCacheEntry* entry = functionsOf(currentBuffer(), editor());
+    if (!entry || !entry->parsed)
         return items;
+    const std::vector<FunctionInfo>& found = entry->found;
     QSet<QString> classes;
     for (const FunctionInfo& fi : found) {
         const QString className = QString::fromStdString(fi.className);

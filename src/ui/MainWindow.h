@@ -32,6 +32,7 @@
 #include "doc/DocumentManager.h"
 #include "search/SearchEngine.h"
 #include "syntax/SyntaxManager.h"
+#include "ui/FunctionParser.h"
 #include "ui/CommandPalette.h"
 #include "ui/EditCommands.h"
 #include "ui/FindReplaceDialog.h"
@@ -789,6 +790,24 @@ private:
     void showFindBar(bool replace);
     QTimer* _symbolTimer[2] = {};
     void updateBreadcrumbs(int index, bool symbols);
+    // Lo que encuentra el analizador de funciones en cada documento, para la ruta de
+    // navegación: analizar un archivo grande tarda (la Lista de funciones de N++ busca con
+    // expresiones regulares), así que no se repite al volver a su pestaña. Vale mientras no
+    // cambien el lenguaje ni el texto (la longitud y el historial de deshacer, que cambian
+    // también si lo edita otra orden)
+    struct SymbolCacheEntry
+    {
+        int language = -1;
+        QString userLanguage;
+        sptr_t length = -1;
+        sptr_t undoActions = -1;
+        sptr_t undoCurrent = -1;
+        bool parsed = false;
+        std::vector<FunctionInfo> found;
+    };
+    mutable std::map<BufferId, SymbolCacheEntry> _symbolCache;
+    // Las funciones del documento (de la caché, o analizándolo); nullptr si no hay analizador
+    const SymbolCacheEntry* functionsOf(BufferId id, const EditorView* view) const;
     // Lenguaje del documento de la vista: vista previa de colores y paréntesis por colores
     void updateLanguageDecorations(int index);
     NotificationBar* _notifications = nullptr;

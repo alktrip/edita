@@ -42,6 +42,9 @@ class EditorView;
 class AutoCompletion
 {
 public:
+    // AutoCompletion::getWordArray: las palabras del documento que empiezan por `begin`
+    // (sin `exclude`, la que se está escribiendo), en el orden en que aparecen
+    void getWordArray(std::vector<std::string>& words, const std::string& begin, const std::string& exclude) const;
     // Separador de tipo de Scintilla e imágenes de la lista (FUNC_IMG_ID, BOX_IMG_ID)
     static constexpr char kTypeSeparator = '\x1E';
     static constexpr int kFunctionImage = 1000;
@@ -85,7 +88,6 @@ private:
     };
 
     bool showAutoComplete(Type type, bool autoInsert);
-    void getWordArray(std::vector<std::string>& words, const std::string& begin, const std::string& exclude) const;
     std::string text(sptr_t start, sptr_t end) const;
     void showList(sptr_t enteredLength, const std::string& list);
     std::string closeTag(sptr_t caret, bool isHtml) const;

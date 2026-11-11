@@ -111,6 +111,48 @@ private slots:
         QVERIFY(crumbs->isHidden());
     }
 
+    // Fase 77: los símbolos se guardan por documento (analizar uno grande tarda), pero se
+    // rehacen si cambia el texto, aunque lo cambie otra orden con el documento en segundo plano
+    void breadcrumbsSymbolsFollowChanges()
+    {
+        const QString a = _tmp.filePath("cache/a.cpp");
+        const QString b = _tmp.filePath("cache/b.cpp");
+        writeFile(a, "int uno(int n)\n{\n    return n;\n}\n");
+        writeFile(b, "int otra;\n");
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        Preferences p = w.preferences();
+        p.breadcrumbs = true; // la prueba anterior la apaga y queda en config.xml
+        w.setPreferences(p);
+        QVERIFY(w.openFile(a) != kInvalidBuffer);
+        Breadcrumbs* crumbs = w.breadcrumbsOfCurrentView();
+        auto symbolAt2 = [&] {
+            crumbs->setCaretLine(2);
+            return crumbs->segments().isEmpty() ? QString() : crumbs->segments().last();
+        };
+        QCOMPARE(symbolAt2(), QStringLiteral("uno"));
+        // Otra pestaña y de vuelta: los mismos (de la caché)
+        QVERIFY(w.openFile(b) != kInvalidBuffer);
+        QVERIFY(w.openFile(a) != kInvalidBuffer);
+        QCOMPARE(symbolAt2(), QStringLiteral("uno"));
+        // Escribir en el documento: tras la pausa, el nombre nuevo
+        w.editor()->sends(SCI_SETTEXT, 0, "int dos(int n)\n{\n    return n;\n}\n");
+        QTRY_COMPARE(symbolAt2(), QStringLiteral("dos"));
+        // Reemplazar en todos los documentos con a.cpp en segundo plano
+        QVERIFY(w.openFile(b) != kInvalidBuffer);
+        SearchOptions o;
+        o.pattern = "dos";
+        o.replacement = "tres";
+        QCOMPARE(w.replaceAllInOpenDocuments(o), 1);
+        QVERIFY(w.openFile(a) != kInvalidBuffer);
+        QCOMPARE(symbolAt2(), QStringLiteral("tres"));
+        // Deshacer también cuenta
+        w.editor()->sci(SCI_UNDO);
+        QVERIFY(w.openFile(b) != kInvalidBuffer);
+        QVERIFY(w.openFile(a) != kInvalidBuffer);
+        QCOMPARE(symbolAt2(), QStringLiteral("dos"));
+    }
+
     void stickyScrollKeepsTheHeaders()
     {
         const QByteArray source = cppSource();

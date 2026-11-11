@@ -49,7 +49,7 @@ edita_add_test(tst_search LIBS edita_search)
 
 # Documentos sobre Scintilla
 edita_add_test(tst_documentmanager LIBS edita_doc)
-edita_add_test(tst_perf LIBS edita_doc LABELS perf)
+edita_add_test(tst_perf LIBS edita_ui LABELS perf)
 
 # Motor de edición y UI
 edita_add_test(tst_engine LIBS edita_ui)

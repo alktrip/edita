@@ -28,9 +28,12 @@
 #include <SciLexer.h>
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cstring>
 #include <sstream>
+#include <string_view>
+#include <unordered_set>
 
 namespace edita {
 
@@ -324,38 +327,72 @@ bool AutoCompletion::showAutoComplete(Type type, bool autoInsert)
 void AutoCompletion::getWordArray(std::vector<std::string>& words, const std::string& begin,
                                   const std::string& exclude) const
 {
-    if (_prefs.autocIgnoreNumbers && isAllDigits(begin))
+    if (begin.empty() || (_prefs.autocIgnoreNumbers && isAllDigits(begin)))
         return;
-    const std::string expr = "\\<" + escapeRegex(begin) + "[^ \\t\\n\\r.,;:\"(){}=<>'+!?\\[\\]]+";
-    int flags = SCFIND_WORDSTART | SCFIND_REGEXP | SCFIND_POSIX;
-    if (!hasApi() || !_api.ignoreCase)
-        flags |= SCFIND_MATCHCASE;
-    _view.sci(SCI_SETSEARCHFLAGS, static_cast<uptr_t>(flags));
-
     const std::string boxId = kTypeSeparator + std::to_string(kKeywordImage);
     const std::string funcId = kTypeSeparator + std::to_string(kFunctionImage);
+    std::unordered_set<std::string> seen;
+    auto add = [&](std::string w) {
+        if (w == exclude)
+            return;
+        // Si además es una palabra de la API, con su icono
+        if (contains(_keywordArray, w + boxId))
+            w += boxId;
+        else if (contains(_keywordArray, w + funcId))
+            w += funcId;
+        if (seen.insert(w).second)
+            words.push_back(std::move(w));
+    };
     const sptr_t docLength = _view.sci(SCI_GETLENGTH);
-    sptr_t pos = 0;
-    while (pos < docLength) {
-        _view.sci(SCI_SETTARGETRANGE, static_cast<uptr_t>(pos), docLength);
-        if (_view.sends(SCI_SEARCHINTARGET, expr.size(), expr.c_str()) < 0)
-            break;
-        const sptr_t wordStart = _view.sci(SCI_GETTARGETSTART);
-        const sptr_t wordEnd = _view.sci(SCI_GETTARGETEND);
-        if (wordEnd - wordStart < 256) {
-            const std::string w = text(wordStart, wordEnd);
-            if (w != exclude) {
-                // Si además es una palabra de la API, con su icono
-                std::string entry = w;
-                if (contains(_keywordArray, w + boxId))
-                    entry = w + boxId;
-                else if (contains(_keywordArray, w + funcId))
-                    entry = w + funcId;
-                if (!contains(words, entry))
-                    words.push_back(entry);
-            }
+
+    if (hasApi() && _api.ignoreCase) {
+        // Sin distinguir mayúsculas (lo pide el archivo de API): la expresión de N++
+        const std::string expr = "\\<" + escapeRegex(begin) + "[^ \\t\\n\\r.,;:\"(){}=<>'+!?\\[\\]]+";
+        _view.sci(SCI_SETSEARCHFLAGS, SCFIND_WORDSTART | SCFIND_REGEXP | SCFIND_POSIX);
+        sptr_t pos = 0;
+        while (pos < docLength) {
+            _view.sci(SCI_SETTARGETRANGE, static_cast<uptr_t>(pos), docLength);
+            if (_view.sends(SCI_SEARCHINTARGET, expr.size(), expr.c_str()) < 0)
+                break;
+            const sptr_t wordStart = _view.sci(SCI_GETTARGETSTART);
+            const sptr_t wordEnd = _view.sci(SCI_GETTARGETEND);
+            if (wordEnd - wordStart < 256)
+                add(text(wordStart, wordEnd));
+            pos = wordEnd > wordStart ? wordEnd : wordStart + 1;
         }
-        pos = wordEnd > wordStart ? wordEnd : wordStart + 1;
+        return;
+    }
+
+    // N++ busca con una expresión regular en todo el documento: con 14 MB, 200 ms en cada
+    // tecla. Aquí se recorre el texto: donde empieza `begin` al principio de una palabra
+    // (antes no hay un carácter de palabra; los que no son ASCII cuentan como letras, como
+    // en Scintilla), y hasta el primer separador
+    std::array<bool, 256> wordChar{};
+    {
+        std::string chars(static_cast<std::size_t>(_view.sci(SCI_GETWORDCHARS)), '\0');
+        _view.sci(SCI_GETWORDCHARS, 0, reinterpret_cast<sptr_t>(chars.data()));
+        for (const char c : chars)
+            wordChar[static_cast<unsigned char>(c)] = true;
+        for (std::size_t c = 0x80; c < 256; ++c)
+            wordChar[c] = true;
+    }
+    static constexpr std::string_view kSeparators = " \t\n\r.,;:\"(){}=<>'+!?[]";
+    const auto* data = reinterpret_cast<const char*>(_view.sci(SCI_GETCHARACTERPOINTER));
+    if (!data)
+        return;
+    const std::string_view doc(data, static_cast<std::size_t>(docLength));
+    std::size_t pos = 0;
+    while ((pos = doc.find(begin, pos)) != std::string_view::npos) {
+        if (pos > 0 && wordChar[static_cast<unsigned char>(doc[pos - 1])]) {
+            ++pos;
+            continue;
+        }
+        std::size_t end = pos + begin.size();
+        while (end < doc.size() && kSeparators.find(doc[end]) == std::string_view::npos)
+            ++end;
+        if (end > pos + begin.size() && end - pos < 256)
+            add(std::string(doc.substr(pos, end - pos)));
+        pos = std::max(end, pos + 1);
     }
 }
 

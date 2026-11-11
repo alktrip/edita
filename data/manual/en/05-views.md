@@ -123,6 +123,8 @@ the color preview of `#rrggbb` and `rgb()` colors (click the color to open a col
 
 - **Breadcrumbs above the editor** shows the folders, the file and the class and function of the
   cursor. Click a part to open the list of files of a folder or of the symbols of the document.
+  In a document over 2 MB, the class and function are updated when you come back to its tab,
+  not while you type, and only when the cursor is on their first line.
 - **Sticky scroll** keeps the first line of the current block (the function, the class, the
   heading) at the top of the editor while you scroll inside it.
 

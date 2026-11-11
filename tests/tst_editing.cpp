@@ -160,6 +160,31 @@ private slots:
         QVERIFY(!x.ac()->showWordComplete(false));
     }
 
+    // Fase 77: las palabras se buscan recorriendo el texto y no con una expresión regular
+    // (200 ms por tecla con 14 MB), con el mismo resultado: desde el inicio de una palabra,
+    // hasta un separador (espacio, . , ; : " ( ) { } = < > ' + ! ? [ ]). Con la expresión
+    // de N++, una palabra que empieza con ñ o con acento no se encontraba
+    void wordArrayEdges()
+    {
+        Window x;
+        x.setText("ñandú cañada ñame foo-bar foo.baz fo_o fo x=fox(fo2) [fo3] afo foo-bar éfo\nfo");
+        auto words = [&](const char* begin, const char* exclude) {
+            std::vector<std::string> list;
+            x.ac()->getWordArray(list, begin, exclude);
+            return list;
+        };
+        QCOMPARE(words("fo", "fo"), (std::vector<std::string>{"foo-bar", "foo", "fo_o", "fox", "fo2", "fo3"}));
+        QCOMPARE(words("ña", "ña"), (std::vector<std::string>{"ñandú", "ñame"}));
+        QCOMPARE(words("fo", "fox"), (std::vector<std::string>{"foo-bar", "foo", "fo_o", "fo2", "fo3"}));
+        QCOMPARE(words("Fo", "Fo"), std::vector<std::string>{}); // distingue mayúsculas
+        QCOMPARE(words("zz", "zz"), std::vector<std::string>{});
+        // Al principio y al final del documento
+        x.setText("fob fo");
+        QCOMPARE(words("fo", "fo"), (std::vector<std::string>{"fob"}));
+        x.setText("afob");
+        QCOMPARE(words("fo", "fo"), std::vector<std::string>{}); // no empieza ahí la palabra
+    }
+
     void listAppearsWhileTyping()
     {
         Window x;
