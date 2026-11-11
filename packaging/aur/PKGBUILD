@@ -3,7 +3,7 @@
 # ver packaging/aur/README.md.
 
 pkgname=edita
-pkgver=0.9.0beta8
+pkgver=0.9.0beta9
 pkgrel=1
 _tag=v${pkgver/beta/-beta.}
 pkgdesc='Text and source code editor inspired by Notepad++'
@@ -17,7 +17,7 @@ optdepends=('hunspell-en_us: English spell checking'
             'hunspell-es_any: Spanish spell checking'
             'git: Git changes in the margin and in the folder panel')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/$_tag.tar.gz")
-sha256sums=('27022b91c8d88c362ffa96ab639fe5818c40496a7f54d10c2a0c52deda80eeca')
+sha256sums=('4dcc4b672e2dab0f602c3facff939bbb07292dfff4c9f1a3974501de431ac6ff')
 
 build() {
   # Sin -Werror (un compilador más nuevo puede avisar de algo nuevo) ni aviso de versiones
