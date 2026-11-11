@@ -30,6 +30,7 @@ jobs:
 
       - name: Paquetes
         run: |
+          .github/scripts/apt-mirror.sh
           sudo apt-get update
           # Compilar: Ninja, libzip, OpenSSL (la firma del catálogo de plugins), Python (Python
           # Script), OpenGL y xkbcommon (Qt Gui).
@@ -84,6 +85,7 @@ jobs:
 
       - name: Paquetes
         run: |
+          .github/scripts/apt-mirror.sh
           sudo apt-get update
           # dpkg-dev: dpkg-shlibdeps calcula las dependencias del paquete .deb
           sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 file dpkg-dev libhunspell-dev \
