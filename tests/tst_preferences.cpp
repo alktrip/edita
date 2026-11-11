@@ -323,7 +323,7 @@ private slots:
         const Preferences p = nonDefault();
         PreferencesDialog dialog(Preferences{}, {{0, "Normal text"}, {22, "Python"}});
         QCOMPARE(dialog.pageNames(), (QStringList{"general", "toolbar", "editing", "margins", "newDocument", "recentFiles",
-                                                  "indentation", "language", "autoCompletion", "highlighting", "searching", "printing",
+                                                  "fileAssociation", "indentation", "language", "autoCompletion", "highlighting", "searching", "printing",
                                                   "backup", "delimiter", "performance", "cloudLink", "searchEngine", "misc",
                                                   "languageServers", "formatting", "spelling"}));
         QVERIFY(dialog.preferences() == Preferences{});

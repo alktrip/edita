@@ -1,0 +1,41 @@
+# Edita en AUR: https://aur.archlinux.org/packages/edita
+# Se compila desde el código de la etiqueta, con el Qt de Arch. Para publicar una versión,
+# ver packaging/aur/README.md.
+
+pkgname=edita
+pkgver=0.9.0beta8
+pkgrel=1
+_tag=v${pkgver/beta/-beta.}
+pkgdesc='Text and source code editor inspired by Notepad++'
+arch=('x86_64')
+url='https://github.com/alktrip/edita'
+license=('GPL-3.0-or-later')
+depends=('qt6-base' 'qt6-svg' 'qt6-5compat' 'hunspell' 'libzip' 'openssl' 'python'
+         'hicolor-icon-theme' 'shared-mime-info')
+makedepends=('cmake' 'ninja' 'qt6-tools')
+optdepends=('hunspell-en_us: English spell checking'
+            'hunspell-es_any: Spanish spell checking'
+            'git: Git changes in the margin and in the folder panel')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/$_tag.tar.gz")
+sha256sums=('27022b91c8d88c362ffa96ab639fe5818c40496a7f54d10c2a0c52deda80eeca')
+
+build() {
+  # Sin -Werror (un compilador más nuevo puede avisar de algo nuevo) ni aviso de versiones
+  # nuevas: las trae pacman. Sin los assert de Scintilla (llevan la ruta del código) ni la
+  # carpeta de datos del código fuente
+  CXXFLAGS+=' -DNDEBUG'
+  CFLAGS+=' -DNDEBUG'
+  cmake -S "$pkgname-${_tag#v}" -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=None \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DEDITA_WERROR=OFF \
+    -DEDITA_BUILD_TESTS=OFF \
+    -DEDITA_UPDATE_CHECK=OFF \
+    -DEDITA_SOURCE_DATA=OFF
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+  install -Dm644 "$pkgname-${_tag#v}/NOTICE" "$pkgdir/usr/share/licenses/$pkgname/NOTICE"
+}

@@ -15,6 +15,7 @@ Most options are described in the chapter of their feature; this is a summary.
 | Margins | Line numbers, fold margin style, vertical edge, bookmark margin, change history, current line number, Git changes, Git in the explorer, blame and marks in the scroll bar. |
 | New Document | End of line, encoding and language of new documents, and the folder of the open and save dialogs. |
 | Recent Files History | Number of recent files, submenu and how their names are shown. |
+| File Association | The extensions that the file manager opens with Edita (see below). |
 | Indentation | Tab size, tabs or spaces, Backspace unindents and auto-indent, for all the languages or for each one. |
 | Language | The Language menu compact (grouped by initial) or with all of them in a row, the languages left out of it, and whether the backslash escapes characters in SQL. |
 | Auto-Completion | When to show the list, from how many characters, snippets with Tab, parameter hints and the automatic closing of brackets, quotes and tags. |
@@ -30,6 +31,28 @@ Most options are described in the chapter of their feature; this is a summary.
 | Language Servers | Turning them on or off, the hints at the end of the lines and the command of each server. |
 | Formatting | Format on save and the formatting tool of each language (see [Formatting](03-editing.md#formatting)). |
 | Spelling | The spell checker, its dictionaries and whether only comments and strings are checked in code (see [Spelling](03-editing.md#spelling)). |
+
+### File Association
+
+As in Notepad++: on the left, the groups of extensions and the extensions of each group; **→**
+associates the chosen extension with Edita and **←** removes the association (a double click does
+the same). In the *customize* group you type any other extension. Each change is made at once,
+without waiting for OK, and for your user only: you do not need to be an administrator.
+
+On Linux, applications are associated with a file type, not with an extension. So associating
+`.cpp` also opens `.cc` and `.cxx` files with Edita, because they are the same type. Edita becomes
+the default application of that type in `~/.config/mimeapps.list` and shows up in **Open With**.
+Removing the association gives the type back to the application it had before. An extension that
+is not a text type (or has no type) gets one of its own, in
+`~/.local/share/mime/packages/edita-associations.xml`; this needs `update-mime-database`, from the
+shared-mime-info package. With the AppImage, Edita also writes its `edita.desktop` in
+`~/.local/share/applications`, with the path of the AppImage; if you later move it or replace it
+with another version, Edita fixes the path when it starts. The .deb and AUR packages already
+install that file.
+
+Some desktops keep their choice in a file of their own (`kde-mimeapps.list`,
+`gnome-mimeapps.list`) that takes precedence over `mimeapps.list`. If a type still opens with
+another application, choose Edita in the file manager's **Open With**.
 
 ## Shortcut Mapper
 
@@ -82,6 +105,7 @@ Edita keeps its configuration in `~/.config/edita/` (on macOS, without `XDG_CONF
 | `stylers.xml`, `themes/` | The default theme and the themes you changed. |
 | `shortcuts.xml` | Shortcuts and macros. |
 | `contextMenu.xml` | The menu of the right click in the editor. |
+| `fileAssociations.xml` | The associated extensions and the previous application of each type. Always in `~/.config/edita/`, also with the settings on the cloud. |
 | `tabContextMenu.xml` | The menu of the right click on the tabs (optional). |
 | `personalDictionary.txt` | The words you added to the dictionary. |
 | `userDefineLang.xml`, `userDefineLangs/` | The user defined languages. |

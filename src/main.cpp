@@ -21,6 +21,7 @@
 #include "core/CrashReport.h"
 #include "core/Locale.h"
 #include "core/CommandLine.h"
+#include "core/FileAssociation.h"
 #include "core/Paths.h"
 #include "core/Preferences.h"
 #include "syntax/DesktopFonts.h"
@@ -127,6 +128,9 @@ int main(int argc, char* argv[])
         return 0;
     // Con varias instancias, solo la primera recuerda la sesión
     const bool firstInstance = !edita::InstanceServer::isRunning(socket);
+    // Preferencias › Asociación de archivos: si el edita.desktop que escribió un AppImage
+    // apunta a uno que ya no está (otra versión, otra carpeta), pasa a este
+    edita::file_association::FileAssociations().refreshLauncher();
 
     edita::MainWindow window;
     window.restoreWindowGeometry();

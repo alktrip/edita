@@ -87,6 +87,12 @@ chmod +x Edita-*-x86_64.AppImage
 
 Funciona en Linux x86_64: Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores. Trae Qt, Python Script y MarkdownViewer++. Edita te avisa cuando hay una versión nueva.
 
+**Debian y Ubuntu:** el paquete `edita_<versión>_amd64.deb` de la misma página se instala con `sudo apt install ./edita_*_amd64.deb`. Lleva su propio Qt, como el AppImage, y deja Edita en el menú y en **Abrir con**.
+
+**Arch Linux:** el `PKGBUILD` de [`packaging/aur/`](packaging/aur/) compila Edita con el Qt de Arch: `makepkg -si` en esa carpeta.
+
+Para abrir tus archivos con Edita desde el administrador de archivos, elige sus extensiones en **Configuración › Preferencias › Asociación de archivos**.
+
 Uso desde la terminal: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst] [--openSession archivo]`. La configuración va en `~/.config/edita/`, con los mismos archivos que Notepad++ (`langs.xml`, `stylers.xml`, `config.xml`, `session.xml`, `shortcuts.xml`, `themes/`, `userDefineLangs/`, `plugins/`…).
 
 ## Probar la beta y reportar
@@ -111,9 +117,10 @@ ctest --test-dir build --output-on-failure      # -LE perf para saltar el de ren
 | `EDITA_BUILD_TESTS` | `ON` | Las pruebas (QtTest, sin pantalla) |
 | `EDITA_BUILD_PLUGINS` | `ON` | Los plugins: el de ejemplo (`plugins/EditaDemo`), Python Script (si hay cabeceras de Python 3) y MarkdownViewer++ |
 | `EDITA_UPDATE_CHECK` | `ON` | Avisar de versiones nuevas; una distribución lo desactiva |
+| `EDITA_SOURCE_DATA` | `ON` | Buscar los datos también en `data/` del código, para usarlo sin instalar; un paquete lo desactiva |
 | `EDITA_APP_ID` | `edita` | Nombre del binario y de `~/.config/<id>/` |
 
-**AppImage:** `packaging/appimage/build-portable.sh` genera `dist/Edita-<versión>-x86_64.AppImage` en Ubuntu 22.04, con Qt, los plugins y Python incluidos ([empaquetado](docs/empaquetado.md)). La CI de Linux lo genera en cada cambio.
+**AppImage y .deb:** `packaging/appimage/build-portable.sh` genera `dist/Edita-<versión>-x86_64.AppImage` y `dist/edita_<versión>_amd64.deb` en Ubuntu 22.04, con Qt, los plugins y Python incluidos ([empaquetado](docs/empaquetado.md)). La CI de Linux los genera en cada cambio. El `PKGBUILD` de AUR está en `packaging/aur/`.
 
 **macOS: todavía no está lista** (ver el aviso al principio). Se conserva una CI (`.github/workflows/macos.yml`, solo a mano) que generaba un `.dmg` universal sin notarizar; no se ha probado desde la fase 55 y no forma parte de los releases.
 

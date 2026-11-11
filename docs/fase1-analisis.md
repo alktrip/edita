@@ -349,6 +349,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 73 — Ortografía | core/SpellChecker (Hunspell opcional, diccionarios del sistema, personal, iconv), `wordsToCheck`, ui/SpellCheck (indicador 20, estilos de comentario y cadena), sugerencias en el clic derecho, Ver › Revisar la ortografía, Preferencias › Ortografía | ✅ [fase73.md](fase73.md) |
 | 74 — Órdenes cortas de N++ | Sangría, Begin/End Select (`EditorView::beginOrEndSelect`), solo lectura para todos, NPC y caracteres de control (`ui/NonPrintingChars.inc`), `ui/FindCharsDialog` + `findCharInRange`, órdenes solo de atajo, core/CommandLine y Ayuda | ✅ [fase74.md](fase74.md) |
 | 75 — Otra ventana, pegado especial, menú de pestañas | `newInstanceArguments` y `-l` (core/CommandLine, `InstanceRequest::language`), `openInNewInstance` con `setInstanceLauncher`, Editar › Pegado especial (HTML/RTF, binario con `application/x-edita-binary`), `tabContextMenu.xml` (`ContextMenuKind::Tab`, `fillMenuFromXml`, `data/tabContextMenu.xml`) | ✅ [fase75.md](fase75.md) |
+| 76 — Asociación de archivos y paquetes | core/FileAssociation (`mimeapps.list` con el programa de antes, tipos propios en `mime/packages` con update-mime-database, `edita.desktop` propio del AppImage y `refreshLauncher`), Preferencias › Asociación de archivos (RegExtDlg), `packaging/deb/build-deb.sh` (el AppDir en `/opt/edita`, `dpkg-shlibdeps`), `packaging/aur/PKGBUILD` | ✅ [fase76.md](fase76.md) |
 
 ---
 

@@ -1,4 +1,4 @@
-# Empaquetado: AppImage
+# Empaquetado: AppImage, .deb y AUR
 
 `packaging/appimage/build-appimage.sh` genera `dist/Edita-<versión>-x86_64.AppImage`: un solo archivo ejecutable con Edita, Qt, sus plugins (Python Script y el de ejemplo) y Python.
 
@@ -43,3 +43,22 @@ Descarga el sistema base de Ubuntu (comprobado con su SHA-256) a `build-portable
 ## Para las distribuciones
 
 Un paquete de una distribución se actualiza con su gestor de paquetes. Para que Edita no busque versiones nuevas en GitHub (ni muestre **Ayuda › Buscar actualizaciones**), se compila con `-DEDITA_UPDATE_CHECK=OFF` ([fase 64](fase64.md)). El AppImage la deja activada.
+
+## El paquete .deb
+
+Al terminar, `build-appimage.sh` llama a `packaging/deb/build-deb.sh` si hay `dpkg-deb` (Debian, Ubuntu; también dentro de `build-portable.sh`), que deja `dist/edita_<versión>_amd64.deb` ([fase 76](fase76.md)). La versión cambia el guion por `~` (`0.9.0~beta.9`), para que dpkg la ponga antes de la `0.9.0`.
+
+Debian 12 y Ubuntu 22.04 y 24.04 traen un Qt más viejo que el 6.7 que necesita Edita, así que el paquete lleva el mismo AppDir que el AppImage, con su Qt:
+
+| Ruta | Qué es |
+|---|---|
+| `/opt/edita/usr/…` | El AppDir: Edita, Qt, los plugins, Python y los datos |
+| `/usr/bin/edita` | Enlace a `/opt/edita/usr/bin/edita`. Edita sigue el enlace y encuentra `qt.conf` y sus datos |
+| `/usr/share/applications/edita.desktop`, `/usr/share/icons/hicolor/…` | El menú, los tipos de archivo de **Abrir con** y el ícono |
+| `/usr/share/doc/edita/copyright` | La licencia y `NOTICE` |
+
+Las dependencias (glibc, OpenGL, X11, fontconfig… lo que tampoco lleva el AppImage) las calcula `dpkg-shlibdeps`, del paquete dpkg-dev. Sin él se usa una lista fija. La CI lo publica junto al AppImage en cada release y en el release «continuous».
+
+## AUR
+
+`packaging/aur/PKGBUILD` compila Edita desde el tarball de la etiqueta con el Qt de Arch, sin `-Werror` y con `-DEDITA_UPDATE_CHECK=OFF`, y lo instala en `/usr`. Cómo publicar una versión: [packaging/aur/README.md](../packaging/aur/README.md).

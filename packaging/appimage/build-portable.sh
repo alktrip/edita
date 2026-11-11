@@ -3,7 +3,7 @@
 # Copyright (C) 2026 Edita contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Genera el AppImage en Ubuntu 22.04 (glibc 2.35) para que funcione en la mayoría
+# Genera el AppImage (y el paquete .deb) en Ubuntu 22.04 (glibc 2.35) para que funcione en la mayoría
 # de las distribuciones (Ubuntu 22.04+, Debian 12+, Fedora 36+…), sin Docker ni
 # privilegios: el sistema base oficial de Ubuntu en una carpeta, al que se entra
 # con un espacio de usuario (unshare + chroot), con Qt 6.8 oficial (aqtinstall,
@@ -94,6 +94,11 @@ if [[ ! -f $ROOT/usr/include/hunspell/hunspell.h ]]; then
     inside "apt-get update && apt-get install -y --no-install-recommends libhunspell-dev"
 fi
 
+if [[ ! -x $ROOT/usr/bin/dpkg-shlibdeps ]]; then
+    log "Añadiendo dpkg-shlibdeps (dpkg-dev) al sistema base, para el paquete .deb"
+    inside "apt-get update && apt-get install -y --no-install-recommends dpkg-dev"
+fi
+
 # --- 3. El AppImage ---------------------------------------------------------------------
 log "Compilando y empaquetando en Ubuntu $UBUNTU_RELEASE"
 QT=/opt/Qt/$QT_VERSION/gcc_64
@@ -110,3 +115,5 @@ inside "
 
 APPIMAGE=$(ls -t "$OUT"/Edita-*-x86_64.AppImage | head -1)
 log "Listo: $APPIMAGE"
+DEB=$(ls -t "$OUT"/edita_*_amd64.deb | head -1)
+log "Listo: $DEB"

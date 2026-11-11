@@ -1,4 +1,5 @@
-# Edita para Linux: compila con -Werror, pasa todas las pruebas y genera el AppImage.
+# Edita para Linux: compila con -Werror, pasa todas las pruebas y genera el AppImage y el
+# paquete .deb (con el mismo AppDir).
 # Ubuntu 22.04 con GCC 12 y Qt 6.8.3, la misma base que el AppImage (glibc 2.35).
 # Se lanza al subir a main (y deja el AppImage en el release «continuous»), en los pull
 # requests, con etiquetas v* (y entonces lo publica en su release) o a mano. Si una prueba
@@ -84,7 +85,8 @@ jobs:
       - name: Paquetes
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 file libhunspell-dev \
+          # dpkg-dev: dpkg-shlibdeps calcula las dependencias del paquete .deb
+          sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 file dpkg-dev libhunspell-dev \
             libzip-dev zlib1g-dev libssl-dev python3-dev libgl-dev libegl-dev libxkbcommon-dev libxkbcommon-x11-0 \
             libfontconfig1-dev libfreetype-dev libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
             libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
@@ -115,14 +117,16 @@ jobs:
           export LD_LIBRARY_PATH="$QT_ROOT_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           packaging/appimage/build-appimage.sh
 
-      - name: Subir el AppImage
+      - name: Subir el AppImage y el .deb
         uses: actions/upload-artifact@v4
         with:
           name: Edita-linux-x86_64
-          path: dist/*.AppImage
+          path: |
+            dist/*.AppImage
+            dist/*.deb
           if-no-files-found: error
 
-      # El release «continuous» (prerelease) lleva siempre el AppImage del último push a
+      # El release «continuous» (prerelease) lleva siempre el AppImage (y el .deb) del último push a
       # main: lo usan la CI del catálogo de plugins (alktrip/edita-plugins) y quien quiera
       # probar la versión en desarrollo
       - name: Publicar en el release continuo
@@ -139,7 +143,7 @@ jobs:
           for asset in $(gh release view continuous --json assets -q '.assets[].name'); do
             gh release delete-asset continuous "$asset" -y
           done
-          gh release upload continuous dist/*.AppImage
+          gh release upload continuous dist/*.AppImage dist/*.deb
 
       # Las notas de cada versión están en packaging/release-notes/<etiqueta>.md. Una beta
       # se publica como versión normal (la última): es la que hay que descargar para probar
@@ -150,4 +154,6 @@ jobs:
           name: Edita ${{ github.ref_name }}
           body_path: packaging/release-notes/${{ github.ref_name }}.md
           make_latest: true
-          files: dist/*.AppImage
+          files: |
+            dist/*.AppImage
+            dist/*.deb

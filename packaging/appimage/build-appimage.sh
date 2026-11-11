@@ -9,7 +9,8 @@
 #      sistemas con otra versión de Python (o sin Python);
 #   3. linuxdeploy y su plugin de Qt copian Qt (con sus plugins de X11 y Wayland y sus
 #      traducciones) y las bibliotecas de las que dependen Edita y sus plugins;
-#   4. empaqueta el AppDir en el AppImage.
+#   4. empaqueta el AppDir en el AppImage;
+#   5. con dpkg-deb (Debian, Ubuntu), también el paquete .deb (packaging/deb/build-deb.sh).
 #
 # Uso: editor/packaging/appimage/build-appimage.sh
 # Los plugins van en usr/lib/edita/plugins también en Debian y Ubuntu (donde
@@ -70,6 +71,7 @@ cmake -S "$SRC" -B "$WORK/build" -G Ninja \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_INSTALL_LIBDIR=lib \
     -DEDITA_BUILD_TESTS=OFF \
+    -DEDITA_SOURCE_DATA=OFF \
     ${CMAKE_EXTRA:-}
 cmake --build "$WORK/build"
 VERSION=$(sed -n 's/^EDITA_VERSION:INTERNAL=//p' "$WORK/build/CMakeCache.txt")
@@ -171,3 +173,12 @@ rm -f "$LDAI_OUTPUT"
 )
 
 log "Listo: $LDAI_OUTPUT ($(du -h "$LDAI_OUTPUT" | cut -f1))"
+
+# --- 5. El paquete .deb, con el mismo AppDir -------------------------------------------------
+if command -v dpkg-deb >/dev/null; then
+    log "Generando el paquete .deb"
+    DEB=$("$SRC/packaging/deb/build-deb.sh" "$APPDIR" "$VERSION" "$OUT")
+    log "Listo: $DEB ($(du -h "$DEB" | cut -f1))"
+else
+    log "Sin dpkg-deb: no se genera el paquete .deb"
+fi

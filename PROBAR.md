@@ -10,6 +10,8 @@ Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. 
 2. Dale permiso de ejecución: `chmod +x Edita-*.AppImage` (o en las propiedades del archivo).
 3. Ábrelo con doble clic o desde una terminal: `./Edita-*.AppImage`.
 
+En Debian y Ubuntu también puedes instalar el paquete `edita_<versión>_amd64.deb` de la misma página: `sudo apt install ./edita_*_amd64.deb`. Así queda en el menú y en **Abrir con**, y se abre con `edita` desde la terminal.
+
 Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, en x86_64. Tu configuración se guarda en `~/.config/edita/`.
 
 > **macOS: todavía no hay versión.** Por limitaciones en el desarrollo, por ahora Edita es solo para Linux. El `.dmg` del release 0.0.1 se retiró; macOS se retomará cuando haya una versión estable para Linux.
@@ -80,6 +82,8 @@ Thank you for testing Edita, a text editor for Linux inspired by Notepad++. This
 1. Download the AppImage (`Edita-<version>-x86_64.AppImage`) from the [latest release](https://github.com/alktrip/edita/releases/latest).
 2. Make it executable: `chmod +x Edita-*.AppImage` (or in the file properties).
 3. Open it with a double click or from a terminal: `./Edita-*.AppImage`.
+
+On Debian and Ubuntu you can also install the `edita_<version>_amd64.deb` package from the same page: `sudo apt install ./edita_*_amd64.deb`. Then Edita is in the menu and in **Open With**, and `edita` opens it from a terminal.
 
 It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, on x86_64. Your settings are stored in `~/.config/edita/`.
 

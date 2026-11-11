@@ -31,6 +31,29 @@
     </message>
 </context>
 <context>
+    <name>FileAssociation</name>
+    <message>
+        <location filename="../src/core/FileAssociation.cpp" line="+57"/>
+        <source>Could not create the folder of %1</source>
+        <translation>No se pudo crear la carpeta de %1</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Could not write %1</source>
+        <translation>No se pudo escribir %1</translation>
+    </message>
+    <message>
+        <location line="+371"/>
+        <source>Could not run update-mime-database (package shared-mime-info), needed for an extension without a text file type</source>
+        <translation>No se pudo ejecutar update-mime-database (paquete shared-mime-info), que hace falta para una extensión sin un tipo de archivo de texto</translation>
+    </message>
+    <message>
+        <location line="+52"/>
+        <source>&quot;%1&quot; is not a valid extension</source>
+        <translation>«%1» no es una extensión válida</translation>
+    </message>
+</context>
+<context>
     <name>LangType</name>
     <message>
         <location filename="../src/core/LangType.cpp" line="+32"/>
@@ -5716,7 +5739,7 @@ Continue?</source>
         <translation>Preferencias</translation>
     </message>
     <message>
-        <location line="+29"/>
+        <location line="+30"/>
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
@@ -6023,12 +6046,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+74"/>
+        <location line="+230"/>
         <source>Default</source>
         <translation>Ninguna</translation>
     </message>
     <message>
-        <location line="-74"/>
+        <location line="-230"/>
         <source>Aligned</source>
         <translation>Alineada</translation>
     </message>
@@ -6059,12 +6082,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+309"/>
+        <location line="+465"/>
         <source>Folder:</source>
         <translation>Plegado:</translation>
     </message>
     <message>
-        <location line="-308"/>
+        <location line="-464"/>
         <source>Simple</source>
         <translation>Simple</translation>
     </message>
@@ -6115,13 +6138,13 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+449"/>
+        <location line="+605"/>
         <location line="+57"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-506"/>
+        <location line="-662"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -6267,12 +6290,47 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+72"/>
+        <location line="+228"/>
         <source> characters</source>
         <translation> caracteres</translation>
     </message>
     <message>
-        <location line="-67"/>
+        <location line="-220"/>
+        <source>File Association</source>
+        <translation>Asociación de archivos</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Supported exts:</source>
+        <translation>Extensiones conocidas:</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>customize</source>
+        <translation>personalizada</translation>
+    </message>
+    <message>
+        <location line="+20"/>
+        <source>Associate with Edita</source>
+        <translation>Asociar con Edita</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Remove the association</source>
+        <translation>Quitar la asociación</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Registered exts:</source>
+        <translation>Extensiones asociadas:</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>On Linux a file type is associated: the extensions of the same type (.cpp and .cc, for example) open with Edita too. Each change is made at once, for your user only.</source>
+        <translation>En Linux se asocia el tipo de archivo: las extensiones del mismo tipo (.cpp y .cc, por ejemplo) también se abren con Edita. Cada cambio se hace al momento y solo para tu usuario.</translation>
+    </message>
+    <message>
+        <location line="+107"/>
         <source>Indentation</source>
         <translation>Tabulación y sangría</translation>
     </message>

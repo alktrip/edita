@@ -50,6 +50,7 @@
 #include <QRadioButton>
 #include <QScreen>
 #include <QSpinBox>
+#include <QStyle>
 #include <QStackedWidget>
 #include <QToolButton>
 #include <QVBoxLayout>
@@ -149,6 +150,7 @@ PreferencesDialog::PreferencesDialog(const Preferences& prefs, std::vector<std::
     buildMargins();
     buildNewDocument();
     buildRecentFiles();
+    buildFileAssociation();
     buildIndentation();
     buildLanguage();
     buildAutoCompletion();
@@ -229,7 +231,7 @@ QWidget* PreferencesDialog::addPage(const QString& name, const QString& title)
         {"general", "general"},     {"editing", "editing"},           {"margins", "margins"},
         {"toolbar", "toolbar"},     {"language", "language"},         {"delimiter", "delimiter"},
         {"performance", "performance"}, {"cloudLink", "cloud"},
-        {"newDocument", "new"},     {"recentFiles", "recent"},        {"indentation", "tabs"},
+        {"newDocument", "new"},     {"recentFiles", "recent"},        {"fileAssociation", "file-association"},        {"indentation", "tabs"},
         {"autoCompletion", "autocompletion"}, {"highlighting", "highlighting"}, {"searching", "find"},
         {"printing", "print"},      {"backup", "backup"},             {"searchEngine", "web"},
         {"misc", "misc"},
@@ -395,6 +397,176 @@ void PreferencesDialog::buildRecentFiles()
     _recentLengthMode = addCombo(form, tr("Display:"), "recentFilesLengthMode",
                                  {{tr("Full file name path"), -1}, {tr("Only file name"), 0}, {tr("Customize maximum length:"), 1}});
     _recentLength = addSpin(form, QString(), "recentFilesCustomLength", 1, 260, tr(" characters"));
+}
+
+void PreferencesDialog::buildFileAssociation()
+{
+    // La página «File Association» de N++ (RegExtDlg): los grupos de extensiones, las del
+    // grupo, → y ←, y las asociadas. El último grupo, «customize», es un campo para escribirla
+    using file_association::extensionGroups;
+    auto* column = new QVBoxLayout(addPage(QStringLiteral("fileAssociation"), tr("File Association")));
+    auto* lists = new QHBoxLayout;
+    column->addLayout(lists, 1);
+
+    auto* supported = new QVBoxLayout;
+    supported->addWidget(new QLabel(tr("Supported exts:")));
+    auto* pick = new QHBoxLayout;
+    _assocGroups = new QListWidget;
+    _assocGroups->setObjectName(QStringLiteral("assocGroups"));
+    for (const auto& group : extensionGroups())
+        _assocGroups->addItem(group.extensions.isEmpty() ? tr("customize") : group.name);
+    _assocExtensions = new QListWidget;
+    _assocExtensions->setObjectName(QStringLiteral("assocExtensions"));
+    _assocCustom = new QLineEdit;
+    _assocCustom->setObjectName(QStringLiteral("assocCustom"));
+    _assocCustom->setMaxLength(17); // extNameMax - 1 de N++
+    _assocCustom->setVisible(false);
+    auto* extColumn = new QVBoxLayout;
+    extColumn->addWidget(_assocExtensions, 1);
+    extColumn->addWidget(_assocCustom);
+    extColumn->addStretch(); // con «customize», el campo arriba
+    // Las listas, tan anchas como lo que llevan: tres de 256 px (el tamaño de Qt) no caben
+    const QFontMetrics metrics(_assocGroups->font());
+    int groupWidth = 0;
+    for (int i = 0; i < _assocGroups->count(); ++i)
+        groupWidth = std::max(groupWidth, metrics.horizontalAdvance(_assocGroups->item(i)->text()));
+    const int extWidth = metrics.horizontalAdvance(QStringLiteral(".manifest.xx"));
+    const int chrome = 2 * _assocGroups->frameWidth() + style()->pixelMetric(QStyle::PM_ScrollBarExtent) + 16;
+    _assocGroups->setFixedWidth(groupWidth + chrome);
+    _assocExtensions->setFixedWidth(extWidth + chrome);
+    _assocCustom->setFixedWidth(extWidth + chrome);
+    pick->addWidget(_assocGroups);
+    pick->addLayout(extColumn);
+    supported->addLayout(pick, 1);
+    lists->addLayout(supported);
+
+    auto* buttons = new QVBoxLayout;
+    buttons->addStretch();
+    _assocAdd = new QPushButton(QStringLiteral("→"));
+    _assocAdd->setObjectName(QStringLiteral("assocAdd"));
+    _assocAdd->setToolTip(tr("Associate with Edita"));
+    _assocRemove = new QPushButton(QStringLiteral("←"));
+    _assocRemove->setObjectName(QStringLiteral("assocRemove"));
+    _assocRemove->setToolTip(tr("Remove the association"));
+    for (QPushButton* button : {_assocAdd, _assocRemove}) {
+        button->setFixedWidth(button->fontMetrics().horizontalAdvance(QStringLiteral("→")) * 3 + 24);
+        buttons->addWidget(button);
+    }
+    buttons->addStretch();
+    lists->addLayout(buttons);
+
+    auto* registered = new QVBoxLayout;
+    registered->addWidget(new QLabel(tr("Registered exts:")));
+    _assocRegistered = new QListWidget;
+    _assocRegistered->setObjectName(QStringLiteral("assocRegistered"));
+    _assocRegistered->setFixedWidth(extWidth + chrome + 24);
+    registered->addWidget(_assocRegistered, 1);
+    lists->addLayout(registered);
+    lists->addStretch();
+
+    auto* note = new QLabel(tr("On Linux a file type is associated: the extensions of the same type (.cpp and .cc, "
+                               "for example) open with Edita too. Each change is made at once, for your user only."));
+    note->setWordWrap(true);
+    column->addWidget(note);
+    _assocStatus = new QLabel;
+    _assocStatus->setObjectName(QStringLiteral("assocStatus"));
+    _assocStatus->setWordWrap(true);
+    column->addWidget(_assocStatus);
+
+    connect(_assocGroups, &QListWidget::currentRowChanged, this, [this] { refreshAssociationLists(); });
+    connect(_assocExtensions, &QListWidget::currentRowChanged, this,
+            [this](int row) { _assocAdd->setEnabled(row >= 0); });
+    connect(_assocRegistered, &QListWidget::currentRowChanged, this,
+            [this](int row) { _assocRemove->setEnabled(row >= 0); });
+    connect(_assocExtensions, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
+        _assocExtensions->setCurrentItem(item);
+        addAssociation();
+    });
+    connect(_assocRegistered, &QListWidget::itemDoubleClicked, this, [this](QListWidgetItem* item) {
+        _assocRegistered->setCurrentItem(item);
+        removeAssociation();
+    });
+    // Como N++: con una sola letra escrita, se pone el punto delante
+    connect(_assocCustom, &QLineEdit::textEdited, this, [this](const QString& text) {
+        if (text.size() == 1 && text != QLatin1String("."))
+            _assocCustom->setText(QLatin1Char('.') + text);
+    });
+    connect(_assocCustom, &QLineEdit::textChanged, this,
+            [this](const QString& text) { _assocAdd->setEnabled(text.size() > 1); });
+    connect(_assocCustom, &QLineEdit::returnPressed, this, [this] {
+        if (_assocAdd->isEnabled())
+            addAssociation();
+    });
+    connect(_assocAdd, &QPushButton::clicked, this, &PreferencesDialog::addAssociation);
+    connect(_assocRemove, &QPushButton::clicked, this, &PreferencesDialog::removeAssociation);
+
+    setFileAssociations(std::make_unique<file_association::FileAssociations>());
+}
+
+void PreferencesDialog::setFileAssociations(std::unique_ptr<file_association::FileAssociations> associations)
+{
+    _associations = std::move(associations);
+    _assocStatus->clear();
+    refreshAssociationLists();
+}
+
+void PreferencesDialog::refreshAssociationLists()
+{
+    const auto& groups = file_association::extensionGroups();
+    const int group = _assocGroups->currentRow();
+    const bool customize = group == int(groups.size()) - 1;
+    _assocExtensions->setVisible(!customize);
+    _assocCustom->setVisible(customize);
+    _assocExtensions->clear();
+    if (group >= 0 && !customize) {
+        for (const QString& ext : groups[size_t(group)].extensions) {
+            if (!_associations->isRegistered(ext))
+                _assocExtensions->addItem(ext);
+        }
+    }
+    _assocRegistered->clear();
+    for (const auto& a : _associations->registered()) {
+        auto* item = new QListWidgetItem(a.extension, _assocRegistered);
+        item->setToolTip(a.mimeType);
+    }
+    _assocExtensions->setCurrentRow(-1);
+    _assocRegistered->setCurrentRow(-1);
+    _assocAdd->setEnabled(customize && _assocCustom->text().size() > 1);
+    _assocRemove->setEnabled(false);
+}
+
+void PreferencesDialog::addAssociation()
+{
+    const bool customize = _assocGroups->currentRow() == int(file_association::extensionGroups().size()) - 1;
+    QString ext;
+    if (customize)
+        ext = _assocCustom->text();
+    else if (const QListWidgetItem* item = _assocExtensions->currentItem())
+        ext = item->text();
+    if (ext.isEmpty())
+        return;
+    QString error;
+    if (!_associations->add(ext, &error)) {
+        _assocStatus->setText(error);
+        return;
+    }
+    _assocStatus->clear();
+    if (customize)
+        _assocCustom->clear();
+    refreshAssociationLists();
+}
+
+void PreferencesDialog::removeAssociation()
+{
+    const QListWidgetItem* item = _assocRegistered->currentItem();
+    if (!item)
+        return;
+    QString error;
+    if (!_associations->remove(item->text(), &error))
+        _assocStatus->setText(error);
+    else
+        _assocStatus->clear();
+    refreshAssociationLists();
 }
 
 void PreferencesDialog::buildIndentation()

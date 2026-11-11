@@ -15,6 +15,7 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 | Márgenes | Números de línea, estilo del plegado, líneas de margen, margen de marcadores, historial de cambios, número de la línea actual, cambios de Git, Git en el explorador, blame y marcas en la barra de desplazamiento. |
 | Documento nuevo | Fin de línea, codificación y lenguaje de los documentos nuevos, y la carpeta de los diálogos de abrir y guardar. |
 | Archivos recientes | Número de archivos recientes, submenú y cómo se muestran sus nombres. |
+| Asociación de archivos | Las extensiones que se abren con Edita desde el administrador de archivos (ver abajo). |
 | Tabulación y sangría | Ancho de tabulación, tabulaciones o espacios, Retroceso quita sangría y sangría automática, para todos los lenguajes o para cada uno. |
 | Lenguaje | El menú Lenguaje compacto (agrupado por inicial) o con todos seguidos, los lenguajes que no salen en él y si la barra invertida escapa caracteres en SQL. |
 | Autocompletado | Cuándo mostrar la lista, a partir de cuántos caracteres, fragmentos con Tab, ayuda de parámetros y el cierre automático de paréntesis, comillas y etiquetas. |
@@ -30,6 +31,27 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 | Servidores de lenguaje | Activarlos o desactivarlos, las pistas al final de las líneas y la orden de cada servidor. |
 | Formato | Dar formato al guardar y la herramienta de formato de cada lenguaje (ver [Dar formato](03-editing.md#dar-formato)). |
 | Ortografía | El corrector ortográfico, sus diccionarios y si en el código se revisan solo los comentarios y las cadenas (ver [Ortografía](03-editing.md#ortografia)). |
+
+### Asociación de archivos
+
+Como en Notepad++: a la izquierda, los grupos de extensiones y las de cada grupo; **→** asocia la
+extensión elegida con Edita y **←** quita la asociación (también con doble clic). En el grupo
+*personalizada* se escribe cualquier otra extensión. Cada cambio se hace al momento, sin esperar a
+Aceptar, y solo para tu usuario: no hace falta ser administrador.
+
+En Linux los programas se asocian a un tipo de archivo y no a una extensión. Por eso, al asociar
+`.cpp` también se abren con Edita los `.cc` y los `.cxx`, que son del mismo tipo. Edita se
+convierte en el programa por omisión de ese tipo en `~/.config/mimeapps.list` y aparece en
+**Abrir con**. Al quitar la asociación vuelve el programa que había antes. Una extensión que no es
+de un tipo de texto (o que no tiene tipo) recibe uno propio, en
+`~/.local/share/mime/packages/edita-associations.xml`; para eso hace falta `update-mime-database`,
+del paquete shared-mime-info. Con el AppImage, Edita escribe además su `edita.desktop` en
+`~/.local/share/applications`, con la ruta del AppImage; si después lo mueves o lo cambias por otra
+versión, Edita corrige la ruta al abrirse. Los paquetes .deb y de AUR ya instalan ese archivo.
+
+Algunos escritorios guardan su elección en un archivo propio (`kde-mimeapps.list`,
+`gnome-mimeapps.list`) que manda sobre `mimeapps.list`. Si un tipo sigue abriéndose con otro
+programa, elige Edita en **Abrir con** del administrador de archivos.
 
 ## Asignación de atajos
 
@@ -83,6 +105,7 @@ Edita guarda su configuración en `~/.config/edita/` (en macOS, sin `XDG_CONFIG_
 | `shortcuts.xml` | Atajos y macros. |
 | `contextMenu.xml` | El menú del clic derecho en el editor. |
 | `tabContextMenu.xml` | El menú del clic derecho en las pestañas (opcional). |
+| `fileAssociations.xml` | Las extensiones asociadas y el programa que tenía antes cada tipo. Va siempre en `~/.config/edita/`, también con la configuración en la nube. |
 | `personalDictionary.txt` | Las palabras que añadiste al diccionario. |
 | `userDefineLang.xml`, `userDefineLangs/` | Los lenguajes definidos por el usuario. |
 | `autoCompletion/` | Tus archivos de API para el autocompletado. |

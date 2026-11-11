@@ -43,6 +43,8 @@ add_library(edita_core STATIC
     core/CommandLine.cpp
     core/CommandLine.h
     core/ContextMenuXml.cpp
+    core/FileAssociation.cpp
+    core/FileAssociation.h
     core/Formatters.cpp
     core/SpellChecker.cpp
     core/SpellChecker.h
@@ -88,8 +90,11 @@ find_package(OpenSSL 1.1.1 REQUIRED COMPONENTS Crypto)
 target_link_libraries(edita_core
     PUBLIC  Qt6::Core Iconv::Iconv
     PRIVATE uchardet_npp pugixml edita_warnings OpenSSL::Crypto)
-# Builds de desarrollo: los datos se buscan también en el árbol de fuentes
-target_compile_definitions(edita_core PRIVATE EDITA_SOURCE_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
+# Builds de desarrollo: los datos se buscan también en el árbol de fuentes. Un paquete no
+# debe llevar esa ruta (makepkg avisa: «referencias a $srcdir»)
+if(EDITA_SOURCE_DATA)
+    target_compile_definitions(edita_core PRIVATE EDITA_SOURCE_DATA_DIR="${PROJECT_SOURCE_DIR}/data")
+endif()
 # Corrector ortográfico (Hunspell, opcional; se busca en el CMakeLists principal)
 if(HUNSPELL_FOUND)
     target_link_libraries(edita_core PRIVATE PkgConfig::HUNSPELL)

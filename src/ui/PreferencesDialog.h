@@ -19,9 +19,12 @@
 
 #pragma once
 
+#include "core/FileAssociation.h"
 #include "core/Preferences.h"
 
 #include <QDialog>
+
+#include <memory>
 
 #include <utility>
 #include <vector>
@@ -33,6 +36,7 @@ class QLabel;
 class QLineEdit;
 class QListWidget;
 class QPlainTextEdit;
+class QPushButton;
 class QSpinBox;
 class QStackedWidget;
 class QTableWidget;
@@ -60,6 +64,9 @@ public:
     void setCloudFolder(const QString& dir);
     QString cloudFolder() const;
     QStringList pageNames() const;
+    // Asociación de archivos: los cambios se hacen al momento, como en N++ (no esperan a
+    // Aceptar). Por omisión, con el entorno de ahora; las pruebas ponen otro
+    void setFileAssociations(std::unique_ptr<file_association::FileAssociations> associations);
 
 signals:
     void applyRequested(const edita::Preferences& prefs);
@@ -72,6 +79,10 @@ private:
     void buildMargins();
     void buildNewDocument();
     void buildRecentFiles();
+    void buildFileAssociation();
+    void refreshAssociationLists();
+    void addAssociation();
+    void removeAssociation();
     void buildIndentation();
     void buildLanguage();
     void buildAutoCompletion();
@@ -254,6 +265,15 @@ private:
     QSpinBox* _updateInterval = nullptr;
     QButtonGroup* _searchEngine = nullptr;
     QLineEdit* _searchEngineCustom = nullptr;
+    // Asociación de archivos
+    std::unique_ptr<file_association::FileAssociations> _associations;
+    QListWidget* _assocGroups = nullptr;
+    QListWidget* _assocExtensions = nullptr;
+    QLineEdit* _assocCustom = nullptr;
+    QListWidget* _assocRegistered = nullptr;
+    QPushButton* _assocAdd = nullptr;
+    QPushButton* _assocRemove = nullptr;
+    QLabel* _assocStatus = nullptr;
 };
 
 } // namespace edita

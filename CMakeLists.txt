@@ -38,6 +38,7 @@ endif()
 
 option(EDITA_WERROR "Tratar los warnings del código propio como errores" ON)
 option(EDITA_BUILD_TESTS "Compilar los tests" ON)
+option(EDITA_SOURCE_DATA "Buscar los datos también en el árbol de fuentes (builds sin instalar); los paquetes lo desactivan" ON)
 option(EDITA_BUILD_PLUGINS "Compilar el plugin de ejemplo" ON)
 
 # Nombre del binario y del directorio de configuración (~/.config/<EDITA_APP_ID>/)
