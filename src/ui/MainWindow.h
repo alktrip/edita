@@ -679,6 +679,7 @@ private:
     void endMacroUndo(const std::vector<SciDocument>& undoDocs);
     void copyOrCut(bool cut);
 
+    void updateFindDialogHighlight();
     void refreshCurrentDocument();
     void refreshWindowTitle();
     void refreshMenuChecks();

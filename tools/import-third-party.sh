@@ -39,6 +39,8 @@ cp "$npp/PowerEditor/src/langs.model.xml" "$npp/PowerEditor/src/stylers.model.xm
 cp "$npp/PowerEditor/installer/themes/"*.xml "$data/themes/"
 mkdir -p "$data/autoCompletion"
 cp "$npp/PowerEditor/installer/APIs/"*.xml "$data/autoCompletion/"
+mkdir -p "$data/functionList"
+cp "$npp/PowerEditor/installer/functionList/"*.xml "$data/functionList/"
 mkdir -p "$data/userDefineLangs"
 cp "$npp/PowerEditor/bin/userDefineLangs/"*.xml "$data/userDefineLangs/"
 
@@ -59,6 +61,12 @@ printf 'notepad-plus-plus %s\nscintilla %s\nlexilla %s\n' "$rev" \
 shopt -s nullglob
 for p in "$dst/patches/"*.patch; do
     echo "Aplicando $(basename "$p")"
-    patch -d "$dst" -p1 --binary --forward --silent < "$p"
+    # Unos parches tienen las rutas desde third_party/ (a/lexilla/…) y otros desde la raíz del
+    # repositorio (a/third_party/boostregex/…), como los deja git diff
+    if grep -q '^--- a/third_party/' "$p"; then
+        patch -d "$here" -p1 --binary --forward --silent < "$p"
+    else
+        patch -d "$dst" -p1 --binary --forward --silent < "$p"
+    fi
 done
 echo "third_party importado desde $npp ($rev)"

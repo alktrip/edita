@@ -1,8 +1,8 @@
 # Lo que tiene Notepad++ y Edita no
 
-Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
+Fecha: 2026-11-05, revisado el 2026-11-11 con Notepad++ 8.9.9 ([fase 78](fase78.md)). Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
 
-**Resultado: Edita tiene unas 220 de las 339 órdenes (✅: las que se hicieron después, desde la [fase 67](fase67.md); la [69](fase69.md) añadió las de Archivo, Sobre la selección y los paneles de Editar, la [70](fase70.md), cinco páginas de Preferencias, la [71](fase71.md), importar, el menú contextual y las macros, la [74](fase74.md), las órdenes cortas, la [75](fase75.md), otra ventana, el pegado especial y `tabContextMenu.xml`, y la [76](fase76.md), la asociación de archivos). De lo que tiene sentido en Linux faltan el texto de derecha a izquierda y los paneles de proyecto; otras 20 no aplican o se descartaron.**
+**Resultado:** en la primera revisión Edita tenía unas 220 de las 339 órdenes. Las que faltaban se hicieron después (✅), desde la [fase 67](fase67.md) hasta la [76](fase76.md). De lo que tiene sentido en Linux solo faltan cinco órdenes: el texto de derecha a izquierda (2) y los paneles de proyecto (3). Otras 20 no aplican o se descartaron. Las novedades de la 8.9.9 están al final.
 
 ## Faltan, y tienen sentido en Linux
 
@@ -78,6 +78,15 @@ Fecha: 2026-11-05. Base: Notepad++ de `referencia/npp`, todas las órdenes del m
 | ✅ Cloud & Link | Configuración en una carpeta de la nube; enlaces que se pueden pulsar |
 | ✅ Search Engine | El buscador de «Search on Internet» |
 | ✅ File Association | Asociar extensiones con Edita (en Linux, el tipo MIME del escritorio) |
+
+## Novedades de Notepad++ 8.9.9
+
+| Novedad | Qué hace |
+|---|---|
+| ✅ Highlight all matches while typing | Casilla junto a «Buscar»: resalta lo que coincide mientras el diálogo está abierto |
+| ✅ After replacing, don't move to the following occurrence | La opción pasó de Preferencias a una casilla junto a «Reemplazar» |
+| ✅ Scintilla 5.6.9, Lexilla 5.5.5, boost 1.92 | Las versiones de los componentes |
+| ✅ Lista de funciones de Bash, INI y PowerShell; escapes de R; puntos de los espacios con el zoom | Arreglos pequeños |
 
 ## No aplican en Linux, o se descartaron
 

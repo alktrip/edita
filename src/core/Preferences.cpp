@@ -275,6 +275,7 @@ Preferences loadPreferences(const ConfigXml& config)
     r.boolAttr("Searching", "fillFindFieldWithSelected", p.fillFindFieldWithSelected);
     r.boolAttr("Searching", "confirmReplaceInAllOpenDocs", p.confirmReplaceInAllOpenDocs);
     r.boolAttr("Searching", "monospacedFontFindDlg", p.monospacedFontFindDlg);
+    r.boolAttr("Searching", "replaceStopsWithoutFindingNext", p.replaceStopsWithoutFindingNext);
 
     // Copias de seguridad
     r.boolText("RememberLastSession", p.rememberLastSession);
@@ -491,6 +492,7 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.attr("Searching", "monospacedFontFindDlg", p.monospacedFontFindDlg);
     w.attr("Searching", "fillFindFieldWithSelected", p.fillFindFieldWithSelected);
     w.attr("Searching", "confirmReplaceInAllOpenDocs", p.confirmReplaceInAllOpenDocs);
+    w.attr("Searching", "replaceStopsWithoutFindingNext", p.replaceStopsWithoutFindingNext);
 
     w.text("RememberLastSession", yesNo(p.rememberLastSession));
     w.attr("Backup", "action", static_cast<int>(p.backupOnSave));

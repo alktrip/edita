@@ -161,7 +161,7 @@ const GenericLexer* genericLexer(LangType lang)
         {L::Gui4Cli, kLists0to4},
         {L::D, kLists0to6},
         {L::PowerShell, kLists0to5},
-        {L::R, kLists0to2},
+        {L::R, kLists0to2, -1, 8, {{"lexer.r.escape.sequence", "1"}}},
         {L::CoffeeScript, kLists0to3},
         {L::BaanC, kLists0to7 | kList8, -1, 8,
          {{"lexer.baan.styling.within.preprocessor", "1"}, {"fold.preprocessor", "1"}, {"fold.baan.syntax.based", "1"},
@@ -947,6 +947,11 @@ void SyntaxStyler::applyGlobalStyles(ScintillaEditBase& view) const
         view.send(SCI_INDICSETALPHA, indic, 100);
         view.send(SCI_INDICSETUNDER, indic, 1);
     }
+    const Style* findMatches = _styles.globalById(kIndicatorIncremental);
+    view.send(SCI_INDICSETSTYLE, kIndicatorFindDialog, INDIC_ROUNDBOX);
+    view.send(SCI_INDICSETFORE, kIndicatorFindDialog, (findMatches ? findMatches->bgColor : rgb(0, 0, 0xFF)) & 0xFFFFFF);
+    view.send(SCI_INDICSETALPHA, kIndicatorFindDialog, 100);
+    view.send(SCI_INDICSETUNDER, kIndicatorFindDialog, 1);
     // Diagnósticos (LSP): ondulado rojo, naranja o azul, como en VS Code; las pistas, puntos
     const bool darkBack = [&] {
         const auto back = static_cast<int>(view.send(SCI_STYLEGETBACK, STYLE_DEFAULT));

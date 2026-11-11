@@ -4,7 +4,7 @@
 <context>
     <name>AutoCompletion</name>
     <message>
-        <location filename="../src/ui/AutoCompletion.cpp" line="+650"/>
+        <location filename="../src/ui/AutoCompletion.cpp" line="+687"/>
         <source>%1 of %2</source>
         <translation>%1 de %2</translation>
     </message>
@@ -48,7 +48,7 @@
         <translation>No se pudo ejecutar update-mime-database (paquete shared-mime-info), que hace falta para una extensión sin un tipo de archivo de texto</translation>
     </message>
     <message>
-        <location line="+52"/>
+        <location line="+53"/>
         <source>&quot;%1&quot; is not a valid extension</source>
         <translation>«%1» no es una extensión válida</translation>
     </message>
@@ -1330,7 +1330,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FileBrowserPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="+384"/>
+        <location filename="../src/ui/Panels.cpp" line="+397"/>
         <source>Add folder</source>
         <translation>Añadir carpeta</translation>
     </message>
@@ -1556,7 +1556,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FindReplaceDialog</name>
     <message>
-        <location filename="../src/ui/FindReplaceDialog.cpp" line="+87"/>
+        <location filename="../src/ui/FindReplaceDialog.cpp" line="+88"/>
         <source>Rep&amp;lace with:</source>
         <translation>Reem&amp;plazar con:</translation>
     </message>
@@ -1641,7 +1641,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;. coincide con salto de línea</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+6"/>
         <location line="+4"/>
         <source>Find</source>
         <translation>Buscar</translation>
@@ -1663,11 +1663,21 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+22"/>
+        <source>Highlight all matches of the current search in the active document while typing</source>
+        <translation>Resaltar mientras se escribe todo lo que coincide con la búsqueda en el documento activo</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>After replacing, don&apos;t move to the following occurrence</source>
+        <translation>Después de reemplazar, no pasar a la siguiente aparición</translation>
+    </message>
+    <message>
+        <location line="+6"/>
         <source>&amp;Find what:</source>
         <translation>&amp;Buscar:</translation>
     </message>
     <message>
-        <location line="+24"/>
+        <location line="+25"/>
         <source>Search Mode</source>
         <translation>Modo de búsqueda</translation>
     </message>
@@ -1742,7 +1752,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location line="+42"/>
+        <location line="+60"/>
         <source>Directory</source>
         <translation>Directorio</translation>
     </message>
@@ -1750,7 +1760,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FunctionListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="-415"/>
+        <location filename="../src/ui/Panels.cpp" line="-428"/>
         <source>Search</source>
         <translation>Buscar</translation>
     </message>
@@ -1951,24 +1961,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+492"/>
-        <location line="+4637"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+496"/>
+        <location line="+4662"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4637"/>
-        <location line="+1877"/>
+        <location line="-4662"/>
+        <location line="+1897"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1780"/>
+        <location line="-1799"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+408"/>
+        <location line="+420"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2419,7 +2429,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1420"/>
+        <location line="+1427"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2642,12 +2652,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2430"/>
+        <location line="-2437"/>
         <source>&amp;Reverse Line Order</source>
         <translation>&amp;Invertir el orden</translation>
     </message>
     <message>
-        <location line="-1041"/>
+        <location line="-1054"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2727,13 +2737,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+811"/>
-        <location line="+1251"/>
+        <location line="+824"/>
+        <location line="+1258"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1210"/>
+        <location line="-1217"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2759,12 +2769,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5500"/>
+        <location line="+5512"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5499"/>
+        <location line="-5511"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3651,12 +3661,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4552"/>
+        <location line="+4564"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4551"/>
+        <location line="-4563"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3686,7 +3696,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+34"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -4145,12 +4155,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+678"/>
+        <location line="+683"/>
         <source>Open in New Instance</source>
         <translation>Abrir en otra ventana</translation>
     </message>
     <message>
-        <location line="-675"/>
+        <location line="-680"/>
         <location line="+185"/>
         <source>Save</source>
         <translation>Guardar</translation>
@@ -4164,12 +4174,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+266"/>
         <location line="+20"/>
-        <location line="+1952"/>
+        <location line="+1957"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2234"/>
+        <location line="-2239"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4309,7 +4319,7 @@ Do you want to save the file anyway?</source>
         <translation>Reinicia Edita para que se aplique.</translation>
     </message>
     <message>
-        <location line="+258"/>
+        <location line="+263"/>
         <source>Could not start a new instance of Edita.</source>
         <translation>No se pudo abrir otra ventana de Edita.</translation>
     </message>
@@ -4508,7 +4518,7 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-2346"/>
+        <location line="-2351"/>
         <source>Format Document</source>
         <translation>Dar formato al documento</translation>
     </message>
@@ -4540,7 +4550,7 @@ Do you want to save the file anyway?</source>
         <translation>Formateado con %1</translation>
     </message>
     <message>
-        <location line="+2281"/>
+        <location line="+2286"/>
         <source> times</source>
         <translation> veces</translation>
     </message>
@@ -5057,7 +5067,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+389"/>
+        <location line="+414"/>
         <source>This line is not committed yet</source>
         <translation>Esta línea aún no está confirmada</translation>
     </message>
@@ -5067,12 +5077,12 @@ Continue?</source>
         <translation>Esta línea no tiene historia en Git</translation>
     </message>
     <message>
-        <location line="+245"/>
+        <location line="+242"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
     <message>
-        <location line="+140"/>
+        <location line="+150"/>
         <source>Replace All</source>
         <translation>Reemplazar todo</translation>
     </message>
@@ -5137,7 +5147,7 @@ Continue?</source>
         <translation>Reemplazar: no se puede reemplazar; el documento es de solo lectura.</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>Replace: Invalid regular expression: %1</source>
         <translation>Reemplazar: expresión regular no válida: %1</translation>
     </message>
@@ -5148,6 +5158,11 @@ Continue?</source>
     </message>
     <message>
         <location line="+4"/>
+        <source>Replace: 1 occurrence was replaced.</source>
+        <translation>Reemplazar: se reemplazó 1 aparición.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
         <source>Replace: 1 occurrence was replaced. The end of the document has been reached.</source>
         <translation>Reemplazar: se reemplazó 1 aparición. Se alcanzó el final del documento.</translation>
     </message>
@@ -5734,7 +5749,7 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+143"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+144"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
@@ -6046,12 +6061,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+230"/>
+        <location line="+244"/>
         <source>Default</source>
         <translation>Ninguna</translation>
     </message>
     <message>
-        <location line="-230"/>
+        <location line="-244"/>
         <source>Aligned</source>
         <translation>Alineada</translation>
     </message>
@@ -6082,12 +6097,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+465"/>
+        <location line="+479"/>
         <source>Folder:</source>
         <translation>Plegado:</translation>
     </message>
     <message>
-        <location line="-464"/>
+        <location line="-478"/>
         <source>Simple</source>
         <translation>Simple</translation>
     </message>
@@ -6138,13 +6153,13 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+605"/>
+        <location line="+619"/>
         <location line="+57"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-662"/>
+        <location line="-676"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -6290,12 +6305,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+228"/>
+        <location line="+242"/>
         <source> characters</source>
         <translation> caracteres</translation>
     </message>
     <message>
-        <location line="-220"/>
+        <location line="-234"/>
         <source>File Association</source>
         <translation>Asociación de archivos</translation>
     </message>
@@ -6310,7 +6325,7 @@ Continue?</source>
         <translation>personalizada</translation>
     </message>
     <message>
-        <location line="+20"/>
+        <location line="+30"/>
         <source>Associate with Edita</source>
         <translation>Asociar con Edita</translation>
     </message>
@@ -6320,12 +6335,12 @@ Continue?</source>
         <translation>Quitar la asociación</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+9"/>
         <source>Registered exts:</source>
         <translation>Extensiones asociadas:</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+8"/>
         <source>On Linux a file type is associated: the extensions of the same type (.cpp and .cc, for example) open with Edita too. Each change is made at once, for your user only.</source>
         <translation>En Linux se asocia el tipo de archivo: las extensiones del mismo tipo (.cpp y .cc, por ejemplo) también se abren con Edita. Cada cambio se hace al momento y solo para tu usuario.</translation>
     </message>

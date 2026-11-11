@@ -216,6 +216,7 @@ FindHistory ConfigXml::findHistory() const
     h.folderFollowsDoc = getBool(node, "fifFolderFollowsDoc", h.folderFollowsDoc);
     h.bookmarkLine = getBool(node, "bookmarkLine", h.bookmarkLine);
     h.purge = getBool(node, "purge", h.purge);
+    h.findDlgHighlightMatches = getBool(node, "findDlgHighlightMatches", h.findDlgHighlightMatches);
     h.searchMode = node.attribute("searchMode").as_int(0);
     return h;
 }
@@ -240,6 +241,7 @@ void ConfigXml::setFindHistory(const FindHistory& h)
     setBool(node, "fifFolderFollowsDoc", h.folderFollowsDoc);
     setBool(node, "bookmarkLine", h.bookmarkLine);
     setBool(node, "purge", h.purge);
+    setBool(node, "findDlgHighlightMatches", h.findDlgHighlightMatches);
     node.append_attribute("searchMode") = h.searchMode;
     setBool(node, "dotMatchesNewline", h.dotMatchesNewline);
     writeNames(node, "Path", h.paths.mid(0, 10));

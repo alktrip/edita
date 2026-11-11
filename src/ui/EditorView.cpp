@@ -45,6 +45,17 @@ EditorView::EditorView(QWidget* parent)
     : ScintillaEditBase(parent)
 {
     applyBaseConfiguration();
+    updateWhitespaceSize();
+    connect(this, &ScintillaEditBase::zoom, this, [this](int) { updateWhitespaceSize(); });
+}
+
+// ScintillaEditView::setWhitespaceSize (N++ 8.9.9): los puntos de los espacios crecen con el zoom.
+// Qt ya escala con la pantalla, así que la base son 2 píxeles lógicos
+void EditorView::updateWhitespaceSize()
+{
+    const int zoom = static_cast<int>(sci(SCI_GETZOOM)) / 2;
+    const int zoomSize = std::max(3, 2 + zoom);
+    sci(SCI_SETWHITESPACESIZE, static_cast<uptr_t>(std::max(2, (zoomSize + 1) / 2)));
 }
 
 void EditorView::applyBaseConfiguration()

@@ -28,6 +28,7 @@ class QLabel;
 class QPushButton;
 class QRadioButton;
 class QTabBar;
+class QTimer;
 class QWidget;
 
 namespace edita {
@@ -81,6 +82,18 @@ public:
     void setHistories(const QStringList& find, const QStringList& replace, const QStringList& filters,
                       const QStringList& directories);
 
+    // N++ 8.9.9: la casilla junto a «Buscar» (findDlgHighlightMatches) resalta lo que coincide
+    // mientras el diálogo está abierto en Buscar o Reemplazar
+    bool highlightMatches() const;
+    void setHighlightMatches(bool on);
+    // Si ahora hay que resaltar: la casilla, el diálogo a la vista y una de esas dos pestañas
+    bool highlightMatchesActive() const;
+    // matchHighlightChanged() un momento después del último cambio (al escribir o editar)
+    void scheduleMatchHighlight();
+    // La casilla junto a «Reemplazar» (replaceStopsWithoutFindingNext)
+    bool replaceStops() const;
+    void setReplaceStops(bool on);
+
 signals:
     void findNextRequested(bool backward);
     void countRequested();
@@ -95,6 +108,13 @@ signals:
     void markAllRequested();
     void clearMarksRequested();
     void copyMarkedTextRequested();
+    // Hay que rehacer (o quitar) el resaltado de lo que coincide
+    void matchHighlightChanged();
+    void replaceStopsChanged(bool on);
+
+protected:
+    void showEvent(QShowEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
 
 private:
     void updateForTab();
@@ -124,6 +144,9 @@ private:
     QRadioButton* _extended;
     QRadioButton* _regex;
     QCheckBox* _dotNewline;
+    QCheckBox* _highlightMatches;
+    QCheckBox* _replaceAndStop;
+    QTimer* _highlightTimer;
     QLabel* _status;
 
     QPushButton* _findNext;

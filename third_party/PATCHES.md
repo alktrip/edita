@@ -1,8 +1,8 @@
 # Parches locales sobre el código de terceros
 
 `third_party/` se regenera con `tools/import-third-party.sh` a partir de
-`referencia/npp`, que ya trae los parches de Notepad++ sobre Scintilla 5.6.6 y
-Lexilla 5.5.3, y su copia de uchardet (`PowerEditor/src/uchardet`). Encima de eso, Edita aplica estos parches mínimos, casi todos de
+`referencia/npp`, que ya trae los parches de Notepad++ sobre Scintilla 5.6.9 y
+Lexilla 5.5.5, y su copia de uchardet (`PowerEditor/src/uchardet`). Encima de eso, Edita aplica estos parches mínimos, casi todos de
 portabilidad a Linux/GCC y sin cambios de comportamiento (los que sí cambian algo lo dicen):
 
 | Parche | Archivo | Motivo |

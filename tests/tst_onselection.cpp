@@ -380,6 +380,10 @@ private slots:
         QCOMPARE(alone.entries().size(), ClipboardHistoryPanel::kMaxEntries);
         QCOMPARE(ClipboardHistoryPanel::displayText(QStringLiteral("a\nb\tc")), QStringLiteral("a b c"));
         QCOMPARE(ClipboardHistoryPanel::displayText(QString(70, QLatin1Char('x'))), QString(64, QLatin1Char('x')) + QStringLiteral("…"));
+        // Sin partir un carácter de dos unidades UTF-16 (un emoji) al recortar (N++ 8.9.9)
+        const QString emoji = QString(63, QLatin1Char('x')) + QString::fromUtf8("😀") + QStringLiteral("yy");
+        QCOMPARE(ClipboardHistoryPanel::displayText(emoji), QString(63, QLatin1Char('x')) + QStringLiteral("…"));
+        QVERIFY(ClipboardHistoryPanel::displayText(emoji).isValidUtf16());
 
         auto w = window();
         auto* panel = w->findChild<ClipboardHistoryPanel*>();

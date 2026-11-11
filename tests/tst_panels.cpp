@@ -153,6 +153,30 @@ private slots:
         QVERIFY(!parsers.parse(view, LangType::Text, {}, found));
     }
 
+    // Los arreglos de N++ 8.9.9 en functionList (los casos de sus unitTest)
+    void functionParsersOfNotepadPlusPlus899()
+    {
+        FunctionParsers parsers;
+        ScintillaEditBase view;
+        auto namesOf = [&](LangType lang, const char* text) {
+            view.send(SCI_SETTEXT, 0, reinterpret_cast<sptr_t>(text));
+            std::vector<FunctionInfo> found;
+            parsers.parse(view, lang, {}, found);
+            QStringList list;
+            for (const FunctionInfo& f : found)
+                list << QString::fromStdString(f.name);
+            return list;
+        };
+        // Bash: una función después de una línea con solo «#»
+        QCOMPARE(namesOf(LangType::Bash, "uno()\n{\n\techo 1\n}\n\n#\n#\tSale con un error.\n#\nerror_exit()\n{\n\texit 1\n}\n"),
+                 (QStringList{"uno", "error_exit"}));
+        // INI: secciones con «+»
+        QCOMPARE(namesOf(LangType::Ini, "[Flow]\na=1\n[Notepad++]\nversion=9.8.9\n"), (QStringList{"Flow", "Notepad++"}));
+        // PowerShell: funciones con «+»
+        QCOMPARE(namesOf(LangType::PowerShell, "function prompt {\n}\nFunction Sauve+Confirm {\n    Write-host \"x\"\n}\n"),
+                 (QStringList{"prompt", "Sauve+Confirm"}));
+    }
+
     void functionListFollowsTheDocument()
     {
         Window x;

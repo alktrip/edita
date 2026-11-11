@@ -168,6 +168,7 @@ private slots:
             h.matchCase = true;
             h.searchMode = 2;
             h.recursive = false;
+            h.findDlgHighlightMatches = true;
             config.setFindHistory(h);
             QVERIFY(config.save());
         }
@@ -181,6 +182,8 @@ private slots:
         QCOMPARE(h.searchMode, 2);
         QCOMPARE(again.guiConfig("stylerTheme", "path"), QStringLiteral("/x/tema.xml")); // lo demás se conserva
         QVERIFY(readAll(path).contains("fifRecuisive=\"no\"")); // nombre del atributo de N++, tal cual
+        QVERIFY(h.findDlgHighlightMatches);
+        QVERIFY(readAll(path).contains("findDlgHighlightMatches=\"yes\""));
     }
 };
 

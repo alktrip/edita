@@ -19,6 +19,8 @@
 
 #include "ui/SmartHighlighter.h"
 
+#include "search/SearchEngine.h"
+#include "search/SearchTarget.h"
 #include "syntax/SyntaxStyler.h"
 #include "ui/EditorView.h"
 
@@ -109,6 +111,43 @@ void smartHighlight(EditorView& view, EditorView* otherView, const SmartHighligh
     highlightWord(view, word, flags);
     if (otherVisible)
         highlightWord(*otherView, word, flags);
+}
+
+void clearFindMatches(EditorView& view)
+{
+    view.sci(SCI_SETINDICATORCURRENT, kIndicatorFindDialog);
+    view.sci(SCI_INDICATORCLEARRANGE, 0, view.sci(SCI_GETLENGTH));
+}
+
+int highlightFindMatches(EditorView& view, SearchOptions options)
+{
+    clearFindMatches(view);
+    if (options.pattern.empty())
+        return 0;
+    options.inSelection = false;
+
+    // De la primera línea visible hasta una pantalla más abajo de la última
+    const sptr_t firstVisible = view.sci(SCI_GETFIRSTVISIBLELINE);
+    const sptr_t linesOnScreen = view.sci(SCI_LINESONSCREEN);
+    const sptr_t firstLine = view.sci(SCI_DOCLINEFROMVISIBLE, static_cast<uptr_t>(firstVisible));
+    const sptr_t lastLine = view.sci(SCI_DOCLINEFROMVISIBLE, static_cast<uptr_t>(firstVisible + 2 * linesOnScreen + 1));
+    const sptr_t start = view.sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(firstLine));
+    sptr_t end = view.sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(lastLine + 1));
+    if (end < 0)
+        end = view.sci(SCI_GETLENGTH);
+
+    // Lo demás que busca usa el mismo destino: se deja como estaba (como SmartHighlighter)
+    const sptr_t savedStart = view.sci(SCI_GETTARGETSTART);
+    const sptr_t savedEnd = view.sci(SCI_GETTARGETEND);
+    ViewSearchTarget target(view);
+    const RangeResult r = processRange(target, options, RangeOperation::MarkAll, start, end, [&view](SciPos from, SciPos to) {
+        if (to > from) {
+            view.sci(SCI_SETINDICATORCURRENT, kIndicatorFindDialog);
+            view.sci(SCI_INDICATORFILLRANGE, static_cast<uptr_t>(from), to - from);
+        }
+    });
+    view.sci(SCI_SETTARGETRANGE, static_cast<uptr_t>(savedStart), savedEnd);
+    return r.invalidRegex ? 0 : r.count;
 }
 
 } // namespace edita

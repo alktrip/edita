@@ -67,6 +67,7 @@ public:
     // Opciones de las preferencias que son de la vista: ajuste de línea, símbolos,
     // cursor, multiselección, espacio virtual, márgenes… (ScintillaViewParams)
     void applyPreferences(const Preferences& prefs);
+    void updateWhitespaceSize();
 
     // Notepad_plus::braceMatch: resalta la llave pareja de la que está junto al
     // cursor, o la marca en rojo si no tiene pareja

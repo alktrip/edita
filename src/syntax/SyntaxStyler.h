@@ -40,7 +40,10 @@ struct Style;
 // su color es el bgColor del estilo global con ese styleID en stylers.xml
 inline constexpr int kIndicatorFound = 31;       // "Find Mark Style" (marcar todo)
 inline constexpr int kIndicatorSmart = 29;       // "Smart Highlighting"
-inline constexpr int kIndicatorIncremental = 28; // "Incremental highlight all"
+inline constexpr int kIndicatorIncremental = 28; // "Find matches highlight all" (antes "Incremental highlight all")
+// Lo que coincide con «Buscar» mientras el diálogo está abierto (FINDDLG_HIGHLIGHT_INDIC de N++ 8.9.9):
+// con el color del 28, pero aparte, para que limpiar uno no borre el otro
+inline constexpr int kIndicatorFindDialog = 30;
 inline constexpr int kIndicatorTagMatch = 27;    // "Tags match highlighting"
 inline constexpr int kIndicatorTagAttribute = 26; // "Tags attribute"
 // "Mark Style 1"…"Mark Style 5" (SCE_UNIVERSAL_FOUND_STYLE_EXT1…EXT5): estilos de token

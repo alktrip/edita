@@ -71,8 +71,11 @@ struct ReplaceOutcome
 };
 
 // processReplace: si la selección es exactamente una coincidencia la reemplaza y
-// busca la siguiente; si no, solo busca (y selecciona) la siguiente.
-ReplaceOutcome replaceNext(SearchTarget& target, const SearchOptions& options, SciPos selStart, SciPos selEnd);
+// busca la siguiente; si no, solo busca (y selecciona) la siguiente. Con `stopAfterReplace`
+// (replaceStopsWithoutFindingNext) no busca la siguiente después de reemplazar: el cursor queda
+// al final de lo reemplazado y `next` vacío.
+ReplaceOutcome replaceNext(SearchTarget& target, const SearchOptions& options, SciPos selStart, SciPos selEnd,
+                           bool stopAfterReplace = false);
 
 // ProcessOperation de N++ que se usan en el MVP
 enum class RangeOperation { FindAll, CountAll, ReplaceAll, MarkAll };

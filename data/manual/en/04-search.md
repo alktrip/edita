@@ -40,6 +40,18 @@ in All Opened Documents**; the last two list the matches in the
 and **Replace All in All Opened Documents** (Edita asks for confirmation before the last one,
 unless it is turned off in the Searching page).
 
+Two checkboxes have no text (hovering over them tells what they do), as in Notepad++:
+
+- The one to the right of the **Find what** field, in the Find and Replace tabs, highlights the
+  matches in the active document while the dialog is open, with the dialog's options. It updates
+  as you type, when you edit the document and when you scroll. It only searches the visible
+  lines, so it does not slow down large files. It uses the colour of **Find matches highlight
+  all** in the Style Configurator (formerly **Incremental highlight all**). It is off by default.
+- The one to the right of **Replace**: after replacing, the cursor stays at the end of the
+  replaced text instead of moving to the next match.
+
+Edita remembers both.
+
 Once the dialog has been used, these commands repeat the search without opening it:
 
 | Command | What it does |

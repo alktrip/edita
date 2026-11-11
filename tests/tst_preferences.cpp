@@ -190,6 +190,7 @@ Preferences nonDefault()
     p.fillFindFieldWithSelected = false;
     p.confirmReplaceInAllOpenDocs = false;
     p.monospacedFontFindDlg = true;
+    p.replaceStopsWithoutFindingNext = true;
     p.rememberLastSession = false;
     p.snapshotMode = false;
     p.snapshotBackupTiming = 30000;
@@ -262,6 +263,7 @@ private slots:
                  "<History nbMaxFile=\"5\" inSubMenu=\"yes\" customLength=\"40\"",
                  "<GUIConfig name=\"SmartHighLight\" matchCase=\"yes\" wholeWordOnly=\"no\" useFindSettings=\"yes\" onAnotherView=\"yes\">no</GUIConfig>",
                  "<GUIConfig name=\"Auto-detection\">autoOld</GUIConfig>",
+                 "replaceStopsWithoutFindingNext=\"yes\"",
              })
             QVERIFY2(xml.contains(expected), expected);
     }
@@ -396,6 +398,16 @@ private slots:
             QCOMPARE(v->sci(SCI_GETTABWIDTH), sptr_t{3});
             QCOMPARE(v->sci(SCI_GETUSETABS), sptr_t{0});
             QCOMPARE(v->sci(SCI_GETMARGINWIDTHN, 0), sptr_t{0});
+            // N++ 8.9.9 (setWhitespaceSize): los puntos de los espacios crecen con el zoom
+            v->sci(SCI_SETZOOM, 0);
+            QCOMPARE(v->sci(SCI_GETWHITESPACESIZE), sptr_t{2});
+            v->sci(SCI_SETZOOM, 10);
+            QCOMPARE(v->sci(SCI_GETWHITESPACESIZE), sptr_t{4});
+            v->sci(SCI_SETZOOM, 20);
+            QCOMPARE(v->sci(SCI_GETWHITESPACESIZE), sptr_t{6});
+            v->sci(SCI_SETZOOM, static_cast<uptr_t>(-10));
+            QCOMPARE(v->sci(SCI_GETWHITESPACESIZE), sptr_t{2});
+            v->sci(SCI_SETZOOM, 0);
         }
         // Una sola columna con fondo
         x.setPrefs([](Preferences& p) {
@@ -466,6 +478,10 @@ private slots:
         });
         x.w().newDocument();
         QCOMPARE(x.current()->encoding().codepage, 1251);
+        // Un lenguaje de usuario sin nombre (lang="15" de N++, sin udl): texto normal, como N++ 8.9.9
+        x.setPrefs([](Preferences& p) { p.newDocLanguage = static_cast<int>(LangType::User); });
+        x.w().newDocument();
+        QCOMPARE(x.current()->language(), LangType::Text);
     }
 
     void openSaveDirectoryFollowsThePreference()

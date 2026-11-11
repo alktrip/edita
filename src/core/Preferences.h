@@ -268,6 +268,8 @@ struct Preferences
     bool fillFindFieldWithSelected = true;
     bool confirmReplaceInAllOpenDocs = true;
     bool monospacedFontFindDlg = false;
+    // Reemplazar no pasa a la siguiente coincidencia (en N++ 8.9.9, una casilla de la pestaña Reemplazar)
+    bool replaceStopsWithoutFindingNext = false;
 
     // --- Copias de seguridad (Backup, RememberLastSession) ------------------------------------
     // <GUIConfig name="RememberLastSession">yes</GUIConfig>

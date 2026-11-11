@@ -1,6 +1,6 @@
 # Fase 1 — Análisis de Notepad++ y plan del MVP
 
-Referencia analizada: `referencia/npp` @ `6ea1128f` (19-oct-2026), Scintilla 5.6.6, Lexilla 5.5.3.
+Referencia analizada: `referencia/npp` @ `6ea1128f` (19-oct-2026), Scintilla 5.6.6, Lexilla 5.5.3. Desde la [fase 78](fase78.md): `7fcd5b5` (Notepad++ 8.9.9), Scintilla 5.6.9, Lexilla 5.5.5.
 Todas las rutas de código son relativas a `referencia/npp/PowerEditor/src/` salvo que se indique otra cosa.
 
 ---
@@ -351,6 +351,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 75 — Otra ventana, pegado especial, menú de pestañas | `newInstanceArguments` y `-l` (core/CommandLine, `InstanceRequest::language`), `openInNewInstance` con `setInstanceLauncher`, Editar › Pegado especial (HTML/RTF, binario con `application/x-edita-binary`), `tabContextMenu.xml` (`ContextMenuKind::Tab`, `fillMenuFromXml`, `data/tabContextMenu.xml`) | ✅ [fase75.md](fase75.md) |
 | 76 — Asociación de archivos y paquetes | core/FileAssociation (`mimeapps.list` con el programa de antes, tipos propios en `mime/packages` con update-mime-database, `edita.desktop` propio del AppImage y `refreshLauncher`), Preferencias › Asociación de archivos (RegExtDlg), `packaging/deb/build-deb.sh` (el AppDir en `/opt/edita`, `dpkg-shlibdeps`), `packaging/aur/PKGBUILD` | ✅ [fase76.md](fase76.md) |
 | 77 — Rendimiento con archivos grandes | Parche 0008 (caché de expresiones compiladas en `BoostRegexSearch`), `isInZones` con búsqueda binaria, `MainWindow::functionsOf` (símbolos por documento: lenguaje, longitud e historial de deshacer) para la ruta, la Lista de funciones y la paleta, `FunctionListPanel::setSource` sin reanalizar el mismo documento, `getWordArray` sin expresión regular, `tst_perf` con 200 000 funciones | ✅ [fase77.md](fase77.md) |
+| 78 — Al día con N++ 8.9.9 | `import-third-party.sh` (Scintilla 5.6.9, Lexilla 5.5.5, boost 1.92, `functionList/`; parches con rutas desde la raíz), `highlightFindMatches` con `kIndicatorFindDialog` 30 y `findDlgHighlightMatches`, `replaceNext(…, stopAfterReplace)` con `replaceStopsWithoutFindingNext`, `lexer.r.escape.sequence`, `EditorView::updateWhitespaceSize` | ✅ [fase78.md](fase78.md) |
 
 ---
 

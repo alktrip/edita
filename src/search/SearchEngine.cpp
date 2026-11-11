@@ -116,7 +116,8 @@ FindResult findNext(SearchTarget& target, const SearchOptions& options, SciPos s
     return result;
 }
 
-ReplaceOutcome replaceNext(SearchTarget& target, const SearchOptions& options, SciPos selStart, SciPos selEnd)
+ReplaceOutcome replaceNext(SearchTarget& target, const SearchOptions& options, SciPos selStart, SciPos selEnd,
+                           bool stopAfterReplace)
 {
     ReplaceOutcome outcome;
     outcome.next = findNext(target, options, selStart, selEnd, FindNextType::FindNextForReplace, true);
@@ -135,6 +136,12 @@ ReplaceOutcome replaceNext(SearchTarget& target, const SearchOptions& options, S
     const SciPos replacedLength = target.replace(selStart, selEnd, replacementText(options), isRegex(options));
     outcome.replaced = true;
     const SciPos after = selStart + replacedLength;
+    if (stopAfterReplace) {
+        outcome.next = {};
+        outcome.selStart = after;
+        outcome.selEnd = after;
+        return outcome;
+    }
     outcome.next = findNext(target, options, after, after, FindNextType::ReplaceNext, true);
     if (outcome.next.found()) {
         outcome.selStart = outcome.next.start;

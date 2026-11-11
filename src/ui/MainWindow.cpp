@@ -702,6 +702,8 @@ void MainWindow::connectPane(EditorPane* pane)
             _findBar[index]->refresh();
         if (pane == _activePane)
             refreshCurrentDocument();
+        else
+            updateFindDialogHighlight();
         if (const Buffer* buf = _documents.buffer(pane->currentBuffer()); buf && autoCompletion(pane))
             autoCompletion(pane)->setLanguage(buf->language());
         if (pane == _activePane)
@@ -772,6 +774,9 @@ void MainWindow::connectPane(EditorPane* pane)
             }
             smartHighlight(*pane->editor(), otherPane(pane)->editor(), options);
         }
+        // Lo que coincide con el diálogo de búsqueda sigue a las líneas que se ven
+        if ((static_cast<int>(updated) & SC_UPDATE_V_SCROLL) && _findDialog && _findDialog->highlightMatchesActive())
+            updateFindDialogHighlight();
     });
     (pane == _mainPane ? _mainAuto : _subAuto) = std::make_unique<AutoCompletion>(*view, _prefs);
     connect(view, &ScintillaEditBase::charAdded, this, [this, pane](int ch) {
@@ -792,9 +797,13 @@ void MainWindow::connectPane(EditorPane* pane)
             _lsp->signatureHelp(*pane->editor(), pane->currentBuffer(), ch);
     });
     // El texto que ve el servidor de lenguaje, al día; y lo que dice al dejar el ratón
-    connect(view, &ScintillaEditBase::modified, this, [this](Scintilla::ModificationFlags type) {
-        if (static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT))
+    connect(view, &ScintillaEditBase::modified, this, [this, pane](Scintilla::ModificationFlags type) {
+        if (static_cast<int>(type) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) {
             _lsp->scheduleSync();
+            // Y lo que coincide con el diálogo de búsqueda, un momento después
+            if (pane == _activePane && _findDialog && _findDialog->highlightMatchesActive())
+                _findDialog->scheduleMatchHighlight();
+        }
     });
     view->send(SCI_SETMOUSEDWELLTIME, 500);
     connect(view, &ScintillaEditBase::notify, this, [this, pane](Scintilla::NotificationData* n) {
@@ -4355,11 +4364,16 @@ void MainWindow::applyPreferences()
                         : mode == UniMode::Ansi ? TextEncoding::fromCodepage(p.fallbackCodepage)
                                                 : TextEncoding::unicode(mode == UniMode::Ascii7 ? UniMode::Utf8 : mode);
     docs.newDocLanguage = static_cast<LangType>(std::clamp(p.newDocLanguage, 0, static_cast<int>(LangType::External) - 1));
+    // L_USER sin el nombre del lenguaje: texto normal (FileManager::newEmptyDocument de N++ 8.9.9)
+    if (docs.newDocLanguage == LangType::User)
+        docs.newDocLanguage = LangType::Text;
     docs.load.detection.autoDetect = p.detectEncoding;
     docs.load.detection.fallbackCodepage = p.fallbackCodepage;
 
-    if (_findDialog)
+    if (_findDialog) {
         _findDialog->setMonospacedFont(p.monospacedFontFindDlg);
+        _findDialog->setReplaceStops(p.replaceStopsWithoutFindingNext);
+    }
 
     for (const auto& [option, action] : _viewOptionActions)
         action->setChecked(p.*option);
@@ -8256,6 +8270,16 @@ FindReplaceDialog* MainWindow::findDialog()
     _findDialog->setOptions(_lastOptions);
     _findDialog->setFindInFilesOptions(history.recursive, history.hidden, history.folderFollowsDoc);
     _findDialog->setMarkOptions(history.bookmarkLine, history.purge);
+    _findDialog->setHighlightMatches(history.findDlgHighlightMatches);
+    _findDialog->setReplaceStops(_prefs.replaceStopsWithoutFindingNext);
+    connect(_findDialog, &FindReplaceDialog::matchHighlightChanged, this, &MainWindow::updateFindDialogHighlight);
+    connect(_findDialog, &FindReplaceDialog::replaceStopsChanged, this, [this](bool on) {
+        if (_prefs.replaceStopsWithoutFindingNext == on)
+            return;
+        _prefs.replaceStopsWithoutFindingNext = on;
+        storePreferences(_syntax.config(), _prefs);
+        _syntax.config().save();
+    });
     if (history.filters.isEmpty())
         _findDialog->setFilters(QStringLiteral("*.*"));
     auto run = [this](auto&& action) {
@@ -8418,7 +8442,9 @@ bool MainWindow::replaceInCurrent(const SearchOptions& options)
     }
     EditorView* view = editor();
     ViewSearchTarget target(*view);
-    const ReplaceOutcome r = replaceNext(target, options, view->sci(SCI_GETSELECTIONSTART), view->sci(SCI_GETSELECTIONEND));
+    const bool stop = _prefs.replaceStopsWithoutFindingNext;
+    const ReplaceOutcome r =
+        replaceNext(target, options, view->sci(SCI_GETSELECTIONSTART), view->sci(SCI_GETSELECTIONEND), stop);
     if (r.next.status == FindStatus::InvalidRegex) {
         setSearchStatus(tr("Replace: Invalid regular expression: %1").arg(QString::fromStdString(r.next.regexError)),
                         Kind::NotFound);
@@ -8435,6 +8461,8 @@ bool MainWindow::replaceInCurrent(const SearchOptions& options)
             setSearchStatus(tr("Replace: no occurrence was found %1").arg(scopeText(options, false)), Kind::NotFound);
         else
             setSearchStatus(QString(), Kind::Message);
+    } else if (stop) {
+        setSearchStatus(tr("Replace: 1 occurrence was replaced."), Kind::Message);
     } else if (r.next.status == FindStatus::EndReached) {
         setSearchStatus(tr("Replace: 1 occurrence was replaced. The end of the document has been reached."), Kind::EndReached);
     } else if (r.next.status == FindStatus::TopReached) {
@@ -9204,6 +9232,7 @@ void MainWindow::saveWindowState()
         h.folderFollowsDoc = _findDialog->followCurrentDocument();
         h.bookmarkLine = _findDialog->bookmarkLine();
         h.purge = _findDialog->purge();
+        h.findDlgHighlightMatches = _findDialog->highlightMatches();
         config.setFindHistory(h);
     }
     config.save();
@@ -9211,9 +9240,26 @@ void MainWindow::saveWindowState()
 
 // --- Estado de la ventana ----------------------------------------------------------
 
+// FindReplaceDlg::updateMatchHighlighting (N++ 8.9.9): lo que coincide con «Buscar», en el documento
+// activo, mientras el diálogo está abierto. Se limpia en las dos vistas: el documento que se ve ahora
+// puede tener el resaltado de antes (los indicadores son del documento)
+void MainWindow::updateFindDialogHighlight()
+{
+    for (EditorPane* pane : {_mainPane, _subPane}) {
+        if (pane)
+            clearFindMatches(*pane->editor());
+    }
+    if (!_findDialog || !_findDialog->highlightMatchesActive())
+        return;
+    if (isLargeFileIn(_activePane) && !_prefs.largeFileSmartHighlight) // allowSmartHilite
+        return;
+    highlightFindMatches(*editor(), _findDialog->options());
+}
+
 void MainWindow::refreshCurrentDocument()
 {
     updatePanels();
+    updateFindDialogHighlight();
     const Buffer* buf = _documents.buffer(currentBuffer());
     _statusBar->updateDocument(buf);
     _statusBar->updateCaret(editor());

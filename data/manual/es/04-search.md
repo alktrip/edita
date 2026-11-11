@@ -40,6 +40,18 @@ coincidencias en el panel de [resultados](#el-panel-de-resultados). La pestaña 
 **Reemplazar**, **Reemplazar todo** y **Reemplazar todo en todos los documentos abiertos** (Edita
 pide confirmación antes de esta última, salvo que se desactive en la página Búsqueda).
 
+Dos casillas sin texto (al pasar el ratón dicen qué hacen), como en Notepad++:
+
+- La de la derecha del campo **Buscar**, en las pestañas Buscar y Reemplazar, resalta lo que
+  coincide en el documento activo mientras el diálogo está abierto, con las opciones del diálogo.
+  Se actualiza mientras escribes, al editar el documento y al desplazarte. Solo busca en las
+  líneas que se ven, así que no se nota en archivos grandes. Usa el color de **Find matches
+  highlight all** del Configurador de estilos (antes **Incremental highlight all**). Viene apagada.
+- La de la derecha de **Reemplazar**: después de reemplazar, el cursor se queda al final de lo
+  reemplazado en lugar de pasar a la siguiente coincidencia.
+
+Edita recuerda las dos.
+
 Después de usar el diálogo, estas órdenes repiten la búsqueda sin abrirlo:
 
 | Orden | Qué hace |

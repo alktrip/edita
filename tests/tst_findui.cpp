@@ -15,11 +15,13 @@
 #include "ui/FindReplaceDialog.h"
 #include "ui/MainWindow.h"
 #include "ui/SearchResultsPanel.h"
+#include "syntax/SyntaxStyler.h"
 
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDir>
 #include <QFile>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QTemporaryDir>
@@ -371,6 +373,140 @@ private slots:
         w.window.openFile(dir + "/x.txt");
         w.window.showFindDialog(FindReplaceDialog::Tab::FindInFiles);
         QCOMPARE(w.window.findDialog()->directory(), QDir::toNativeSeparators(dir));
+    }
+
+    // N++ 8.9.9: «Después de reemplazar, no pasar a la siguiente» se pasó de Preferencias a
+    // la pestaña Reemplazar (replaceStopsWithoutFindingNext, en GUIConfig "Searching")
+    void replaceAndStopDoesNotMoveToNext()
+    {
+        {
+            Window w;
+            w.window.showFindDialog(FindReplaceDialog::Tab::Find);
+            FindReplaceDialog* d = w.window.findDialog();
+            auto* stop = d->findChild<QCheckBox*>("replaceAndStopCheck");
+            QVERIFY(stop);
+            QVERIFY(!stop->isVisible()); // solo en la pestaña Reemplazar
+            QVERIFY(!stop->isChecked());
+            d->showTab(FindReplaceDialog::Tab::Replace);
+            QVERIFY(stop->isVisible());
+            QVERIFY(!stop->toolTip().isEmpty());
+            stop->setChecked(true);
+            QVERIFY(w.window.preferences().replaceStopsWithoutFindingNext);
+
+            w.setText("gato perro gato");
+            w.editor()->sci(SCI_SETSEL, 0, 4);
+            QVERIFY(w.window.replaceInCurrent(plain("gato", "felino")));
+            QCOMPARE(w.text(), "felino perro gato"s);
+            // El cursor queda al final de lo reemplazado, sin seleccionar la siguiente
+            QVERIFY(w.editor()->sci(SCI_GETSELECTIONEMPTY));
+            QCOMPARE(w.editor()->sci(SCI_GETCURRENTPOS), sptr_t{6});
+            QCOMPARE(w.window.lastSearchStatus(), QStringLiteral("Replace: 1 occurrence was replaced."));
+            // Sin selección, Reemplazar solo busca la siguiente
+            QVERIFY(!w.window.replaceInCurrent(plain("gato", "felino")));
+            QCOMPARE(w.selection(), "gato"s);
+            w.window.close();
+        }
+        // Se guarda en config.xml
+        Window again;
+        QVERIFY(again.window.preferences().replaceStopsWithoutFindingNext);
+        QVERIFY(again.window.findDialog()->findChild<QCheckBox*>("replaceAndStopCheck")->isChecked());
+        again.window.findDialog()->findChild<QCheckBox*>("replaceAndStopCheck")->setChecked(false);
+        QVERIFY(!again.window.preferences().replaceStopsWithoutFindingNext);
+    }
+
+    // N++ 8.9.9: la casilla junto a «Buscar»: con el diálogo abierto en Buscar o Reemplazar,
+    // resalta lo que coincide en las líneas visibles del documento, mientras se escribe
+    void dialogHighlightsMatchesWhileOpen()
+    {
+        constexpr uptr_t indicator = kIndicatorFindDialog;
+        Window w;
+        std::string text = "uno dos uno\n";
+        for (int i = 0; i < 2000; ++i)
+            text += "relleno\n";
+        text += "uno al final\n";
+        w.setText(text.c_str());
+        w.window.resize(800, 600);
+        w.window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w.window));
+        auto valueAt = [&](sptr_t pos) { return w.editor()->sci(SCI_INDICATORVALUEAT, indicator, pos); };
+
+        w.window.showFindDialog(FindReplaceDialog::Tab::Find);
+        FindReplaceDialog* d = w.window.findDialog();
+        auto* check = d->findChild<QCheckBox*>("highlightMatchesCheck");
+        QVERIFY(check);
+        QVERIFY(check->isVisible());
+        QVERIFY(!check->isChecked()); // apagada por omisión, como en N++
+        QVERIFY(!check->toolTip().isEmpty());
+        auto* combo = d->findChild<QComboBox*>("findCombo");
+        QTest::keyClicks(combo->lineEdit(), "uno");
+        QTest::qWait(400);
+        QCOMPARE(valueAt(0), sptr_t{0}); // con la casilla apagada no resalta
+
+        check->setChecked(true);
+        QTRY_COMPARE(valueAt(0), sptr_t{1});
+        QCOMPARE(valueAt(8), sptr_t{1});
+        QCOMPARE(valueAt(4), sptr_t{0});
+        // Solo las líneas que se ven (y una pantalla más): la del final todavía no
+        const sptr_t last = static_cast<sptr_t>(text.rfind("uno"));
+        QCOMPARE(valueAt(last), sptr_t{0});
+
+        // Al escribir se actualiza un momento después
+        QTest::keyClicks(combo->lineEdit(), " d");
+        QTRY_COMPARE(valueAt(0), sptr_t{1});
+        QTRY_COMPARE(valueAt(8), sptr_t{0});
+        combo->setEditText(QStringLiteral("uno"));
+        QTRY_COMPARE(valueAt(8), sptr_t{1});
+
+        // Con las opciones del diálogo
+        d->findChild<QCheckBox*>("matchCaseCheck")->setChecked(true);
+        combo->setEditText(QStringLiteral("UNO"));
+        QTRY_COMPARE(valueAt(0), sptr_t{0});
+        d->findChild<QCheckBox*>("matchCaseCheck")->setChecked(false);
+        QTRY_COMPARE(valueAt(0), sptr_t{1});
+
+        // Al desplazarse, lo que entra en pantalla
+        w.editor()->sci(SCI_SETFIRSTVISIBLELINE, 1990);
+        QTRY_COMPARE(valueAt(last), sptr_t{1});
+
+        // Al editar el documento
+        w.editor()->sci(SCI_SETFIRSTVISIBLELINE, 0);
+        QTRY_COMPARE(valueAt(0), sptr_t{1});
+        w.editor()->sci(SCI_SETSEL, 0, 0);
+        w.editor()->sends(SCI_REPLACESEL, 0, "x");
+        QTRY_COMPARE(valueAt(1), sptr_t{1});
+        QCOMPARE(valueAt(0), sptr_t{0});
+
+        // En la pestaña Marcar no; en Reemplazar sí
+        d->showTab(FindReplaceDialog::Tab::Mark);
+        QVERIFY(!check->isVisible());
+        QTRY_COMPARE(valueAt(1), sptr_t{0});
+        d->showTab(FindReplaceDialog::Tab::Replace);
+        QVERIFY(check->isVisible());
+        QTRY_COMPARE(valueAt(1), sptr_t{1});
+
+        // Al cerrar el diálogo se quita
+        d->hide();
+        QTRY_COMPARE(valueAt(1), sptr_t{0});
+        d->show();
+        QTRY_COMPARE(valueAt(1), sptr_t{1});
+
+        // Sigue al documento activo: el de antes se limpia
+        w.window.newDocument();
+        QCOMPARE(w.editor()->sci(SCI_INDICATOREND, indicator, 0), w.editor()->sci(SCI_GETLENGTH));
+        w.setText("uno uno");
+        QTRY_COMPARE(valueAt(4), sptr_t{1});
+
+        // Apagar la casilla quita el resaltado; se guarda en config.xml (findDlgHighlightMatches)
+        check->setChecked(false);
+        QTRY_COMPARE(valueAt(4), sptr_t{0});
+        check->setChecked(true);
+        w.window.close();
+    }
+
+    void dialogHighlightIsSaved()
+    {
+        Window w;
+        QVERIFY(w.window.findDialog()->findChild<QCheckBox*>("highlightMatchesCheck")->isChecked());
     }
 
     void volatileFindOfWordUnderCaret()

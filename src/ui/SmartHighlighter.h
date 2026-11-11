@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "search/SearchOptions.h"
+
 namespace edita {
 
 class EditorView;
@@ -35,5 +37,12 @@ struct SmartHighlightOptions
 // de una línea si no se exige palabra completa), marca sus apariciones en las
 // líneas visibles con el indicador "Smart Highlighting" (29)
 void smartHighlight(EditorView& view, EditorView* otherView, const SmartHighlightOptions& options);
+
+// FindReplaceDlg::updateMatchHighlighting (N++ 8.9.9): con el diálogo de búsqueda abierto, marca
+// con kIndicatorFindDialog lo que coincide con `options` (sin «en la selección»). Como el
+// resaltado inteligente, solo en las líneas visibles y una pantalla más, así que no depende del
+// tamaño del documento. Devuelve cuántas marcó.
+int highlightFindMatches(EditorView& view, SearchOptions options);
+void clearFindMatches(EditorView& view);
 
 } // namespace edita

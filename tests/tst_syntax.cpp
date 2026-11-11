@@ -169,6 +169,8 @@ private slots:
         QTest::newRow("diff") << LangType::Diff << "--- a\n+++ b\n+añadida\n" << "+añadida" << SCE_DIFF_ADDED;
         QTest::newRow("makefile") << LangType::Makefile << "# comentario\nall:\n" << "# comentario" << SCE_MAKE_COMMENT;
         QTest::newRow("yaml") << LangType::Yaml << "clave: valor\n" << "clave" << SCE_YAML_IDENTIFIER;
+        // N++ 8.9.9 activa lexer.r.escape.sequence
+        QTest::newRow("r escape") << LangType::R << "x <- \"a\\nb\"\n" << "\\n" << SCE_R_ESCAPESEQUENCE;
     }
 
     void otherLanguagesColourise()

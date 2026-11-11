@@ -35,6 +35,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QTabBar>
+#include <QTimer>
 #include <QVBoxLayout>
 
 namespace edita {
@@ -102,6 +103,9 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     , _extended(new QRadioButton(tr("&Extended (\\n, \\r, \\t, \\0, \\x…)"), this))
     , _regex(new QRadioButton(tr("Re&gular expression"), this))
     , _dotNewline(new QCheckBox(tr("&. matches newline"), this))
+    , _highlightMatches(new QCheckBox(this))
+    , _replaceAndStop(new QCheckBox(this))
+    , _highlightTimer(new QTimer(this))
     , _status(new QLabel(this))
 {
     setWindowTitle(tr("Find"));
@@ -131,6 +135,15 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     _bookmarkLine->setObjectName(QStringLiteral("bookmarkLineCheck"));
     _purge->setObjectName(QStringLiteral("purgeCheck"));
     _status->setObjectName(QStringLiteral("findStatus"));
+    // Como en N++, casillas sin texto con una ayuda emergente
+    _highlightMatches->setObjectName(QStringLiteral("highlightMatchesCheck"));
+    _highlightMatches->setToolTip(tr("Highlight all matches of the current search in the active document while typing"));
+    _highlightMatches->setAccessibleName(_highlightMatches->toolTip());
+    _replaceAndStop->setObjectName(QStringLiteral("replaceAndStopCheck"));
+    _replaceAndStop->setToolTip(tr("After replacing, don't move to the following occurrence"));
+    _replaceAndStop->setAccessibleName(_replaceAndStop->toolTip());
+    _highlightTimer->setSingleShot(true);
+    _highlightTimer->setInterval(250); // ms, como updateMatchHighlightingLater
     _status->setWordWrap(true);
 
     auto* findLabel = new QLabel(tr("&Find what:"), this);
@@ -142,6 +155,7 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     auto* fields = new QGridLayout;
     fields->addWidget(findLabel, 0, 0);
     fields->addWidget(_find, 0, 1, 1, 2);
+    fields->addWidget(_highlightMatches, 0, 3);
     fields->addWidget(_replaceLabel, 1, 0);
     fields->addWidget(_replace, 1, 1, 1, 2);
     fields->addWidget(_filtersLabel, 2, 0);
@@ -184,8 +198,16 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
 
     auto* buttons = new QVBoxLayout;
     for (QPushButton* b : {_findNext, _count, _findAllCurrent, _findAllOpen, _replaceOne, _replaceAll, _replaceAllOpen,
-                           _findInFiles, _replaceInFiles, _cancel, _markAll, _clearMarks, _copyMarked})
-        buttons->addWidget(b);
+                           _findInFiles, _replaceInFiles, _cancel, _markAll, _clearMarks, _copyMarked}) {
+        if (b != _replaceOne) {
+            buttons->addWidget(b);
+            continue;
+        }
+        auto* replaceRow = new QHBoxLayout;
+        replaceRow->addWidget(_replaceOne, 1);
+        replaceRow->addWidget(_replaceAndStop);
+        buttons->addLayout(replaceRow);
+    }
     buttons->addStretch();
     buttons->addWidget(close);
 
@@ -221,6 +243,16 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     connect(_clearMarks, &QPushButton::clicked, this, &FindReplaceDialog::clearMarksRequested);
     connect(_copyMarked, &QPushButton::clicked, this, &FindReplaceDialog::copyMarkedTextRequested);
     connect(close, &QPushButton::clicked, this, &QDialog::hide);
+    // El resaltado de lo que coincide: al escribir, un momento después; lo demás, enseguida
+    connect(_highlightTimer, &QTimer::timeout, this, &FindReplaceDialog::matchHighlightChanged);
+    connect(_find, &QComboBox::editTextChanged, this, &FindReplaceDialog::scheduleMatchHighlight);
+    for (QAbstractButton* b : std::initializer_list<QAbstractButton*>{_highlightMatches, _matchCase, _wholeWord, _normal,
+                                                                      _extended, _regex, _dotNewline})
+        connect(b, &QAbstractButton::toggled, this, [this] {
+            _highlightTimer->stop();
+            emit matchHighlightChanged();
+        });
+    connect(_replaceAndStop, &QCheckBox::toggled, this, &FindReplaceDialog::replaceStopsChanged);
     connect(_browse, &QPushButton::clicked, this, [this] {
         const QString dir = QFileDialog::getExistingDirectory(this, tr("Directory"), directory());
         if (!dir.isEmpty())
@@ -290,7 +322,54 @@ void FindReplaceDialog::updateForTab()
     _replaceOne->setVisible(replace);
     _replaceAll->setVisible(replace);
     _replaceAllOpen->setVisible(replace);
+    _replaceAndStop->setVisible(replace);
+    _highlightMatches->setVisible(tab == Tab::Find || replace);
     adjustSize();
+    emit matchHighlightChanged();
+}
+
+bool FindReplaceDialog::highlightMatches() const
+{
+    return _highlightMatches->isChecked();
+}
+
+void FindReplaceDialog::setHighlightMatches(bool on)
+{
+    _highlightMatches->setChecked(on);
+}
+
+bool FindReplaceDialog::highlightMatchesActive() const
+{
+    const Tab tab = currentTab();
+    return _highlightMatches->isChecked() && isVisible() && (tab == Tab::Find || tab == Tab::Replace);
+}
+
+void FindReplaceDialog::scheduleMatchHighlight()
+{
+    _highlightTimer->start();
+}
+
+bool FindReplaceDialog::replaceStops() const
+{
+    return _replaceAndStop->isChecked();
+}
+
+void FindReplaceDialog::setReplaceStops(bool on)
+{
+    _replaceAndStop->setChecked(on);
+}
+
+void FindReplaceDialog::showEvent(QShowEvent* event)
+{
+    QDialog::showEvent(event);
+    emit matchHighlightChanged();
+}
+
+void FindReplaceDialog::hideEvent(QHideEvent* event)
+{
+    QDialog::hideEvent(event);
+    _highlightTimer->stop();
+    emit matchHighlightChanged();
 }
 
 bool FindReplaceDialog::bookmarkLine() const

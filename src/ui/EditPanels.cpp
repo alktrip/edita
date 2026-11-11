@@ -226,10 +226,23 @@ void ClipboardHistoryPanel::clear()
     rebuild();
 }
 
+namespace {
+
+// Los primeros `length` caracteres UTF-16, sin dejar la mitad de un par (como N++ 8.9.9)
+QString leftWhole(const QString& text, int length)
+{
+    QString shown = text.left(length);
+    if (shown.size() < text.size() && !shown.isEmpty() && shown.back().isHighSurrogate())
+        shown.chop(1);
+    return shown;
+}
+
+} // namespace
+
 QString ClipboardHistoryPanel::displayText(const QString& text)
 {
     // En una línea: los fines de línea y los tabuladores, como espacios
-    QString shown = text.left(kDisplayLength);
+    QString shown = leftWhole(text, kDisplayLength);
     for (QChar& c : shown) {
         if (c == QLatin1Char('\r') || c == QLatin1Char('\n') || c == QLatin1Char('\t'))
             c = QLatin1Char(' ');
@@ -244,7 +257,7 @@ void ClipboardHistoryPanel::rebuild()
     _list->clear();
     for (const QString& text : _entries) {
         auto* item = new QListWidgetItem(displayText(text), _list);
-        item->setToolTip(text.left(1000));
+        item->setToolTip(leftWhole(text, 1000));
     }
 }
 
