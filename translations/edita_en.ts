@@ -77,7 +77,7 @@
 <context>
     <name>edita::GitChanges</name>
     <message numerus="yes">
-        <location filename="../src/ui/GitChanges.cpp" line="+315"/>
+        <location filename="../src/ui/GitChanges.cpp" line="+332"/>
         <source>Added since the last commit: %n line(s)</source>
         <translation>
             <numerusform>Added since the last commit: %n line</numerusform>
@@ -99,7 +99,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+2656"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+2902"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -131,7 +131,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+2277"/>
+        <location line="+2290"/>
         <source> time(s)</source>
         <translation>
             <numerusform> time</numerusform>

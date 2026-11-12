@@ -59,6 +59,8 @@ public:
     QColor color(LineChangeKind kind) const { return _colors[static_cast<int>(kind)]; }
     // ¿El archivo está en un repositorio y en HEAD? (si no, no hay marcas)
     bool hasBase() const { return _base != nullptr; }
+    // El archivo en HEAD, en UTF-8 (nullptr: no hay)
+    std::shared_ptr<const std::string> base() const { return _base; }
     // Las líneas de HEAD que quitó o cambió un cambio (para el aviso)
     QStringList originalLines(const LineChange& change, int maxLines = 20) const;
     // El cambio que toca esa línea del documento
@@ -69,6 +71,8 @@ public:
 
 signals:
     void changed();
+    // Clic en una marca del margen (fase 85): el menú del bloque
+    void hunkMenuRequested(int line, const QPoint& globalPos);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;

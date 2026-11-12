@@ -114,6 +114,8 @@ edita_add_test(tst_pluginapi LIBS edita_ui)
 edita_add_test(tst_localhistory LIBS edita_ui)
 # Fase 84: las tareas del proyecto
 edita_add_test(tst_tasks LIBS edita_ui)
+# Fase 85: Git desde el margen y el panel Git
+edita_add_test(tst_githunks LIBS edita_ui)
 if(EDITA_BUILD_PLUGINS)
     edita_add_test(tst_plugins LIBS edita_ui)
     add_dependencies(tst_plugins EditaDemo)

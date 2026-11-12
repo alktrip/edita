@@ -26,6 +26,35 @@ No tienen atajo; asígnales uno en {{actionShortcutMapper}} o usa la
 Las marcas también aparecen en la barra de desplazamiento y en el Mapa del documento. Se desactivan
 con **Cambios desde el último commit de Git** (página Márgenes de {{actionPreferences}}).
 
+## Descartar o preparar un bloque
+
+Haz clic en una marca del margen para abrir el menú de ese bloque:
+
+- **Descartar este cambio** vuelve a poner las líneas del último commit en el documento. Solo cambia
+  ese bloque, el archivo no se guarda y {{actionUndo}} lo deshace.
+- **Preparar este cambio** pasa ese bloque al índice de Git (`git add` de una parte del archivo),
+  para incluirlo en el próximo commit. Lo que ya estaba preparado se conserva. Si el documento tiene
+  cambios sin guardar, Edita pregunta si guardarlo antes, porque lo que se prepara es lo del disco.
+  En un archivo que Git todavía no sigue se prepara el archivo entero.
+- **Comparar con Git (HEAD)**, **Cambio siguiente** y **Cambio anterior**.
+
+Lo mismo, para el bloque de la línea del cursor, está en {{actionRevertGitChange}} y
+{{actionStageGitChange}}. Los archivos UTF-16 solo se pueden preparar enteros.
+
+## El panel Git
+
+{{actionGitCommit}} muestra los archivos cambiados del repositorio del documento actual, con la rama.
+Arriba van los **Preparados** y abajo los **Cambios** sin preparar:
+
+- **Preparar**, **Quitar** y **Preparar todo** trabajan con los archivos elegidos. Doble clic en uno
+  lo abre.
+- Escribe el mensaje y pulsa **Confirmar** (o Ctrl+Intro) para hacer el commit de lo preparado.
+  **Corregir el último commit** lo reemplaza (`git commit --amend`).
+- **Actualizar** vuelve a leer el estado, aunque Edita ya lo hace al guardar y al volver a la ventana.
+
+El commit usa tu configuración de Git (nombre, correo, *hooks*). Si Git da un error, Edita lo muestra
+tal cual.
+
 ## Quién cambió cada línea (blame)
 
 Al final de la línea del cursor, en gris, Edita muestra quién la cambió por última vez y cuándo:

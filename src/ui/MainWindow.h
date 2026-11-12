@@ -95,6 +95,7 @@ class ProblemsPanel;
 class LocalHistory;
 class LocalHistoryPanel;
 class TaskOutputPanel;
+class GitCommitPanel;
 class TaskRunner;
 class FileBrowserPanel;
 class FunctionListPanel;
@@ -401,6 +402,13 @@ public:
     void rerunTask();
     TaskRunner* taskRunner() const { return _taskRunner; }
     TaskOutputPanel* taskOutputPanel() const { return _taskOutput; }
+    // Git desde el margen (fase 85): descartar o pasar al índice el bloque de la línea `line`
+    // (desde 0) del documento actual, y el panel Ver › Git
+    bool revertGitHunk(int line);
+    bool stageGitHunk(int line);
+    QString gitTopLevel() const;
+    void refreshGitCommitPanel();
+    GitCommitPanel* gitCommitPanel() const { return _gitCommit; }
     void stopCompare();
     CompareSession* compareSession() const { return _compare.get(); }
     GitStatus* gitStatus() const { return _gitStatus; }
@@ -590,6 +598,9 @@ private:
     void recordLocalHistory(const QString& path, bool beforeSaving);
     void connectLocalHistory();
     void connectTasks();
+    void connectGitCommit();
+    void showGitHunkMenu(int line, const QPoint& globalPos);
+    void reloadGitDecorations();
     void compareChanged();
     void applyTerminalStyle();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
@@ -871,6 +882,8 @@ private:
     ProblemsPanel* _problems = nullptr;
     LocalHistoryPanel* _localHistoryPanel = nullptr;
     TaskOutputPanel* _taskOutput = nullptr;
+    GitCommitPanel* _gitCommit = nullptr;
+    bool _gitCommitRefreshPending = false;
     TaskRunner* _taskRunner = nullptr;
     std::optional<tasks::Task> _lastTask;
     QMap<QString, std::vector<LspManager::Diagnostic>> _taskDiagnostics; // los errores de la última tarea

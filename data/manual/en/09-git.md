@@ -25,6 +25,34 @@ They have no shortcut; assign one in {{actionShortcutMapper}} or use the
 The marks also appear in the scroll bar and in the Document Map. Turn them off with **Changes
 since the last Git commit** (Margins page of {{actionPreferences}}).
 
+## Reverting or staging a block
+
+Click a mark in the margin to open the menu of that block:
+
+- **Revert This Change** puts the lines of the last commit back in the document. Only that block
+  changes, the file is not saved and {{actionUndo}} undoes it.
+- **Stage This Change** moves that block to the Git index (`git add` of a part of the file), to
+  include it in the next commit. What was already staged is kept. If the document has unsaved
+  changes, Edita asks whether to save it first, because what is staged is what is on disk. In a file
+  Git does not track yet, the whole file is staged.
+- **Compare with Git (HEAD)**, **Next Change** and **Previous Change**.
+
+The same, for the block of the cursor line, is in {{actionRevertGitChange}} and
+{{actionStageGitChange}}. UTF-16 files can only be staged whole.
+
+## The Git panel
+
+{{actionGitCommit}} shows the changed files of the repository of the current document, with the
+branch. The **Staged** files are at the top and the unstaged **Changes** below:
+
+- **Stage**, **Unstage** and **Stage All** work with the chosen files. Double click one to open it.
+- Write the message and press **Commit** (or Ctrl+Enter) to commit what is staged. **Amend the last
+  commit** replaces it (`git commit --amend`).
+- **Refresh** reads the state again, although Edita already does it when saving and when coming back
+  to the window.
+
+The commit uses your Git settings (name, email, hooks). If Git gives an error, Edita shows it as is.
+
 ## Who changed each line (blame)
 
 At the end of the line of the cursor, in gray, Edita shows who changed it last and when:

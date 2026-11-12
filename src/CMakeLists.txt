@@ -38,6 +38,8 @@ add_library(edita_core STATIC
     core/LocalHistory.h
     core/Tasks.cpp
     core/Tasks.h
+    core/GitHunks.cpp
+    core/GitHunks.h
     core/FuzzyMatch.cpp
     core/Macro.cpp
     core/CrashReport.cpp
@@ -215,6 +217,7 @@ add_library(edita_ui STATIC
     ui/LocalHistoryPanel.cpp
     ui/TaskOutputPanel.cpp
     ui/TaskRunner.cpp
+    ui/GitCommitPanel.cpp
     ui/Terminal.cpp
     ui/TerminalPanel.cpp
     ui/ScrollBarMarks.cpp

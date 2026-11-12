@@ -12,6 +12,7 @@
 #include <QHash>
 #include <QHelpEvent>
 #include <QProcess>
+#include <QMouseEvent>
 #include <QToolTip>
 
 namespace edita {
@@ -295,6 +296,22 @@ int GitChanges::marginLeft() const
 // El aviso con las líneas originales, al pasar el ratón por una marca
 bool GitChanges::eventFilter(QObject* watched, QEvent* event)
 {
+    if (event->type() == QEvent::MouseButtonPress && _view && watched == _view->viewport() && !_changes.empty()) {
+        const auto* mouse = static_cast<QMouseEvent*>(event);
+        const int left = marginLeft();
+        const int width = static_cast<int>(_view->send(SCI_GETMARGINWIDTHN, kMargin));
+        const int x = static_cast<int>(mouse->position().x());
+        if (mouse->button() == Qt::LeftButton && width > 0 && x >= left && x < left + width) {
+            const sptr_t pos = _view->send(SCI_POSITIONFROMPOINT, static_cast<uptr_t>(left + width + 1),
+                                           static_cast<sptr_t>(mouse->position().y()));
+            const int line = static_cast<int>(_view->send(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pos)));
+            if (changeAt(line)) {
+                emit hunkMenuRequested(line, mouse->globalPosition().toPoint());
+                return true;
+            }
+        }
+        return false;
+    }
     if (event->type() != QEvent::ToolTip || !_view || watched != _view->viewport() || _changes.empty())
         return false;
     auto* help = static_cast<QHelpEvent*>(event);

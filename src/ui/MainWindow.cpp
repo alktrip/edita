@@ -60,6 +60,8 @@
 #include "ui/ProblemsPanel.h"
 #include "ui/LocalHistoryPanel.h"
 #include "ui/TaskOutputPanel.h"
+#include "ui/GitCommitPanel.h"
+#include "core/GitHunks.h"
 #include "ui/TaskRunner.h"
 #include "ui/CompareSession.h"
 #include "ui/GitBlame.h"
@@ -608,6 +610,10 @@ void MainWindow::connectPane(EditorPane* pane)
     // Git en el margen y marcas en la barra de desplazamiento (no existen en N++)
     const int index = pane == _subPane ? 1 : 0;
     _git[index] = new GitChanges(pane->editor());
+    connect(_git[index], &GitChanges::hunkMenuRequested, this, [this, pane](int line, const QPoint& globalPos) {
+        setActivePane(pane);
+        showGitHunkMenu(line, globalPos);
+    });
     _blame[index] = new GitBlame(pane->editor());
     _snippetControllers[index] = new SnippetController(pane->editor(), *_snippets);
     // La bombilla de las acciones de código y las pistas, un momento después de moverse o editar
@@ -1474,7 +1480,7 @@ void MainWindow::createMenus()
     const std::pair<const char*, QString> panelEntries[] = {
         {"documentMap", tr("&Document Map")}, {"documentList", tr("Document &List")},
         {"functionList", tr("&Function List")}, {"folderAsWorkspace", tr("Folder as Wor&kspace")},
-        {"problems", tr("P&roblems")},
+        {"problems", tr("P&roblems")}, {"gitCommit", tr("G&it")},
     };
     for (const auto& [name, text] : panelEntries) {
         QDockWidget* dock = panelDock(QString::fromLatin1(name));
@@ -2222,6 +2228,7 @@ void MainWindow::createPanels()
     _history = std::make_unique<LocalHistory>(LocalHistory::defaultRoot());
     _localHistoryPanel = new LocalHistoryPanel;
     _taskOutput = new TaskOutputPanel;
+    _gitCommit = new GitCommitPanel;
     _taskRunner = new TaskRunner(this);
     _charPanel = new CharacterPanel;
     _clipboardPanel = new ClipboardHistoryPanel;
@@ -2237,6 +2244,7 @@ void MainWindow::createPanels()
         {_problems, "problems", tr("Problems"), Qt::BottomDockWidgetArea},           // no existe en N++
         {_localHistoryPanel, "localHistory", tr("Local History"), Qt::RightDockWidgetArea}, // no existe en N++
         {_taskOutput, "taskOutput", tr("Task Output"), Qt::BottomDockWidgetArea},           // no existe en N++
+        {_gitCommit, "gitCommit", tr("Git"), Qt::LeftDockWidgetArea},                       // no existe en N++
         {_charPanel, "charPanel", tr("Character Panel"), Qt::RightDockWidgetArea},
         {_clipboardPanel, "clipboardHistory", tr("Clipboard History"), Qt::RightDockWidgetArea},
     };
@@ -2336,6 +2344,7 @@ void MainWindow::createPanels()
     connect(_problems, &ProblemsPanel::activated, this, &MainWindow::goToLspPosition);
     connectLocalHistory();
     connectTasks();
+    connectGitCommit();
     // Git en el explorador: el estado de cada archivo, al cambiar algo
     _gitStatus = new GitStatus(this);
     _gitStatusTimer = new QTimer(this);
@@ -2554,6 +2563,243 @@ void MainWindow::connectTasks()
     connect(_taskOutput, &TaskOutputPanel::rerunRequested, this, &MainWindow::rerunTask);
     connect(_taskOutput, &TaskOutputPanel::activated, this, [this](const tasks::Problem& p) {
         goToLocation(p.file, std::max(0, p.line - 1), std::max(0, p.column - 1), lsp::PositionEncoding::Utf8);
+    });
+}
+
+namespace {
+
+struct GitResult
+{
+    int code = -1;
+    QByteArray out;
+    QString err;
+};
+
+// git en `dir`, esperando a que termine (las órdenes de un bloque o de un commit son rápidas)
+GitResult runGit(const QString& dir, const QStringList& args, const QByteArray& input = {})
+{
+    GitResult r;
+    QProcess git;
+    git.setWorkingDirectory(dir);
+    git.start(QStringLiteral("git"), args);
+    if (!git.waitForStarted(5000)) {
+        r.err = QCoreApplication::translate("edita::MainWindow", "Git is not installed.");
+        return r;
+    }
+    if (!input.isNull())
+        git.write(input);
+    git.closeWriteChannel();
+    if (!git.waitForFinished(30000)) {
+        git.kill();
+        git.waitForFinished(1000);
+        r.err = QStringLiteral("git %1: timeout").arg(args.value(0));
+        return r;
+    }
+    r.code = git.exitStatus() == QProcess::NormalExit ? git.exitCode() : -1;
+    r.out = git.readAllStandardOutput();
+    r.err = QString::fromUtf8(git.readAllStandardError()).trimmed();
+    return r;
+}
+
+} // namespace
+
+QString MainWindow::gitTopLevel() const
+{
+    QString dir;
+    if (const Buffer* buf = _documents.buffer(currentBuffer()); buf && !buf->isUntitled())
+        dir = QFileInfo(buf->filePath()).absolutePath();
+    else if (_folderPanel && !_folderPanel->roots().isEmpty())
+        dir = _folderPanel->roots().first();
+    if (dir.isEmpty() || !QFileInfo(dir).isDir())
+        return {};
+    const GitResult r = runGit(dir, {QStringLiteral("rev-parse"), QStringLiteral("--show-toplevel")});
+    return r.code == 0 ? QDir::cleanPath(QString::fromUtf8(r.out).trimmed()) : QString();
+}
+
+void MainWindow::refreshGitCommitPanel()
+{
+    if (!_gitCommit)
+        return;
+    const QString top = gitTopLevel();
+    if (top.isEmpty()) {
+        _gitCommit->setRepository({}, {}, {});
+        return;
+    }
+    const GitResult status = runGit(top, {QStringLiteral("status"), QStringLiteral("--porcelain=v1"), QStringLiteral("-z"),
+                                          QStringLiteral("--untracked-files=all")});
+    const GitResult branch = runGit(top, {QStringLiteral("branch"), QStringLiteral("--show-current")});
+    _gitCommit->setRepository(top, QString::fromUtf8(branch.out).trimmed(),
+                              status.code == 0 ? GitCommitPanel::parseStatus(status.out) : QList<GitCommitPanel::Entry>());
+}
+
+void MainWindow::reloadGitDecorations()
+{
+    GitChanges::clearCache();
+    for (const QPointer<GitChanges>& git : _git) {
+        if (git)
+            git->reload();
+    }
+    for (const QPointer<GitBlame>& blame : _blame) {
+        if (blame)
+            blame->reload();
+    }
+    scheduleGitStatus();
+    refreshGitCommitPanel();
+}
+
+bool MainWindow::revertGitHunk(int line)
+{
+    GitChanges* git = gitChanges(_activePane);
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    if (!git || !buf || !git->base())
+        return false;
+    const LineChange* change = githunks::hunkAt(git->changes(), line);
+    if (!change)
+        return false;
+    if (buf->isReadOnly()) {
+        _prompter->warn(this, tr("Revert Git Change"), tr("The document is read-only."));
+        return false;
+    }
+    EditorView* view = editor();
+    const std::string current = view->text();
+    const std::string reverted = githunks::applyHunk(current, *git->base(), githunks::inverted(*change));
+    const githunks::Span span = githunks::changedSpan(current, reverted);
+    // Solo lo que cambia, en un paso de deshacer: los marcadores y el plegado de lo demás se quedan
+    view->sci(SCI_BEGINUNDOACTION);
+    view->sci(SCI_SETTARGETRANGE, span.start, static_cast<sptr_t>(span.endA));
+    view->send(SCI_REPLACETARGET, span.endB - span.start, reinterpret_cast<sptr_t>(reverted.data() + span.start));
+    view->sci(SCI_ENDUNDOACTION);
+    view->sci(SCI_GOTOPOS, static_cast<uptr_t>(view->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(std::max(0, change->line)))));
+    git->reload();
+    return true;
+}
+
+bool MainWindow::stageGitHunk(int line)
+{
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    if (!buf || buf->isUntitled())
+        return false;
+    const QString title = tr("Stage Git Change");
+    if (buf->encoding().isUtf16()) {
+        _prompter->warn(this, title, tr("Changes of UTF-16 files cannot be staged one by one. Stage the whole file from View › Git."));
+        return false;
+    }
+    if (buf->isDirty()) {
+        // Lo que va al índice es lo del disco
+        if (!_prompter->confirm(this, title, tr("Save \"%1\" before staging the change?").arg(buf->displayName()))
+            || !saveBuffer(currentBuffer()))
+            return false;
+        buf = _documents.buffer(currentBuffer());
+    }
+    const QString path = buf->filePath();
+    const QString top = gitTopLevel();
+    if (top.isEmpty())
+        return false;
+    const QString rel = QDir(top).relativeFilePath(path);
+    const TextEncoding encoding = buf->encoding();
+    const std::string current = editor()->text();
+    // Contra el índice, no contra HEAD: lo que ya esté en el stage se conserva
+    const GitResult index = runGit(top, {QStringLiteral("show"), QStringLiteral(":") + rel});
+    if (index.code != 0) {
+        // Un archivo nuevo: entero
+        const GitResult add = runGit(top, {QStringLiteral("add"), QStringLiteral("--"), rel});
+        if (add.code != 0) {
+            _prompter->warn(this, title, add.err);
+            return false;
+        }
+        statusBar()->showMessage(tr("Staged the new file %1").arg(rel), 6000);
+        reloadGitDecorations();
+        return true;
+    }
+    const bool hadBom = index.out.startsWith("\xEF\xBB\xBF");
+    std::string indexText = decodeAll(std::string_view(index.out.constData(), static_cast<std::size_t>(index.out.size())), encoding);
+    if (indexText.starts_with("\xEF\xBB\xBF"))
+        indexText.erase(0, 3);
+    const std::vector<LineChange> changes = diffLines(splitLines(indexText), splitLines(current));
+    const LineChange* change = githunks::hunkAt(changes, line);
+    if (!change) {
+        statusBar()->showMessage(tr("This change is already staged."), 6000);
+        return false;
+    }
+    const std::string staged = githunks::applyHunk(indexText, current, *change);
+    QByteArray bytes = QByteArray::fromStdString(encodeAll(staged, encoding));
+    if (hadBom && !bytes.startsWith("\xEF\xBB\xBF"))
+        bytes.prepend("\xEF\xBB\xBF");
+    QString mode = QStringLiteral("100644");
+    const GitResult files = runGit(top, {QStringLiteral("ls-files"), QStringLiteral("-s"), QStringLiteral("--"), rel});
+    if (files.code == 0 && !files.out.isEmpty())
+        mode = QString::fromUtf8(files.out).section(QLatin1Char(' '), 0, 0);
+    const GitResult blob = runGit(top, {QStringLiteral("hash-object"), QStringLiteral("-w"), QStringLiteral("--stdin")}, bytes);
+    const QString sha = QString::fromUtf8(blob.out).trimmed();
+    const GitResult update = blob.code == 0 ? runGit(top, {QStringLiteral("update-index"), QStringLiteral("--cacheinfo"),
+                                                           QStringLiteral("%1,%2,%3").arg(mode, sha, rel)})
+                                            : blob;
+    if (update.code != 0) {
+        _prompter->warn(this, title, update.err);
+        return false;
+    }
+    statusBar()->showMessage(tr("Staged the change at line %1 of %2").arg(change->line + 1).arg(rel), 6000);
+    reloadGitDecorations();
+    return true;
+}
+
+void MainWindow::showGitHunkMenu(int line, const QPoint& globalPos)
+{
+    EditorView* view = editor();
+    view->sci(SCI_GOTOPOS, static_cast<uptr_t>(view->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line))));
+    QMenu menu(this);
+    menu.setObjectName(QStringLiteral("gitHunkMenu"));
+    menu.addAction(tr("&Revert This Change"), this, [this, line] { revertGitHunk(line); });
+    menu.addAction(tr("&Stage This Change"), this, [this, line] { stageGitHunk(line); });
+    menu.addAction(tr("&Compare with Git (HEAD)"), this, [this] { startCompare(CompareWith::GitHead); });
+    menu.addSeparator();
+    menu.addAction(tr("&Next Change"), this, [this] { goToGitChange(true); });
+    menu.addAction(tr("&Previous Change"), this, [this] { goToGitChange(false); });
+    menu.exec(globalPos);
+}
+
+void MainWindow::connectGitCommit()
+{
+    connect(_gitCommit, &GitCommitPanel::refreshRequested, this, &MainWindow::refreshGitCommitPanel);
+    auto run = [this](const QStringList& args, const QString& title) {
+        const QString top = _gitCommit->repository();
+        if (top.isEmpty())
+            return;
+        const GitResult r = runGit(top, args);
+        if (r.code != 0)
+            _prompter->warn(this, title, r.err);
+        reloadGitDecorations();
+    };
+    connect(_gitCommit, &GitCommitPanel::stageRequested, this, [run](const QStringList& paths) {
+        if (!paths.isEmpty())
+            run(QStringList{QStringLiteral("add"), QStringLiteral("--")} + paths, tr("Stage"));
+    });
+    connect(_gitCommit, &GitCommitPanel::unstageRequested, this, [run](const QStringList& paths) {
+        if (!paths.isEmpty())
+            run(QStringList{QStringLiteral("reset"), QStringLiteral("-q"), QStringLiteral("HEAD"), QStringLiteral("--")} + paths,
+                tr("Unstage"));
+    });
+    connect(_gitCommit, &GitCommitPanel::openRequested, this, [this](const QString& rel) {
+        const QString path = QDir(_gitCommit->repository()).filePath(rel);
+        if (QFileInfo(path).isFile())
+            openFile(path);
+    });
+    connect(_gitCommit, &GitCommitPanel::commitRequested, this, [this](const QString& message, bool amend) {
+        const QString top = _gitCommit->repository();
+        if (top.isEmpty() || message.trimmed().isEmpty())
+            return;
+        QStringList args{QStringLiteral("commit"), QStringLiteral("-q"), QStringLiteral("-F"), QStringLiteral("-")};
+        if (amend)
+            args << QStringLiteral("--amend");
+        const GitResult r = runGit(top, args, message.toUtf8());
+        if (r.code != 0) {
+            _prompter->warn(this, tr("Commit"), r.err.isEmpty() ? QString::fromUtf8(r.out) : r.err);
+            return;
+        }
+        _gitCommit->clearMessage();
+        const GitResult head = runGit(top, {QStringLiteral("log"), QStringLiteral("-1"), QStringLiteral("--format=%h %s")});
+        statusBar()->showMessage(tr("Committed %1").arg(QString::fromUtf8(head.out).trimmed()), 8000);
+        reloadGitDecorations();
     });
 }
 
@@ -3378,6 +3624,14 @@ void MainWindow::updatePanels()
     }
     if (shown("localHistory"))
         refreshLocalHistory();
+    if (shown("gitCommit") && !_gitCommitRefreshPending) {
+        // git status puede tardar en un repositorio grande: una vez cada poco
+        _gitCommitRefreshPending = true;
+        QTimer::singleShot(250, this, [this] {
+            _gitCommitRefreshPending = false;
+            refreshGitCommitPanel();
+        });
+    }
     // Funciones del documento activo
     if (shown("functionList") && buf)
         _functionListPanel->setSource(editor(), buf->language(), buf->userLanguage(), buf->displayName());
@@ -3991,6 +4245,11 @@ void MainWindow::createSearchMenu()
     changes->addSeparator();
     addIn(changes, tr("Go to Next &Git Change"), "actionNextGitChange", QKeySequence(), [this] { goToGitChange(true); });
     addIn(changes, tr("Go to Previous G&it Change"), "actionPreviousGitChange", QKeySequence(), [this] { goToGitChange(false); });
+    auto cursorLine = [this] {
+        return static_cast<int>(editor()->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(editor()->sci(SCI_GETCURRENTPOS))));
+    };
+    addIn(changes, tr("&Revert Git Change"), "actionRevertGitChange", QKeySequence(), [this, cursorLine] { revertGitHunk(cursorLine()); });
+    addIn(changes, tr("S&tage Git Change"), "actionStageGitChange", QKeySequence(), [this, cursorLine] { stageGitHunk(cursorLine()); });
     changes->addSeparator();
     QAction* blameAction = addIn(changes, tr("Show Git &Blame"), "actionGitBlame", QKeySequence(), [this] {
         const bool on = findChild<QAction*>(QStringLiteral("actionGitBlame"))->isChecked();
