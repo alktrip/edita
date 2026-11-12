@@ -96,6 +96,8 @@ private slots:
         QVERIFY(uc::compareVersions("0.9.0", "0.9.1-beta.1") < 0);
         QVERIFY(uc::compareVersions("0.9.0-alpha.3", "0.9.0-beta.1") < 0);
         QVERIFY(uc::compareVersions("0.9.0-rc.1", "0.9.0-beta.5") > 0);
+        QVERIFY(uc::compareVersions("0.9.0-beta.11", "1.0.0-rc.1") < 0); // de la última beta a la rc
+        QVERIFY(uc::compareVersions("1.0.0-rc.1", "1.0.0") < 0);
         QVERIFY(uc::compareVersions("1.0.0", "0.10.0") > 0);
         QVERIFY(uc::compareVersions("0.10.0", "0.9.9") > 0); // números, no texto
         QCOMPARE(uc::compareVersions("v0.9.0-beta.2", "0.9.0-beta.2"), 0);
