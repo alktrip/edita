@@ -121,7 +121,8 @@ at the bottom of the page or in {{actionPreferences}} (General page).
 - {{actionAbout}} shows the version of Edita.
 - {{actionCheckForUpdates}} asks whether there is a new version. Edita also checks at startup:
   every day in a beta and every 15 days in a stable version (change it in {{actionPreferences}},
-  MISC. page). If there is one, it says so in the notification bar, with a button to go to its
+  MISC. page). A stable version only tells you about stable versions; a beta also tells you about
+  new betas. If there is one, it says so in the notification bar, with a button to go to its
   download page and another to skip that version. Edita does not update itself: it only asks
   GitHub which is the latest version, sending no data other than the version you use.
 - {{actionReportProblem}} opens the GitHub form to report a bug, with your version and your system

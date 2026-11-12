@@ -125,7 +125,8 @@ que está al pie de la página o en {{actionPreferences}} (página General).
 - {{actionAbout}} muestra la versión de Edita.
 - {{actionCheckForUpdates}} pregunta si hay una versión nueva. Edita también lo comprueba al
   arrancar: cada día en una beta y cada 15 días en una versión estable (se cambia en
-  {{actionPreferences}}, página Varios). Si la hay, lo dice en la barra de avisos, con un botón
+  {{actionPreferences}}, página Varios). Una versión estable solo avisa de versiones estables; una
+  beta avisa también de las betas nuevas. Si la hay, lo dice en la barra de avisos, con un botón
   para ir a su página de descarga y otro para omitir esa versión. Edita no se actualiza solo: solo
   pregunta a GitHub cuál es la última versión, sin enviar más dato que la versión que usas.
 - {{actionReportProblem}} abre el formulario para informar de un error en GitHub, con tu versión

@@ -87,17 +87,19 @@ int compareVersions(const QString& a, const QString& b)
     return comparePrerelease(pa->prerelease, pb->prerelease);
 }
 
-bool parseLatestRelease(const QByteArray& json, Release& release, QString* error)
+namespace {
+
+QString notAVersion()
 {
-    QJsonParseError parseError;
-    const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
-    const QJsonObject o = doc.object();
+    return QCoreApplication::translate("UpdateCheck", "The answer is not a version of Edita");
+}
+
+// Un elemento de la respuesta; false si su etiqueta no es una versión
+bool readRelease(const QJsonObject& o, Release& release)
+{
     QString tag = o.value(QStringLiteral("tag_name")).toString();
-    if (doc.isNull() || !doc.isObject() || !isValidVersion(tag)) {
-        if (error)
-            *error = QCoreApplication::translate("UpdateCheck", "The answer is not a version of Edita");
+    if (!isValidVersion(tag))
         return false;
-    }
     if (tag.startsWith(QLatin1Char('v')) || tag.startsWith(QLatin1Char('V')))
         tag.remove(0, 1);
     release.version = tag;
@@ -109,6 +111,53 @@ bool parseLatestRelease(const QByteArray& json, Release& release, QString* error
             release.appImage = QUrl(asset.value(QStringLiteral("browser_download_url")).toString());
             break;
         }
+    }
+    return true;
+}
+
+bool isPrerelease(const QJsonObject& o, const Release& release)
+{
+    return o.value(QStringLiteral("prerelease")).toBool() || release.version.contains(QLatin1Char('-'));
+}
+
+} // namespace
+
+bool parseLatestRelease(const QByteArray& json, Release& release, QString* error)
+{
+    QJsonParseError parseError;
+    const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
+    if (doc.isNull() || !doc.isObject() || !readRelease(doc.object(), release)) {
+        if (error)
+            *error = notAVersion();
+        return false;
+    }
+    return true;
+}
+
+bool parseReleases(const QByteArray& json, bool includePrereleases, Release& release, QString* error)
+{
+    QJsonParseError parseError;
+    const QJsonDocument doc = QJsonDocument::fromJson(json, &parseError);
+    QJsonArray list;
+    if (doc.isArray()) {
+        list = doc.array();
+    } else if (doc.isObject() && isValidVersion(doc.object().value(QStringLiteral("tag_name")).toString())) {
+        list.append(doc.object());
+    } else {
+        if (error)
+            *error = notAVersion();
+        return false;
+    }
+    release = {};
+    for (const QJsonValue& v : list) {
+        const QJsonObject o = v.toObject();
+        Release candidate;
+        if (o.value(QStringLiteral("draft")).toBool() || !readRelease(o, candidate))
+            continue;
+        if (!includePrereleases && isPrerelease(o, candidate))
+            continue;
+        if (release.version.isEmpty() || compareVersions(candidate.version, release.version) > 0)
+            release = candidate;
     }
     return true;
 }
@@ -147,11 +196,13 @@ QUrl releaseUrl(const QString& homepage)
         return {};
     if (!env.isEmpty())
         return QUrl(env).scheme().isEmpty() ? QUrl::fromLocalFile(env) : QUrl(env);
-    // https://github.com/<dueño>/<repo> → https://api.github.com/repos/<dueño>/<repo>/releases/latest
+    // https://github.com/<dueño>/<repo> → https://api.github.com/repos/<dueño>/<repo>/releases.
+    // No releases/latest: GitHub da ahí la última publicada aunque sea una beta, y una
+    // versión estable tiene que poder saltársela y ver la estable anterior
     const QUrl home(homepage);
     if (home.host() != QLatin1String("github.com"))
         return {};
-    return QUrl(QStringLiteral("https://api.github.com/repos") + home.path() + QStringLiteral("/releases/latest"));
+    return QUrl(QStringLiteral("https://api.github.com/repos") + home.path() + QStringLiteral("/releases?per_page=30"));
 }
 
 } // namespace edita::update_check

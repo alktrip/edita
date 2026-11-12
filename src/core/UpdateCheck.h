@@ -27,7 +27,7 @@ namespace update_check {
 int compareVersions(const QString& a, const QString& b);
 bool isValidVersion(const QString& version);
 
-// La última versión publicada (GET /repos/<dueño>/<repo>/releases/latest)
+// Una versión publicada (un elemento de GET /repos/<dueño>/<repo>/releases)
 struct Release
 {
     QString version;  // sin la «v»
@@ -35,6 +35,12 @@ struct Release
     QUrl appImage;    // el AppImage de x86_64, si lo tiene
 };
 bool parseLatestRelease(const QByteArray& json, Release& release, QString* error = nullptr);
+// Fase 79: la más nueva de la lista de versiones (o de un solo objeto, como el de
+// releases/latest). Sin `includePrereleases` (una versión estable de Edita) no cuentan las
+// betas: ni las que tienen etapa en el número (1.1.0-beta.1) ni las marcadas «prerelease».
+// Los borradores y las etiquetas que no son versiones («continuous») nunca. Si no queda
+// ninguna, `release.version` queda vacía: no hay nada que avisar
+bool parseReleases(const QByteArray& json, bool includePrereleases, Release& release, QString* error = nullptr);
 
 // El estado (lo que el usuario elige, comprobar al arrancar y cada cuántos días, está en
 // Preferences: autoUpdateMode e intervalDays del mismo <GUIConfig>)
@@ -50,7 +56,7 @@ bool isDue(bool onStartup, const State& state, const QDate& today);
 // Tras comprobar: la próxima fecha (launchUpdater: hoy + intervalDays)
 void scheduleNext(State& state, int intervalDays, const QDate& today);
 
-// De dónde: la API de GitHub, o EDITA_UPDATE_URL (una ruta local sirve para las pruebas;
+// De dónde: la lista de versiones de la API de GitHub (las 30 más recientes), o EDITA_UPDATE_URL (una ruta local sirve para las pruebas;
 // "none" lo desactiva). Vacía = desactivado
 QUrl releaseUrl(const QString& homepage);
 

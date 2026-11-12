@@ -1854,7 +1854,7 @@ void MainWindow::updateCheckFinished(QNetworkReply* reply, bool manual)
     update_check::Release release;
     QString error = reply->error() == QNetworkReply::NoError ? QString() : reply->errorString();
     if (error.isEmpty())
-        update_check::parseLatestRelease(reply->readAll(), release, &error);
+        update_check::parseReleases(reply->readAll(), kAppPrerelease, release, &error); // una estable no avisa de betas
     if (!error.isEmpty()) {
         if (manual) // al arrancar, sin red no se molesta a nadie
             _prompter->warn(this, tr("Check for Updates"), tr("Could not check for a new version: %1").arg(error));

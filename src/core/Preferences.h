@@ -342,9 +342,9 @@ struct Preferences
                                         "telnet:// gopher:// ssh:// sftp:// smb:// skype: snmp:// spotify: steam:// sms: "
                                         "slack:// chrome:// bitcoin:");
     // Avisar de las versiones nuevas (AutoUpdateOptions de N++): <GUIConfig name="noUpdate"
-    // autoUpdateMode="1" intervalDays="15">. En una beta, cada día
+    // autoUpdateMode="1" intervalDays="15">. En una beta, cada día (defaultUpdateIntervalDays)
     bool updateOnStartup = true;
-    int updateIntervalDays = kAppPrerelease ? 1 : 15;
+    int updateIntervalDays = kAppPrerelease ? 1 : 15; // defaultUpdateIntervalDays(kAppPrerelease)
 
     bool detectsChanges() const { return fileAutoDetection != FileAutoDetection::Disabled; }
     bool detectsAllFiles() const { return (fileAutoDetection & FileAutoDetection::AllFiles) != 0; }
@@ -362,6 +362,21 @@ void storePreferences(ConfigXml& config, const Preferences& prefs);
 // edgeMultiColumnPos: "80 120" ↔ {80, 120} (ordenadas y sin repetir)
 QList<int> parseEdgeColumns(const QString& text);
 QString edgeColumnsToText(const QList<int>& columns);
+
+// Cada cuántos días se buscan versiones nuevas por omisión: en una beta, cada día; en una
+// versión estable, cada 15, como N++
+constexpr int defaultUpdateIntervalDays(bool prerelease)
+{
+    return prerelease ? 1 : 15;
+}
+// El intervalo guardado al pasar de una beta a una versión estable o al revés: si era el de
+// la otra, pasa al de esta; si el usuario lo había cambiado, se queda
+constexpr int migratedUpdateInterval(int stored, bool writtenByPrerelease, bool prerelease)
+{
+    return writtenByPrerelease != prerelease && stored == defaultUpdateIntervalDays(writtenByPrerelease)
+        ? defaultUpdateIntervalDays(prerelease)
+        : stored;
+}
 
 // Texto de "Auto-detection" de N++ ("yes", "auto", "Update2End", "yesOld"…) y al revés
 int fileAutoDetectionFromText(const QString& text);

@@ -366,6 +366,10 @@ Preferences loadPreferences(const ConfigXml& config)
     r.intAttr("noUpdate", "autoUpdateMode", updateMode, 0, 2);
     p.updateOnStartup = updateMode != 0;
     r.intAttr("noUpdate", "intervalDays", p.updateIntervalDays, 0, 365);
+    // Fase 79: quién lo escribió (sin el atributo, una de las betas 1-11)
+    p.updateIntervalDays = migratedUpdateInterval(p.updateIntervalDays,
+                                                  r.get("noUpdate", "editaPrerelease") != QLatin1String("no"),
+                                                  kAppPrerelease);
     r.boolText("EditaQtFileDialog", p.qtFileDialog);
     r.boolText("EditaGitMargin", p.gitMargin);
     r.boolText("EditaScrollBarMarks", p.scrollBarMarks);
@@ -545,6 +549,7 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.attr("searchEngine", "searchEngineCustom", p.searchEngineCustom);
     w.attr("noUpdate", "autoUpdateMode", p.updateOnStartup ? 1 : 0);
     w.attr("noUpdate", "intervalDays", p.updateIntervalDays);
+    w.attr("noUpdate", "editaPrerelease", kAppPrerelease);
     w.text("EditaQtFileDialog", yesNo(p.qtFileDialog));
     w.text("EditaGitMargin", yesNo(p.gitMargin));
     w.text("EditaScrollBarMarks", yesNo(p.scrollBarMarks));
