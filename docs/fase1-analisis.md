@@ -357,6 +357,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 81 — Pulido de la interfaz | `actionGoToDefinition` en Alt+F12 (F12 era ambiguo con Post-It), letras de acceso de los menús, plural de «time(s)» en RunMacroDlg, `modeColumn` en FindReplaceDialog, enlace en Acerca de; `tst_uipolish` | ✅ [fase81.md](fase81.md) |
 | 82 — La API de plugins de la 1.x | `Notepad_plus_msgs.h` (números estables, `_DEPRECATED`, mensaje desconocido → 0, `NPPM_GETNPPVERSION`); promesa en `docs/plugins.md` y `edita_plugin.h`; `tst_pluginapi` | ✅ [fase82.md](fase82.md) |
 | 83 — Historial local | `Notepad_plus::doSave` y `BackupFeature` (`.bak` simple o detallado, sin interfaz); `core/LocalHistory`, `LocalHistoryPanel`, `compareWithBytes`; `tst_localhistory` | ✅ [fase83.md](fase83.md) |
+| 84 — Tareas del proyecto | `RunDlg` (F5, sin salida) y el plugin NppExec (consola y filtros a mano); `core/Tasks`, `ui/TaskRunner`, `ui/TaskOutputPanel`, diagnósticos de tareas en Problemas; `tst_tasks` | ✅ [fase84.md](fase84.md) |
 
 ---
 

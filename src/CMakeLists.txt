@@ -36,6 +36,8 @@ add_library(edita_core STATIC
     core/LineDiff.cpp
     core/LocalHistory.cpp
     core/LocalHistory.h
+    core/Tasks.cpp
+    core/Tasks.h
     core/FuzzyMatch.cpp
     core/Macro.cpp
     core/CrashReport.cpp
@@ -211,6 +213,8 @@ add_library(edita_ui STATIC
     ui/ManualWindow.cpp
     ui/ProblemsPanel.cpp
     ui/LocalHistoryPanel.cpp
+    ui/TaskOutputPanel.cpp
+    ui/TaskRunner.cpp
     ui/Terminal.cpp
     ui/TerminalPanel.cpp
     ui/ScrollBarMarks.cpp

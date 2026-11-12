@@ -74,3 +74,31 @@ eliminarlas.
 
 Las órdenes se guardan en la sección `<UserDefinedCommands>` de `~/.config/edita/shortcuts.xml`,
 como en Notepad++.
+
+## Tareas del proyecto
+
+{{actionRunTask}} muestra lo que se puede compilar, probar o ejecutar en el proyecto del documento
+actual: la carpeta más cercana, hacia arriba, con alguno de estos archivos. Si el documento no tiene
+archivo, se usa la primera carpeta del Explorador de carpetas.
+
+| Archivo | Tareas |
+|---|---|
+| `Makefile` | `make` y `make objetivo` para cada objetivo |
+| `CMakeLists.txt` | Configurar (si falta la carpeta `build`), `cmake --build` y `ctest` |
+| `package.json` | Cada script, con npm, pnpm, yarn o bun según el archivo de bloqueo |
+| `Cargo.toml` | `cargo build`, `test`, `run`, `check` y `clippy` |
+| `go.mod` | `go build`, `test`, `vet` y `run` |
+| `pyproject.toml`, `pytest.ini`, `setup.py`… | `python3 -m pytest` |
+| `meson.build` | Configurar, `meson compile` y `meson test` |
+| `justfile` | Cada receta |
+
+La tarea se ejecuta con `/bin/sh` en la carpeta del proyecto, y su salida aparece en el panel
+{{actionTaskOutput}}. Los errores y avisos que reconoce Edita salen subrayados: doble clic en uno
+abre el archivo en esa línea. También aparecen en el panel Problemas (Ver › Problemas) junto a los
+del [servidor de lenguaje](08-language-servers.md), y en el contador de la barra de estado. Edita
+reconoce los mensajes de GCC, Clang, Go, rustc, TypeScript (`tsc`), las trazas de Python y pytest, y
+los de cualquier herramienta que escriba `archivo:línea:columna: mensaje`.
+
+{{actionRunLastTask}} repite la última tarea, y {{actionStopTask}} la detiene junto con todo lo que
+haya lanzado. En el panel hay los mismos botones. Edita no guarda los documentos antes de ejecutar
+una tarea: guárdalos antes con {{actionSaveAll}} si la tarea los usa.

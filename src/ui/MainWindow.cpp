@@ -59,6 +59,8 @@
 #include "ui/ManualWindow.h"
 #include "ui/ProblemsPanel.h"
 #include "ui/LocalHistoryPanel.h"
+#include "ui/TaskOutputPanel.h"
+#include "ui/TaskRunner.h"
 #include "ui/CompareSession.h"
 #include "ui/GitBlame.h"
 #include "ui/GitStatus.h"
@@ -117,6 +119,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QKeySequence>
+#include <QLabel>
 #include <QLocale>
 #include <QMenu>
 #include <QMenuBar>
@@ -2218,6 +2221,8 @@ void MainWindow::createPanels()
     _problems = new ProblemsPanel;
     _history = std::make_unique<LocalHistory>(LocalHistory::defaultRoot());
     _localHistoryPanel = new LocalHistoryPanel;
+    _taskOutput = new TaskOutputPanel;
+    _taskRunner = new TaskRunner(this);
     _charPanel = new CharacterPanel;
     _clipboardPanel = new ClipboardHistoryPanel;
     // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
@@ -2231,6 +2236,7 @@ void MainWindow::createPanels()
         {_terminal, "terminal", tr("Terminal"), Qt::BottomDockWidgetArea},           // no existe en N++
         {_problems, "problems", tr("Problems"), Qt::BottomDockWidgetArea},           // no existe en N++
         {_localHistoryPanel, "localHistory", tr("Local History"), Qt::RightDockWidgetArea}, // no existe en N++
+        {_taskOutput, "taskOutput", tr("Task Output"), Qt::BottomDockWidgetArea},           // no existe en N++
         {_charPanel, "charPanel", tr("Character Panel"), Qt::RightDockWidgetArea},
         {_clipboardPanel, "clipboardHistory", tr("Clipboard History"), Qt::RightDockWidgetArea},
     };
@@ -2329,6 +2335,7 @@ void MainWindow::createPanels()
     connect(_folderPanel, &FileBrowserPanel::openTerminal, this, [this](const QString& dir) { openTerminal(dir); });
     connect(_problems, &ProblemsPanel::activated, this, &MainWindow::goToLspPosition);
     connectLocalHistory();
+    connectTasks();
     // Git en el explorador: el estado de cada archivo, al cambiar algo
     _gitStatus = new GitStatus(this);
     _gitStatusTimer = new QTimer(this);
@@ -2448,6 +2455,105 @@ void MainWindow::connectLocalHistory()
             return;
         _history->removeVersion(_localHistoryPanel->file(), v);
         refreshLocalHistory();
+    });
+}
+
+QString MainWindow::taskRoot() const
+{
+    // El proyecto del documento actual; sin archivo, la primera carpeta del explorador
+    if (const Buffer* buf = _documents.buffer(currentBuffer()); buf && !buf->isUntitled())
+        return tasks::findProjectRoot(buf->filePath());
+    if (_folderPanel) {
+        for (const QString& root : _folderPanel->roots()) {
+            if (const QString found = tasks::findProjectRoot(root); !found.isEmpty())
+                return found;
+        }
+    }
+    return {};
+}
+
+void MainWindow::pickTask()
+{
+    const QString root = taskRoot();
+    const QList<tasks::Task> found = tasks::detectTasks(root);
+    if (found.isEmpty()) {
+        _prompter->inform(this, tr("Run Task"),
+                          root.isEmpty() ? tr("The current document is not in a project folder.")
+                                         : tr("No tasks found in %1 (Makefile, CMakeLists.txt, package.json, Cargo.toml, "
+                                              "go.mod, pyproject.toml, meson.build or justfile).")
+                                               .arg(QDir::toNativeSeparators(root)));
+        return;
+    }
+    std::vector<QuickPicker::Item> items;
+    // La última, primero
+    if (_lastTask && _lastTask->cwd == root)
+        items.push_back({_lastTask->label, tr("last task"), false, [this, task = *_lastTask] { runTask(task); }});
+    for (const tasks::Task& task : found) {
+        if (!(_lastTask && _lastTask->cwd == root && _lastTask->command == task.command))
+            items.push_back({task.label, task.source, false, [this, task] { runTask(task); }});
+    }
+    ensurePicker()->popup(editor(), tr("Run a task of %1").arg(QFileInfo(root).fileName()), std::move(items));
+}
+
+void MainWindow::runTask(const tasks::Task& task)
+{
+    _lastTask = task;
+    _taskDiagnostics.clear();
+    _taskErrors = _taskWarnings = 0;
+    updateDiagnostics();
+    if (QDockWidget* dock = panelDock(QStringLiteral("taskOutput"))) {
+        dock->show();
+        dock->raise();
+    }
+    _taskRunner->start(task);
+}
+
+void MainWindow::rerunTask()
+{
+    if (_lastTask)
+        runTask(*_lastTask);
+    else
+        pickTask();
+}
+
+void MainWindow::connectTasks()
+{
+    connect(_taskRunner, &TaskRunner::started, _taskOutput, &TaskOutputPanel::begin);
+    connect(_taskRunner, &TaskRunner::line, _taskOutput, &TaskOutputPanel::appendLine);
+    connect(_taskRunner, &TaskRunner::problem, this, [this](const tasks::Problem& p) {
+        _taskOutput->markProblem(p);
+        LspManager::Diagnostic d;
+        d.line = std::max(0, p.line - 1);
+        d.character = std::max(0, p.column - 1);
+        d.endLine = d.line;
+        d.endCharacter = d.character;
+        d.severity = p.severity;
+        d.message = p.message;
+        d.source = _taskRunner->task().command.section(QLatin1Char(' '), 0, 0);
+        d.code = p.code;
+        _taskDiagnostics[p.file].push_back(d);
+        if (p.severity == 1)
+            ++_taskErrors;
+        else if (p.severity == 2)
+            ++_taskWarnings;
+        // Con muchos errores seguidos, el panel Problemas se actualiza de vez en cuando
+        if (!_taskDiagnosticsPending) {
+            _taskDiagnosticsPending = true;
+            QTimer::singleShot(300, this, [this] {
+                _taskDiagnosticsPending = false;
+                updateDiagnostics();
+            });
+        }
+    });
+    connect(_taskRunner, &TaskRunner::finished, this, [this](int exitCode, qint64 ms) {
+        _taskOutput->end(exitCode, ms, _taskErrors, _taskWarnings);
+        updateDiagnostics();
+        statusBar()->showMessage(_taskOutput->status()->text(), 8000);
+    });
+    connect(_taskOutput, &TaskOutputPanel::stopRequested, _taskRunner, &TaskRunner::stop);
+    connect(_taskOutput, &TaskOutputPanel::rerunRequested, this, &MainWindow::rerunTask);
+    connect(_taskOutput, &TaskOutputPanel::activated, this, [this](const tasks::Problem& p) {
+        goToLocation(p.file, std::max(0, p.line - 1), std::max(0, p.column - 1), lsp::PositionEncoding::Utf8);
     });
 }
 
@@ -2787,18 +2893,26 @@ void MainWindow::updateDiagnostics()
         if (pane->currentBuffer() != kInvalidBuffer)
             _lsp->paintDiagnostics(*pane->editor(), pane->currentBuffer());
     }
-    if (_problems)
-        _problems->setDiagnostics(_lsp->allDiagnostics());
+    if (_problems) {
+        // Los del servidor de lenguaje y los de la última tarea
+        QMap<QString, std::vector<LspManager::Diagnostic>> all = _lsp->allDiagnostics();
+        for (auto it = _taskDiagnostics.cbegin(); it != _taskDiagnostics.cend(); ++it) {
+            std::vector<LspManager::Diagnostic>& list = all[it.key()];
+            list.insert(list.end(), it.value().begin(), it.value().end());
+        }
+        _problems->setDiagnostics(all);
+    }
     updateProblemsField();
 }
 
 void MainWindow::updateProblemsField()
 {
-    const int errors = _lsp->count(1);
-    const int warnings = _lsp->count(2);
+    const int errors = _lsp->count(1) + _taskErrors;
+    const int warnings = _lsp->count(2) + _taskWarnings;
     QString tip = _lsp->statusText(currentBuffer());
     tip = tip.isEmpty() ? tr("Problems (no language server for this document)") : tr("Problems — language server: %1").arg(tip);
-    _statusBar->setProblems(_lsp->isEnabled() && (_lsp->hasClients() || errors + warnings > 0), errors, warnings, tip);
+    _statusBar->setProblems((_lsp->isEnabled() && (_lsp->hasClients() || errors + warnings > 0)) || _taskErrors + _taskWarnings > 0,
+                            errors, warnings, tip);
 }
 
 void MainWindow::goToLspPosition(const QString& path, int line, int character)
@@ -4792,6 +4906,31 @@ void MainWindow::createRunMenu()
     QAction* run = _runMenu->addAction(tr("&Run…"), this, &MainWindow::showRunDialog);
     run->setObjectName(QStringLiteral("actionRun"));
     run->setShortcut(QKeySequence(Qt::Key_F5));
+    // Tareas del proyecto (fase 84; no existen en N++)
+    auto addAction = [this](QMenu* menu, const QString& text, const char* name, const QKeySequence& key, auto&& slot) {
+        QAction* action = menu->addAction(text);
+        action->setObjectName(QString::fromLatin1(name));
+        action->setShortcut(key);
+        connect(action, &QAction::triggered, this, slot);
+        return action;
+    };
+    addAction(_runMenu, tr("Run &Task…"), "actionRunTask", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_B), [this] { pickTask(); });
+    addAction(_runMenu, tr("Run &Last Task"), "actionRunLastTask", QKeySequence(Qt::CTRL | Qt::Key_F5), [this] { rerunTask(); });
+    addAction(_runMenu, tr("&Stop Task"), "actionStopTask", QKeySequence(), [this] { _taskRunner->stop(); });
+    {
+        QDockWidget* dock = panelDock(QStringLiteral("taskOutput"));
+        QAction* toggle = addAction(_runMenu, tr("Task &Output"), "actionTaskOutput", QKeySequence(), [] {});
+        toggle->setCheckable(true);
+        toggle->setChecked(dock->isVisibleTo(this));
+        connect(toggle, &QAction::toggled, dock, [dock](bool on) {
+            dock->setVisible(on);
+            if (on)
+                dock->raise();
+        });
+        connect(dock, &QDockWidget::visibilityChanged, toggle, [this, toggle, dock] {
+            toggle->setChecked(dock->isVisibleTo(this));
+        });
+    }
     _runMenu->addSeparator();
     _runCommandsEnd = _runMenu->addSeparator();
     QAction* edit = _runMenu->addAction(tr("Modify Shortcut/Delete Command…"), this, [this] {

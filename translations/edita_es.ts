@@ -2047,19 +2047,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+498"/>
-        <location line="+4777"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+501"/>
+        <location line="+4913"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4777"/>
-        <location line="+1990"/>
+        <location line="-4913"/>
+        <location line="+2093"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1892"/>
+        <location line="-1995"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2515,7 +2515,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1519"/>
+        <location line="+1630"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2738,7 +2738,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2531"/>
+        <location line="-2642"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
@@ -2824,12 +2824,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+824"/>
-        <location line="+1280"/>
+        <location line="+1283"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1222"/>
+        <location line="-1225"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2855,12 +2855,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5613"/>
+        <location line="+5749"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5612"/>
+        <location line="-5748"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3752,12 +3752,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4663"/>
+        <location line="+4799"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4662"/>
+        <location line="-4798"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3787,7 +3787,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+36"/>
+        <location line="+38"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -3823,12 +3823,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+214"/>
+        <location line="+216"/>
         <source>Local History</source>
         <translation>Historial local</translation>
     </message>
     <message>
-        <location line="-213"/>
+        <location line="-215"/>
+        <source>Task Output</source>
+        <translation>Salida de la tarea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
         <source>Character Panel</source>
         <translation>Panel de caracteres</translation>
     </message>
@@ -3838,12 +3843,37 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Historial del portapapeles</translation>
     </message>
     <message>
-        <location line="+212"/>
+        <location line="+213"/>
         <source>Delete this version from the local history?</source>
         <translation>¿Borrar esta versión del historial local?</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+26"/>
+        <source>Run Task</source>
+        <translation>Ejecutar una tarea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The current document is not in a project folder.</source>
+        <translation>El documento actual no está en la carpeta de un proyecto.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>No tasks found in %1 (Makefile, CMakeLists.txt, package.json, Cargo.toml, go.mod, pyproject.toml, meson.build or justfile).</source>
+        <translation>No hay tareas en %1 (Makefile, CMakeLists.txt, package.json, Cargo.toml, go.mod, pyproject.toml, meson.build o justfile).</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>last task</source>
+        <translation>última tarea</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Run a task of %1</source>
+        <translation>Ejecutar una tarea de %1</translation>
+    </message>
+    <message>
+        <location line="+81"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+10"/>
@@ -3919,7 +3949,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Insertar fragmento</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+46"/>
         <source>Problems (no language server for this document)</source>
         <translation>Problemas (este documento no tiene servidor de lenguaje)</translation>
     </message>
@@ -3929,7 +3959,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Problemas — servidor de lenguaje: %1</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+29"/>
         <source>No definition found</source>
         <translation>No se encontró la definición</translation>
     </message>
@@ -4276,12 +4306,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+1"/>
         <location line="+270"/>
         <location line="+20"/>
-        <location line="+1960"/>
+        <location line="+1985"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2246"/>
+        <location line="-2271"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4442,12 +4472,12 @@ Do you want to save the file anyway?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+382"/>
+        <location line="+407"/>
         <source>Start &amp;Recording</source>
         <translation>&amp;Iniciar la grabación</translation>
     </message>
     <message>
-        <location line="-379"/>
+        <location line="-404"/>
         <source>&amp;Playback</source>
         <translation>&amp;Reproducir</translation>
     </message>
@@ -4477,7 +4507,27 @@ Do you want to save the file anyway?</source>
         <translation>&amp;Ejecutar…</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+11"/>
+        <source>Run &amp;Task…</source>
+        <translation>Ejecutar una &amp;tarea…</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Run &amp;Last Task</source>
+        <translation>Repetir la ú&amp;ltima tarea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Stop Task</source>
+        <translation>&amp;Detener la tarea</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Task &amp;Output</source>
+        <translation>&amp;Salida de la tarea</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Modify Shortcut/Delete Command…</source>
         <translation>Modificar el atajo o eliminar una orden…</translation>
     </message>
@@ -4628,7 +4678,7 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-2360"/>
+        <location line="-2385"/>
         <source>Format Document</source>
         <translation>Dar formato al documento</translation>
     </message>
@@ -4660,7 +4710,7 @@ Do you want to save the file anyway?</source>
         <translation>Formateado con %1</translation>
     </message>
     <message>
-        <location line="+2296"/>
+        <location line="+2321"/>
         <source>Run until the end of file</source>
         <translation>Hasta el final del archivo</translation>
     </message>
@@ -8230,6 +8280,78 @@ Do you want to save your changes before switching themes?</source>
         <location line="+36"/>
         <source>Cannot create %1</source>
         <translation>No se puede crear %1</translation>
+    </message>
+</context>
+<context>
+    <name>edita::TaskOutputPanel</name>
+    <message>
+        <location filename="../src/ui/TaskOutputPanel.cpp" line="+28"/>
+        <source>Run › Run Task… lists the tasks of the project.</source>
+        <translation>Ejecutar › Ejecutar una tarea… muestra las tareas del proyecto.</translation>
+    </message>
+    <message>
+        <location line="+11"/>
+        <source>Stop</source>
+        <translation>Detener</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Run Again</source>
+        <translation>Repetir</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Clear</source>
+        <translation>Borrar</translation>
+    </message>
+    <message>
+        <location line="+25"/>
+        <source>Running: %1</source>
+        <translation>En marcha: %1</translation>
+    </message>
+    <message>
+        <location line="+21"/>
+        <source>Double click to go to %1:%2</source>
+        <translation>Doble clic para ir a %1:%2</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Stopped after %1 s</source>
+        <translation>Detenida a los %1 s</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Finished in %1 s</source>
+        <translation>Terminó en %1 s</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Failed with exit code %1 after %2 s</source>
+        <translation>Falló con el código %1 a los %2 s</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n error</numerusform>
+            <numerusform>%n errores</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n aviso</numerusform>
+            <numerusform>%n avisos</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>edita::TaskRunner</name>
+    <message>
+        <location filename="../src/ui/TaskRunner.cpp" line="+58"/>
+        <source>Could not run the shell (/bin/sh).</source>
+        <translation>No se pudo ejecutar la shell (/bin/sh).</translation>
     </message>
 </context>
 <context>

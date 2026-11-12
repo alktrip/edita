@@ -99,7 +99,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+2550"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+2656"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -107,7 +107,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+362"/>
+        <location line="+370"/>
         <source>%n reference(s)</source>
         <translation>
             <numerusform>%n reference</numerusform>
@@ -131,7 +131,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+2252"/>
+        <location line="+2277"/>
         <source> time(s)</source>
         <translation>
             <numerusform> time</numerusform>
@@ -344,6 +344,25 @@
         <translation>
             <numerusform>(%Ln hit in %1 of %2 searched)</numerusform>
             <numerusform>(%Ln hits in %1 of %2 searched)</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>edita::TaskOutputPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/TaskOutputPanel.cpp" line="+103"/>
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n error</numerusform>
+            <numerusform>%n errors</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n warning</numerusform>
+            <numerusform>%n warnings</numerusform>
         </translation>
     </message>
 </context>

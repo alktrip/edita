@@ -71,3 +71,31 @@ and open the file path of the cursor in a new Edita window. {{actionEditRunComma
 
 The commands are kept in the `<UserDefinedCommands>` section of `~/.config/edita/shortcuts.xml`, as
 in Notepad++.
+
+## Project tasks
+
+{{actionRunTask}} shows what can be built, tested or run in the project of the current document: the
+nearest folder, going up, with one of these files. If the document has no file, the first folder of
+the Folder as Workspace is used.
+
+| File | Tasks |
+|---|---|
+| `Makefile` | `make` and `make target` for each target |
+| `CMakeLists.txt` | Configure (if there is no `build` folder), `cmake --build` and `ctest` |
+| `package.json` | Each script, with npm, pnpm, yarn or bun depending on the lock file |
+| `Cargo.toml` | `cargo build`, `test`, `run`, `check` and `clippy` |
+| `go.mod` | `go build`, `test`, `vet` and `run` |
+| `pyproject.toml`, `pytest.ini`, `setup.py`… | `python3 -m pytest` |
+| `meson.build` | Configure, `meson compile` and `meson test` |
+| `justfile` | Each recipe |
+
+The task runs with `/bin/sh` in the project folder, and its output appears in the
+{{actionTaskOutput}} panel. The errors and warnings Edita recognizes are underlined: double click
+one to open the file at that line. They also appear in the Problems panel (View › Problems) next to
+those of the [language server](08-language-servers.md), and in the counter of the status bar. Edita
+recognizes the messages of GCC, Clang, Go, rustc, TypeScript (`tsc`), Python tracebacks and pytest,
+and those of any tool that writes `file:line:column: message`.
+
+{{actionRunLastTask}} runs the last task again, and {{actionStopTask}} stops it together with
+everything it started. The panel has the same buttons. Edita does not save the documents before
+running a task: save them first with {{actionSaveAll}} if the task uses them.

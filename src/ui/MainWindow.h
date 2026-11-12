@@ -27,6 +27,7 @@
 #include "core/Macro.h"
 #include "core/Preferences.h"
 #include "core/Session.h"
+#include "core/Tasks.h"
 #include "core/UserCommands.h"
 #include "doc/Buffer.h"
 #include "doc/DocumentManager.h"
@@ -36,6 +37,7 @@
 #include "ui/CommandPalette.h"
 #include "ui/EditCommands.h"
 #include "ui/FindReplaceDialog.h"
+#include "ui/LspManager.h"
 #include "ui/ManualWindow.h"
 #include "ui/WindowsDialog.h"
 #include "ui/PluginsAdminDialog.h"
@@ -59,6 +61,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 
 class QActionGroup;
 class QDate;
@@ -91,6 +94,8 @@ class SnippetController;
 class ProblemsPanel;
 class LocalHistory;
 class LocalHistoryPanel;
+class TaskOutputPanel;
+class TaskRunner;
 class FileBrowserPanel;
 class FunctionListPanel;
 class FunctionParsers;
@@ -389,6 +394,13 @@ public:
     // Archivo › Historial local (fase 83)
     LocalHistory& localHistory() const { return *_history; }
     LocalHistoryPanel* localHistoryPanel() const { return _localHistoryPanel; }
+    // Ejecutar › Ejecutar una tarea (fase 84): las tareas del proyecto del documento actual
+    QString taskRoot() const;
+    void pickTask();
+    void runTask(const tasks::Task& task);
+    void rerunTask();
+    TaskRunner* taskRunner() const { return _taskRunner; }
+    TaskOutputPanel* taskOutputPanel() const { return _taskOutput; }
     void stopCompare();
     CompareSession* compareSession() const { return _compare.get(); }
     GitStatus* gitStatus() const { return _gitStatus; }
@@ -577,6 +589,7 @@ private:
     void refreshLocalHistory();
     void recordLocalHistory(const QString& path, bool beforeSaving);
     void connectLocalHistory();
+    void connectTasks();
     void compareChanged();
     void applyTerminalStyle();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
@@ -857,6 +870,13 @@ private:
     std::unique_ptr<LspManager> _lsp;
     ProblemsPanel* _problems = nullptr;
     LocalHistoryPanel* _localHistoryPanel = nullptr;
+    TaskOutputPanel* _taskOutput = nullptr;
+    TaskRunner* _taskRunner = nullptr;
+    std::optional<tasks::Task> _lastTask;
+    QMap<QString, std::vector<LspManager::Diagnostic>> _taskDiagnostics; // los errores de la última tarea
+    int _taskErrors = 0;
+    int _taskWarnings = 0;
+    bool _taskDiagnosticsPending = false;
     std::unique_ptr<LocalHistory> _history;
     std::unique_ptr<CompareSession> _compare;
     GitStatus* _gitStatus = nullptr;
