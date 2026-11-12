@@ -89,6 +89,8 @@ class GitBlame;
 class SnippetLibrary;
 class SnippetController;
 class ProblemsPanel;
+class LocalHistory;
+class LocalHistoryPanel;
 class FileBrowserPanel;
 class FunctionListPanel;
 class FunctionParsers;
@@ -382,6 +384,11 @@ public:
     // o con la versión de Git; la referencia va en la otra vista
     enum class CompareWith { OtherView, Saved, GitHead };
     bool startCompare(CompareWith with);
+    // Compara el documento actual con estos bytes (como en el disco), abiertos en la otra vista
+    bool compareWithBytes(const QByteArray& bytes, const QString& label);
+    // Archivo › Historial local (fase 83)
+    LocalHistory& localHistory() const { return *_history; }
+    LocalHistoryPanel* localHistoryPanel() const { return _localHistoryPanel; }
     void stopCompare();
     CompareSession* compareSession() const { return _compare.get(); }
     GitStatus* gitStatus() const { return _gitStatus; }
@@ -566,6 +573,10 @@ private:
     void goToLspPosition(const QString& path, int line, int character);
     void goToLocation(const QString& path, int line, int character, lsp::PositionEncoding encoding);
     BufferId openReference(EditorPane* pane, const QString& name, const std::string& utf8, const Buffer& like);
+    bool beginCompare(EditorPane* oldPane, EditorPane* newPane, BufferId temp);
+    void refreshLocalHistory();
+    void recordLocalHistory(const QString& path, bool beforeSaving);
+    void connectLocalHistory();
     void compareChanged();
     void applyTerminalStyle();
     // Recuerda los atajos de serie y aplica los de shortcuts.xml (tras crear menús y plugins)
@@ -845,6 +856,8 @@ private:
     ClipboardHistoryPanel* _clipboardPanel = nullptr;
     std::unique_ptr<LspManager> _lsp;
     ProblemsPanel* _problems = nullptr;
+    LocalHistoryPanel* _localHistoryPanel = nullptr;
+    std::unique_ptr<LocalHistory> _history;
     std::unique_ptr<CompareSession> _compare;
     GitStatus* _gitStatus = nullptr;
     QTimer* _gitStatusTimer = nullptr;

@@ -46,6 +46,9 @@
 #include <QTableWidget>
 #include <QListWidget>
 #include <QPlainTextEdit>
+#include <QDir>
+#include <QLocale>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QScreen>
@@ -767,6 +770,29 @@ void PreferencesDialog::buildBackup()
     _sessionExt->setPlaceholderText(QStringLiteral("edita-session"));
     _sessionExt->setToolTip(tr("Files with this extension are opened as sessions (File › Load Session…)"));
     form->addRow(tr("Session file extension:"), _sessionExt);
+    // Historial local (fase 83; no existe en N++)
+    form->addRow(new QLabel(tr("<b>Local history</b>")));
+    _localHistory = addCheck(form, tr("Keep a copy of each saved version (File › Local History)"), "localHistory");
+    _localHistoryVersions = addSpin(form, tr("Versions per file:"), "localHistoryVersions", 1, 10000);
+    _localHistoryDays = addSpin(form, tr("Delete versions older than:"), "localHistoryDays", 1, 3650, tr(" days"));
+    _localHistoryMaxKB = addSpin(form, tr("Skip files larger than:"), "localHistoryMaxKB", 1, 1024 * 1024, tr(" KB"));
+    auto* clear = new QPushButton;
+    clear->setObjectName(QStringLiteral("localHistoryClear"));
+    auto updateClear = [clear] {
+        const qint64 size = LocalHistory(LocalHistory::defaultRoot()).totalSize();
+        clear->setText(tr("Delete the Whole Local History (%1)").arg(QLocale().formattedDataSize(size)));
+        clear->setEnabled(size > 0);
+    };
+    updateClear();
+    connect(clear, &QPushButton::clicked, this, [this, updateClear] {
+        if (QMessageBox::question(this, tr("Local History"),
+                                  tr("Delete the saved versions of all files? This cannot be undone."))
+            != QMessageBox::Yes)
+            return;
+        QDir(LocalHistory::defaultRoot()).removeRecursively();
+        updateClear();
+    });
+    form->addRow(QString(), clear);
 }
 
 void PreferencesDialog::buildDelimiter()
@@ -1092,6 +1118,8 @@ void PreferencesDialog::updateEnabledState()
     _snapshotSeconds->setEnabled(_remember->isChecked() && _snapshot->isChecked());
     _customBackupDir->setEnabled(comboValue(_backupOnSave) != 0);
     _backupDir->parentWidget()->setEnabled(comboValue(_backupOnSave) != 0 && _customBackupDir->isChecked());
+    for (QSpinBox* spin : {_localHistoryVersions, _localHistoryDays, _localHistoryMaxKB})
+        spin->setEnabled(_localHistory->isChecked());
     for (QWidget* w : std::initializer_list<QWidget*>{_autocFromLen, _autocIgnoreNumbers, _autocBrief})
         w->setEnabled(comboValue(_autocStatus) != 0);
     for (QCheckBox* box : {_detectAll, _autoUpdate, _goToEnd})
@@ -1259,6 +1287,10 @@ void PreferencesDialog::setPreferences(const Preferences& p)
     _snapshotSeconds->setValue(std::max(1, p.snapshotBackupTiming / 1000));
     setComboValue(_backupOnSave, static_cast<int>(p.backupOnSave));
     _customBackupDir->setChecked(p.useCustomBackupDir);
+    _localHistory->setChecked(p.localHistory);
+    _localHistoryVersions->setValue(p.localHistoryVersions);
+    _localHistoryDays->setValue(p.localHistoryDays);
+    _localHistoryMaxKB->setValue(p.localHistoryMaxKB);
     _backupDir->setText(p.backupDir);
     _sessionExt->setText(p.sessionExt);
 
@@ -1494,6 +1526,10 @@ Preferences PreferencesDialog::preferences() const
     p.snapshotBackupTiming = _snapshotSeconds->value() * 1000;
     p.backupOnSave = static_cast<BackupOnSave>(comboValue(_backupOnSave));
     p.useCustomBackupDir = _customBackupDir->isChecked();
+    p.localHistory = _localHistory->isChecked();
+    p.localHistoryVersions = _localHistoryVersions->value();
+    p.localHistoryDays = _localHistoryDays->value();
+    p.localHistoryMaxKB = _localHistoryMaxKB->value();
     p.backupDir = _backupDir->text().trimmed();
     p.sessionExt = _sessionExt->text().trimmed();
     if (p.sessionExt.startsWith(QLatin1Char('.')))

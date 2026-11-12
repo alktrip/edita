@@ -11,6 +11,7 @@
 
 #include "ui/EditorView.h"
 #include "ui/FindReplaceDialog.h"
+#include "ui/LocalHistoryPanel.h"
 #include "ui/MainWindow.h"
 #include "ui/RegexTester.h"
 #include "ui/Translations.h"
@@ -23,8 +24,11 @@
 #include <QFile>
 #include <QLineEdit>
 #include <QPainter>
+#include <QPushButton>
+#include <QStatusBar>
 #include <QTemporaryDir>
 #include <QTimer>
+#include <QTreeWidget>
 
 #include <functional>
 #include <vector>
@@ -185,6 +189,33 @@ int main(int argc, char** argv)
              auto inlinePrefs = w.preferences();
              inlinePrefs.inlineFind = true;
              w.setPreferences(inlinePrefs);
+             w.editor()->setFocus();
+         }},
+        {[&] {
+             // Historial local (fase 83): dos guardados y la comparación con el original
+             // (en item.h, para que main.cpp siga igual en las demás capturas)
+             hideDocks();
+             w.openFile(project + QStringLiteral("/src/item.h"));
+             w.editor()->send(SCI_DOCUMENTEND);
+             w.insertText(QStringLiteral("\nstruct Item {\n    int quantity = 0;\n};\n"));
+             w.saveBuffer(w.currentBuffer());
+             w.editor()->send(SCI_GOTOLINE, 3);
+             w.insertText(QStringLiteral("    double price = 0;\n"));
+             w.saveBuffer(w.currentBuffer());
+             action("actionLocalHistory")->trigger();
+             if (auto* panel = w.findChild<LocalHistoryPanel*>()) {
+                 QTreeWidget* tree = panel->tree();
+                 tree->setCurrentItem(tree->topLevelItem(tree->topLevelItemCount() - 1));
+                 if (auto* compare = panel->findChild<QPushButton*>(QStringLiteral("localHistoryCompare")))
+                     compare->click();
+             }
+         },
+         [&] {
+             save(w.grab().toImage(), "localhistory.png");
+             w.stopCompare();
+             hideDocks();
+             w.closeBuffer(w.currentBuffer());
+             w.statusBar()->clearMessage(); // «Comparar: …» no sale en las capturas siguientes
              w.editor()->setFocus();
          }},
         {[&] {

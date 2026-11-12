@@ -138,6 +138,32 @@ session. `--openSession file` on the command line does the same with any name.
 save it: as `file.bak` next to the file, or with the date in the name in an `nppBackup` folder.
 The backups can go to a fixed folder instead of the file's folder.
 
+## Local history
+
+Every time you save a file, Edita keeps a copy of how it was saved. {{actionLocalHistory}} opens a
+panel with the versions of the current document, newest first. The first time you save a file, what
+was there before is kept too, so you can always go back to the file as it was when you opened it.
+Saving without changes does not create another version.
+
+![The Local History panel comparing the original version with the current one](images/localhistory.png)
+
+Choose a version and:
+
+- **Compare** (or double click) opens it in the other view and compares it with the document, like
+  {{actionCompareSaved}}. End the comparison with {{actionCompareClear}}.
+- **Restore** replaces the text of the document with that version. The file does not change until
+  you save it, and {{actionUndo}} undoes it.
+- **Open** shows it in a new read-only tab, to copy a part of it.
+- **Delete** removes it from the history.
+
+The history follows the file when you rename it with {{actionRename}}. The copies are kept in
+`~/.config/edita/localHistory`, never in the cloud folder. In the Backup page of
+{{actionPreferences}} you can turn it off and choose how many versions are kept per file (50), for
+how many days (30) and from which size no copies are kept (2 MB). The newest version is always
+kept. The whole history can be deleted there too.
+
+Unlike `.bak` backups, the history leaves no files next to yours and does not grow without limit.
+
 ## Printing and PDF
 
 - {{actionPrint}} opens the print dialog; {{actionPrintNow}} prints with the default printer

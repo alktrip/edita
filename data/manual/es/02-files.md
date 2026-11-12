@@ -113,7 +113,7 @@ editor que ofrece volver a cargarlo. Se configura en {{actionPreferences}} (pág
 
 Al cerrar Edita se recuerdan los documentos abiertos, la posición del cursor en cada uno, la
 vista dividida y las carpetas de trabajo, y se restauran la próxima vez (casilla **Recordar la
-sesión para el próximo arranque**, página Copias de seguridad de {{actionPreferences}}).
+sesión para el próximo arranque**, página Copia de seguridad de {{actionPreferences}}).
 `--nosession` en la línea de órdenes arranca sin restaurar ni guardar la sesión.
 
 Con **Copias periódicas de los cambios sin guardar** (modo snapshot, activado de serie), Edita
@@ -136,7 +136,7 @@ ejemplo uno por proyecto o por tarea:
 
 Los archivos de sesión tienen el formato del `session.xml` de Notepad++, así que se pueden cargar
 sesiones guardadas por Notepad++ (y al revés). Si eliges una **Extensión de los archivos de sesión**
-en la página Copias de seguridad de {{actionPreferences}} (por ejemplo `edita-session`), el diálogo
+en la página Copia de seguridad de {{actionPreferences}} (por ejemplo `edita-session`), el diálogo
 de guardar la usa, y al abrir un archivo con esa extensión (desde el diálogo Abrir, el
 administrador de archivos o la línea de órdenes) se carga como sesión. `--openSession archivo` en
 la línea de órdenes hace lo mismo con cualquier nombre.
@@ -144,6 +144,33 @@ la línea de órdenes hace lo mismo con cualquier nombre.
 **Al guardar, copiar la versión anterior** conserva el contenido anterior del archivo cada vez que
 lo guardas: como `archivo.bak` junto al archivo, o con la fecha en el nombre en una carpeta
 `nppBackup`. Las copias pueden ir a una carpeta fija en lugar de a la del archivo.
+
+## Historial local
+
+Cada vez que guardas un archivo, Edita conserva una copia de cómo quedó. {{actionLocalHistory}} abre
+un panel con las versiones del documento actual, de la más nueva a la más vieja. La primera vez que
+guardas un archivo también se conserva lo que había antes, así que siempre puedes volver al archivo
+como estaba al abrirlo. Si guardas sin cambios no se crea otra versión.
+
+![El panel Historial local comparando la versión original con la actual](images/localhistory.png)
+
+Elige una versión y:
+
+- **Comparar** (o doble clic) la abre en la otra vista y la compara con el documento, como
+  {{actionCompareSaved}}. Termina la comparación con {{actionCompareClear}}.
+- **Restaurar** cambia el texto del documento por el de esa versión. El archivo no cambia hasta que
+  lo guardas, y {{actionUndo}} lo deshace.
+- **Abrir** la muestra en una pestaña nueva de solo lectura, para copiar una parte.
+- **Borrar** la quita del historial.
+
+El historial sigue al archivo cuando lo renombras con {{actionRename}}. Las copias se guardan en
+`~/.config/edita/localHistory` y nunca en la carpeta de la nube. En la página Copia de seguridad
+de {{actionPreferences}} se puede apagar y elegir cuántas versiones se conservan por archivo (50),
+cuántos días (30) y desde qué tamaño no se guardan copias (2 MB). La versión más nueva se conserva
+siempre. Ahí mismo se puede borrar todo el historial.
+
+A diferencia de las copias `.bak`, el historial no deja archivos junto a los tuyos ni crece sin
+límite.
 
 ## Imprimir y PDF
 

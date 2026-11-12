@@ -110,6 +110,8 @@ edita_add_test(tst_udl LIBS edita_ui)
 edita_add_test(tst_editcommands LIBS edita_ui)
 # Fase 82: la API de plugins de la 1.x no cambia
 edita_add_test(tst_pluginapi LIBS edita_ui)
+# Fase 83: el historial local
+edita_add_test(tst_localhistory LIBS edita_ui)
 if(EDITA_BUILD_PLUGINS)
     edita_add_test(tst_plugins LIBS edita_ui)
     add_dependencies(tst_plugins EditaDemo)

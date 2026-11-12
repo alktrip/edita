@@ -23,6 +23,7 @@
 #include "core/Codec.h"
 #include "core/CrashReport.h"
 #include "core/DateTimeFormat.h"
+#include "core/LocalHistory.h"
 #include "core/OnSelection.h"
 #include "core/CommandLine.h"
 #include "core/ContextMenuXml.h"
@@ -57,6 +58,7 @@
 #include "ui/LspManager.h"
 #include "ui/ManualWindow.h"
 #include "ui/ProblemsPanel.h"
+#include "ui/LocalHistoryPanel.h"
 #include "ui/CompareSession.h"
 #include "ui/GitBlame.h"
 #include "ui/GitStatus.h"
@@ -1043,6 +1045,23 @@ void MainWindow::createMenus()
     addAction(file, tr("Open in &Default Viewer"), "actionOpenDefaultViewer", QKeySequence(),
               [this] { openInDefaultViewer(currentBuffer()); });
     addAction(file, tr("Re&load from Disk"), "actionReload", QKeySequence(), [this] { reloadBuffer(currentBuffer()); });
+    // Historial local (fase 83; no existe en N++): el panel con las versiones guardadas
+    {
+        QDockWidget* dock = panelDock(QStringLiteral("localHistory"));
+        QAction* toggle = addAction(file, tr("Local &History"), "actionLocalHistory", QKeySequence(), [] {});
+        toggle->setCheckable(true);
+        toggle->setChecked(dock->isVisibleTo(this));
+        connect(toggle, &QAction::toggled, dock, [this, dock](bool on) {
+            dock->setVisible(on);
+            if (on) {
+                dock->raise();
+                refreshLocalHistory();
+            }
+        });
+        connect(dock, &QDockWidget::visibilityChanged, toggle, [this, toggle, dock] {
+            toggle->setChecked(dock->isVisibleTo(this));
+        });
+    }
     file->addSeparator();
     addAction(file, tr("&Save"), "actionSave", QKeySequence::Save, [this] { saveBuffer(currentBuffer()); });
     addAction(file, tr("Save &As…"), "actionSaveAs", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_S),
@@ -2197,6 +2216,8 @@ void MainWindow::createPanels()
     _regexTester = new RegexTesterPanel;
     _terminal = new TerminalPanel;
     _problems = new ProblemsPanel;
+    _history = std::make_unique<LocalHistory>(LocalHistory::defaultRoot());
+    _localHistoryPanel = new LocalHistoryPanel;
     _charPanel = new CharacterPanel;
     _clipboardPanel = new ClipboardHistoryPanel;
     // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
@@ -2209,6 +2230,7 @@ void MainWindow::createPanels()
         {_regexTester, "regexTester", tr("Regex Tester"), Qt::BottomDockWidgetArea}, // no existe en N++
         {_terminal, "terminal", tr("Terminal"), Qt::BottomDockWidgetArea},           // no existe en N++
         {_problems, "problems", tr("Problems"), Qt::BottomDockWidgetArea},           // no existe en N++
+        {_localHistoryPanel, "localHistory", tr("Local History"), Qt::RightDockWidgetArea}, // no existe en N++
         {_charPanel, "charPanel", tr("Character Panel"), Qt::RightDockWidgetArea},
         {_clipboardPanel, "clipboardHistory", tr("Clipboard History"), Qt::RightDockWidgetArea},
     };
@@ -2306,6 +2328,7 @@ void MainWindow::createPanels()
     });
     connect(_folderPanel, &FileBrowserPanel::openTerminal, this, [this](const QString& dir) { openTerminal(dir); });
     connect(_problems, &ProblemsPanel::activated, this, &MainWindow::goToLspPosition);
+    connectLocalHistory();
     // Git en el explorador: el estado de cada archivo, al cambiar algo
     _gitStatus = new GitStatus(this);
     _gitStatusTimer = new QTimer(this);
@@ -2358,6 +2381,76 @@ BufferId MainWindow::openReference(EditorPane* pane, const QString& name, const 
     return id;
 }
 
+void MainWindow::recordLocalHistory(const QString& path, bool beforeSaving)
+{
+    if (!_prefs.localHistory)
+        return;
+    // Antes de guardar por primera vez, también lo que había en el disco
+    if (beforeSaving) {
+        if (QFileInfo::exists(path) && !_history->hasHistory(path))
+            _history->recordFile(path, QDateTime::currentDateTime(), _prefs.localHistoryLimits());
+    } else if (_history->recordFile(path, QDateTime::currentDateTime(), _prefs.localHistoryLimits())) {
+        refreshLocalHistory();
+    }
+}
+
+void MainWindow::refreshLocalHistory()
+{
+    const QDockWidget* dock = panelDock(QStringLiteral("localHistory"));
+    if (!_localHistoryPanel || !dock || !dock->isVisibleTo(this))
+        return;
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    const QString path = buf && !buf->isUntitled() ? buf->filePath() : QString();
+    _localHistoryPanel->setFile(path, path.isEmpty() ? QList<LocalHistory::Version>() : _history->versions(path),
+                                _prefs.localHistory);
+}
+
+void MainWindow::connectLocalHistory()
+{
+    // Cada orden vale para el archivo que muestra el panel, que es el del documento actual
+    auto bytesOf = [this](const LocalHistory::Version& v) {
+        return _history->read(_localHistoryPanel->file(), v);
+    };
+    auto label = [](const LocalHistory::Version& v) {
+        return LocalHistoryPanel::describe(v.when, QDateTime::currentDateTime());
+    };
+    connect(_localHistoryPanel, &LocalHistoryPanel::compareRequested, this, [this, bytesOf, label](const LocalHistory::Version& v) {
+        compareWithBytes(bytesOf(v), label(v));
+    });
+    connect(_localHistoryPanel, &LocalHistoryPanel::openRequested, this, [this, bytesOf, label](const LocalHistory::Version& v) {
+        const Buffer* buf = _documents.buffer(currentBuffer());
+        if (!buf)
+            return;
+        const QByteArray bytes = bytesOf(v);
+        std::string utf8 = decodeAll(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), buf->encoding());
+        if (utf8.starts_with("\xEF\xBB\xBF"))
+            utf8.erase(0, 3);
+        openReference(_activePane, QStringLiteral("%1 (%2)").arg(buf->displayName(), label(v)), utf8, *buf);
+    });
+    connect(_localHistoryPanel, &LocalHistoryPanel::restoreRequested, this, [this, bytesOf](const LocalHistory::Version& v) {
+        const Buffer* buf = _documents.buffer(currentBuffer());
+        if (!buf || buf->isReadOnly())
+            return;
+        const QByteArray bytes = bytesOf(v);
+        std::string utf8 = decodeAll(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), buf->encoding());
+        if (utf8.starts_with("\xEF\xBB\xBF"))
+            utf8.erase(0, 3);
+        // Todo el texto en un solo paso de deshacer; el archivo no se toca hasta guardar
+        EditorView* view = editor();
+        view->sci(SCI_BEGINUNDOACTION);
+        view->sci(SCI_TARGETWHOLEDOCUMENT);
+        view->send(SCI_REPLACETARGET, utf8.size(), reinterpret_cast<sptr_t>(utf8.data()));
+        view->sci(SCI_ENDUNDOACTION);
+        view->setFocus();
+    });
+    connect(_localHistoryPanel, &LocalHistoryPanel::deleteRequested, this, [this](const LocalHistory::Version& v) {
+        if (!_prompter->confirm(this, tr("Local History"), tr("Delete this version from the local history?")))
+            return;
+        _history->removeVersion(_localHistoryPanel->file(), v);
+        refreshLocalHistory();
+    });
+}
+
 bool MainWindow::startCompare(CompareWith with)
 {
     stopCompare();
@@ -2408,14 +2501,30 @@ bool MainWindow::startCompare(CompareWith with)
             bytes = git.readAllStandardOutput();
             suffix = QStringLiteral("HEAD");
         }
-        std::string utf8 = decodeAll(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), buf->encoding());
-        if (utf8.starts_with("\xEF\xBB\xBF"))
-            utf8.erase(0, 3);
-        temp = openReference(other, QStringLiteral("%1 (%2)").arg(buf->displayName(), suffix), utf8, *buf);
-        oldPane = other;
-        newPane = current;
-        setActivePane(current);
+        return compareWithBytes(bytes, suffix);
     }
+    return beginCompare(oldPane, newPane, temp);
+}
+
+bool MainWindow::compareWithBytes(const QByteArray& bytes, const QString& label)
+{
+    stopCompare();
+    EditorPane* current = _activePane;
+    EditorPane* other = otherPane(current);
+    const Buffer* buf = _documents.buffer(current->currentBuffer());
+    if (!buf)
+        return false;
+    // Los bytes como en el disco: se leen con la codificación del documento
+    std::string utf8 = decodeAll(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())), buf->encoding());
+    if (utf8.starts_with("\xEF\xBB\xBF"))
+        utf8.erase(0, 3);
+    const BufferId temp = openReference(other, QStringLiteral("%1 (%2)").arg(buf->displayName(), label), utf8, *buf);
+    setActivePane(current);
+    return beginCompare(other, current, temp);
+}
+
+bool MainWindow::beginCompare(EditorPane* oldPane, EditorPane* newPane, BufferId temp)
+{
     _compareBuffers[0] = oldPane->currentBuffer();
     _compareBuffers[1] = newPane->currentBuffer();
     _compareTemp = temp;
@@ -3153,6 +3262,8 @@ void MainWindow::updatePanels()
             }
         });
     }
+    if (shown("localHistory"))
+        refreshLocalHistory();
     // Funciones del documento activo
     if (shown("functionList") && buf)
         _functionListPanel->setSource(editor(), buf->language(), buf->userLanguage(), buf->displayName());
@@ -4012,8 +4123,10 @@ bool MainWindow::saveBuffer(BufferId id)
         return false;
     formatBeforeSave(id);
     notifyPlugins(NPPN_FILEBEFORESAVE, id);
+    recordLocalHistory(path, /*beforeSaving*/ true);
     const SaveResult result = _documents.saveBuffer(id, path);
     if (result.ok()) {
+        recordLocalHistory(path, /*beforeSaving*/ false);
         notifyPlugins(NPPN_FILESAVED, id);
         _lsp->documentSaved(id);
         scheduleGitStatus();
@@ -4060,6 +4173,7 @@ bool MainWindow::saveBufferTo(BufferId id, const QString& absPath, bool isCopy)
     if (!isCopy)
         formatBeforeSave(id);
     notifyPlugins(NPPN_FILEBEFORESAVE, id);
+    recordLocalHistory(absPath, /*beforeSaving*/ true);
     const SaveResult result = _documents.saveBuffer(id, absPath, isCopy);
     if (result.ok())
         notifyPlugins(NPPN_FILESAVED, id);
@@ -4067,6 +4181,7 @@ bool MainWindow::saveBufferTo(BufferId id, const QString& absPath, bool isCopy)
         _prompter->warn(this, tr("Save As"), result.errorString);
         return false;
     }
+    recordLocalHistory(absPath, /*beforeSaving*/ false);
     _lastDirectory = QFileInfo(absPath).absolutePath();
     afterSave(absPath);
     return true;
@@ -6598,7 +6713,10 @@ bool MainWindow::renameBuffer(BufferId id)
         }
         notifyPlugins(NPPN_FILEBEFORERENAME, id);
         QString error;
+        const QString before = buf->filePath();
         const bool ok = _documents.moveFile(id, target, &error);
+        if (ok)
+            _history->rename(before, target); // el historial local sigue al archivo
         notifyPlugins(ok ? NPPN_FILERENAMED : NPPN_FILERENAMECANCEL, id);
         if (!ok)
             _prompter->warn(this, tr("Rename"), tr("Cannot rename %1:\n%2").arg(QDir::toNativeSeparators(buf->filePath()), error));

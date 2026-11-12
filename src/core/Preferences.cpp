@@ -395,6 +395,10 @@ Preferences loadPreferences(const ConfigXml& config)
     p.spellDictionaries = r.get("EditaSpellCheck", "dictionaries");
     r.boolAttr("EditaSpellCheck", "onlyCommentsAndStrings", p.spellOnlyCommentsAndStrings);
     r.boolText("EditaWelcomePage", p.showWelcome);
+    r.boolAttr("EditaLocalHistory", "enabled", p.localHistory);
+    r.intAttr("EditaLocalHistory", "versions", p.localHistoryVersions, 1, 10000);
+    r.intAttr("EditaLocalHistory", "days", p.localHistoryDays, 1, 3650);
+    r.intAttr("EditaLocalHistory", "maxKB", p.localHistoryMaxKB, 1, 1024 * 1024);
     return p;
 }
 
@@ -574,6 +578,10 @@ void storePreferences(ConfigXml& config, const Preferences& p)
     w.attr("EditaSpellCheck", "enabled", p.spellCheck);
     w.attr("EditaSpellCheck", "dictionaries", p.spellDictionaries);
     w.attr("EditaSpellCheck", "onlyCommentsAndStrings", p.spellOnlyCommentsAndStrings);
+    w.attr("EditaLocalHistory", "enabled", p.localHistory);
+    w.attr("EditaLocalHistory", "versions", p.localHistoryVersions);
+    w.attr("EditaLocalHistory", "days", p.localHistoryDays);
+    w.attr("EditaLocalHistory", "maxKB", p.localHistoryMaxKB);
     w.text("EditaWelcomePage", yesNo(p.showWelcome));
 }
 

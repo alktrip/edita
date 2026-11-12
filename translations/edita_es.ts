@@ -1941,6 +1941,92 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>edita::LocalHistoryPanel</name>
+    <message>
+        <location filename="../src/ui/LocalHistoryPanel.cpp" line="+31"/>
+        <source>Saved</source>
+        <translation>Guardada</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Size</source>
+        <translation>Tamaño</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>&amp;Compare</source>
+        <translation>&amp;Comparar</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Compare this version with the document</source>
+        <translation>Comparar esta versión con el documento</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Restore</source>
+        <translation>&amp;Restaurar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Replace the text of the document with this version (it can be undone)</source>
+        <translation>Cambiar el texto del documento por esta versión (se puede deshacer)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Open</source>
+        <translation>&amp;Abrir</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Open this version in a new tab</source>
+        <translation>Abrir esta versión en una pestaña nueva</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Delete</source>
+        <translation>&amp;Borrar</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Delete this version from the history</source>
+        <translation>Borrar esta versión del historial</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>Today %1</source>
+        <translation>Hoy %1</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Yesterday %1</source>
+        <translation>Ayer %1</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>The local history is turned off (Settings › Preferences › Backup).</source>
+        <translation>El historial local está apagado (Configuración › Preferencias › Copia de seguridad).</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The document has not been saved to a file yet.</source>
+        <translation>El documento aún no se ha guardado en un archivo.</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>%1: no saved versions yet. Each save keeps one.</source>
+        <translation>%1: todavía no hay versiones. Cada vez que guardas se conserva una.</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+2"/>
+        <source>%1: %n saved version(s)</source>
+        <translation>
+            <numerusform>%1: %n versión guardada</numerusform>
+            <numerusform>%1: %n versiones guardadas</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::LspManager</name>
     <message>
         <location filename="../src/ui/LspManager.cpp" line="+245"/>
@@ -1961,19 +2047,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+496"/>
-        <location line="+4664"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+498"/>
+        <location line="+4777"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-4664"/>
-        <location line="+1899"/>
+        <location line="-4777"/>
+        <location line="+1990"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-1801"/>
+        <location line="-1892"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2003,7 +2089,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Recargar desde el disco</translation>
     </message>
     <message>
-        <location line="+2"/>
+        <location line="+19"/>
         <source>&amp;Save</source>
         <translation>&amp;Guardar</translation>
     </message>
@@ -2429,7 +2515,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1427"/>
+        <location line="+1519"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2475,12 +2561,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+27"/>
-        <location line="+924"/>
+        <location line="+928"/>
         <source>None (Normal Text)</source>
         <translation>Ninguno (texto normal)</translation>
     </message>
     <message>
-        <location line="-894"/>
+        <location line="-898"/>
         <source>&amp;User Defined Language</source>
         <translation>Definido por el &amp;usuario</translation>
     </message>
@@ -2652,12 +2738,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2439"/>
+        <location line="-2531"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
     <message>
-        <location line="-1054"/>
+        <location line="-1071"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -2738,12 +2824,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+824"/>
-        <location line="+1260"/>
+        <location line="+1280"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1219"/>
+        <location line="-1222"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2769,12 +2855,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+5517"/>
+        <location line="+5613"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-5516"/>
+        <location line="-5612"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3059,8 +3145,8 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Lista de &amp;funciones</translation>
     </message>
     <message>
-        <location line="-415"/>
-        <location line="+415"/>
+        <location line="-432"/>
+        <location line="+432"/>
         <source>Folder as Wor&amp;kspace</source>
         <translation>E&amp;xplorador de carpetas</translation>
     </message>
@@ -3070,13 +3156,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>P&amp;roblemas</translation>
     </message>
     <message>
-        <location line="-421"/>
-        <location line="+437"/>
+        <location line="-438"/>
+        <location line="+454"/>
         <source>Termin&amp;al</source>
         <translation>&amp;Terminal</translation>
     </message>
     <message>
-        <location line="-447"/>
+        <location line="-464"/>
         <source>Open Containing &amp;Folder</source>
         <translation>Abrir &amp;la carpeta contenedora</translation>
     </message>
@@ -3091,7 +3177,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Abrir con la aplicación &amp;predeterminada</translation>
     </message>
     <message>
-        <location line="+11"/>
+        <location line="+6"/>
+        <source>Local &amp;History</source>
+        <translation>Historial &amp;local</translation>
+    </message>
+    <message>
+        <location line="+22"/>
         <source>Re&amp;name…</source>
         <translation>Re&amp;nombrar…</translation>
     </message>
@@ -3661,12 +3752,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+4567"/>
+        <location line="+4663"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-4566"/>
+        <location line="-4662"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3696,7 +3787,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+36"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -3732,6 +3823,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+1"/>
+        <location line="+214"/>
+        <source>Local History</source>
+        <translation>Historial local</translation>
+    </message>
+    <message>
+        <location line="-213"/>
         <source>Character Panel</source>
         <translation>Panel de caracteres</translation>
     </message>
@@ -3741,7 +3838,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Historial del portapapeles</translation>
     </message>
     <message>
-        <location line="+164"/>
+        <location line="+212"/>
+        <source>Delete this version from the local history?</source>
+        <translation>¿Borrar esta versión del historial local?</translation>
+    </message>
+    <message>
+        <location line="+23"/>
         <location line="+9"/>
         <location line="+9"/>
         <location line="+10"/>
@@ -3769,7 +3871,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>%1 no tiene versión en Git (HEAD).</translation>
     </message>
     <message>
-        <location line="+34"/>
+        <location line="+50"/>
         <source>Compare: the documents are identical</source>
         <translation>Comparar: los documentos son idénticos</translation>
     </message>
@@ -3897,7 +3999,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         </translation>
     </message>
     <message>
-        <location line="+299"/>
+        <location line="+301"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -4155,31 +4257,31 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+683"/>
+        <location line="+687"/>
         <source>Open in New Instance</source>
         <translation>Abrir en otra ventana</translation>
     </message>
     <message>
-        <location line="-680"/>
-        <location line="+185"/>
+        <location line="-684"/>
+        <location line="+187"/>
         <source>Save</source>
         <translation>Guardar</translation>
     </message>
     <message>
-        <location line="-184"/>
+        <location line="-186"/>
         <source>Save As…</source>
         <translation>Guardar como…</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+266"/>
+        <location line="+270"/>
         <location line="+20"/>
         <location line="+1960"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2242"/>
+        <location line="-2246"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -4240,18 +4342,18 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 %2</translation>
     </message>
     <message>
-        <location line="+111"/>
-        <location line="+13"/>
+        <location line="+113"/>
+        <location line="+14"/>
         <source>Save As</source>
         <translation>Guardar como</translation>
     </message>
     <message>
-        <location line="-12"/>
+        <location line="-13"/>
         <source>&quot;%1&quot; is already open in another tab. Close it before overwriting it.</source>
         <translation>«%1» ya está abierto en otra pestaña. Ciérrelo antes de sobrescribirlo.</translation>
     </message>
     <message>
-        <location line="+46"/>
+        <location line="+48"/>
         <source>Backup</source>
         <translation>Copia de seguridad</translation>
     </message>
@@ -4526,7 +4628,7 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-2354"/>
+        <location line="-2360"/>
         <source>Format Document</source>
         <translation>Dar formato al documento</translation>
     </message>
@@ -4558,7 +4660,7 @@ Do you want to save the file anyway?</source>
         <translation>Formateado con %1</translation>
     </message>
     <message>
-        <location line="+2290"/>
+        <location line="+2296"/>
         <source>Run until the end of file</source>
         <translation>Hasta el final del archivo</translation>
     </message>
@@ -4761,12 +4863,12 @@ Keep this file in editor?</source>
     <message>
         <location line="+63"/>
         <location line="+7"/>
-        <location line="+8"/>
+        <location line="+11"/>
         <source>Rename</source>
         <translation>Renombrar</translation>
     </message>
     <message>
-        <location line="-15"/>
+        <location line="-18"/>
         <source>The file %1 no longer exists.</source>
         <translation>El archivo %1 ya no existe.</translation>
     </message>
@@ -4776,7 +4878,7 @@ Keep this file in editor?</source>
         <translation>%1 está abierto en Edita. Ciérralo primero.</translation>
     </message>
     <message>
-        <location line="+8"/>
+        <location line="+11"/>
         <source>Cannot rename %1:
 %2</source>
         <translation>No se puede renombrar %1:
@@ -5752,7 +5854,7 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+144"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+147"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
@@ -6100,12 +6202,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+479"/>
+        <location line="+502"/>
         <source>Folder:</source>
         <translation>Plegado:</translation>
     </message>
     <message>
-        <location line="-478"/>
+        <location line="-501"/>
         <source>Simple</source>
         <translation>Simple</translation>
     </message>
@@ -6156,13 +6258,13 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+619"/>
+        <location line="+642"/>
         <location line="+57"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-676"/>
+        <location line="-699"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -6726,12 +6828,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+153"/>
+        <location line="+176"/>
         <source>Every:</source>
         <translation>Cada:</translation>
     </message>
     <message>
-        <location line="-153"/>
+        <location line="-176"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -6766,7 +6868,52 @@ Continue?</source>
         <translation>Extensión de los archivos de sesión:</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+2"/>
+        <source>&lt;b&gt;Local history&lt;/b&gt;</source>
+        <translation>&lt;b&gt;Historial local&lt;/b&gt;</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Keep a copy of each saved version (File › Local History)</source>
+        <translation>Conservar una copia de cada versión guardada (Archivo › Historial local)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Versions per file:</source>
+        <translation>Versiones por archivo:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete versions older than:</source>
+        <translation>Borrar las versiones de más de:</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Skip files larger than:</source>
+        <translation>No guardar copias de archivos de más de:</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source> KB</source>
+        <translation> KB</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Delete the Whole Local History (%1)</source>
+        <translation>Borrar todo el historial local (%1)</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Local History</source>
+        <translation>Historial local</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Delete the saved versions of all files? This cannot be undone.</source>
+        <translation>¿Borrar las versiones guardadas de todos los archivos? No se puede deshacer.</translation>
+    </message>
+    <message>
+        <location line="+12"/>
         <source>Delimiter</source>
         <translation>Delimitadores</translation>
     </message>
@@ -7072,7 +7219,8 @@ Continue?</source>
         <translation>Buscar una versión nueva de Edita al arrancar</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="-161"/>
+        <location line="+162"/>
         <source> days</source>
         <translation> días</translation>
     </message>

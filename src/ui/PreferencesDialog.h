@@ -248,6 +248,10 @@ private:
     QCheckBox* _remember = nullptr;
     QCheckBox* _snapshot = nullptr;
     QSpinBox* _snapshotSeconds = nullptr;
+    QCheckBox* _localHistory = nullptr;
+    QSpinBox* _localHistoryVersions = nullptr;
+    QSpinBox* _localHistoryDays = nullptr;
+    QSpinBox* _localHistoryMaxKB = nullptr;
     QComboBox* _backupOnSave = nullptr;
     QCheckBox* _customBackupDir = nullptr;
     QLineEdit* _backupDir = nullptr;

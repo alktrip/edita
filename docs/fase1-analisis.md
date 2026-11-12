@@ -356,6 +356,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 80 — Sin avisos de beta y capturas nuevas | README, PROBAR.md (`#testing-edita`) y la plantilla de issues sin «beta»; `edita_readme_images` y `edita_manual_images` regeneradas; `finddialog.png` en `manual_screenshots` | ✅ [fase80.md](fase80.md) |
 | 81 — Pulido de la interfaz | `actionGoToDefinition` en Alt+F12 (F12 era ambiguo con Post-It), letras de acceso de los menús, plural de «time(s)» en RunMacroDlg, `modeColumn` en FindReplaceDialog, enlace en Acerca de; `tst_uipolish` | ✅ [fase81.md](fase81.md) |
 | 82 — La API de plugins de la 1.x | `Notepad_plus_msgs.h` (números estables, `_DEPRECATED`, mensaje desconocido → 0, `NPPM_GETNPPVERSION`); promesa en `docs/plugins.md` y `edita_plugin.h`; `tst_pluginapi` | ✅ [fase82.md](fase82.md) |
+| 83 — Historial local | `Notepad_plus::doSave` y `BackupFeature` (`.bak` simple o detallado, sin interfaz); `core/LocalHistory`, `LocalHistoryPanel`, `compareWithBytes`; `tst_localhistory` | ✅ [fase83.md](fase83.md) |
 
 ---
 

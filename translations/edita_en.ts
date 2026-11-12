@@ -86,9 +86,20 @@
     </message>
 </context>
 <context>
+    <name>edita::LocalHistoryPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/LocalHistoryPanel.cpp" line="+99"/>
+        <source>%1: %n saved version(s)</source>
+        <translation>
+            <numerusform>%1: %n saved version</numerusform>
+            <numerusform>%1: %n saved versions</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+2441"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+2550"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -120,7 +131,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+2246"/>
+        <location line="+2252"/>
         <source> time(s)</source>
         <translation>
             <numerusform> time</numerusform>
@@ -128,7 +139,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+3325"/>
+        <location line="+3328"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>

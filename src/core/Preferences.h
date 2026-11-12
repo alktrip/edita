@@ -20,6 +20,7 @@
 #pragma once
 
 #include "AppInfo.h"
+#include "core/LocalHistory.h"
 
 #include <QList>
 #include <QString>
@@ -165,6 +166,16 @@ struct Preferences
     bool spellOnlyCommentsAndStrings = true;
     // Página de inicio mientras el único documento es uno nuevo y vacío (EditaWelcomePage)
     bool showWelcome = true;
+    // Historial local (core/LocalHistory; no existe en N++): <GUIConfig name="EditaLocalHistory"
+    // enabled="yes" versions="50" days="30" maxKB="2048">
+    bool localHistory = true;
+    int localHistoryVersions = 50;
+    int localHistoryDays = 30;
+    int localHistoryMaxKB = 2048;
+    LocalHistoryLimits localHistoryLimits() const
+    {
+        return {localHistoryVersions, localHistoryDays, qint64{localHistoryMaxKB} * 1024};
+    }
     // <GUIConfig name="multiInst" setting="0" …/>
     MultiInst multiInstSetting = MultiInst::Mono;
     // Modo oscuro de N++: <GUIConfig name="DarkMode" enable="no" enableWindowsMode="yes"
