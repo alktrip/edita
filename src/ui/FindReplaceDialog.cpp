@@ -216,7 +216,11 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     left->addLayout(fields);
     auto* optionsRow = new QHBoxLayout;
     optionsRow->addLayout(options);
-    optionsRow->addWidget(modeBox, 1);
+    // El recuadro con su altura; lo que sobra, debajo (en Marcar, con más casillas a la izquierda)
+    auto* modeColumn = new QVBoxLayout;
+    modeColumn->addWidget(modeBox);
+    modeColumn->addStretch();
+    optionsRow->addLayout(modeColumn, 1);
     left->addLayout(optionsRow);
     left->addWidget(_status);
 

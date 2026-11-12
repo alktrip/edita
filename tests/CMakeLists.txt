@@ -82,6 +82,7 @@ target_compile_definitions(tst_crashreport PRIVATE EDITA_CRASH_HELPER="$<TARGET_
 edita_add_test(tst_statusbar LIBS edita_ui)
 edita_add_test(tst_navigation LIBS edita_ui)
 edita_add_test(tst_findbar LIBS edita_ui)
+edita_add_test(tst_uipolish LIBS edita_ui)
 edita_add_test(tst_regextester LIBS edita_ui)
 edita_add_test(tst_terminal LIBS edita_ui)
 edita_add_test(tst_lsp LIBS edita_ui)

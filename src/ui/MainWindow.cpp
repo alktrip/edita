@@ -1031,12 +1031,12 @@ void MainWindow::createMenus()
         if (const QString dir = currentDir(); !dir.isEmpty())
             _openUrl(QUrl::fromLocalFile(dir));
     });
-    addAction(containing, tr("&Terminal"), "actionOpenFolderInTerminal", QKeySequence(), [this, currentDir] {
+    addAction(containing, tr("Termin&al"), "actionOpenFolderInTerminal", QKeySequence(), [this, currentDir] {
         if (const QString dir = currentDir(); !dir.isEmpty())
             openTerminal(dir);
     });
     containing->addSeparator();
-    addAction(containing, tr("Folder as &Workspace"), "actionContainingFolderAsWorkspace", QKeySequence(), [this, currentDir] {
+    addAction(containing, tr("Folder as Wor&kspace"), "actionContainingFolderAsWorkspace", QKeySequence(), [this, currentDir] {
         if (const QString dir = currentDir(); !dir.isEmpty())
             addFolderToWorkspace(dir);
     });
@@ -1136,7 +1136,7 @@ void MainWindow::createMenus()
     addAction(edit, tr("Select A&ll"), "actionSelectAll", QKeySequence::SelectAll, sci(SCI_SELECTALL));
     // IDM_EDIT_BEGINENDSELECT[_COLUMNMODE]: marcada mientras se espera el final; la otra, sin poder usarse
     for (const bool column : {false, true}) {
-        QAction* select = addAction(edit, column ? tr("Begin/End Select in Column &Mode") : tr("&Begin/End Select"),
+        QAction* select = addAction(edit, column ? tr("Begin/End Select in Column &Mode") : tr("Be&gin/End Select"),
                                     column ? "actionBeginEndSelectColumn" : "actionBeginEndSelect", QKeySequence(), [this, column] {
                                         editor()->beginOrEndSelect(column);
                                         refreshBeginEndSelect(column);
@@ -1212,13 +1212,13 @@ void MainWindow::createMenus()
               sci(SCI_MOVESELECTEDLINESUP));
     addAction(lines, tr("Move Down Current Lin&e"), "actionLineDown", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Down),
               sci(SCI_MOVESELECTEDLINESDOWN));
-    addAction(lines, tr("Remove &Empty Lines"), "actionRemoveEmptyLines", QKeySequence(),
+    addAction(lines, tr("Re&move Empty Lines"), "actionRemoveEmptyLines", QKeySequence(),
               [this] { removeEmptyLines(*editor(), false); });
     addAction(lines, tr("Remove Empty Lines (Containing &Blank characters)"), "actionRemoveBlankLines", QKeySequence(),
               [this] { removeEmptyLines(*editor(), true); });
     addAction(lines, tr("Insert Blank Line &Above Current"), "actionBlankLineAbove",
               QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_Return), [this] { insertBlankLine(*editor(), true); });
-    addAction(lines, tr("Insert Blank Line &Below Current"), "actionBlankLineBelow",
+    addAction(lines, tr("In&sert Blank Line Below Current"), "actionBlankLineBelow",
               QKeySequence(Qt::CTRL | Qt::ALT | Qt::SHIFT | Qt::Key_Return), [this] { insertBlankLine(*editor(), false); });
     lines->addSeparator();
     // Ordenar (IDM_EDIT_SORTLINES_*): una entrada por ordenador y sentido
@@ -1231,7 +1231,7 @@ void MainWindow::createMenus()
     };
     static constexpr SortEntry kSortEntries[] = {
         {QT_TR_NOOP("&Reverse Line Order"), "actionSortReverse", SortKind::Reverse, false},
-        {QT_TR_NOOP("&Randomize Line Order"), "actionSortRandom", SortKind::Random, false},
+        {QT_TR_NOOP("Randomize Line &Order"), "actionSortRandom", SortKind::Random, false},
         {nullptr, nullptr, SortKind::Lexicographic, false},
         {QT_TR_NOOP("Sort Lines Lexicographically Ascending"), "actionSortLexAsc", SortKind::Lexicographic, false},
         {QT_TR_NOOP("Sort Lines Lexicographically Descending"), "actionSortLexDesc", SortKind::Lexicographic, true},
@@ -1272,7 +1272,7 @@ void MainWindow::createMenus()
         {QT_TR_NOOP("&Proper Case"), "actionProperCase", TextCase::ProperForce, Qt::ALT | Qt::Key_U},
         {QT_TR_NOOP("Proper Case (&blend)"), "actionProperCaseBlend", TextCase::ProperBlend, Qt::ALT | Qt::SHIFT | Qt::Key_U},
         {QT_TR_NOOP("&Sentence case"), "actionSentenceCase", TextCase::SentenceForce, Qt::CTRL | Qt::ALT | Qt::Key_U},
-        {QT_TR_NOOP("Sentence case (b&lend)"), "actionSentenceCaseBlend", TextCase::SentenceBlend,
+        {QT_TR_NOOP("Sentence &case (blend)"), "actionSentenceCaseBlend", TextCase::SentenceBlend,
          Qt::CTRL | Qt::ALT | Qt::SHIFT | Qt::Key_U},
         {QT_TR_NOOP("&iNVERT cASE"), "actionInvertCase", TextCase::Invert, QKeyCombination()},
         {QT_TR_NOOP("ra&NdOm CasE"), "actionRandomCase", TextCase::Random, QKeyCombination()},
@@ -1311,11 +1311,11 @@ void MainWindow::createMenus()
     addAction(blanks, tr("Trim Both and EOL to &Space"), "actionTrimAll", QKeySequence(),
               [this] { trimAll(*editor()); });
     blanks->addSeparator();
-    addAction(blanks, tr("&TAB to Space"), "actionTabToSpace", QKeySequence(),
+    addAction(blanks, tr("TA&B to Space"), "actionTabToSpace", QKeySequence(),
               [this] { convertTabs(*editor(), TabConversion::TabsToSpaces); });
     addAction(blanks, tr("Space to TAB (&All)"), "actionSpaceToTabAll", QKeySequence(),
               [this] { convertTabs(*editor(), TabConversion::SpacesToTabsAll); });
-    addAction(blanks, tr("Space to TAB (L&eading)"), "actionSpaceToTabLeading", QKeySequence(),
+    addAction(blanks, tr("S&pace to TAB (Leading)"), "actionSpaceToTabLeading", QKeySequence(),
               [this] { convertTabs(*editor(), TabConversion::SpacesToTabsLeading); });
     // Autocompletado (los atajos de N++)
     QMenu* complete = edit->addMenu(tr("&Auto-Completion"));
@@ -1421,7 +1421,7 @@ void MainWindow::createMenus()
     _readOnlyAction->setCheckable(true);
     // IDM_EDIT_SETREADONLYFORALLDOCS, IDM_EDIT_CLEARREADONLYFORALLDOCS
     for (const bool on : {true, false}) {
-        addAction(edit, on ? tr("Read-Only for &All Documents") : tr("Clear Read-Only for All Doc&uments"),
+        addAction(edit, on ? tr("Read-Only for &All Documents") : tr("Clear Read-Only &for All Documents"),
                   on ? "actionReadOnlyAll" : "actionReadOnlyClearAll", QKeySequence(), [this, on] {
                       for (std::size_t i = 0; i < _documents.count(); ++i)
                           _documents.bufferAt(i)->setUserReadOnly(on);
@@ -1450,8 +1450,8 @@ void MainWindow::createMenus()
     view->addSeparator();
     // IDM_VIEW_DOC_MAP, IDM_VIEW_DOCLIST, IDM_VIEW_FUNC_LIST, IDM_VIEW_FILEBROWSER
     const std::pair<const char*, QString> panelEntries[] = {
-        {"documentMap", tr("Document &Map")}, {"documentList", tr("Document &List")},
-        {"functionList", tr("&Function List")}, {"folderAsWorkspace", tr("Folder as &Workspace")},
+        {"documentMap", tr("&Document Map")}, {"documentList", tr("Document &List")},
+        {"functionList", tr("&Function List")}, {"folderAsWorkspace", tr("Folder as Wor&kspace")},
         {"problems", tr("P&roblems")},
     };
     for (const auto& [name, text] : panelEntries) {
@@ -1468,7 +1468,7 @@ void MainWindow::createMenus()
         });
     }
     // Terminal integrada (no existe en N++): Ctrl+` o, en los teclados en español, Ctrl+Ñ
-    QAction* terminal = addAction(view, tr("&Terminal"), "actionTerminal", QKeySequence(Qt::CTRL | Qt::Key_QuoteLeft),
+    QAction* terminal = addAction(view, tr("Termin&al"), "actionTerminal", QKeySequence(Qt::CTRL | Qt::Key_QuoteLeft),
                                   [this] { toggleTerminal(); });
     terminal->setShortcuts({QKeySequence(Qt::CTRL | Qt::Key_QuoteLeft), QKeySequence(Qt::CTRL | Qt::Key_Ntilde)});
     addAction(view, tr("New Te&rminal"), "actionNewTerminal", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_QuoteLeft),
@@ -1493,7 +1493,7 @@ void MainWindow::createMenus()
             statusBar()->showMessage(tr("Difference %1 of %2").arg(_compare->goToDifference(editor(), false)).arg(_compare->changes().size()), 4000);
     });
     compare->addSeparator();
-    QAction* ignoreSpaces = addAction(compare, tr("Ignore &Spaces"), "actionCompareIgnoreSpaces", QKeySequence(), [this](bool on) {
+    QAction* ignoreSpaces = addAction(compare, tr("&Ignore Spaces"), "actionCompareIgnoreSpaces", QKeySequence(), [this](bool on) {
         _compareIgnoreSpaces = on;
         if (_compare)
             _compare->setOptions({_compareIgnoreSpaces, _compareIgnoreCase});
@@ -1506,7 +1506,7 @@ void MainWindow::createMenus()
     });
     ignoreCase->setCheckable(true);
     compare->addSeparator();
-    addAction(compare, tr("&Clear Comparison"), "actionCompareClear", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_X), [this] { stopCompare(); });
+    addAction(compare, tr("C&lear Comparison"), "actionCompareClear", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_X), [this] { stopCompare(); });
     view->addSeparator();
     _wrapAction = addAction(view, tr("&Word wrap"), "actionWrap", QKeySequence(),
                             [this](bool checked) { toggleViewOption(&Preferences::wrap, checked); });
@@ -1596,7 +1596,7 @@ void MainWindow::createMenus()
         _prompter->inform(this, tr("Summary"), documentSummary());
     });
     // El corrector ortográfico (no existe en N++): Preferencias › Ortografía
-    QAction* spelling = addAction(view, tr("Check S&pelling"), "actionSpellCheck", QKeySequence(), [this] {
+    QAction* spelling = addAction(view, tr("Check &Spelling"), "actionSpellCheck", QKeySequence(), [this] {
         toggleViewOption(&Preferences::spellCheck, !_prefs.spellCheck);
     });
     spelling->setCheckable(true);
@@ -1632,12 +1632,12 @@ void MainWindow::createMenus()
     tab->addSeparator();
     addAction(tab, tr("Move to &Start"), "actionTabToStart", QKeySequence(), [this] { moveCurrentTab(-1000000); });
     addAction(tab, tr("Move to &End"), "actionTabToEnd", QKeySequence(), [this] { moveCurrentTab(1000000); });
-    addAction(tab, tr("Move Tab &Forward"), "actionTabForward", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_PageDown),
+    addAction(tab, tr("&Move Tab Forward"), "actionTabForward", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_PageDown),
               [this] { moveCurrentTab(1); });
     addAction(tab, tr("Move Tab &Backward"), "actionTabBackward", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_PageUp),
               [this] { moveCurrentTab(-1); });
     tab->addSeparator();
-    QAction* pin = addAction(tab, tr("Pi&n Tab"), "actionPinTab", QKeySequence(), [this] {
+    QAction* pin = addAction(tab, tr("Pin &Tab"), "actionPinTab", QKeySequence(), [this] {
         if (Buffer* buf = _documents.buffer(currentBuffer()))
             buf->setPinned(!buf->isPinned());
     });
@@ -1682,7 +1682,7 @@ void MainWindow::createMenus()
     addAction(settings, tr("Edit S&nippets…"), "actionEditSnippets", QKeySequence(), [this] { editUserSnippets(); });
     // IDM_SETTING_IMPORTPLUGIN, IDM_SETTING_IMPORTSTYLETHEMES, IDM_SETTING_EDITCONTEXTMENU
     settings->addSeparator();
-    QMenu* import = settings->addMenu(tr("I&mport"));
+    QMenu* import = settings->addMenu(tr("&Import"));
     import->setObjectName(QStringLiteral("menuImport"));
     addAction(import, tr("Import &plugin(s)…"), "actionImportPlugins", QKeySequence(), [this] {
         importPlugins(_prompter->openFileNames(this, QDir::homePath(), tr("Edita plugin (*.so *.zip)")));
@@ -1787,7 +1787,9 @@ void MainWindow::createMenus()
                               .scaled(160, 160, Qt::KeepAspectRatio, Qt::SmoothTransformation));
         box.setText(tr("<b>%1 %2</b><br>Text editor inspired by Notepad++.<br>Based on Scintilla and "
                        "Lexilla.<br>GNU GPL v3 or later license.")
-                        .arg(QString::fromUtf8(kAppName), QString::fromUtf8(kAppVersion)));
+                        .arg(QString::fromUtf8(kAppName), QString::fromUtf8(kAppVersion))
+                    // La página del proyecto (QMessageBox abre los enlaces con el navegador)
+                    + QStringLiteral("<br><br><a href=\"%1\">%1</a>").arg(QString::fromUtf8(kHomepageUrl)));
         box.exec();
     });
     about->setObjectName(QStringLiteral("actionAbout"));
@@ -3591,9 +3593,9 @@ void MainWindow::createSearchMenu()
         else
             showFindDialog(Tab::Find);
     });
-    add(tr("Find in &Files…"), "actionFindInFiles", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F),
+    add(tr("Find in Fi&les…"), "actionFindInFiles", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F),
         [this] { showFindDialog(Tab::FindInFiles); });
-    add(tr("Find Characters in &Range…"), "actionFindCharsInRange", QKeySequence(), [this] {
+    add(tr("Find Ch&aracters in Range…"), "actionFindCharsInRange", QKeySequence(), [this] {
         if (!_findCharsDialog) {
             _findCharsDialog = new FindCharsDialog(this);
             connect(_findCharsDialog, &FindCharsDialog::findRequested, this, [this] {
@@ -3636,13 +3638,13 @@ void MainWindow::createSearchMenu()
         if (ok)
             goToLine(line);
     });
-    add(tr("Go to &File…"), "actionGoToFile", QKeySequence(Qt::CTRL | Qt::Key_E), [this] { showCommandPalette(QString()); });
+    add(tr("Go to F&ile…"), "actionGoToFile", QKeySequence(Qt::CTRL | Qt::Key_E), [this] { showCommandPalette(QString()); });
     add(tr("Go to S&ymbol…"), "actionGoToSymbol", QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_O),
         [this] { showCommandPalette(QStringLiteral("@")); });
     // Con el servidor de lenguaje (no existen en N++)
-    add(tr("Go to &Definition"), "actionGoToDefinition", QKeySequence(Qt::Key_F12), [this] { goToDefinition(); });
-    add(tr("Find Re&ferences"), "actionFindReferences", QKeySequence(Qt::SHIFT | Qt::Key_F12), [this] { findReferences(); });
-    add(tr("Go to Symbol in &Project…"), "actionWorkspaceSymbol", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_O), [this] { showWorkspaceSymbols(); });
+    add(tr("Go to &Definition"), "actionGoToDefinition", QKeySequence(Qt::ALT | Qt::Key_F12), [this] { goToDefinition(); });
+    add(tr("Find R&eferences"), "actionFindReferences", QKeySequence(Qt::SHIFT | Qt::Key_F12), [this] { findReferences(); });
+    add(tr("Go to &Symbol in Project…"), "actionWorkspaceSymbol", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_O), [this] { showWorkspaceSymbols(); });
     search->addSeparator();
     add(tr("Next Search Result"), "actionNextResult", QKeySequence(Qt::Key_F4),
         [this] { _results->activateAdjacentResult(true); });
@@ -3650,7 +3652,7 @@ void MainWindow::createSearchMenu()
         [this] { _results->activateAdjacentResult(false); });
     add(tr("Rege&x Tester"), "actionRegexTester", QKeySequence(), [this] { showRegexTester(); });
     QAction* panel = _results->toggleViewAction();
-    panel->setText(tr("Search &Results Window"));
+    panel->setText(tr("Search Results &Window"));
     panel->setShortcut(QKeySequence(Qt::Key_F7));
     search->addAction(panel);
     search->addSeparator();
@@ -3728,14 +3730,14 @@ void MainWindow::createSearchMenu()
     });
     addIn(bookmarks, tr("C&opy Bookmarked Lines"), "actionCopyMarkedLines", QKeySequence(),
           [this] { QApplication::clipboard()->setText(QString::fromStdString(markedLinesText(*editor()))); });
-    addIn(bookmarks, tr("&Paste to (Replace) Bookmarked Lines"), "actionPasteMarkedLines", QKeySequence(), [this] {
+    addIn(bookmarks, tr("Paste to (Replace) Bookmarked &Lines"), "actionPasteMarkedLines", QKeySequence(), [this] {
         const QString text = QApplication::clipboard()->text();
         if (!text.isEmpty())
             replaceMarkedLines(*editor(), text.toStdString());
     });
     addIn(bookmarks, tr("&Remove Bookmarked Lines"), "actionDeleteMarkedLines", QKeySequence(),
           [this] { deleteMarkedLines(*editor(), true); });
-    addIn(bookmarks, tr("Remove &Non-Bookmarked Lines"), "actionDeleteUnmarkedLines", QKeySequence(),
+    addIn(bookmarks, tr("Remove Non-&Bookmarked Lines"), "actionDeleteUnmarkedLines", QKeySequence(),
           [this] { deleteMarkedLines(*editor(), false); });
     addIn(bookmarks, tr("&Inverse Bookmark"), "actionInverseBookmarks", QKeySequence(),
           [this] { inverseBookmarks(*editor()); });
@@ -5007,7 +5009,7 @@ void MainWindow::rebuildMacroMenu()
         _savedMacroActions.push_back(action);
     }
     if (!_savedMacros.empty()) {
-        auto* remove = new QMenu(tr("&Delete a Macro"), _macroMenu);
+        auto* remove = new QMenu(tr("Delete &a Macro"), _macroMenu);
         remove->setObjectName(QStringLiteral("menuDeleteMacro"));
         for (std::size_t i = 0; i < _savedMacros.size(); ++i) {
             remove->addAction(_savedMacros[i].name, this, [this, i] {
@@ -5185,7 +5187,10 @@ void MainWindow::showRunMacroDialog()
     auto* timesRadio = new QRadioButton(tr("Run"), &dialog);
     auto* times = new QSpinBox(&dialog);
     times->setRange(1, 1000000);
-    times->setSuffix(tr(" times"));
+    // «1 vez», «2 veces» (el plural sale de edita_en.ts y edita_es.ts)
+    auto timesSuffix = [times] { times->setSuffix(MainWindow::tr(" time(s)", nullptr, times->value())); };
+    timesSuffix();
+    connect(times, &QSpinBox::valueChanged, &dialog, timesSuffix);
     auto* eofRadio = new QRadioButton(tr("Run until the end of file"), &dialog);
     timesRadio->setChecked(true);
     auto* timesRow = new QHBoxLayout;

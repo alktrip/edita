@@ -354,6 +354,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 78 — Al día con N++ 8.9.9 | `import-third-party.sh` (Scintilla 5.6.9, Lexilla 5.5.5, boost 1.92, `functionList/`; parches con rutas desde la raíz), `highlightFindMatches` con `kIndicatorFindDialog` 30 y `findDlgHighlightMatches`, `replaceNext(…, stopAfterReplace)` con `replaceStopsWithoutFindingNext`, `lexer.r.escape.sequence`, `EditorView::updateWhitespaceSize` | ✅ [fase78.md](fase78.md) |
 | 79 — Aviso de actualizaciones estable | `update_check::parseReleases` (lista `releases?per_page=30`; sin betas, borradores ni `continuous` en una versión estable), `migratedUpdateInterval` con `<GUIConfig name="noUpdate" editaPrerelease>` | ✅ [fase79.md](fase79.md) |
 | 80 — Sin avisos de beta y capturas nuevas | README, PROBAR.md (`#testing-edita`) y la plantilla de issues sin «beta»; `edita_readme_images` y `edita_manual_images` regeneradas; `finddialog.png` en `manual_screenshots` | ✅ [fase80.md](fase80.md) |
+| 81 — Pulido de la interfaz | `actionGoToDefinition` en Alt+F12 (F12 era ambiguo con Post-It), letras de acceso de los menús, plural de «time(s)» en RunMacroDlg, `modeColumn` en FindReplaceDialog, enlace en Acerca de; `tst_uipolish` | ✅ [fase81.md](fase81.md) |
 
 ---
 
