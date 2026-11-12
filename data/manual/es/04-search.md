@@ -25,6 +25,8 @@ Notepad++ para Ctrl+F y Ctrl+H, desactiva **Ctrl+F y Ctrl+H abren la barra de bu
 
 ## El diálogo Buscar
 
+![El diálogo Buscar, en la pestaña Reemplazar](images/finddialog.png)
+
 El diálogo tiene cuatro pestañas: **Buscar**, **Reemplazar**, **Buscar en archivos** y **Marcar**
 (ver [La pestaña Marcar](#la-pestana-marcar)). Comparten el texto que se busca y estas opciones:
 

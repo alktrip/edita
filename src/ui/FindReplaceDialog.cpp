@@ -119,6 +119,7 @@ FindReplaceDialog::FindReplaceDialog(QWidget* parent)
     _tabs->setObjectName(QStringLiteral("findTabs"));
 
     _find->setObjectName(QStringLiteral("findCombo"));
+    _replace->setObjectName(QStringLiteral("replaceCombo"));
     _filters->setEditText(QStringLiteral("*.*"));
     _wrapAround->setChecked(true);
     _recursive->setChecked(true);

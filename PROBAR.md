@@ -1,8 +1,8 @@
-# Probar Edita 0.9.0 beta
+# Probar Edita
 
-*[English below](#testing-edita-090-beta)*
+*[English below](#testing-edita)*
 
-Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. Esta versión es una **beta**: casi todo está hecho, pero falta que lo use gente real. Lo que encuentres nos dice qué arreglar antes de la 1.0.
+Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. Lo que encuentres nos dice qué arreglar. Antes de cada versión estable se publica una versión de prueba (beta o rc): si usas una, tus reportes llegan a tiempo para la estable.
 
 ## Instalar
 
@@ -16,10 +16,7 @@ Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, en x8
 
 > **macOS: todavía no hay versión.** Por limitaciones en el desarrollo, por ahora Edita es solo para Linux. El `.dmg` del release 0.0.1 se retiró; macOS se retomará cuando haya una versión estable para Linux.
 
-Si al abrirlo dice que falta una biblioteca:
-
-- **`libOpenGL.so.0`** (beta 5 o anterior, en Ubuntu 26.10 y otros sistemas sin `libopengl0`): está corregido desde la beta 6. Con una beta anterior, `sudo apt install libopengl0`.
-- **Otra**: repórtalo con el mensaje completo. Para ver todas las que faltan de una vez: `./Edita-*.AppImage --appimage-extract >/dev/null && ldd squashfs-root/usr/bin/edita | grep "not found"`.
+Si al abrirlo dice que falta una biblioteca, repórtalo con el mensaje completo. Para ver todas las que faltan de una vez: `./Edita-*.AppImage --appimage-extract >/dev/null && ldd squashfs-root/usr/bin/edita | grep "not found"`.
 
 ## Reportar un problema
 
@@ -73,9 +70,9 @@ También vienen con Edita **Python Script** (scripts de Python que controlan el 
 
 ---
 
-# Testing Edita 0.9.0 beta
+# Testing Edita
 
-Thank you for testing Edita, a text editor for Linux inspired by Notepad++. This version is a **beta**: almost everything is done, but it still needs real people to use it. What you find tells us what to fix before 1.0.
+Thank you for testing Edita, a text editor for Linux inspired by Notepad++. What you find tells us what to fix. Before each stable version there is a test version (beta or rc): if you use one, your reports arrive in time for the stable one.
 
 ## Install
 
@@ -89,10 +86,7 @@ It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, on x86_64. Yo
 
 > **macOS: there is no version yet.** Because of development limitations, for now Edita is only for Linux. The `.dmg` of release 0.0.1 has been removed; macOS will resume once there is a stable Linux version.
 
-If it says that a library is missing when opening it:
-
-- **`libOpenGL.so.0`** (beta 5 or earlier, on Ubuntu 26.10 and other systems without `libopengl0`): fixed since beta 6. With an earlier beta, `sudo apt install libopengl0`.
-- **Another one**: report it with the full message. To see all the missing ones at once: `./Edita-*.AppImage --appimage-extract >/dev/null && ldd squashfs-root/usr/bin/edita | grep "not found"`.
+If it says that a library is missing when opening it, report it with the full message. To see all the missing ones at once: `./Edita-*.AppImage --appimage-extract >/dev/null && ldd squashfs-root/usr/bin/edita | grep "not found"`.
 
 ## Report a problem
 

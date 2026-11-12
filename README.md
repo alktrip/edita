@@ -19,7 +19,7 @@
 
 <p align="center">
   <a href="https://github.com/alktrip/edita/releases/latest"><b>⬇ Descargar el AppImage</b></a> ·
-  <a href="PROBAR.md">Probar la beta</a> ·
+  <a href="PROBAR.md">Probar Edita</a> ·
   <a href="https://github.com/alktrip/edita/issues/new/choose">Reportar un problema</a>
 </p>
 
@@ -31,7 +31,7 @@ Edita lleva a Linux la forma de trabajar de Notepad++: abre tus archivos tal com
 
 Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git en el margen, terminal integrada, servidores de lenguaje (LSP), comparación de archivos y un manual integrado en español e inglés.
 
-> **Estado:** beta pública (0.9.0). Casi todo está hecho; falta que lo use gente real. Si lo pruebas, [cuéntanos qué encuentras](https://github.com/alktrip/edita/issues/new/choose).
+> **Estado:** ya tiene casi todo lo de Notepad++ ([qué falta](docs/paridad-npp.md)). Antes de cada versión estable se publica una versión de prueba; si usas una, [cuéntanos qué encuentras](https://github.com/alktrip/edita/issues/new/choose).
 
 > [!WARNING]
 > **La versión para macOS todavía no está lista.** Por limitaciones en el desarrollo (no hay una Mac para probarla a fondo y falta la firma y notarización de Apple), por ahora Edita solo se publica para **Linux x86_64**. El `.dmg` del release 0.0.1, una prueba temprana sin firmar, se retiró. El desarrollo para macOS se retomará cuando haya una versión estable para Linux; mientras tanto, los reportes de macOS no se pueden atender.
@@ -95,7 +95,7 @@ Para abrir tus archivos con Edita desde el administrador de archivos, elige sus 
 
 Uso desde la terminal: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst] [--openSession archivo]`. La configuración va en `~/.config/edita/`, con los mismos archivos que Notepad++ (`langs.xml`, `stylers.xml`, `config.xml`, `session.xml`, `shortcuts.xml`, `themes/`, `userDefineLangs/`, `plugins/`…).
 
-## Probar la beta y reportar
+## Probar y reportar
 
 La guía [PROBAR.md](PROBAR.md) dice qué probar. Para reportar un problema, **Ayuda › Reportar un problema…** abre el formulario de GitHub con tu versión y tu sistema ya escritos. Hay otro formulario para los plugins.
 

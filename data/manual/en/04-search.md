@@ -25,6 +25,8 @@ Notepad++ for Ctrl+F and Ctrl+H, turn off **Ctrl+F and Ctrl+H open the inline fi
 
 ## The Find dialog
 
+![The Find dialog, on the Replace tab](images/finddialog.png)
+
 The dialog has four tabs: **Find**, **Replace**, **Find in Files** and **Mark** (see
 [The Mark tab](#the-mark-tab)). They share the text to search and these options:
 

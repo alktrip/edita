@@ -10,12 +10,14 @@
 //   manual_screenshots <idioma> <carpeta de salida>
 
 #include "ui/EditorView.h"
+#include "ui/FindReplaceDialog.h"
 #include "ui/MainWindow.h"
 #include "ui/RegexTester.h"
 #include "ui/Translations.h"
 
 #include <QAction>
 #include <QApplication>
+#include <QComboBox>
 #include <QDir>
 #include <QDockWidget>
 #include <QFile>
@@ -156,6 +158,33 @@ int main(int argc, char** argv)
                  field->clear();
              for (QWidget* bar : w.findChildren<QWidget*>(QStringLiteral("findBar")))
                  bar->hide();
+             w.editor()->setFocus();
+         }},
+        {[&] {
+             // El diálogo Buscar en Reemplazar, con las dos casillas de N++ 8.9.9 (fase 78)
+             // (con la búsqueda en línea, la de omisión, Ctrl+H abre la barra)
+             w.editor()->send(SCI_GOTOLINE, 13);
+             auto inlinePrefs = w.preferences();
+             inlinePrefs.inlineFind = false;
+             w.setPreferences(inlinePrefs);
+             action("actionReplace")->trigger();
+             if (auto* dialog = w.findChild<FindReplaceDialog*>()) {
+                 dialog->setHighlightMatches(true);
+                 if (auto* field = dialog->findChild<QComboBox*>(QStringLiteral("findCombo")))
+                     field->setCurrentText(QStringLiteral("item"));
+                 if (auto* field = dialog->findChild<QComboBox*>(QStringLiteral("replaceCombo")))
+                     field->setCurrentText(QStringLiteral("entry"));
+             }
+         },
+         [&] {
+             if (auto* dialog = w.findChild<FindReplaceDialog*>()) {
+                 save(dialog->grab().toImage(), "finddialog.png");
+                 dialog->setHighlightMatches(false);
+                 dialog->hide();
+             }
+             auto inlinePrefs = w.preferences();
+             inlinePrefs.inlineFind = true;
+             w.setPreferences(inlinePrefs);
              w.editor()->setFocus();
          }},
         {[&] {
