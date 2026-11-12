@@ -91,7 +91,7 @@ chmod +x Edita-*-x86_64.AppImage     # o Edita-*-aarch64.AppImage
 
 **Fedora, openSUSE y compatibles:** `sudo dnf install ./edita-*.x86_64.rpm` (o `.aarch64.rpm`); en openSUSE, `sudo zypper install ./edita-*.rpm`.
 
-Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, openSUSE Tumbleweed y, en general, en las distribuciones con glibc 2.35 o más nueva. Los tres llevan su propio Qt, Python Script y MarkdownViewer++. Los paquetes dejan Edita en el menú y en **Abrir con**. Edita te avisa cuando hay una versión nueva.
+En x86_64 funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, openSUSE Tumbleweed y, en general, en las distribuciones con glibc 2.35 o más nueva. En arm64 hace falta glibc 2.39: Ubuntu 24.04, Debian 13, Raspberry Pi OS 13 (trixie), Fedora 40 o más nuevos. Los tres llevan su propio Qt, Python Script y MarkdownViewer++. Los paquetes dejan Edita en el menú y en **Abrir con**. Edita te avisa cuando hay una versión nueva.
 
 **Arch Linux:** el `PKGBUILD` de [`packaging/aur/`](packaging/aur/) compila Edita con el Qt de Arch: `makepkg -si` en esa carpeta.
 

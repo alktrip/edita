@@ -70,7 +70,7 @@ Si hay `rpmbuild` (paquete `rpm` en Debian y Ubuntu, `rpm-build` en Fedora), `bu
 
 ## x86_64 y arm64
 
-Los tres formatos se generan para la arquitectura del equipo (`uname -m`): `x86_64` y `aarch64` en el AppImage y el .rpm, y `amd64` y `arm64` en el .deb. La CI compila, prueba y empaqueta en las dos, con un runner de GitHub para cada una (`ubuntu-22.04` y `ubuntu-22.04-arm`) y el Qt 6.8.3 oficial de cada una. Luego instala el .rpm en Fedora 41 y el .deb en Debian 12, en contenedores limpios de las dos arquitecturas, y comprueba que Edita arranca. Solo si todo pasa se publican los seis archivos.
+Los tres formatos se generan para la arquitectura del equipo (`uname -m`): `x86_64` y `aarch64` en el AppImage y el .rpm, y `amd64` y `arm64` en el .deb. La CI compila, prueba y empaqueta en las dos, con un runner de GitHub para cada una y el Qt 6.8.3 oficial de cada una. x86_64 se compila en Ubuntu 22.04 (glibc 2.35). arm64 se compila en Ubuntu 24.04 (glibc 2.39), porque el Qt oficial para arm64 está compilado con glibc 2.38: la versión ARM necesita Ubuntu 24.04, Debian 13, Raspberry Pi OS 13 o Fedora 40 y posteriores. Luego instala el .rpm en Fedora 41 y el .deb en Debian 12 (x86_64) o 13 (arm64), en contenedores limpios, y comprueba que Edita arranca. Solo si todo pasa se publican los seis archivos.
 
 El catálogo de plugins publica binarios de x86_64. En arm64, el administrador de plugins ofrece compilar cada plugin desde su receta (hacen falta cmake y un compilador de C++), como cuando el binario no sirve para el equipo. Que las recetas compilen en arm64 todavía no se ha probado.
 

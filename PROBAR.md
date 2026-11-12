@@ -12,7 +12,7 @@ Gracias por probar Edita, un editor de texto para Linux inspirado en Notepad++. 
 
 En Debian y Ubuntu también puedes instalar el paquete `.deb` de la misma página (`sudo apt install ./edita_*_amd64.deb`, o `_arm64.deb`), y en Fedora y openSUSE el `.rpm` (`sudo dnf install ./edita-*.rpm` o `sudo zypper install ./edita-*.rpm`). Así queda en el menú y en **Abrir con**, y se abre con `edita` desde la terminal.
 
-Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, openSUSE Tumbleweed, en x86_64 y en arm64. Tu configuración se guarda en `~/.config/edita/`.
+En x86_64 funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores y openSUSE Tumbleweed. En arm64, en Ubuntu 24.04, Debian 13, Raspberry Pi OS 13 (trixie), Fedora 40 y posteriores. Tu configuración se guarda en `~/.config/edita/`.
 
 > **macOS: todavía no hay versión.** Por limitaciones en el desarrollo, por ahora Edita es solo para Linux. El `.dmg` del release 0.0.1 se retiró; macOS se retomará cuando haya una versión estable para Linux.
 
@@ -82,7 +82,7 @@ Thank you for testing Edita, a text editor for Linux inspired by Notepad++. What
 
 On Debian and Ubuntu you can also install the `.deb` package from the same page (`sudo apt install ./edita_*_amd64.deb`, or `_arm64.deb`), and on Fedora and openSUSE the `.rpm` (`sudo dnf install ./edita-*.rpm` or `sudo zypper install ./edita-*.rpm`). Then Edita is in the menu and in **Open With**, and `edita` opens it from a terminal.
 
-It works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, openSUSE Tumbleweed, on x86_64 and arm64. Your settings are stored in `~/.config/edita/`.
+On x86_64 it works on Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later and openSUSE Tumbleweed. On arm64, on Ubuntu 24.04, Debian 13, Raspberry Pi OS 13 (trixie), Fedora 40 and later. Your settings are stored in `~/.config/edita/`.
 
 > **macOS: there is no version yet.** Because of development limitations, for now Edita is only for Linux. The `.dmg` of release 0.0.1 has been removed; macOS will resume once there is a stable Linux version.
 

@@ -1,7 +1,8 @@
 # Edita para Linux, en x86_64 y en arm64 (aarch64): compila con -Werror, pasa todas las pruebas
 # y genera el AppImage y los paquetes .deb y .rpm (con el mismo AppDir). Después instala los
 # paquetes en Fedora y en Debian y comprueba que Edita arranca.
-# Ubuntu 22.04 con GCC 12 y Qt 6.8.3, la misma base que el AppImage (glibc 2.35).
+# x86_64: Ubuntu 22.04 con GCC 12 y Qt 6.8.3 (glibc 2.35). arm64: Ubuntu 24.04 (glibc 2.39),
+# porque el Qt oficial para arm64 necesita glibc 2.38.
 # Se lanza al subir a main (y deja el AppImage en el release «continuous»), en los pull
 # requests, con etiquetas v* (y entonces lo publica en su release) o a mano. Si una prueba
 # falla, la corrida falla y no se empaqueta.
@@ -33,7 +34,7 @@ jobs:
             qt_host: linux
             qt_arch: linux_gcc_64
           - arch: aarch64
-            runner: ubuntu-22.04-arm
+            runner: ubuntu-24.04-arm
             qt_host: linux_arm64
             qt_arch: linux_gcc_arm64
     name: pruebas (${{ matrix.arch }})
@@ -97,7 +98,7 @@ jobs:
             qt_host: linux
             qt_arch: linux_gcc_64
           - arch: aarch64
-            runner: ubuntu-22.04-arm
+            runner: ubuntu-24.04-arm
             qt_host: linux_arm64
             qt_arch: linux_gcc_arm64
     name: paquetes (${{ matrix.arch }})
@@ -165,10 +166,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, aarch64]
-        system: ['fedora:41', 'debian:12']
+        include:
+          - {arch: x86_64, runner: ubuntu-22.04, system: 'fedora:41'}
+          - {arch: x86_64, runner: ubuntu-22.04, system: 'debian:12'}
+          # arm64 se compila en Ubuntu 24.04 (glibc 2.39): Debian 13 es el primero que sirve
+          - {arch: aarch64, runner: ubuntu-24.04-arm, system: 'fedora:41'}
+          - {arch: aarch64, runner: ubuntu-24.04-arm, system: 'debian:13'}
     name: instalar (${{ matrix.system }}, ${{ matrix.arch }})
-    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ matrix.runner }}
     container: ${{ matrix.system }}
     timeout-minutes: 30
     steps:

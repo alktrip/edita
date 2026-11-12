@@ -20,9 +20,10 @@ atajo actual, así que si cambias un atajo en {{actionShortcutMapper}}, el manua
 ### Linux
 
 Edita se publica para PC (**x86_64**) y para ARM de 64 bits (**arm64** o aarch64: Raspberry Pi 4 y
-5, portátiles y servidores ARM). `uname -m` en una terminal dice cuál es tu equipo. Funciona en
-Ubuntu 22.04 o posterior, Debian 12 o posterior, Fedora 36 o posterior, openSUSE Tumbleweed y la
-mayoría de las distribuciones actuales.
+5, portátiles y servidores ARM). `uname -m` en una terminal dice cuál es tu equipo. En x86_64
+funciona en Ubuntu 22.04 o posterior, Debian 12 o posterior, Fedora 36 o posterior, openSUSE
+Tumbleweed y la mayoría de las distribuciones actuales. En arm64 necesita Ubuntu 24.04, Debian 13,
+Raspberry Pi OS 13 (trixie), Fedora 40 o posteriores.
 
 - **Debian, Ubuntu, Linux Mint:** instala el paquete `.deb` con `sudo apt install ./edita_*.deb`.
 - **Fedora, openSUSE y compatibles:** instala el `.rpm` con `sudo dnf install ./edita-*.rpm` (en

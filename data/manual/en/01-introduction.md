@@ -19,9 +19,10 @@ a shortcut in {{actionShortcutMapper}}, the manual shows the new one.
 ### Linux
 
 Edita is published for PCs (**x86_64**) and for 64-bit ARM (**arm64** or aarch64: Raspberry Pi 4
-and 5, ARM laptops and servers). `uname -m` in a terminal tells which one your computer is. It works
-on Ubuntu 22.04 or later, Debian 12 or later, Fedora 36 or later, openSUSE Tumbleweed and most
-current distributions.
+and 5, ARM laptops and servers). `uname -m` in a terminal tells which one your computer is. On x86_64
+it works on Ubuntu 22.04 or later, Debian 12 or later, Fedora 36 or later, openSUSE Tumbleweed and
+most current distributions. On arm64 it needs Ubuntu 24.04, Debian 13, Raspberry Pi OS 13
+(trixie), Fedora 40 or later.
 
 - **Debian, Ubuntu, Linux Mint:** install the `.deb` package with `sudo apt install ./edita_*.deb`.
 - **Fedora, openSUSE and compatible:** install the `.rpm` with `sudo dnf install ./edita-*.rpm` (on
