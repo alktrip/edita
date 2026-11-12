@@ -94,3 +94,6 @@ La interfaz de plugins (`edita_plugin.h`) se instala con Edita (en `share/edita/
 código de Edita incluye una guía (`docs/plugins.md`) y un plugin de ejemplo. La interfaz usa los
 mismos mensajes que Notepad++ (`NPPM_*` y `SCI_*`), así que adaptar un plugin de Notepad++ consiste
 sobre todo en sustituir las partes de Windows.
+
+Durante toda la versión 1.x la interfaz no cambia: un plugin compilado para Edita 1.0 funciona en
+cualquier 1.x sin volver a compilarlo. Las versiones nuevas solo añaden mensajes.

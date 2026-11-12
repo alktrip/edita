@@ -32,6 +32,25 @@ EDITA_PLUGIN_EXPORT intptr_t messageProc(unsigned int m, uintptr_t w, intptr_t l
 
 Opcional: `EDITA_PLUGIN_EXPORT const char* edita_plugin_version(void)` devuelve la versión del plugin (`"1.2.3"`). Es lo que en N++ es el recurso de versión de la DLL, y el administrador de plugins la usa para ofrecer actualizaciones.
 
+## Qué no cambia en Edita 1.x
+
+Un plugin compilado con el SDK de Edita 1.0 carga y funciona igual en cualquier 1.x, sin volver a compilarlo. Durante toda la 1.x:
+
+- `EDITA_PLUGIN_API_VERSION` sigue siendo 1 y las funciones exportadas (`setInfo`, `getName`, `getFuncsArray`, `beNotified`, `messageProc`, `edita_plugin_version`) no cambian.
+- Los mensajes `NPPM_*` y las notificaciones `NPPN_*` conservan su número, sus parámetros y lo que devuelven. Tampoco cambian las demás constantes de `edita_plugin.h`.
+- `EditaData`, `EditaFuncItem`, `EditaShortcutKey`, `EditaCommunicationInfo` y `EditaDockData` conservan sus campos, en el mismo orden y del mismo tamaño.
+- Los números de lenguaje (`L_*` de N++, los de `NPPM_GETCURRENTLANGTYPE`) y de codificación (`NPPM_GETBUFFERENCODING`) no cambian.
+- `SCNotification` y los mensajes `SCI_*` llegan como los define Scintilla. Edita solo actualiza Scintilla en la 1.x si `SCNotification` sigue igual.
+
+Lo que sí puede pasar en una 1.x es que se **añadan** mensajes, notificaciones y constantes. Si un mensaje queda obsoleto, sigue funcionando con su número hasta la 2.0, como hace N++ con los suyos (`NPPM_DESTROYSCINTILLAHANDLE_DEPRECATED`). Un mensaje que la versión instalada no conoce devuelve 0, como en N++. Así, un plugin que use uno nuevo puede comprobar la versión con `NPPM_GETNPPVERSION` (`(mayor << 16) | menor`; 1.2 da `(1 << 16) | 200`) o tratar el 0 como «no disponible».
+
+Fuera de esta promesa:
+
+- La capa de compatibilidad Win32 (`compat/`) para portar plugins de N++. Va compilada dentro de cada `.so`, así que un plugin ya compilado no se entera de sus cambios. Al volver a compilar desde la receta se usa la capa de esa versión.
+- Los plugins que usan Qt directamente (los `QWidget*` de paneles y menús) necesitan el Qt con el que se compilaron o uno más nuevo de la serie 6. Edita 1.x sigue en Qt 6, y el catálogo declara el Qt de sus binarios (`edita-qt`).
+
+Romper algo de la lista (cambiar un número, quitar un mensaje, mover un campo) solo puede pasar en Edita 2.0, con `EDITA_PLUGIN_API_VERSION` 2. `tests/tst_pluginapi.cpp` lo comprueba: tiene cada constante con su valor de la 1.0, la forma de las estructuras y los números de lenguaje y codificación. Lo que se añada al SDK hay que añadirlo también ahí, y desde ese momento forma parte de la API.
+
 ## Distribuirlo con el administrador de plugins
 
 **Plugins > Administrador de plugins…** instala paquetes `.zip` desde una lista con el formato de `nppPluginList.json` de N++ (ver [fase14.md](fase14.md)). El paquete lleva `MiPlugin.so` en la raíz o dentro de `MiPlugin/`. En la lista, `id` es el `sha256sum` del `.zip` y `repository` su URL.

@@ -95,3 +95,6 @@ The plugin interface (`edita_plugin.h`) is installed with Edita (in `share/edita
 and the source code of Edita includes a guide (`docs/plugins.md`) and an example plugin. The interface uses the
 same messages as Notepad++ (`NPPM_*` and `SCI_*`), so porting a Notepad++ plugin is mostly
 replacing the Windows parts.
+
+The interface does not change during the whole 1.x series: a plugin built for Edita 1.0 works in
+any 1.x without being rebuilt. New versions only add messages.

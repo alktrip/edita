@@ -45,6 +45,12 @@
  *     intptr_t messageProc(unsigned int message, uintptr_t wParam, intptr_t lParam); // opcional
  *
  * Un FuncItem sin función (pFunc == NULL) es un separador, como en N++.
+ *
+ * Estabilidad: durante toda Edita 1.x esta es la API 1. Los números, los parámetros y
+ * las estructuras de este archivo no cambian; solo se añaden mensajes y notificaciones.
+ * Un mensaje que la versión instalada no conoce devuelve 0. Lo comprueba
+ * tests/tst_pluginapi.cpp; los detalles están en docs/plugins.md («Qué no cambia en
+ * Edita 1.x»).
  */
 
 #ifndef EDITA_PLUGIN_H
