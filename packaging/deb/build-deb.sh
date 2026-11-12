@@ -3,7 +3,7 @@
 # Copyright (C) 2026 Edita contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Genera edita_<versión>_amd64.deb con el AppDir del AppImage (lo llama build-appimage.sh
+# Genera edita_<versión>_<amd64|arm64>.deb con el AppDir del AppImage (lo llama build-appimage.sh
 # al terminar). Edita necesita Qt 6.7 o más nuevo y Debian 12 y Ubuntu 22.04/24.04 traen
 # uno más viejo, así que el paquete lleva su Qt, como el AppImage:
 #   /opt/edita/usr/…                    el AppDir (Edita, Qt, plugins, Python, datos)
@@ -24,7 +24,11 @@ HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SRC=$(cd "$HERE/../.." && pwd)
 # 0.9.0-beta.8 → 0.9.0~beta.8: para dpkg, con ~ va antes que 0.9.0
 DEB_VERSION=${VERSION//-/\~}
-ARCH=amd64
+case $(uname -m) in
+    x86_64) ARCH=amd64 ;;
+    aarch64) ARCH=arm64 ;;
+    *) ARCH=$(dpkg --print-architecture) ;;
+esac
 
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT

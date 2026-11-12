@@ -1,6 +1,6 @@
-# Empaquetado: AppImage, .deb y AUR
+# Empaquetado: AppImage, .deb, .rpm y AUR
 
-`packaging/appimage/build-appimage.sh` genera `dist/Edita-<versión>-x86_64.AppImage`: un solo archivo ejecutable con Edita, Qt, sus plugins (Python Script y el de ejemplo) y Python.
+`packaging/appimage/build-appimage.sh` genera `dist/Edita-<versión>-<arquitectura>.AppImage` (x86_64 o aarch64, la del equipo donde se ejecuta): un solo archivo ejecutable con Edita, Qt, sus plugins (Python Script y el de ejemplo) y Python.
 
 ```sh
 editor/packaging/appimage/build-appimage.sh     # deja dist/Edita-<versión>-x86_64.AppImage
@@ -58,6 +58,21 @@ Debian 12 y Ubuntu 22.04 y 24.04 traen un Qt más viejo que el 6.7 que necesita 
 | `/usr/share/doc/edita/copyright` | La licencia y `NOTICE` |
 
 Las dependencias (glibc, OpenGL, X11, fontconfig… lo que tampoco lleva el AppImage) las calcula `dpkg-shlibdeps`, del paquete dpkg-dev. Sin él se usa una lista fija. La CI lo publica junto al AppImage en cada release y en el release «continuous».
+
+
+## El paquete .rpm
+
+Si hay `rpmbuild` (paquete `rpm` en Debian y Ubuntu, `rpm-build` en Fedora), `build-appimage.sh` también llama a `packaging/rpm/build-rpm.sh`, que deja `dist/edita-<versión>-1.<arquitectura>.rpm` ([fase 86](fase86.md)). Es para Fedora, openSUSE y compatibles, con el mismo contenido que el .deb: el AppDir en `/opt/edita`, el enlace `/usr/bin/edita`, el menú y los iconos.
+
+- La versión cambia el guion por `~` (`1.0.0~rc.1`), como en el .deb: rpm la ordena antes que la `1.0.0`.
+- rpmbuild calcula las dependencias de los ELF con nombres de biblioteca (`libGL.so.1()(64bit)`), que valen en cualquier distribución. Se quitan las bibliotecas que ya van dentro (Qt, ICU, Python…) y los intérpretes de los scripts de la biblioteca de Python. El paquete no anuncia como suyas las bibliotecas de `/opt/edita`, para no ocupar el lugar de las del sistema.
+- No se generan símbolos de depuración ni se pasa `strip` ni se compila el bytecode de Python: todo va tal cual en el AppDir.
+
+## x86_64 y arm64
+
+Los tres formatos se generan para la arquitectura del equipo (`uname -m`): `x86_64` y `aarch64` en el AppImage y el .rpm, y `amd64` y `arm64` en el .deb. La CI compila, prueba y empaqueta en las dos, con un runner de GitHub para cada una (`ubuntu-22.04` y `ubuntu-22.04-arm`) y el Qt 6.8.3 oficial de cada una. Luego instala el .rpm en Fedora 41 y el .deb en Debian 12, en contenedores limpios de las dos arquitecturas, y comprueba que Edita arranca. Solo si todo pasa se publican los seis archivos.
+
+El catálogo de plugins publica binarios de x86_64. En arm64, el administrador de plugins ofrece compilar cada plugin desde su receta (hacen falta cmake y un compilador de C++), como cuando el binario no sirve para el equipo. Que las recetas compilen en arm64 todavía no se ha probado.
 
 ## AUR
 

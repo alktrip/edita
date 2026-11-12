@@ -1,5 +1,6 @@
-# Edita para Linux: compila con -Werror, pasa todas las pruebas y genera el AppImage y el
-# paquete .deb (con el mismo AppDir).
+# Edita para Linux, en x86_64 y en arm64 (aarch64): compila con -Werror, pasa todas las pruebas
+# y genera el AppImage y los paquetes .deb y .rpm (con el mismo AppDir). Después instala los
+# paquetes en Fedora y en Debian y comprueba que Edita arranca.
 # Ubuntu 22.04 con GCC 12 y Qt 6.8.3, la misma base que el AppImage (glibc 2.35).
 # Se lanza al subir a main (y deja el AppImage en el release «continuous»), en los pull
 # requests, con etiquetas v* (y entonces lo publica en su release) o a mano. Si una prueba
@@ -23,7 +24,20 @@ env:
 
 jobs:
   pruebas:
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+            qt_host: linux
+            qt_arch: linux_gcc_64
+          - arch: aarch64
+            runner: ubuntu-22.04-arm
+            qt_host: linux_arm64
+            qt_arch: linux_gcc_arm64
+    name: pruebas (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -45,9 +59,9 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          host: linux
+          host: ${{ matrix.qt_host }}
           target: desktop
-          arch: linux_gcc_64
+          arch: ${{ matrix.qt_arch }}
           modules: qt5compat
           cache: true
 
@@ -68,17 +82,26 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: tests-linux
+          name: tests-linux-${{ matrix.arch }}
           path: build/Testing/Temporary/LastTest.log
           if-no-files-found: ignore
 
   appimage:
     needs: pruebas
-    runs-on: ubuntu-22.04
-    # Uno a la vez por rama: dos pushes seguidos no se pisan al publicar el release continuo
-    concurrency:
-      group: appimage-${{ github.ref }}
-      cancel-in-progress: false
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-22.04
+            qt_host: linux
+            qt_arch: linux_gcc_64
+          - arch: aarch64
+            runner: ubuntu-22.04-arm
+            qt_host: linux_arm64
+            qt_arch: linux_gcc_arm64
+    name: paquetes (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -87,8 +110,8 @@ jobs:
         run: |
           .github/scripts/apt-mirror.sh
           sudo apt-get update
-          # dpkg-dev: dpkg-shlibdeps calcula las dependencias del paquete .deb
-          sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 file dpkg-dev libhunspell-dev \
+          # dpkg-dev: dpkg-shlibdeps calcula las dependencias del paquete .deb; rpm: rpmbuild
+          sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 file dpkg-dev rpm libhunspell-dev \
             libzip-dev zlib1g-dev libssl-dev python3-dev libgl-dev libegl-dev libxkbcommon-dev libxkbcommon-x11-0 \
             libfontconfig1-dev libfreetype-dev libxcb-cursor0 libxcb-icccm4 libxcb-image0 \
             libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 \
@@ -98,9 +121,9 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: ${{ env.QT_VERSION }}
-          host: linux
+          host: ${{ matrix.qt_host }}
           target: desktop
-          arch: linux_gcc_64
+          arch: ${{ matrix.qt_arch }}
           modules: qt5compat
           cache: true
 
@@ -119,14 +142,74 @@ jobs:
           export LD_LIBRARY_PATH="$QT_ROOT_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           packaging/appimage/build-appimage.sh
 
-      - name: Subir el AppImage y el .deb
+      - name: El AppImage arranca
+        run: |
+          out=$(APPIMAGE_EXTRACT_AND_RUN=1 QT_QPA_PLATFORM=offscreen dist/*.AppImage --version)
+          echo "$out"
+          [[ $out == edita* ]]
+
+      - name: Subir los paquetes
         uses: actions/upload-artifact@v4
         with:
-          name: Edita-linux-x86_64
+          name: Edita-linux-${{ matrix.arch }}
           path: |
             dist/*.AppImage
             dist/*.deb
+            dist/*.rpm
           if-no-files-found: error
+
+  # Los paquetes, instalados como los instalaría un usuario (con las dependencias que piden) en
+  # sistemas limpios de cada familia, y Edita arranca
+  instalar:
+    needs: appimage
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+        system: ['fedora:41', 'debian:12']
+    name: instalar (${{ matrix.system }}, ${{ matrix.arch }})
+    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    container: ${{ matrix.system }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Edita-linux-${{ matrix.arch }}
+          path: dist
+
+      - name: Instalar
+        run: |
+          if command -v dnf >/dev/null; then
+            dnf install -y dist/*.rpm
+          else
+            apt-get update
+            apt-get install -y ./dist/*.deb
+          fi
+
+      - name: Edita arranca
+        run: |
+          out=$(QT_QPA_PLATFORM=offscreen edita --version)
+          echo "$out"
+          case $out in edita*) ;; *) exit 1 ;; esac
+          test -f /usr/share/applications/edita.desktop
+
+  # Lo que se publica: los paquetes de las dos arquitecturas, una vez instalados bien
+  publicar:
+    needs: [appimage, instalar]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-22.04
+    # Uno a la vez por rama: dos pushes seguidos no se pisan al publicar el release continuo
+    concurrency:
+      group: publicar-${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Edita-linux-*
+          path: dist
+          merge-multiple: true
 
       # El release «continuous» (prerelease) lleva siempre el AppImage (y el .deb) del último push a
       # main: lo usan la CI del catálogo de plugins (alktrip/edita-plugins) y quien quiera
@@ -145,7 +228,7 @@ jobs:
           for asset in $(gh release view continuous --json assets -q '.assets[].name'); do
             gh release delete-asset continuous "$asset" -y
           done
-          gh release upload continuous dist/*.AppImage dist/*.deb
+          gh release upload continuous dist/*.AppImage dist/*.deb dist/*.rpm
 
       # Las notas de cada versión están en packaging/release-notes/<etiqueta>.md. Una beta
       # se publica como versión normal (la última): es la que hay que descargar para probar
@@ -159,3 +242,4 @@ jobs:
           files: |
             dist/*.AppImage
             dist/*.deb
+            dist/*.rpm

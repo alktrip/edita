@@ -19,11 +19,19 @@ atajo actual, así que si cambias un atajo en {{actionShortcutMapper}}, el manua
 
 ### Linux
 
-La forma más sencilla es el **AppImage**: un solo archivo que funciona en Ubuntu 22.04 o
-posterior, Debian 12 o posterior, Fedora 36 o posterior y la mayoría de las distribuciones
-actuales.
+Edita se publica para PC (**x86_64**) y para ARM de 64 bits (**arm64** o aarch64: Raspberry Pi 4 y
+5, portátiles y servidores ARM). `uname -m` en una terminal dice cuál es tu equipo. Funciona en
+Ubuntu 22.04 o posterior, Debian 12 o posterior, Fedora 36 o posterior, openSUSE Tumbleweed y la
+mayoría de las distribuciones actuales.
 
-1. Descarga `Edita-<versión>-x86_64.AppImage` de la página de Releases del proyecto.
+- **Debian, Ubuntu, Linux Mint:** instala el paquete `.deb` con `sudo apt install ./edita_*.deb`.
+- **Fedora, openSUSE y compatibles:** instala el `.rpm` con `sudo dnf install ./edita-*.rpm` (en
+  openSUSE, `sudo zypper install ./edita-*.rpm`).
+
+Los paquetes dejan Edita en el menú de aplicaciones y en **Abrir con**. En cualquier otra
+distribución usa el **AppImage**, un solo archivo que no se instala:
+
+1. Descarga `Edita-<versión>-x86_64.AppImage` (o `-aarch64.AppImage`) de la página de Releases del proyecto.
 2. Dale permiso de ejecución: clic derecho › Propiedades › Permitir ejecutar, o en una terminal
    `chmod +x Edita-*.AppImage`.
 3. Ábrelo con doble clic o desde una terminal.

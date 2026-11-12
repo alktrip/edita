@@ -13,12 +13,12 @@
   <a href="https://github.com/alktrip/edita/releases/latest"><img alt="Última versión" src="https://img.shields.io/github/v/release/alktrip/edita?label=versi%C3%B3n&color=2ea44f"></a>
   <a href="https://github.com/alktrip/edita/actions/workflows/linux.yml"><img alt="CI de Linux" src="https://github.com/alktrip/edita/actions/workflows/linux.yml/badge.svg"></a>
   <a href="COPYING"><img alt="Licencia GPL v3" src="https://img.shields.io/badge/licencia-GPL%20v3-blue"></a>
-  <img alt="Linux x86_64" src="https://img.shields.io/badge/Linux-x86__64-informational?logo=linux&logoColor=white">
+  <img alt="Linux x86_64 y arm64" src="https://img.shields.io/badge/Linux-x86__64%20%7C%20arm64-informational?logo=linux&logoColor=white">
   <img alt="macOS: aún no disponible" src="https://img.shields.io/badge/macOS-a%C3%BAn%20no%20disponible-lightgrey?logo=apple&logoColor=white">
 </p>
 
 <p align="center">
-  <a href="https://github.com/alktrip/edita/releases/latest"><b>⬇ Descargar el AppImage</b></a> ·
+  <a href="https://github.com/alktrip/edita/releases/latest"><b>⬇ Descargar Edita</b></a> ·
   <a href="PROBAR.md">Probar Edita</a> ·
   <a href="https://github.com/alktrip/edita/issues/new/choose">Reportar un problema</a>
 </p>
@@ -34,7 +34,7 @@ Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git e
 > **Estado:** ya tiene casi todo lo de Notepad++ ([qué falta](docs/paridad-npp.md)). Antes de cada versión estable se publica una versión de prueba; si usas una, [cuéntanos qué encuentras](https://github.com/alktrip/edita/issues/new/choose).
 
 > [!WARNING]
-> **La versión para macOS todavía no está lista.** Por limitaciones en el desarrollo (no hay una Mac para probarla a fondo y falta la firma y notarización de Apple), por ahora Edita solo se publica para **Linux x86_64**. El `.dmg` del release 0.0.1, una prueba temprana sin firmar, se retiró. El desarrollo para macOS se retomará cuando haya una versión estable para Linux; mientras tanto, los reportes de macOS no se pueden atender.
+> **La versión para macOS todavía no está lista.** Por limitaciones en el desarrollo (no hay una Mac para probarla a fondo y falta la firma y notarización de Apple), por ahora Edita solo se publica para **Linux** (x86_64 y arm64). El `.dmg` del release 0.0.1, una prueba temprana sin firmar, se retiró. El desarrollo para macOS se retomará cuando haya una versión estable para Linux; mientras tanto, los reportes de macOS no se pueden atender.
 
 ## Capturas
 
@@ -78,16 +78,20 @@ Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git e
 
 ## Instalar
 
-Descarga el AppImage de la [última versión](https://github.com/alktrip/edita/releases/latest), dale permiso de ejecución y ábrelo:
+En la [última versión](https://github.com/alktrip/edita/releases/latest) hay un AppImage y paquetes .deb y .rpm para **x86_64** (PC) y **arm64** (aarch64: Raspberry Pi 4 y 5, portátiles y servidores ARM). `uname -m` dice cuál es el tuyo.
+
+**AppImage** (cualquier distribución): dale permiso de ejecución y ábrelo.
 
 ```sh
-chmod +x Edita-*-x86_64.AppImage
+chmod +x Edita-*-x86_64.AppImage     # o Edita-*-aarch64.AppImage
 ./Edita-*-x86_64.AppImage
 ```
 
-Funciona en Linux x86_64: Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores. Trae Qt, Python Script y MarkdownViewer++. Edita te avisa cuando hay una versión nueva.
+**Debian, Ubuntu, Linux Mint:** `sudo apt install ./edita_*_amd64.deb` (o `_arm64.deb`).
 
-**Debian y Ubuntu:** el paquete `edita_<versión>_amd64.deb` de la misma página se instala con `sudo apt install ./edita_*_amd64.deb`. Lleva su propio Qt, como el AppImage, y deja Edita en el menú y en **Abrir con**.
+**Fedora, openSUSE y compatibles:** `sudo dnf install ./edita-*.x86_64.rpm` (o `.aarch64.rpm`); en openSUSE, `sudo zypper install ./edita-*.rpm`.
+
+Funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posteriores, openSUSE Tumbleweed y, en general, en las distribuciones con glibc 2.35 o más nueva. Los tres llevan su propio Qt, Python Script y MarkdownViewer++. Los paquetes dejan Edita en el menú y en **Abrir con**. Edita te avisa cuando hay una versión nueva.
 
 **Arch Linux:** el `PKGBUILD` de [`packaging/aur/`](packaging/aur/) compila Edita con el Qt de Arch: `makepkg -si` en esa carpeta.
 

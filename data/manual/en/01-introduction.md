@@ -18,10 +18,19 @@ a shortcut in {{actionShortcutMapper}}, the manual shows the new one.
 
 ### Linux
 
-The simplest way is the **AppImage**: a single file that works on Ubuntu 22.04 or later,
-Debian 12 or later, Fedora 36 or later and most current distributions.
+Edita is published for PCs (**x86_64**) and for 64-bit ARM (**arm64** or aarch64: Raspberry Pi 4
+and 5, ARM laptops and servers). `uname -m` in a terminal tells which one your computer is. It works
+on Ubuntu 22.04 or later, Debian 12 or later, Fedora 36 or later, openSUSE Tumbleweed and most
+current distributions.
 
-1. Download `Edita-<version>-x86_64.AppImage` from the project's Releases page.
+- **Debian, Ubuntu, Linux Mint:** install the `.deb` package with `sudo apt install ./edita_*.deb`.
+- **Fedora, openSUSE and compatible:** install the `.rpm` with `sudo dnf install ./edita-*.rpm` (on
+  openSUSE, `sudo zypper install ./edita-*.rpm`).
+
+The packages put Edita in the applications menu and in **Open With**. On any other distribution use
+the **AppImage**, a single file that is not installed:
+
+1. Download `Edita-<version>-x86_64.AppImage` (or `-aarch64.AppImage`) from the project's Releases page.
 2. Make it executable: right click › Properties › Allow executing, or in a terminal
    `chmod +x Edita-*.AppImage`.
 3. Run it with a double click or from a terminal.

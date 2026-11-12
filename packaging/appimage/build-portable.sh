@@ -99,6 +99,11 @@ if [[ ! -x $ROOT/usr/bin/dpkg-shlibdeps ]]; then
     inside "apt-get update && apt-get install -y --no-install-recommends dpkg-dev"
 fi
 
+if [[ ! -x $ROOT/usr/bin/rpmbuild ]]; then
+    log "Añadiendo rpmbuild (rpm) al sistema base, para el paquete .rpm"
+    inside "apt-get update && apt-get install -y --no-install-recommends rpm"
+fi
+
 # --- 3. El AppImage ---------------------------------------------------------------------
 log "Compilando y empaquetando en Ubuntu $UBUNTU_RELEASE"
 QT=/opt/Qt/$QT_VERSION/gcc_64
@@ -117,3 +122,5 @@ APPIMAGE=$(ls -t "$OUT"/Edita-*-x86_64.AppImage | head -1)
 log "Listo: $APPIMAGE"
 DEB=$(ls -t "$OUT"/edita_*_amd64.deb | head -1)
 log "Listo: $DEB"
+RPM=$(ls -t "$OUT"/edita-*.x86_64.rpm | head -1)
+log "Listo: $RPM"

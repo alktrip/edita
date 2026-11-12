@@ -3,14 +3,15 @@
 # Copyright (C) 2026 Edita contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Genera Edita-<versión>-x86_64.AppImage:
+# Genera Edita-<versión>-<arquitectura>.AppImage (x86_64 o aarch64, la del equipo):
 #   1. compila Edita en Release y lo instala en un AppDir (prefijo /usr);
 #   2. copia la biblioteca estándar de Python, para que Python Script funcione en
 #      sistemas con otra versión de Python (o sin Python);
 #   3. linuxdeploy y su plugin de Qt copian Qt (con sus plugins de X11 y Wayland y sus
 #      traducciones) y las bibliotecas de las que dependen Edita y sus plugins;
 #   4. empaqueta el AppDir en el AppImage;
-#   5. con dpkg-deb (Debian, Ubuntu), también el paquete .deb (packaging/deb/build-deb.sh).
+#   5. con dpkg-deb (Debian, Ubuntu), también el paquete .deb (packaging/deb/build-deb.sh), y
+#      con rpmbuild, el .rpm (packaging/rpm/build-rpm.sh).
 #
 # Uso: editor/packaging/appimage/build-appimage.sh
 # Los plugins van en usr/lib/edita/plugins también en Debian y Ubuntu (donde
@@ -32,7 +33,7 @@ WORK=${WORK:-$(dirname "$SRC")/build-appimage}
 OUT=${OUT:-$(dirname "$SRC")/dist}
 TOOLS=$WORK/tools
 APPDIR=$WORK/AppDir
-ARCH=x86_64
+ARCH=$(uname -m) # x86_64 o aarch64: linuxdeploy y su plugin de Qt publican las dos
 
 log() { printf '\n==> %s\n' "$*"; }
 
@@ -181,4 +182,11 @@ if command -v dpkg-deb >/dev/null; then
     log "Listo: $DEB ($(du -h "$DEB" | cut -f1))"
 else
     log "Sin dpkg-deb: no se genera el paquete .deb"
+fi
+if command -v rpmbuild >/dev/null; then
+    log "Generando el paquete .rpm"
+    RPM=$("$SRC/packaging/rpm/build-rpm.sh" "$APPDIR" "$VERSION" "$OUT")
+    log "Listo: $RPM ($(du -h "$RPM" | cut -f1))"
+else
+    log "Sin rpmbuild: no se genera el paquete .rpm"
 fi
