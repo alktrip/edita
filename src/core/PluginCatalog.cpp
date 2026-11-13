@@ -22,6 +22,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLocale>
 #include <QStringList>
 
 #include <algorithm>
@@ -155,7 +156,7 @@ bool PluginCatalog::parse(const QByteArray& json, PluginCatalog& catalog, QStrin
         info.folderName = o.value(QStringLiteral("folder-name")).toString();
         info.displayName = o.value(QStringLiteral("display-name")).toString();
         info.author = o.value(QStringLiteral("author")).toString();
-        info.description = o.value(QStringLiteral("description")).toString();
+        info.description = localizedText(o, QStringLiteral("description"));
         info.id = o.value(QStringLiteral("id")).toString();
         info.version = PluginVersion::parse(o.value(QStringLiteral("version")).toString());
         info.repository = o.value(QStringLiteral("repository")).toString();
@@ -168,6 +169,13 @@ bool PluginCatalog::parse(const QByteArray& json, PluginCatalog& catalog, QStrin
         catalog.plugins.push_back(std::move(info));
     }
     return true;
+}
+
+QString localizedText(const QJsonObject& object, const QString& key)
+{
+    const QString language = QLocale::languageToCode(QLocale().language(), QLocale::ISO639Part1);
+    const QString localized = object.value(key + QLatin1Char('-') + language).toString();
+    return localized.isEmpty() ? object.value(key).toString() : localized;
 }
 
 const PluginInfo* PluginCatalog::find(const QString& folderName) const

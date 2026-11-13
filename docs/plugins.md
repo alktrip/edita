@@ -87,6 +87,7 @@ MiPlugin/
 
 Campos opcionales:
 
+- **`"description-es"`** (y `-de`, `-fr`…): la descripción en otro idioma. Edita muestra la del idioma de su interfaz y, si no la hay, `"description"`, que va en inglés. El catálogo copia estas traducciones a su lista.
 - **`"extra-sources"`**: más código, que se copia dentro del del autor antes de `remove` y de los parches. Son, por ejemplo, los submódulos de git, que GitHub no incluye en el `.zip` de una etiqueta. Cada fuente tiene `url`, `sha256`, `strip-components` y `dest` (una carpeta dentro del código, sin `..`):
   ```json
   "extra-sources": [{ "url": "https://github.com/npp-plugins/plugintemplate/archive/<commit>.zip",

@@ -19,6 +19,7 @@
 #pragma once
 
 #include <QByteArray>
+#include <QJsonObject>
 #include <QString>
 
 #include <utility>
@@ -97,6 +98,10 @@ struct PluginCatalog
     static bool parse(const QByteArray& json, PluginCatalog& catalog, QString* error = nullptr);
     const PluginInfo* find(const QString& folderName) const;
 };
+
+// Un texto de la lista o de una receta en el idioma de la interfaz (QLocale por omisión, que
+// pone i18n::install): «description-es» si existe, si no «description» (no existe en N++)
+QString localizedText(const QJsonObject& object, const QString& key);
 
 // Un plugin que está en disco
 struct InstalledPlugin

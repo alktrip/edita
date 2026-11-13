@@ -200,7 +200,7 @@ bool PluginRecipe::parse(const QString& path, PluginRecipe& recipe, QString* err
     info.folderName = o.value(QStringLiteral("folder-name")).toString();
     info.displayName = o.value(QStringLiteral("display-name")).toString(info.folderName);
     info.version = PluginVersion::parse(o.value(QStringLiteral("version")).toString());
-    info.description = o.value(QStringLiteral("description")).toString();
+    info.description = localizedText(o, QStringLiteral("description"));
     info.author = o.value(QStringLiteral("author")).toString();
     info.homepage = o.value(QStringLiteral("homepage")).toString();
     info.compatibleVersions = parseVersionInterval(o.value(QStringLiteral("npp-compatible-versions")).toString());

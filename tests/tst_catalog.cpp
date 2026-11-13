@@ -73,6 +73,28 @@ class TestCatalog : public QObject
     Q_OBJECT
 
 private slots:
+    // La descripción en el idioma de la interfaz («description-es»), si la hay; si no, la
+    // general, en inglés
+    void descriptionInTheInterfaceLanguage()
+    {
+        QJsonObject withSpanish = plugin(QStringLiteral("Uno"), QStringLiteral("https://ejemplo.org/uno.zip"));
+        withSpanish["description"] = QStringLiteral("Reverses the lines");
+        withSpanish["description-es"] = QStringLiteral("Invierte las líneas");
+        QJsonObject onlyEnglish = plugin(QStringLiteral("Dos"), QStringLiteral("https://ejemplo.org/dos.zip"));
+        onlyEnglish["description"] = QStringLiteral("Sorts the lines");
+        const QByteArray json = catalogJson(QStringLiteral("1"), {withSpanish, onlyEnglish});
+        const QLocale previous;
+        QLocale::setDefault(QLocale(QLocale::Spanish, QLocale::Mexico));
+        PluginCatalog catalog;
+        QVERIFY(PluginCatalog::parse(json, catalog));
+        QCOMPARE(catalog.find(QStringLiteral("Uno"))->description, QStringLiteral("Invierte las líneas"));
+        QCOMPARE(catalog.find(QStringLiteral("Dos"))->description, QStringLiteral("Sorts the lines"));
+        QLocale::setDefault(QLocale(QLocale::English));
+        QVERIFY(PluginCatalog::parse(json, catalog));
+        QCOMPARE(catalog.find(QStringLiteral("Uno"))->description, QStringLiteral("Reverses the lines"));
+        QLocale::setDefault(previous);
+    }
+
     // La lista que publicó la CI del catálogo (catalog.py, en Python), con la clave que trae Edita
     void verifiesThePublishedCatalog()
     {
