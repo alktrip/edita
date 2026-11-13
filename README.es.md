@@ -78,7 +78,8 @@ Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git e
 **Plugins**
 - **Python Script**, con la API del plugin de Notepad++: muchos de sus scripts funcionan sin cambios.
 - **MarkdownViewer++**, la vista previa de Markdown.
-- Un [catálogo firmado](https://github.com/alktrip/edita-plugins) con 19 plugins de Notepad++ compilados para Linux desde su código original (XML Tools, MIME Tools, un formateador de SQL, plugins de lenguaje…), instalables desde **Plugins › Administrador de plugins**.
+- **Detector de secretos**, propio de Edita: subraya las claves de API, tokens y contraseñas escritas en tus archivos y avisa antes de hacer commit de una.
+- Un [catálogo firmado](https://github.com/alktrip/edita-plugins) con 22 plugins de Notepad++ compilados para Linux desde su código original (XML Tools, JSON Viewer, MIME Tools, Npp Converter, un formateador de SQL, plugins de lenguaje…), instalables desde **Plugins › Administrador de plugins**.
 - Un SDK para escribir plugins nuevos o portar los de Notepad++ ([guía](docs/plugins.md)).
 
 ## Instalar

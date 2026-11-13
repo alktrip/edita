@@ -593,7 +593,7 @@
 <context>
     <name>PluginCatalog</name>
     <message>
-        <location filename="../src/core/PluginCatalog.cpp" line="+108"/>
+        <location filename="../src/core/PluginCatalog.cpp" line="+109"/>
         <source>Author: </source>
         <translation>Autor: </translation>
     </message>
@@ -634,7 +634,7 @@
         <translation>Incompatible: </translation>
     </message>
     <message>
-        <location line="+90"/>
+        <location line="+97"/>
         <source>Information not available (it is not in the plugin list).</source>
         <translation>Información no disponible (no está en la lista de plugins).</translation>
     </message>
@@ -2141,18 +2141,18 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     <name>edita::MainWindow</name>
     <message>
         <location filename="../src/ui/MainWindow.cpp" line="+503"/>
-        <location line="+5170"/>
+        <location line="+5185"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-5170"/>
-        <location line="+2337"/>
+        <location line="-5185"/>
+        <location line="+2352"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-2239"/>
+        <location line="-2254"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2608,7 +2608,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1878"/>
+        <location line="+1893"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2831,7 +2831,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2890"/>
+        <location line="-2905"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
@@ -2948,12 +2948,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+6002"/>
+        <location line="+6017"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-6001"/>
+        <location line="-6016"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3850,12 +3850,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+5052"/>
+        <location line="+5067"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-5051"/>
+        <location line="-5066"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -4056,12 +4056,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Quitar de lo preparado</translation>
     </message>
     <message>
-        <location line="+16"/>
+        <location line="+21"/>
+        <location line="+10"/>
         <source>Commit</source>
         <translation>Confirmar</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="-9"/>
+        <source>%1
+
+Commit anyway?</source>
+        <translation>%1
+
+¿Hacer el commit de todos modos?</translation>
+    </message>
+    <message>
+        <location line="+14"/>
         <source>Committed %1</source>
         <translation>Confirmado: %1</translation>
     </message>

@@ -32,6 +32,8 @@ EDITA_PLUGIN_EXPORT intptr_t messageProc(unsigned int m, uintptr_t w, intptr_t l
 
 Opcional: `EDITA_PLUGIN_EXPORT const char* edita_plugin_version(void)` devuelve la versión del plugin (`"1.2.3"`). Es lo que en N++ es el recurso de versión de la DLL, y el administrador de plugins la usa para ofrecer actualizaciones.
 
+Opcional (Edita 1.1): `EDITA_PLUGIN_EXPORT int edita_plugin_before_commit(EditaCommitCheck* check)`. Edita la llama antes de hacer un commit desde el panel Git, con la raíz del repositorio y el mensaje. Si devuelve distinto de 0, Edita muestra lo que el plugin escribió en `check->reason` y pregunta si confirmar de todos modos. La usa el [detector de secretos](../plugins/SecretScanner). Es una función aparte, y no un mensaje de `messageProc`, porque los plugins de N++ responden `TRUE` a cualquier mensaje.
+
 ## Qué no cambia en Edita 1.x
 
 Un plugin compilado con el SDK de Edita 1.0 carga y funciona igual en cualquier 1.x, sin volver a compilarlo. Durante toda la 1.x:

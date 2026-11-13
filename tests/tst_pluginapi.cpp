@@ -427,6 +427,12 @@ static_assert(offsetof(EditaDockData, uMask) == 20);
 static_assert(offsetof(EditaDockData, hIconTab) == 24);
 static_assert(offsetof(EditaDockData, pszAddInfo) == 32);
 static_assert(offsetof(EditaDockData, pszModuleName) == 40);
+// Edita 1.1: lo que recibe edita_plugin_before_commit (fase 88)
+static_assert(sizeof(EditaCommitCheck) == 32);
+static_assert(offsetof(EditaCommitCheck, repository) == 0);
+static_assert(offsetof(EditaCommitCheck, message) == 8);
+static_assert(offsetof(EditaCommitCheck, reason) == 16);
+static_assert(offsetof(EditaCommitCheck, reasonSize) == 24);
 // SCNotification es de Scintilla y llega tal cual a beNotified: si una versión nueva de
 // Scintilla la cambia, los plugins ya compilados leerían basura. Actualizar Scintilla en la
 // 1.x solo vale si esto sigue igual

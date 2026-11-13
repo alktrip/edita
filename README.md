@@ -74,6 +74,7 @@ Notepad++ is one of the most loved editors on Windows, and it only runs on Windo
 - **Command palette**, go to file and go to symbol
 - **Compare** two files, or a file with its saved or Git version
 - **Local history** of every saved version
+- **Secret scanner:** API keys, tokens and passwords are underlined as you type, and a commit that contains one asks first
 - Snippets (VS Code format), regex tester, spell checking (Hunspell), external formatters, breadcrumbs, sticky scroll
 
 </td>
@@ -99,8 +100,8 @@ flowchart LR
 
 - **Plugin API.** [`edita_plugin.h`](plugin-sdk/edita_plugin.h) mirrors Notepad++'s plugin interface for Linux: UTF-8 strings, `NPPM_*`/`NPPN_*` with the same numbers, docking panels, inter-plugin messages and Scintilla access. It is **stable for the whole 1.x series**: a plugin built for 1.0 keeps working in any 1.x ([what is guaranteed](docs/plugins.md#qué-no-cambia-en-edita-1x)).
 - **Porting toolkit.** A Win32 compatibility layer (windows, dialogs from `.rc` files, common controls, GDI drawing on Qt) and *recipes* that build a Notepad++ plugin from its original source with a few patches. `edita --build-recipe` and `edita --check-plugin` build and test them without a GUI.
-- **Signed catalog.** [edita-plugins](https://github.com/alktrip/edita-plugins) builds the recipes in CI and publishes an Ed25519-signed list. **Plugins › Plugins Admin** installs from it in one click. It currently lists **19 Notepad++ plugins** (XML Tools, MIME Tools, a SQL formatter, language lexers…). The prebuilt binaries are for x86_64; on arm64 the Plugins Admin offers to build from the recipe.
-- **Bundled plugins.** **Python Script**, with the API of the Notepad++ plugin (many scripts run unchanged), and **MarkdownViewer++**, a live Markdown preview.
+- **Signed catalog.** [edita-plugins](https://github.com/alktrip/edita-plugins) builds the recipes in CI and publishes an Ed25519-signed list. **Plugins › Plugins Admin** installs from it in one click. It currently lists **22 Notepad++ plugins** (XML Tools, JSON Viewer, MIME Tools, Npp Converter, a SQL formatter, language lexers…). The prebuilt binaries are for x86_64; on arm64 the Plugins Admin offers to build from the recipe.
+- **Bundled plugins.** **Python Script**, with the API of the Notepad++ plugin (many scripts run unchanged), **MarkdownViewer++**, a live Markdown preview, and **Secret Scanner**, Edita's own: it underlines API keys, tokens and passwords written in your files and warns before you commit one.
 
 **Writing a plugin:** start with the [plugin guide](docs/plugins.md) and the [example plugin](plugins/EditaDemo). **Porting one:** add a recipe to [edita-plugins](https://github.com/alktrip/edita-plugins) with a pull request, and the catalog CI builds it, tests it and publishes it.
 
@@ -144,7 +145,7 @@ flowchart LR
 </table>
 
 <p align="center">
-  <img src="docs/images/en/edita-plugins.png" alt="Plugins Admin listing the 19 plugins of the signed catalog" width="85%"><br>
+  <img src="docs/images/en/edita-plugins.png" alt="Plugins Admin listing the plugins of the signed catalog" width="85%"><br>
   <b>Plugins Admin</b> with the signed catalog of Notepad++ plugins built for Linux
 </p>
 

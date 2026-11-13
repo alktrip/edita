@@ -88,6 +88,20 @@ folder and loaded when Edita restarts. Windows `.dll` files do not work.
 |---|---|
 | **MarkdownViewer++** | Shows a preview of the Markdown document in a panel (Ctrl+Shift+M), with synchronized scrolling, and exports it to HTML or PDF, prints it or copies it as HTML. |
 | **Python Script** | Runs Python scripts that control the editor, with the API of the PythonScript plugin of Notepad++ (`notepad`, `editor`, `console`), so many of its scripts work unchanged. It has an interactive console. (Not included in the macOS version yet.) |
+| **Secret Scanner** | Underlines in red the API keys, tokens, private keys and passwords written in your files, and warns before a commit from the Git panel if the staged changes contain one. See below. |
+
+### Secret Scanner
+
+It is Edita's own plugin; Notepad++ has nothing like it. While you type, it underlines in red what looks like a secret: GitHub, GitLab, Slack, npm and PyPI tokens; AWS, Google, OpenAI, Anthropic, Stripe, SendGrid and Azure keys; private keys (`-----BEGIN … PRIVATE KEY-----`); JWTs; passwords in URLs (`postgres://user:pass@…`); and assignments such as `password = "…"`, or any `…_SECRET=` in a `.env` file, when the value looks random. Example values (`changeme`, `${VARIABLE}`, `<your-key>`) do not count.
+
+In **Plugins › Secret Scanner**:
+
+- **Secrets Panel** and **Scan Current Document** show the list: line, type and the masked value (`ghp_…tB`). Double click selects the secret.
+- **Scan Project** checks the Git repository of the document (what Git tracks and new files it does not ignore) or, outside Git, its folder. Double click opens the file at the secret.
+- **Ignore Secret at Cursor**, or the **Ignore** button of the panel, stops reporting that value in any file. To allow a line, add the comment `edita:allow-secret`. The gitleaks (`gitleaks:allow`) and detect-secrets (`pragma: allowlist secret`) markers work too.
+- **Mark Secrets While Typing** turns the underlining on or off.
+
+Before a commit from {{actionGitCommit}}, it checks the lines being committed. If it finds something, it lists it and asks whether to commit anyway. Commits made from a terminal do not go through it.
 
 ## Writing plugins
 

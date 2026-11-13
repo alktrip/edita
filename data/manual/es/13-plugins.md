@@ -87,6 +87,20 @@ copia a la carpeta de plugins y se carga al reiniciar Edita. Los `.dll` de Windo
 |---|---|
 | **MarkdownViewer++** | Muestra una vista previa del documento Markdown en un panel (Ctrl+Mayús+M), con desplazamiento sincronizado, y lo exporta a HTML o PDF, lo imprime o lo copia como HTML. |
 | **Python Script** | Ejecuta scripts de Python que controlan el editor, con la API del plugin PythonScript de Notepad++ (`notepad`, `editor`, `console`), así que muchos de sus scripts funcionan sin cambios. Tiene una consola interactiva. (Aún no se incluye en la versión para macOS.) |
+| **Detector de secretos** | Subraya en rojo las claves de API, tokens, claves privadas y contraseñas escritas en tus archivos, y avisa antes de un commit desde el panel Git si lo preparado contiene alguno. Ver abajo. |
+
+### Detector de secretos
+
+Es un plugin propio de Edita; Notepad++ no tiene nada parecido. Mientras escribes, subraya en rojo lo que parece un secreto: tokens de GitHub, GitLab, Slack, npm y PyPI; claves de AWS, Google, OpenAI, Anthropic, Stripe, SendGrid y Azure; claves privadas (`-----BEGIN … PRIVATE KEY-----`); JWT; contraseñas en URLs (`postgres://usuario:clave@…`); y asignaciones como `password = "…"`, o cualquier `…_SECRET=` en un archivo `.env`, cuando el valor parece aleatorio. Los valores de ejemplo (`changeme`, `${VARIABLE}`, `<tu-clave>`) no cuentan.
+
+En **Plugins › Detector de secretos**:
+
+- **Panel de secretos** y **Analizar el documento actual** muestran la lista: línea, tipo y el valor enmascarado (`ghp_…tB`). Doble clic selecciona el secreto.
+- **Analizar el proyecto** revisa el repositorio de Git del documento (lo que sigue Git y lo nuevo que no ignora) o, fuera de Git, su carpeta. Doble clic abre el archivo en el secreto.
+- **Ignorar el secreto del cursor**, o el botón **Ignorar** del panel, deja de avisar de ese valor en cualquier archivo. Para permitir una línea, añade el comentario `edita:allow-secret`. También valen los de gitleaks (`gitleaks:allow`) y detect-secrets (`pragma: allowlist secret`).
+- **Marcar secretos mientras escribes** enciende o apaga el subrayado.
+
+Antes de hacer un commit desde {{actionGitCommit}}, revisa las líneas que se van a confirmar. Si encuentra algo, lo enumera y pregunta si hacer el commit de todos modos. Los commits hechos desde la terminal no pasan por aquí.
 
 ## Escribir plugins
 

@@ -175,6 +175,7 @@ bool PluginManager::loadPlugin(const QString& path, QString* error)
         plugin->version = QString::fromUtf8(version() ? version() : "");
     plugin->beNotified = reinterpret_cast<void (*)(SCNotification*)>(library->resolve("beNotified"));
     plugin->messageProc = reinterpret_cast<intptr_t (*)(unsigned int, uintptr_t, intptr_t)>(library->resolve("messageProc"));
+    plugin->beforeCommit = reinterpret_cast<int (*)(EditaCommitCheck*)>(library->resolve("edita_plugin_before_commit"));
 
     // Como PluginsManager::loadPluginFromPath: setInfo antes de pedir las órdenes
     EditaData data{_host, _mainEditor, _subEditor, &PluginManager::send};

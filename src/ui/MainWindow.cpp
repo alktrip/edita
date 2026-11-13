@@ -2788,6 +2788,21 @@ void MainWindow::connectGitCommit()
         const QString top = _gitCommit->repository();
         if (top.isEmpty() || message.trimmed().isEmpty())
             return;
+        // Los plugins que revisan lo que se va a confirmar (el detector de secretos)
+        const QByteArray repo = top.toUtf8();
+        const QByteArray text = message.toUtf8();
+        for (const auto& plugin : _plugins->plugins()) {
+            if (!plugin->beforeCommit)
+                continue;
+            QByteArray reason(4096, '\0');
+            EditaCommitCheck check{repo.constData(), text.constData(), reason.data(), static_cast<unsigned>(reason.size())};
+            if (plugin->beforeCommit(&check) != 0) {
+                reason.truncate(static_cast<qsizetype>(qstrnlen(reason.constData(), static_cast<size_t>(reason.size()))));
+                if (!_prompter->confirm(this, tr("Commit"),
+                                        tr("%1\n\nCommit anyway?").arg(QString::fromUtf8(reason).trimmed())))
+                    return;
+            }
+        }
         QStringList args{QStringLiteral("commit"), QStringLiteral("-q"), QStringLiteral("-F"), QStringLiteral("-")};
         if (amend)
             args << QStringLiteral("--amend");

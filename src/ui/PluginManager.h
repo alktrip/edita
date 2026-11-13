@@ -68,6 +68,7 @@ public:
         std::unique_ptr<QLibrary> library;
         void (*beNotified)(SCNotification*) = nullptr;
         intptr_t (*messageProc)(unsigned int, uintptr_t, intptr_t) = nullptr;
+        int (*beforeCommit)(EditaCommitCheck*) = nullptr; // edita_plugin_before_commit, opcional
         std::vector<Command> commands;
         // Plugin de lexer (exporta GetLexerCount, GetLexerName y CreateLexer de Lexilla):
         // los nombres de sus lexers y su CreateLexer

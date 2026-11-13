@@ -80,6 +80,21 @@ typedef struct Sci_CharacterRangeFull Sci_CharacterRangeFull;
  *     EDITA_PLUGIN_EXPORT const char* edita_plugin_version(void) { return "1.2.3"; }
  */
 
+/* Opcional (Edita 1.1; no existe en N++): Edita la llama antes de hacer un commit desde el
+ * panel Git. Si devuelve distinto de 0, Edita muestra `reason` y pregunta si confirmar de
+ * todos modos. `reason` es UTF-8 y cabe en `reasonSize` bytes (con el nulo):
+ *     EDITA_PLUGIN_EXPORT int edita_plugin_before_commit(EditaCommitCheck* check) { … }
+ * Es una función aparte y no un mensaje de messageProc: los plugins de N++ responden TRUE a
+ * cualquier mensaje y bloquearían todos los commits.
+ */
+typedef struct EditaCommitCheck
+{
+    const char* repository; /* la raíz del repositorio */
+    const char* message;    /* el mensaje del commit */
+    char* reason;           /* lo escribe el plugin */
+    unsigned int reasonSize;
+} EditaCommitCheck;
+
 /* --- Datos que recibe el plugin (NppData) ------------------------------------------ */
 
 typedef intptr_t (*EditaSendFn)(void* target, unsigned int message, uintptr_t wParam, intptr_t lParam);
