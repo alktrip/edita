@@ -256,7 +256,7 @@ private slots:
         QTemporaryDir tmp;
         qputenv("EDITA_PLUGIN_CATALOG_URL", tmp.filePath("servidor/plugins.json").toUtf8());
         qputenv("EDITA_PLUGIN_CATALOG_PUBKEY", minisign::publicKeyFromSeed(kKeyId, kSeed).toUtf8());
-        const remote_catalog::Settings settings = remote_catalog::settings(tmp.filePath("plugins"));
+        const remote_catalog::Settings settings = remote_catalog::settings(tmp.filePath("plugins"), QStringLiteral("linux-x86_64"));
         QVERIFY(settings.enabled());
         QVERIFY(settings.listUrl.isLocalFile());
         QCOMPARE(settings.signatureUrl.toLocalFile(), tmp.filePath("servidor/plugins.json.minisig"));
@@ -278,7 +278,7 @@ private slots:
         QVERIFY(!remote_catalog::settings(tmp.filePath("plugins")).enabled());
         qunsetenv("EDITA_PLUGIN_CATALOG_URL");
         qunsetenv("EDITA_PLUGIN_CATALOG_PUBKEY");
-        const remote_catalog::Settings defaults = remote_catalog::settings(tmp.filePath("plugins"));
+        const remote_catalog::Settings defaults = remote_catalog::settings(tmp.filePath("plugins"), QStringLiteral("linux-x86_64"));
         QCOMPARE(defaults.listUrl.toString(), QString::fromLatin1(remote_catalog::kDefaultListUrl));
         QCOMPARE(defaults.signatureUrl.toString(), QString::fromLatin1(remote_catalog::kDefaultListUrl) + ".minisig");
         QCOMPARE(minisign::keyIdText(defaults.key.keyId), QStringLiteral("F1C3EC604B709A70"));
