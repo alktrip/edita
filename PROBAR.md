@@ -65,8 +65,12 @@ Para cada plugin que instales, revisa: que se instale sin errores, que sus órde
 | Pork to Sausage | Transformar la selección con un programa (por ejemplo `sort` o `tr a-z A-Z`) |
 | HLASM Lexer | Plugin de lenguaje: abrir un `.mlc` (o elegir Lenguaje › HLASM) y ver que se colorea; cambiar sus colores en el Configurador de estilos |
 | OCaml Lexer | Plugin de lenguaje: abrir un `.ml` y ver que se colorea; con `olint` instalado, que marque sus avisos |
+| JSON Viewer | Abrir el panel con el árbol de un JSON, buscar en él, dar formato, comprimir y ordenar por clave |
+| Npp Converter | ASCII → HEX y HEX → ASCII con una selección; el Panel de conversión |
+| NppExport | Exportar el documento a HTML y RTF, en un archivo y al portapapeles (este se compila en tu equipo) |
+| FTP and SFTP | Plugin propio de Edita. Guardar un servidor en **Perfiles…**, conectar (SFTP con tu clave o contraseña, o FTP), abrir un archivo con doble clic, cambiarlo, guardarlo y revisar que se subió; crear, renombrar y borrar en el servidor |
 
-También vienen con Edita **Python Script** (scripts de Python que controlan el editor) y **MarkdownViewer++** (vista previa de Markdown, Ctrl+Mayús+M).
+También vienen con Edita **Python Script** (scripts de Python que controlan el editor), **MarkdownViewer++** (vista previa de Markdown, Ctrl+Mayús+M), el **editor hexadecimal** (Ctrl+Alt+Mayús+H: editar los bytes de un archivo, también binario) y el **detector de secretos** (escribe una clave de API falsa y revisa que se subraye; prueba el aviso antes de un commit desde Ver › Git).
 
 ---
 
@@ -114,4 +118,6 @@ Use it as your everyday editor: that helps the most. If you have time, also chec
 
 For each plugin you install, check that it installs without errors, that its commands appear in the Plugins menu, that they do what they say, and that its windows (options, "About") look right and respond. Language plugins (HLASM Lexer, OCaml Lexer) add a language instead: open a file with their extension (`.mlc`, `.ml`) and check that it is highlighted, and that you can change its colors in the Style Configurator. The table above lists what to try in each one; the commands have the same names in the menu.
 
-Edita also comes with **Python Script** (Python scripts that control the editor) and **MarkdownViewer++** (Markdown preview, Ctrl+Shift+M).
+Edita also comes with **Python Script** (Python scripts that control the editor), **MarkdownViewer++** (Markdown preview, Ctrl+Shift+M), the **Hex Editor** (Ctrl+Alt+Shift+H: edit the bytes of a file, binaries too) and **Secret Scanner** (type a fake API key and check that it is underlined; try the warning before a commit from View › Git).
+
+**FTP and SFTP**, Edita's own catalog plugin: save a server in **Profiles…**, connect (SFTP with your key or password, or FTP), open a file with a double click, change it, save it and check that it was uploaded; create, rename and delete on the server.
