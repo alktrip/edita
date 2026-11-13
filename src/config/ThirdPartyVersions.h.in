@@ -1,0 +1,11 @@
+// Generado por CMake a partir de src/config/ThirdPartyVersions.h.in. No editar.
+// Las versiones de los componentes de third_party/, para Ayuda › Acerca de (fase 91).
+#pragma once
+
+#define EDITA_SCINTILLA_VERSION "@EDITA_SCINTILLA_VERSION@"
+#define EDITA_LEXILLA_VERSION "@EDITA_LEXILLA_VERSION@"
+#define EDITA_PUGIXML_VERSION "@EDITA_PUGIXML_VERSION@"
+#define EDITA_BOOST_VERSION "@EDITA_BOOST_VERSION@"
+#define EDITA_VTERM_VERSION "@EDITA_VTERM_VERSION@"
+#define EDITA_MD4C_VERSION "@EDITA_MD4C_VERSION@"
+#define EDITA_NPP_COMMIT "@EDITA_NPP_COMMIT@"

@@ -364,6 +364,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 88 — Detector de secretos | Ningún plugin de N++ lo hace; `plugins/SecretScanner` (24 reglas, entropía, marcadores de permiso), `edita_plugin_before_commit` en la API; `tst_secretscanner` | ✅ [fase88.md](fase88.md) |
 | 89 — Editor hexadecimal | HEX-Editor 0.9.14 (vista de lista dibujada por el plugin: no se porta); `plugins/EditaHex` (`HexBuffer`, `HexView`); `tst_hexeditor` | ✅ [fase89.md](fase89.md) |
 | 90 — FTP y SFTP | NppFTP 0.30.23 (sockets de Windows, OLE y una biblioteca FTP con licencia no compatible con la GPL: no se porta); `plugins/EditaFTP` sobre ssh/sftp y curl, sin moc, en el catálogo y no en los paquetes; `tst_editaftp` | ✅ [fase90.md](fase90.md) |
+| 91 — Acerca de Edita | `AboutDlg` de N++ (versión con la arquitectura, compilación, licencia); `core/AboutInfo`, `ui/AboutDialog` con componentes y licencias, versión nueva, enlaces y copiar; `tst_about` | ✅ [fase91.md](fase91.md) |
 
 ---
 

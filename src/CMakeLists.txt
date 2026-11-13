@@ -8,8 +8,40 @@ target_compile_options(edita_warnings INTERFACE
 include(GNUInstallDirs) # CMAKE_INSTALL_LIBDIR, también en AppInfo.h
 configure_file(config/AppInfo.h.in ${CMAKE_CURRENT_BINARY_DIR}/generated/AppInfo.h @ONLY)
 
+# Las versiones de third_party/ para Ayuda › Acerca de (fase 91), de sus propios archivos
+set(TP ${PROJECT_SOURCE_DIR}/third_party)
+function(_edita_digits_version file var)
+    file(READ ${file} raw) # «569» → 5.6.9
+    string(STRIP "${raw}" raw)
+    string(REGEX REPLACE "^([0-9])([0-9])([0-9]+)$" "\\1.\\2.\\3" v "${raw}")
+    set(${var} ${v} PARENT_SCOPE)
+endfunction()
+_edita_digits_version(${TP}/scintilla/version.txt EDITA_SCINTILLA_VERSION)
+_edita_digits_version(${TP}/lexilla/version.txt EDITA_LEXILLA_VERSION)
+file(STRINGS ${TP}/pugixml/pugixml.hpp line REGEX "define PUGIXML_VERSION [0-9]+")
+string(REGEX REPLACE ".*PUGIXML_VERSION ([0-9]+).*" "\\1" pugi "${line}") # 1160 → 1.16 (mayor·1000 + menor·10)
+math(EXPR pugi_major "${pugi} / 1000")
+math(EXPR pugi_minor "(${pugi} % 1000) / 10")
+set(EDITA_PUGIXML_VERSION "${pugi_major}.${pugi_minor}")
+file(STRINGS ${TP}/boostregex/boost/version.hpp line REGEX "define BOOST_LIB_VERSION")
+string(REGEX REPLACE ".*\"([0-9]+)_([0-9]+).*" "\\1.\\2" EDITA_BOOST_VERSION "${line}")
+file(STRINGS ${TP}/libvterm/include/vterm.h lines REGEX "define VTERM_VERSION_(MAJOR|MINOR)")
+string(REGEX REPLACE ".*MAJOR ([0-9]+).*MINOR ([0-9]+).*" "\\1.\\2" EDITA_VTERM_VERSION "${lines}")
+set(EDITA_MD4C_VERSION 0.5.2) # third_party/CMakeLists.txt: release-0.5.2
+file(STRINGS ${TP}/UPSTREAM.txt line REGEX "^notepad-plus-plus ")
+string(REGEX REPLACE "^notepad-plus-plus ([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]).*" "\\1" EDITA_NPP_COMMIT "${line}")
+configure_file(config/ThirdPartyVersions.h.in ${CMAKE_CURRENT_BINARY_DIR}/generated/ThirdPartyVersions.h @ONLY)
+# El commit y su fecha, en cada compilación (cmake/BuildInfo.cmake)
+add_custom_target(edita_build_info
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/generated/BuildInfo.h
+            -P ${PROJECT_SOURCE_DIR}/cmake/BuildInfo.cmake
+    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/generated/BuildInfo.h
+    COMMENT "Commit de la compilación")
+
 # Núcleo sin widgets (documentos, encoding, configuración…): testeable por separado
 add_library(edita_core STATIC
+    core/AboutInfo.cpp
+    core/AboutInfo.h
     core/ApiFile.cpp
     core/ApiFile.h
     core/Backup.cpp
@@ -96,6 +128,7 @@ find_package(OpenSSL 1.1.1 REQUIRED COMPONENTS Crypto)
 target_link_libraries(edita_core
     PUBLIC  Qt6::Core Iconv::Iconv
     PRIVATE uchardet_npp pugixml edita_warnings OpenSSL::Crypto)
+add_dependencies(edita_core edita_build_info)
 # Builds de desarrollo: los datos se buscan también en el árbol de fuentes. Un paquete no
 # debe llevar esa ruta (makepkg avisa: «referencias a $srcdir»)
 if(EDITA_SOURCE_DATA)
@@ -198,6 +231,8 @@ add_library(edita_ui STATIC
     ui/UrlLinks.h
     ui/ColorPreview.cpp
     ui/CompareSession.cpp
+    ui/AboutDialog.cpp
+    ui/AboutDialog.h
     ui/CommandPalette.cpp
     ui/EolAnnotations.cpp
     ui/FileIcons.cpp
@@ -300,6 +335,18 @@ qt_add_resources(edita_ui edita_resources
     PREFIX /edita
     BASE ${PROJECT_SOURCE_DIR}/resources
     FILES ${PROJECT_SOURCE_DIR}/resources/logo.png ${EDITA_ICON_FILES})
+# Las licencias para Ayuda › Acerca de (fase 91): la de Edita y los avisos que piden las
+# licencias MIT, BSD y Boost de los componentes de third_party/
+qt_add_resources(edita_ui edita_licenses
+    PREFIX /edita
+    BASE ${PROJECT_SOURCE_DIR}
+    FILES ${PROJECT_SOURCE_DIR}/COPYING
+          ${PROJECT_SOURCE_DIR}/third_party/scintilla/License.txt
+          ${PROJECT_SOURCE_DIR}/third_party/lexilla/License.txt
+          ${PROJECT_SOURCE_DIR}/third_party/pugixml/LICENSE.md
+          ${PROJECT_SOURCE_DIR}/third_party/libvterm/LICENSE
+          ${PROJECT_SOURCE_DIR}/third_party/md4c/LICENSE.md
+          ${PROJECT_SOURCE_DIR}/resources/licenses/BSL-1.0.txt)
 
 add_executable(${EDITA_APP_ID} main.cpp)
 target_link_libraries(${EDITA_APP_ID} PRIVATE edita_ui edita_warnings)

@@ -2,6 +2,69 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="es">
 <context>
+    <name>About</name>
+    <message>
+        <location filename="../src/core/AboutInfo.cpp" line="+34"/>
+        <source>The interface</source>
+        <translation>La interfaz</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The editing component</source>
+        <translation>El componente de edición</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Syntax highlighting</source>
+        <translation>El coloreado de sintaxis</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Regular expressions</source>
+        <translation>Las expresiones regulares</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Detecting the encoding of files</source>
+        <translation>Detectar la codificación de los archivos</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Reading and writing the XML settings</source>
+        <translation>Leer y escribir la configuración en XML</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The integrated terminal</source>
+        <translation>La terminal integrada</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>The Markdown preview</source>
+        <translation>La vista previa de Markdown</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Checking the signature of the plugin catalog</source>
+        <translation>Comprobar la firma del catálogo de plugins</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Inspiration; its settings files, languages and plugin interface</source>
+        <translation>La inspiración; sus archivos de configuración, lenguajes e interfaz de plugins</translation>
+    </message>
+    <message>
+        <location line="+33"/>
+        <source>system package</source>
+        <translation>paquete del sistema</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>built from source</source>
+        <translation>compilado desde el código</translation>
+    </message>
+</context>
+<context>
     <name>AutoCompletion</name>
     <message>
         <location filename="../src/ui/AutoCompletion.cpp" line="+687"/>
@@ -987,6 +1050,155 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <location line="+25"/>
         <source>The language &quot;%1&quot; does not exist</source>
         <translation>No existe el lenguaje «%1»</translation>
+    </message>
+</context>
+<context>
+    <name>edita::AboutDialog</name>
+    <message>
+        <location filename="../src/ui/AboutDialog.cpp" line="+50"/>
+        <source>About %1</source>
+        <translation>Acerca de %1</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>&amp;About</source>
+        <translation>&amp;Acerca de</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Components</source>
+        <translation>&amp;Componentes</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;License</source>
+        <translation>&amp;Licencia</translation>
+    </message>
+    <message>
+        <location line="+4"/>
+        <source>Co&amp;py Version Info</source>
+        <translation>Co&amp;piar la información de la versión</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>The version, the system and the plugins, to paste in a bug report</source>
+        <translation>La versión, el sistema y los plugins, para pegarlos en un reporte de error</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Copied</source>
+        <translation>Copiado</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>Build %1</source>
+        <translation>Compilación %1</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>A native text and code editor for Linux, inspired by Notepad++: its engine (Scintilla), its settings files and its plugin interface, with LSP, Git, a terminal and project tasks.</source>
+        <translation>Un editor de texto y código nativo para Linux, inspirado en Notepad++: su motor (Scintilla), sus archivos de configuración y su interfaz de plugins, con LSP, Git, una terminal y tareas del proyecto.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Home Page</source>
+        <translation>Página del proyecto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>User Manual</source>
+        <translation>Manual de usuario</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Report a Problem</source>
+        <translation>Reportar un problema</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Plugin Catalog</source>
+        <translation>Catálogo de plugins</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Release Notes</source>
+        <translation>Notas de la versión</translation>
+    </message>
+    <message>
+        <location line="+26"/>
+        <source>No plugins loaded.</source>
+        <translation>No hay plugins cargados.</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Plugins loaded (%1): %2</source>
+        <translation>Plugins cargados (%1): %2</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Copyright © 2026 Edita contributors. Free software under the GNU General Public License, version 3 or later: see the License tab. It comes with no warranty.</source>
+        <translation>Copyright © 2026 Edita contributors. Software libre bajo la Licencia Pública General de GNU, versión 3 o posterior: ver la pestaña Licencia. No tiene garantía.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>Component</source>
+        <translation>Componente</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Version</source>
+        <translation>Versión</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Used for</source>
+        <translation>Para qué</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <location line="+20"/>
+        <source>License</source>
+        <translation>Licencia</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The text of this license is on the component&apos;s web page.</source>
+        <translation>El texto de esta licencia está en la página web del componente.</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Edita is built on these projects. Double-click one to open its web page.</source>
+        <translation>Edita está hecho sobre estos proyectos. Doble clic en uno abre su página web.</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Edita is free software: you can redistribute it and modify it under the terms of the GNU General Public License, version 3 or (at your option) any later version.</source>
+        <translation>Edita es software libre: puedes redistribuirlo y modificarlo bajo los términos de la Licencia Pública General de GNU, versión 3 o (a tu elección) cualquier versión posterior.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Checking for new versions is disabled.</source>
+        <translation>La búsqueda de versiones nuevas está desactivada.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Checking for a new version…</source>
+        <translation>Buscando una versión nueva…</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>✓ This is the latest version.</source>
+        <translation>✓ Esta es la versión más reciente.</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>&lt;b&gt;Edita %1 is available.&lt;/b&gt; &lt;a href=&quot;download&quot;&gt;Download page&lt;/a&gt;</source>
+        <translation>&lt;b&gt;Edita %1 está disponible.&lt;/b&gt; &lt;a href=&quot;download&quot;&gt;Página de descarga&lt;/a&gt;</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Could not check for a new version: %1</source>
+        <translation>No se pudo buscar una versión nueva: %1</translation>
     </message>
 </context>
 <context>
@@ -2140,19 +2352,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+503"/>
-        <location line="+5185"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+505"/>
+        <location line="+5233"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-5185"/>
-        <location line="+2352"/>
+        <location line="-5233"/>
+        <location line="+2400"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-2254"/>
+        <location line="-2302"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2593,22 +2805,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Acerca de %1</translation>
     </message>
     <message>
-        <location line="+3"/>
-        <source>About %1</source>
-        <translation>Acerca de %1</translation>
-    </message>
-    <message>
-        <location line="+3"/>
-        <source>&lt;b&gt;%1 %2&lt;/b&gt;&lt;br&gt;Text editor inspired by Notepad++.&lt;br&gt;Based on Scintilla and Lexilla.&lt;br&gt;GNU GPL v3 or later license.</source>
-        <translation>&lt;b&gt;%1 %2&lt;/b&gt;&lt;br&gt;Editor de texto inspirado en Notepad++.&lt;br&gt;Basado en Scintilla y Lexilla.&lt;br&gt;Licencia GNU GPL v3 o posterior.</translation>
-    </message>
-    <message>
-        <location line="+8"/>
+        <location line="+2"/>
         <source>About &amp;Qt</source>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1893"/>
+        <location line="+1953"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -2831,7 +3033,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2905"/>
+        <location line="-2953"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
@@ -2917,12 +3119,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+828"/>
-        <location line="+1285"/>
+        <location line="+1333"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1227"/>
+        <location line="-1275"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -2948,12 +3150,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+6017"/>
+        <location line="+6065"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-6016"/>
+        <location line="-6064"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3773,7 +3975,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Página de Edita</translation>
     </message>
     <message>
-        <location line="+21"/>
+        <location line="+9"/>
         <source>Toggle Macro Recording</source>
         <translation>Empezar o parar la grabación de la macro</translation>
     </message>
@@ -3789,17 +3991,17 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+33"/>
-        <location line="+27"/>
+        <location line="+37"/>
         <source>Check for Updates</source>
         <translation>Buscar actualizaciones</translation>
     </message>
     <message>
-        <location line="-27"/>
+        <location line="-37"/>
         <source>Checking for new versions is disabled.</source>
         <translation>La búsqueda de versiones nuevas está desactivada.</translation>
     </message>
     <message>
-        <location line="+27"/>
+        <location line="+37"/>
         <source>Could not check for a new version: %1</source>
         <translation>No se pudo buscar una versión nueva: %1</translation>
     </message>
@@ -3850,12 +4052,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+5067"/>
+        <location line="+5117"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-5066"/>
+        <location line="-5116"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -3870,7 +4072,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Descartar</translation>
     </message>
     <message>
-        <location line="+94"/>
+        <location line="+144"/>
         <source>Shortcut only</source>
         <translation>Solo atajo</translation>
     </message>

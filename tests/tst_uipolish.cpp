@@ -20,6 +20,8 @@
 #include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QTest>
+#include <QDialog>
+#include <QLabel>
 #include <QTimer>
 
 #include <algorithm>
@@ -197,15 +199,19 @@ private slots:
     {
         auto w = window(QStringLiteral("en"));
         QString text;
-        QTimer::singleShot(0, this, [&text] {
-            if (auto* box = qobject_cast<QMessageBox*>(QApplication::activeModalWidget())) {
-                text = box->text();
+        QString links;
+        QTimer::singleShot(0, this, [&text, &links] {
+            if (auto* box = qobject_cast<QDialog*>(QApplication::activeModalWidget())) {
+                if (auto* version = box->findChild<QLabel*>(QStringLiteral("aboutVersion")))
+                    text = version->text();
+                if (auto* row = box->findChild<QLabel*>(QStringLiteral("aboutLinks")))
+                    links = row->text();
                 box->accept();
             }
         });
         w->findChild<QAction*>(QStringLiteral("actionAbout"))->trigger();
         QVERIFY(text.contains(QString::fromUtf8(kAppVersion)));
-        QVERIFY(text.contains(QStringLiteral("<a href=\"%1\">").arg(QString::fromUtf8(kHomepageUrl))));
+        QVERIFY(links.contains(QLatin1String("Home Page")));
     }
 
     void menuTextsFollowTheRules_data() { menuMnemonicsAreUnique_data(); }

@@ -17,8 +17,10 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "ui/MainWindow.h"
+#include "ui/AboutDialog.h"
 
 #include "AppInfo.h"
+#include "core/AboutInfo.h"
 #include "core/Backup.h"
 #include "core/Codec.h"
 #include "core/CrashReport.h"
@@ -1807,19 +1809,7 @@ void MainWindow::createMenus()
         _openUrl(QUrl(QStringLiteral("https://github.com/alktrip/edita")));
     });
     help->addSeparator();
-    QAction* about = help->addAction(tr("&About %1").arg(QString::fromUtf8(kAppName)), this, [this] {
-        QMessageBox box(this);
-        box.setObjectName(QStringLiteral("aboutBox"));
-        box.setWindowTitle(tr("About %1").arg(QString::fromUtf8(kAppName)));
-        box.setIconPixmap(QPixmap(QStringLiteral(":/edita/logo.png"))
-                              .scaled(160, 160, Qt::KeepAspectRatio, Qt::SmoothTransformation));
-        box.setText(tr("<b>%1 %2</b><br>Text editor inspired by Notepad++.<br>Based on Scintilla and "
-                       "Lexilla.<br>GNU GPL v3 or later license.")
-                        .arg(QString::fromUtf8(kAppName), QString::fromUtf8(kAppVersion))
-                    // La página del proyecto (QMessageBox abre los enlaces con el navegador)
-                    + QStringLiteral("<br><br><a href=\"%1\">%1</a>").arg(QString::fromUtf8(kHomepageUrl)));
-        box.exec();
-    });
+    QAction* about = help->addAction(tr("&About %1").arg(QString::fromUtf8(kAppName)), this, [this] { showAbout(); });
     about->setObjectName(QStringLiteral("actionAbout"));
     help->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
     // Órdenes sin menú, solo para darles un atajo (las «shortcut only» de N++)
@@ -1885,6 +1875,16 @@ void MainWindow::updateCheckFinished(QNetworkReply* reply, bool manual)
     QString error = reply->error() == QNetworkReply::NoError ? QString() : reply->errorString();
     if (error.isEmpty())
         update_check::parseReleases(reply->readAll(), kAppPrerelease, release, &error); // una estable no avisa de betas
+    // Para Acerca de (lo pidiera o no)
+    const QString running = QString::fromUtf8(kAppVersion);
+    _latestRelease.known = true;
+    _latestRelease.error = error;
+    _latestRelease.version = error.isEmpty() && update_check::compareVersions(release.version, running) > 0 ? release.version : QString();
+    _latestRelease.page = release.page.isValid() ? release.page : QUrl(QString::fromUtf8(kHomepageUrl) + QStringLiteral("/releases"));
+    const bool quiet = std::exchange(_updateQuiet, false);
+    emit releaseChecked();
+    if (quiet)
+        return;
     if (!error.isEmpty()) {
         if (manual) // al arrancar, sin red no se molesta a nadie
             _prompter->warn(this, tr("Check for Updates"), tr("Could not check for a new version: %1").arg(error));
@@ -1949,6 +1949,56 @@ bool MainWindow::offerCrashReport(const QString& directory)
           }},
          {tr("Discard"), [directory] { crash_report::clear(directory); }}});
     return true;
+}
+
+void MainWindow::showAbout()
+{
+    // AboutDlg de N++: la versión con la arquitectura, la compilación y la licencia; además, los
+    // componentes, si hay una versión nueva, enlaces y copiar la información de la versión
+    AboutDialog::Context context;
+    context.versionLine = about::versionLine(QString::fromUtf8(kAppVersion), QSysInfo::currentCpuArchitecture(), about::currentInstall());
+    if (!about::buildCommit().isEmpty())
+        context.build = QStringLiteral("%1, %2").arg(about::buildCommit(), about::buildDate());
+    context.system = issue_report::describe(issue_report::currentSystem(QGuiApplication::platformName()));
+    if (_plugins) {
+        for (const auto& p : _plugins->plugins())
+            context.plugins << (p->version.isEmpty() ? p->name : QStringLiteral("%1 (%2)").arg(p->name, p->version));
+    }
+    context.homepage = QUrl(QString::fromUtf8(kHomepageUrl));
+    context.releaseNotes = about::releaseNotesUrl(QString::fromUtf8(kHomepageUrl), QString::fromUtf8(kAppVersion));
+    context.openUrl = [this](const QUrl& url) { _openUrl(url); };
+    auto trigger = [this](const char* name) {
+        return [this, name] {
+            if (QAction* action = findChild<QAction*>(QString::fromLatin1(name)))
+                action->trigger();
+        };
+    };
+    context.openManual = trigger("actionUserManual");
+    context.reportProblem = trigger("actionReportProblem");
+    context.openPluginsAdmin = trigger("actionPluginsAdmin");
+    AboutDialog dialog(std::move(context), this);
+    auto showRelease = [this, &dialog] {
+        if (!_latestRelease.error.isEmpty())
+            dialog.setUpdateState(AboutDialog::UpdateState::Failed, {}, {}, _latestRelease.error);
+        else if (!_latestRelease.version.isEmpty())
+            dialog.setUpdateState(AboutDialog::UpdateState::Available, _latestRelease.version, _latestRelease.page);
+        else
+            dialog.setUpdateState(AboutDialog::UpdateState::UpToDate);
+    };
+    if (!kUpdateCheck || update_check::releaseUrl(QString::fromUtf8(kHomepageUrl)).isEmpty()) {
+        dialog.setUpdateState(AboutDialog::UpdateState::Disabled);
+    } else if (_latestRelease.known) {
+        showRelease();
+    } else {
+        // Una búsqueda sin avisos (si ya hay una en curso, se espera a esa)
+        dialog.setUpdateState(AboutDialog::UpdateState::Checking);
+        connect(this, &MainWindow::releaseChecked, &dialog, showRelease);
+        if (!_updateReply) {
+            _updateQuiet = true;
+            checkForUpdates(false);
+        }
+    }
+    dialog.exec();
 }
 
 QUrl MainWindow::issueReportUrl() const

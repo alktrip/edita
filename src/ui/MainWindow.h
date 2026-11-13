@@ -150,6 +150,8 @@ public:
     // Sin bloquear: el resultado sale en la barra de avisos
     void checkForUpdates(bool manual);
     bool isCheckingForUpdates() const { return _updateReply != nullptr; }
+    // Ayuda › Acerca de Edita (fase 91; ui/AboutDialog)
+    void showAbout();
     // Al arrancar, si toca (Preferences::updateOnStartup, cada updateIntervalDays días)
     void checkForUpdatesIfDue(const QDate& today);
     // Si la vez anterior Edita se cerró por un fallo (crash_report), lo dice en la barra de
@@ -265,6 +267,12 @@ public:
     bool selectDelimitedAt(sptr_t position);
     // Ayuda › Información de depuración
     QString debugInfo() const;
+
+signals:
+    // Terminó una búsqueda de versiones nuevas (_latestRelease tiene el resultado)
+    void releaseChecked();
+
+public:
     void showDebugInfo();
     bool closeAllToLeft(BufferId id);
     bool closeAllToRight(BufferId id);
@@ -809,6 +817,16 @@ private:
     QNetworkAccessManager* _updateNetwork = nullptr;
     QPointer<QNetworkReply> _updateReply;
     void updateCheckFinished(QNetworkReply* reply, bool manual);
+    // La última búsqueda de versiones de esta sesión, para Acerca de; las que lanza Acerca de
+    // no muestran avisos (_updateQuiet)
+    struct LatestRelease
+    {
+        bool known = false;
+        QString version; // vacío: no hay una más nueva para este canal
+        QUrl page;
+        QString error;
+    } _latestRelease;
+    bool _updateQuiet = false;
     QPointer<GitBlame> _blame[2];
     SnippetLibrary* _snippets = nullptr;
     QPointer<SnippetController> _snippetControllers[2];
