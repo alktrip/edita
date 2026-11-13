@@ -5,6 +5,10 @@
 <h1 align="center">Edita</h1>
 
 <p align="center">
+  <b>English</b> &nbsp;|&nbsp; <a href="README.es.md"><b>Español</b></a>
+</p>
+
+<p align="center">
   <b>The Notepad++ experience, built for Linux.</b><br>
   A native Qt 6 text and code editor with the Notepad++ engine, configuration files and plugin API,<br>
   plus the tools developers expect today: LSP, Git, an integrated terminal and project tasks.

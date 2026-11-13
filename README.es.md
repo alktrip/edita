@@ -5,6 +5,10 @@
 <h1 align="center">Edita</h1>
 
 <p align="center">
+  <a href="README.md"><b>English</b></a> &nbsp;|&nbsp; <b>Español</b>
+</p>
+
+<p align="center">
   <b>Un editor de texto nativo para Linux inspirado en Notepad++.</b><br>
   El mismo motor de edición (Scintilla y Lexilla), sus formatos de configuración y sus plugins, con una interfaz moderna en Qt 6.
 </p>
