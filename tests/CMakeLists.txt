@@ -228,3 +228,10 @@ add_custom_target(edita_readme_images
             $<TARGET_FILE:readme_screenshots> en ${PROJECT_SOURCE_DIR}/docs/images/en
     DEPENDS readme_screenshots
     COMMENT "Capturas del README")
+
+# Con sanitizers (EDITA_SANITIZE, fase 93) no tienen sentido: tst_perf mide tiempos (todo va de
+# 2 a 3 veces más lento) y tst_crashreport provoca fallos a propósito, que UBSan y ASan
+# atrapan antes que el manejador de Edita
+if(EDITA_SANITIZE)
+    set_tests_properties(tst_perf tst_crashreport PROPERTIES DISABLED TRUE)
+endif()

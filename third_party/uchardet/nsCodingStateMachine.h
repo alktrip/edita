@@ -39,7 +39,8 @@
 
 #include "nsPkgInt.h"
 
-typedef enum {
+// Edita: tipo subyacente fijo; el estado guarda cualquier valor de la tabla (UBSan)
+typedef enum : unsigned int {
    eStart = 0,
    eError = 1,
    eItsMe = 2 

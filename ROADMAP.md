@@ -6,6 +6,7 @@ This is the planned work, not a promise of dates. Priorities change with what te
 
 - **Release candidates.** [1.0.0-rc.3](https://github.com/alktrip/edita/releases/latest) is out. If testers find nothing serious, 1.0.0 is the same version with a new number; otherwise there will be another candidate.
 - **Plugins on arm64.** Done: the catalog builds every plugin for arm64 too, and Edita on arm64 installs them prebuilt (from the next version on; 1.0.0-rc.3 and earlier build them from the recipe).
+- **Memory checks in CI.** Done: every test also runs with AddressSanitizer and UndefinedBehaviorSanitizer, and packages are not published if they fail.
 
 ## Next: 1.1
 

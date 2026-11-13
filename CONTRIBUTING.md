@@ -23,7 +23,7 @@ Open an [issue](https://github.com/alktrip/edita/issues/new/choose) that describ
 
 1. Build Edita and run the tests ([build instructions](README.md#build-from-source)).
 2. Every change comes with its tests in `tests/` (QtTest, headless). A bug fix starts with a test that fails.
-3. The code builds with `-Werror` (`EDITA_WERROR=ON`) on GCC and Clang. CI also builds with GCC 12 and Qt 6.8 on Ubuntu 22.04, and on arm64.
+3. The code builds with `-Werror` (`EDITA_WERROR=ON`) on GCC and Clang. CI also builds with GCC 12 and Qt 6.8 on Ubuntu 22.04, and on arm64, and runs every test with AddressSanitizer and UndefinedBehaviorSanitizer (`-DEDITA_SANITIZE=address,undefined`, see [docs/fase93.md](docs/fase93.md)).
 4. When a feature exists in Notepad++, study how Notepad++ does it first (its source is the reference) and keep its file formats and command IDs.
 5. New user-visible text goes through `tr()`, with its Spanish translation in `translations/edita_es.ts`. New commands are documented in the [user manual](data/manual/en), in English and Spanish: `tst_manual` checks that every menu command is in it.
 6. Keep pull requests focused on one change, and explain the why in the description.

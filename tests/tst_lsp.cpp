@@ -313,7 +313,9 @@ private slots:
         const BufferId lib = w.currentBuffer();
         QCOMPARE(w.editor()->sci(SCI_GETCURRENTPOS), sptr_t{4}); // «def |helper»
 
-        // Mayús+F12: las referencias en el panel de resultados, por archivo
+        // Mayús+F12: las referencias en el panel de resultados, por archivo. Antes, que el
+        // servidor tenga lib.py (con carga, como con los sanitizers, tarda: fase 93)
+        QTRY_VERIFY_WITH_TIMEOUT(lsp->supports(lib, "referencesProvider"), 15000);
         w.findChild<QAction*>("actionFindReferences")->trigger();
         ScintillaEditBase* results = w.resultsPanel()->view();
         auto resultsText = [&] {

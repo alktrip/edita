@@ -385,7 +385,9 @@ void SnippetController::highlight()
 
 bool SnippetController::eventFilter(QObject* watched, QEvent* event)
 {
-    if (watched != _view || event->type() != QEvent::KeyPress || !_view)
+    // El tipo primero: mientras el editor se destruye llegan eventos de foco, y comparar con
+    // _view convertiría a EditorView un objeto que ya solo es QWidget (UBSan)
+    if (event->type() != QEvent::KeyPress || !_view || watched != _view)
         return false;
     auto* key = static_cast<QKeyEvent*>(event);
     const bool lists = _view->send(SCI_AUTOCACTIVE) != 0;

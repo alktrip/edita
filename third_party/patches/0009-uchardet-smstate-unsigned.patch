@@ -1,0 +1,14 @@
+diff --git a/third_party/uchardet/nsCodingStateMachine.h b/third_party/uchardet/nsCodingStateMachine.h
+index f6447a7..fc7b512 100644
+--- a/third_party/uchardet/nsCodingStateMachine.h
++++ b/third_party/uchardet/nsCodingStateMachine.h
+@@ -39,7 +39,8 @@
+ 
+ #include "nsPkgInt.h"
+ 
+-typedef enum {
++// Edita: tipo subyacente fijo; el estado guarda cualquier valor de la tabla (UBSan)
++typedef enum : unsigned int {
+    eStart = 0,
+    eError = 1,
+    eItsMe = 2 

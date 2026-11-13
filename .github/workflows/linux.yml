@@ -87,6 +87,61 @@ jobs:
           path: build/Testing/Temporary/LastTest.log
           if-no-files-found: ignore
 
+  # Las mismas pruebas con AddressSanitizer y UndefinedBehaviorSanitizer (fase 93): accesos
+  # fuera de memoria, usos después de liberar y comportamiento indefinido de C++, que en una
+  # compilación normal pueden pasar sin que se note. Solo en x86_64 (es el mismo código).
+  # Sin LeakSanitizer: Qt y fontconfig dejan memoria reservada a propósito al salir.
+  sanitizers:
+    name: sanitizers (ASan + UBSan)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Paquetes
+        run: |
+          .github/scripts/apt-mirror.sh
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build pkg-config g++-12 libhunspell-dev \
+            libzip-dev zlib1g-dev libssl-dev python3-dev libgl-dev libegl-dev libxkbcommon-dev \
+            libfontconfig1-dev libfreetype-dev \
+            git patch binutils poppler-utils
+
+      - name: Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          modules: qt5compat
+          cache: true
+
+      - name: Configurar
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEDITA_WERROR=ON -DEDITA_SANITIZE=address,undefined
+
+      - name: Compilar
+        run: cmake --build build
+
+      - name: Probar
+        # Un error detiene la prueba con su traza (halt_on_error). tst_perf y tst_crashreport no
+        # se ejecutan con sanitizers (tests/CMakeLists.txt)
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1:detect_stack_use_after_return=0
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: |
+          git config --global user.name "Edita CI"
+          git config --global user.email "ci@example.invalid"
+          ctest --test-dir build -j4 --output-on-failure --timeout 1800
+
+      - name: Resultados de las pruebas
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-linux-sanitizers
+          path: build/Testing/Temporary/LastTest.log
+          if-no-files-found: ignore
+
   appimage:
     needs: pruebas
     strategy:
@@ -200,7 +255,7 @@ jobs:
 
   # Lo que se publica: los paquetes de las dos arquitecturas, una vez instalados bien
   publicar:
-    needs: [appimage, instalar]
+    needs: [appimage, instalar, sanitizers]
     if: github.event_name == 'push'
     runs-on: ubuntu-22.04
     # Uno a la vez por rama: dos pushes seguidos no se pisan al publicar el release continuo

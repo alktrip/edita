@@ -40,6 +40,15 @@ option(EDITA_WERROR "Tratar los warnings del código propio como errores" ON)
 option(EDITA_BUILD_TESTS "Compilar los tests" ON)
 option(EDITA_SOURCE_DATA "Buscar los datos también en el árbol de fuentes (builds sin instalar); los paquetes lo desactivan" ON)
 option(EDITA_BUILD_PLUGINS "Compilar el plugin de ejemplo" ON)
+# Pruebas de memoria (fase 93): -DEDITA_SANITIZE=address,undefined instrumenta todo (Edita,
+# third_party, los plugins del árbol y las pruebas) con AddressSanitizer y
+# UndefinedBehaviorSanitizer. Lo usa la CI; un error de memoria detiene la prueba
+set(EDITA_SANITIZE "" CACHE STRING "Sanitizers de GCC/Clang separados por comas (address,undefined); vacío: ninguno")
+if(EDITA_SANITIZE)
+    add_compile_options(-fsanitize=${EDITA_SANITIZE} -fno-omit-frame-pointer -fno-sanitize-recover=all)
+    add_link_options(-fsanitize=${EDITA_SANITIZE})
+    message(STATUS "Sanitizers: ${EDITA_SANITIZE}")
+endif()
 
 # Nombre del binario y del directorio de configuración (~/.config/<EDITA_APP_ID>/)
 set(EDITA_APP_ID "edita" CACHE STRING "Identificador de la aplicación")
