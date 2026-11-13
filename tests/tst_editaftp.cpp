@@ -562,8 +562,8 @@ private slots:
     {
         qputenv("FAKE_PASSWORD", "s3cret");
         qputenv("FAKE_DOTS", "1");
+        QStringList log; // antes que la sesión: se destruye después
         ftp::Session s;
-        QStringList log;
         s.setLogger([&](const QString& line) { log << line; });
         s.setProfile(sftpProfile());
         s.setPassword(QStringLiteral("s3cret"));
@@ -648,8 +648,8 @@ private slots:
     void sftpReconnects()
     {
         qputenv("FAKE_PASSWORD", "s3cret");
+        QStringList log; // antes que la sesión: se destruye después
         ftp::Session s;
-        QStringList log;
         s.setLogger([&](const QString& line) { log << line; });
         s.setProfile(sftpProfile());
         s.setPassword(QStringLiteral("s3cret"));

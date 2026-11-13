@@ -58,6 +58,8 @@ Session::Session()
 
 Session::~Session()
 {
+    // Sin avisar al registro: lo que captura puede haberse destruido ya
+    _logger = nullptr;
     disconnectFromHost();
 }
 
