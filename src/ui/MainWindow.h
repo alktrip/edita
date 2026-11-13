@@ -152,6 +152,9 @@ public:
     bool isCheckingForUpdates() const { return _updateReply != nullptr; }
     // Ayuda › Acerca de Edita (fase 91; ui/AboutDialog)
     void showAbout();
+    // La versión del estado de los paneles que se guarda (saveState); al cambiar los paneles de
+    // forma incompatible, se sube y el estado anterior se ignora
+    static constexpr int kDockStateVersion = 1;
     // Al arrancar, si toca (Preferences::updateOnStartup, cada updateIntervalDays días)
     void checkForUpdatesIfDue(const QDate& today);
     // Si la vez anterior Edita se cerró por un fallo (crash_report), lo dice en la barra de

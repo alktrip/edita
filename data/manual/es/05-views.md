@@ -180,8 +180,9 @@ copiar o guardar se incluyen las líneas ocultas.
 ## Paneles
 
 Los paneles se muestran u ocultan desde el menú Ver. Se pueden arrastrar a cualquier lado de la
-ventana, ponerse como pestañas uno encima de otro o separarse como ventanas flotantes. Edita
-recuerda dónde estaban.
+ventana, ponerse como pestañas uno encima de otro o separarse como ventanas flotantes. Al volver
+a abrir Edita, cada panel está donde lo dejaste: el lado, el tamaño, si flotaba y con qué otros
+paneles compartía pestañas. También los paneles de los plugins.
 
 ### Lista de documentos
 

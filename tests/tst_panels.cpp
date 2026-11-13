@@ -366,6 +366,70 @@ private slots:
         QVERIFY(y.window.findChild<QAction*>(QStringLiteral("actionFunctionList"))->isChecked());
         QVERIFY(!y.window.panelDock(QStringLiteral("documentMap"))->isVisibleTo(&y.window));
     }
+
+    // Fase 94: dónde está cada panel, su tamaño, si flota y con cuáles comparte pestañas
+    // (DockingManager de N++), de una sesión a la siguiente
+    void panelsRememberTheirPlaceAndSize()
+    {
+        int listWidth = 0;
+        {
+            Window x;
+            MainWindow& w = x.window;
+            w.resize(1100, 750);
+            w.show();
+            QVERIFY(QTest::qWaitForWindowExposed(&w));
+            QDockWidget* map = w.panelDock(QStringLiteral("documentMap"));
+            QDockWidget* list = w.panelDock(QStringLiteral("documentList"));
+            QDockWidget* functions = w.panelDock(QStringLiteral("functionList"));
+            QDockWidget* chars = w.panelDock(QStringLiteral("charPanel"));
+            QDockWidget* clipboard = w.panelDock(QStringLiteral("clipboardHistory"));
+            w.addDockWidget(Qt::BottomDockWidgetArea, map); // de la derecha a abajo
+            map->show();
+            list->show();
+            w.resizeDocks({list}, {333}, Qt::Horizontal);
+            functions->show();
+            functions->setFloating(true);
+            functions->setGeometry(120, 140, 310, 420);
+            chars->show();
+            clipboard->show();
+            w.tabifyDockWidget(chars, clipboard);
+            QTest::qWait(50);
+            listWidth = list->width();
+            QVERIFY(std::abs(listWidth - 333) < 20);
+            QVERIFY(w.close());
+        }
+        Window y;
+        MainWindow& w = y.window;
+        w.restoreWindowGeometry();
+        w.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w));
+        QDockWidget* map = w.panelDock(QStringLiteral("documentMap"));
+        QDockWidget* list = w.panelDock(QStringLiteral("documentList"));
+        QDockWidget* functions = w.panelDock(QStringLiteral("functionList"));
+        QCOMPARE(w.dockWidgetArea(map), Qt::BottomDockWidgetArea);
+        QVERIFY(map->isVisibleTo(&w));
+        QCOMPARE(w.dockWidgetArea(list), Qt::LeftDockWidgetArea);
+        QVERIFY(std::abs(list->width() - listWidth) < 20);
+        QVERIFY(functions->isFloating());
+        QCOMPARE(functions->size(), QSize(310, 420));
+        QVERIFY(w.tabifiedDockWidgets(w.panelDock(QStringLiteral("charPanel"))).contains(w.panelDock(QStringLiteral("clipboardHistory"))));
+        // Lo que estaba oculto sigue oculto
+        QVERIFY(!w.panelDock(QStringLiteral("terminal"))->isVisibleTo(&w));
+    }
+
+    // Un estado guardado roto o de otra versión no impide arrancar: los paneles van a su sitio
+    void brokenPanelStateIsIgnored()
+    {
+        {
+            Window x;
+            x.window.syntax().config().setGuiConfig(QStringLiteral("EditaDockState"), QStringLiteral("state"), QStringLiteral("no es base64 de Qt"));
+            x.window.syntax().config().save();
+        }
+        Window y;
+        y.window.restoreWindowGeometry();
+        y.window.show();
+        QCOMPARE(y.window.dockWidgetArea(y.window.panelDock(QStringLiteral("documentMap"))), Qt::RightDockWidgetArea);
+    }
 };
 
 QTEST_MAIN(TestPanels)

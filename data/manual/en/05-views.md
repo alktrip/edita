@@ -174,7 +174,9 @@ searching, copying or saving include the hidden lines.
 ## Panels
 
 The panels are shown or hidden from the View menu. They can be dragged to any side of the window,
-placed as tabs over each other, or detached as floating windows. Edita remembers where they were.
+placed as tabs over each other, or detached as floating windows. When you open Edita again, every
+panel is where you left it: the side, the size, whether it was floating and which panels it shared
+tabs with. Plugin panels too.
 
 ### Document List
 

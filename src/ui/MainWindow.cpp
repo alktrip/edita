@@ -6316,8 +6316,12 @@ intptr_t MainWindow::registerPluginDock(const EditaDockData& dockData)
     const unsigned container = (dockData.uMask >> 28) & 0x3;
     static constexpr Qt::DockWidgetArea kAreas[] = {Qt::LeftDockWidgetArea, Qt::RightDockWidgetArea, Qt::TopDockWidgetArea,
                                                     Qt::BottomDockWidgetArea};
-    addDockWidget(kAreas[container], entry.dock);
-    entry.dock->setFloating((dockData.uMask & DWS_DF_FLOATING) != 0);
+    // Donde lo dejó el usuario la última vez (fase 94): el panel se crea después de restaurar
+    // los demás, cuando el plugin lo registra. Si no hay nada guardado, donde lo pide el plugin
+    if (!restoreDockWidget(entry.dock)) {
+        addDockWidget(kAreas[container], entry.dock);
+        entry.dock->setFloating((dockData.uMask & DWS_DF_FLOATING) != 0);
+    }
     entry.dock->hide(); // se muestra con NPPM_DMMSHOW, como en N++
     // Si el plugin destruye su ventana (DestroyWindow en la capa de N++), el panel se va con ella
     QDockWidget* dock = entry.dock;
@@ -9785,6 +9789,12 @@ void MainWindow::restoreWindowGeometry()
         resize(width, height);
     if (config.guiConfig(QStringLiteral("AppPosition"), QStringLiteral("isMaximized")) == QLatin1String("yes"))
         setWindowState(windowState() | Qt::WindowMaximized);
+    // Los paneles (fase 94): zona, tamaño, si flotan y con cuáles comparten pestañas. Lo que
+    // guarda N++ en <GUIConfig name="DockingManager">, en el formato de Qt. Un estado roto o de
+    // otra versión se ignora (restoreState no cambia nada)
+    const QByteArray docks = QByteArray::fromBase64(config.guiConfig(QStringLiteral("EditaDockState"), QStringLiteral("state")).toLatin1());
+    if (!docks.isEmpty())
+        restoreState(docks, kDockStateVersion);
 }
 
 void MainWindow::saveWindowState()
@@ -9796,6 +9806,7 @@ void MainWindow::saveWindowState()
     config.setGuiConfig(name, QStringLiteral("width"), QString::number(normalGeometry().width()));
     config.setGuiConfig(name, QStringLiteral("height"), QString::number(normalGeometry().height()));
     config.setGuiConfig(name, QStringLiteral("isMaximized"), isMaximized() ? QStringLiteral("yes") : QStringLiteral("no"));
+    config.setGuiConfig(QStringLiteral("EditaDockState"), QStringLiteral("state"), QString::fromLatin1(saveState(kDockStateVersion).toBase64()));
     RecentFilesConfig recent = config.recentFiles();
     recent.files = _recentFiles.mid(0, _prefs.recentFilesMax);
     config.setRecentFiles(recent);

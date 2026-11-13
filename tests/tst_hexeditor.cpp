@@ -14,6 +14,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QComboBox>
+#include <QDockWidget>
 #include <QFile>
 #include <QLabel>
 #include <QLineEdit>
@@ -302,6 +303,42 @@ private slots:
         QVERIFY(info->text().contains(QLatin1String("2 bytes"))); // seleccionados
         // El inspector, con el valor del byte del cursor
         QVERIFY(w.findChild<QLabel*>(QStringLiteral("hexValues"))->text().contains(QLatin1String("uint8")));
+    }
+
+    // Fase 94: el panel de un plugin vuelve a donde lo dejó el usuario (se crea cuando el
+    // plugin lo registra, después de restaurar los demás)
+    void pluginPanelRemembersItsPlace()
+    {
+        auto panelCommand = [](MainWindow& w) {
+            for (const auto& p : w.plugins()->plugins()) {
+                if (p->name == QLatin1String("Hex Editor"))
+                    return p->commands.at(0).cmdId;
+            }
+            return 0;
+        };
+        const QString name = QStringLiteral("pluginDock_EditaHex.so_0");
+        {
+            MainWindow w;
+            w.setPrompter(std::make_unique<FakePrompter>());
+            w.notifyPluginsReady();
+            w.resize(1000, 700);
+            w.show();
+            QVERIFY(w.plugins()->runCommand(panelCommand(w)));
+            auto* dock = w.findChild<QDockWidget*>(name);
+            QVERIFY(dock);
+            QCOMPARE(w.dockWidgetArea(dock), Qt::BottomDockWidgetArea); // donde lo pide el plugin
+            w.addDockWidget(Qt::TopDockWidgetArea, dock);
+            QVERIFY(w.close());
+        }
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        w.restoreWindowGeometry();
+        w.notifyPluginsReady();
+        w.show();
+        QVERIFY(w.plugins()->runCommand(panelCommand(w)));
+        auto* dock = w.findChild<QDockWidget*>(name);
+        QVERIFY(dock && dock->isVisibleTo(&w));
+        QCOMPARE(w.dockWidgetArea(dock), Qt::TopDockWidgetArea);
     }
 };
 
