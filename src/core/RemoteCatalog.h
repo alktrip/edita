@@ -32,6 +32,9 @@ struct Settings
 {
     QUrl listUrl;        // vacío: sin catálogo
     QUrl signatureUrl;   // listUrl + ".minisig"
+    // Si la lista de esta arquitectura no está publicada (un catálogo de antes de la 1.0, solo
+    // con la de x86_64): esa, cuyos plugins se compilan en el equipo. Vacío en x86_64
+    QUrl fallbackListUrl;
     minisign::PublicKey key;
     QString cacheDir;    // <plugins>/Config/catalog
     bool enabled() const { return listUrl.isValid() && !listUrl.isEmpty() && key.isValid(); }
@@ -40,6 +43,9 @@ struct Settings
 // Con EDITA_PLUGIN_CATALOG_URL (una URL, una ruta o "none") y EDITA_PLUGIN_CATALOG_PUBKEY
 // (otra clave: para las pruebas o un catálogo propio)
 Settings settings(const QString& userPluginsDir);
+// Para una arquitectura («linux-aarch64»): cada una tiene su lista, plugins-<arquitectura>.json,
+// junto a plugins.json, que es la de x86_64
+Settings settings(const QString& userPluginsDir, const QString& arch);
 
 // Para qué Edita sirven los binarios de este equipo
 struct Runtime

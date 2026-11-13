@@ -109,6 +109,16 @@ void PluginsAdminDialog::refreshCatalog()
     connect(_catalogReply, &QNetworkReply::finished, this, [this, get] {
         QNetworkReply* list = std::exchange(_catalogReply, nullptr);
         list->deleteLater();
+        // La lista de esta arquitectura todavía no está publicada: la de x86_64, cuyos plugins se
+        // compilan en el equipo (adapt)
+        if (list->error() == QNetworkReply::ContentNotFoundError && _context.catalogSettings.fallbackListUrl.isValid()) {
+            remote_catalog::Settings& current = _context.catalogSettings;
+            current.listUrl = std::exchange(current.fallbackListUrl, QUrl());
+            current.signatureUrl = current.listUrl;
+            current.signatureUrl.setPath(current.listUrl.path() + QStringLiteral(".minisig"));
+            refreshCatalog();
+            return;
+        }
         if (list->error() != QNetworkReply::NoError) {
             catalogFailed(list->errorString());
             return;

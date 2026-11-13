@@ -365,6 +365,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 89 — Editor hexadecimal | HEX-Editor 0.9.14 (vista de lista dibujada por el plugin: no se porta); `plugins/EditaHex` (`HexBuffer`, `HexView`); `tst_hexeditor` | ✅ [fase89.md](fase89.md) |
 | 90 — FTP y SFTP | NppFTP 0.30.23 (sockets de Windows, OLE y una biblioteca FTP con licencia no compatible con la GPL: no se porta); `plugins/EditaFTP` sobre ssh/sftp y curl, sin moc, en el catálogo y no en los paquetes; `tst_editaftp` | ✅ [fase90.md](fase90.md) |
 | 91 — Acerca de Edita | `AboutDlg` de N++ (versión con la arquitectura, compilación, licencia); `core/AboutInfo`, `ui/AboutDialog` con componentes y licencias, versión nueva, enlaces y copiar; `tst_about` | ✅ [fase91.md](fase91.md) |
+| 92 — Plugins para arm64 | `nppPluginList` de N++ (un zip por arquitectura en cada entrada); CI del catálogo en x86_64 y arm64, `plugins-linux-aarch64.json`, `remote_catalog::settings(dir, arch)` con respaldo a `plugins.json`; `tst_catalog`, `tst_pluginsadmin` | ✅ [fase92.md](fase92.md) |
 
 ---
 

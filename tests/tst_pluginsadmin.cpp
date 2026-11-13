@@ -461,6 +461,49 @@ private slots:
         QCOMPARE(cached.version, QStringLiteral("2026.11.04.1"));
     }
 
+    // En arm64 se pide plugins-linux-aarch64.json; si el catálogo todavía no la tiene,
+    // plugins.json (sus plugins se compilan en el equipo)
+    void catalogForArm64()
+    {
+        const QByteArray keyId = QByteArray::fromHex("1122334455667788");
+        const QByteArray seed = QByteArray(32, '\x07');
+        qputenv("EDITA_PLUGIN_CATALOG_PUBKEY", minisign::publicKeyFromSeed(keyId, seed).toUtf8());
+        const QString server = repo() + "/servidor-arm";
+        qputenv("EDITA_PLUGIN_CATALOG_URL", (server + "/plugins.json").toUtf8());
+        auto restore = qScopeGuard([] {
+            qputenv("EDITA_PLUGIN_CATALOG_URL", "none");
+            qunsetenv("EDITA_PLUGIN_CATALOG_PUBKEY");
+        });
+        writeCatalog(repo() + "/list.json", {});
+        QDir(userPlugins() + "/Config/catalog").removeRecursively();
+        auto publish = [&](const QString& file, const QString& version, const QString& arch) {
+            const QByteArray json = QJsonDocument(QJsonObject{
+                {"name", "Edita plugin catalog"}, {"version", version}, {"arch", arch}, {"edita-plugin-api", 1},
+                {"edita-qt", QString::fromLatin1(qVersion())},
+                {"edita-recipes", QUrl::fromLocalFile(server + "/recipes.zip").toString()}, {"edita-recipes-sha256", QString(64, '0')},
+                {"npp-plugins", QJsonArray()}}).toJson();
+            writeFile(server + "/" + file, json);
+            writeFile(server + "/" + file + ".minisig", minisign::sign(json, keyId, seed, "catalog:" + version));
+        };
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        FakePrompter prompter;
+        auto refresh = [&] {
+            PluginsAdminContext context = adminContext(w);
+            context.catalogSettings = remote_catalog::settings(context.userPluginsDir, QStringLiteral("linux-aarch64"));
+            PluginsAdminDialog dialog(context, prompter);
+            QSignalSpy refreshed(&dialog, &PluginsAdminDialog::catalogRefreshed);
+            const bool ok = refreshed.wait(10000) && refreshed.first().at(0).toBool();
+            return ok ? dialog.findChild<QLabel*>(QStringLiteral("listVersion"))->text() : QStringLiteral("error");
+        };
+        // Solo la de x86_64 (un catálogo anterior a la 1.0)
+        publish(QStringLiteral("plugins.json"), QStringLiteral("2026.11.13.1"), QStringLiteral("linux-x86_64"));
+        QCOMPARE(refresh(), QStringLiteral("Plugin list version: 2026.11.13.1"));
+        // Con la de arm64
+        publish(QStringLiteral("plugins-linux-aarch64.json"), QStringLiteral("2026.11.13.2"), QStringLiteral("linux-aarch64"));
+        QCOMPARE(refresh(), QStringLiteral("Plugin list version: 2026.11.13.2"));
+    }
+
     // El catálogo publicado de verdad (red): solo con EDITA_NETWORK_TESTS=1
     void publishedCatalog()
     {

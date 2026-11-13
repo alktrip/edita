@@ -282,6 +282,22 @@ private slots:
         QCOMPARE(defaults.listUrl.toString(), QString::fromLatin1(remote_catalog::kDefaultListUrl));
         QCOMPARE(defaults.signatureUrl.toString(), QString::fromLatin1(remote_catalog::kDefaultListUrl) + ".minisig");
         QCOMPARE(minisign::keyIdText(defaults.key.keyId), QStringLiteral("F1C3EC604B709A70"));
+
+        // Cada arquitectura tiene su lista; la de x86_64 es plugins.json (la de las versiones
+        // anteriores de Edita). Si la de la arquitectura no existe, la de x86_64 (con recetas)
+        const remote_catalog::Settings x86 = remote_catalog::settings(tmp.filePath("plugins"), QStringLiteral("linux-x86_64"));
+        QCOMPARE(x86.listUrl.toString(), QString::fromLatin1(remote_catalog::kDefaultListUrl));
+        QVERIFY(x86.fallbackListUrl.isEmpty());
+        const remote_catalog::Settings arm = remote_catalog::settings(tmp.filePath("plugins"), QStringLiteral("linux-aarch64"));
+        QCOMPARE(arm.listUrl.toString(),
+                 QStringLiteral("https://github.com/alktrip/edita-plugins/releases/latest/download/plugins-linux-aarch64.json"));
+        QCOMPARE(arm.signatureUrl.toString(), arm.listUrl.toString() + ".minisig");
+        QCOMPARE(arm.fallbackListUrl.toString(), QString::fromLatin1(remote_catalog::kDefaultListUrl));
+        // También con una lista propia (EDITA_PLUGIN_CATALOG_URL)
+        qputenv("EDITA_PLUGIN_CATALOG_URL", "https://example.org/c/plugins.json");
+        QCOMPARE(remote_catalog::settings(tmp.filePath("plugins"), QStringLiteral("linux-aarch64")).listUrl.toString(),
+                 QStringLiteral("https://example.org/c/plugins-linux-aarch64.json"));
+        qunsetenv("EDITA_PLUGIN_CATALOG_URL");
     }
 
     void unpacksTheRecipes()

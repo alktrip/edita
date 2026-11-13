@@ -59,6 +59,11 @@ bool writeFile(const QString& path, const QByteArray& data)
 
 Settings settings(const QString& userPluginsDir)
 {
+    return settings(userPluginsDir, currentRuntime(0).arch);
+}
+
+Settings settings(const QString& userPluginsDir, const QString& arch)
+{
     Settings s;
     s.cacheDir = QDir(userPluginsDir).filePath(QStringLiteral("Config/catalog"));
     QString url = qEnvironmentVariable("EDITA_PLUGIN_CATALOG_URL");
@@ -67,6 +72,11 @@ Settings settings(const QString& userPluginsDir)
     if (url != QLatin1String("none")) {
         const QUrl parsed(url);
         s.listUrl = parsed.scheme().size() > 1 ? parsed : QUrl::fromLocalFile(QFileInfo(url).absoluteFilePath());
+        const QString path = s.listUrl.path();
+        if (arch != QLatin1String("linux-x86_64") && path.endsWith(QLatin1String("/plugins.json"))) {
+            s.fallbackListUrl = s.listUrl;
+            s.listUrl.setPath(path.chopped(int(sizeof("plugins.json")) - 1) + QStringLiteral("plugins-%1.json").arg(arch));
+        }
         s.signatureUrl = s.listUrl;
         s.signatureUrl.setPath(s.listUrl.path() + QStringLiteral(".minisig"));
     }
