@@ -1,8 +1,10 @@
 # Plugins de ejemplo. Cada uno se genera en <build>/plugins/<Nombre>/<Nombre>.so,
 # donde el binario de desarrollo los busca, y se instala en
-# <prefijo>/lib/<id>/plugins/<Nombre>/.
+# <prefijo>/lib/<id>/plugins/<Nombre>/. Con NO_INSTALL no va en los paquetes de Edita: se
+# distribuye con el catálogo de plugins (aquí se compila para las pruebas).
 function(edita_add_plugin name)
-    add_library(${name} MODULE ${ARGN})
+    cmake_parse_arguments(ARG "NO_INSTALL" "" "" ${ARGN})
+    add_library(${name} MODULE ${ARG_UNPARSED_ARGUMENTS})
     set_target_properties(${name} PROPERTIES
         PREFIX ""
         C_VISIBILITY_PRESET hidden
@@ -12,7 +14,9 @@ function(edita_add_plugin name)
         ${PROJECT_SOURCE_DIR}/plugin-sdk
         ${PROJECT_SOURCE_DIR}/third_party/scintilla/include)
     target_compile_options(${name} PRIVATE -Wall -Wextra -Wpedantic $<$<BOOL:${EDITA_WERROR}>:-Werror>)
-    install(TARGETS ${name} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/${EDITA_APP_ID}/plugins/${name})
+    if(NOT ARG_NO_INSTALL)
+        install(TARGETS ${name} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}/${EDITA_APP_ID}/plugins/${name})
+    endif()
 endfunction()
 
 edita_add_plugin(EditaDemo EditaDemo/EditaDemo.c)
@@ -31,3 +35,4 @@ endif()
 add_subdirectory(MarkdownViewerPlusPlus)
 add_subdirectory(SecretScanner)
 add_subdirectory(EditaHex)
+add_subdirectory(EditaFTP)

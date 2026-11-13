@@ -119,6 +119,28 @@ In **Plugins › Secret Scanner**:
 
 Before a commit from {{actionGitCommit}}, it checks the lines being committed. If it finds something, it lists it and asks whether to commit anyway. Commits made from a terminal do not go through it.
 
+## FTP and SFTP (from the catalog)
+
+Edita's own plugin that does what NppFTP does in Notepad++. It is not bundled: install it from **Plugins › Plugins Admin**, in the catalog tab (**FTP and SFTP**). It uses the programs of the system: `ssh` and `sftp` (OpenSSH) for SFTP, with your `~/.ssh` configuration, keys and agent, and `curl` for FTP. Almost every distribution ships them.
+
+**Plugins › FTP › FTP Panel** opens the panel. **Profiles…** adds the servers: name, protocol, host, port (empty: the protocol's), user, initial folder and, for SFTP, the private key.
+
+| Protocol | What it is |
+|---|---|
+| **SFTP** | Files over SSH. The recommended one |
+| **FTPES** | FTP encrypted with explicit TLS, on port 21 |
+| **FTPS** | FTP encrypted with implicit TLS, on port 990 |
+| **FTP** | Not encrypted: the password travels in the clear. Use it only on your own network |
+
+- **Connect** opens the session and shows the initial folder. Expanding a folder in the tree lists it.
+- **Passwords** are not saved to disk. For SFTP, Edita first tries your keys and agent and, if they are not enough, asks for the password or the key passphrase. For FTP it asks when connecting. They are only remembered while Edita is open.
+- **New servers:** the first time you connect to an SFTP server, Edita shows its key fingerprint and asks whether to trust it. If you accept, it is saved in `~/.ssh/known_hosts`, as `ssh` does. If the key of a known server changes, Edita does not connect and explains how to remove the old one.
+- **Opening:** double-clicking a file downloads it to a local copy (in `~/.cache/edita/ftp/<profile>/`) and opens it. **When you save it in Edita, it is uploaded.** If you are no longer connected, it is only saved on your computer and Edita tells you.
+- **Panel buttons:** refresh, upload the current document to the selected folder, download the selected file to another folder, new folder, rename and delete. They are also in the tree's context menu. Only empty folders can be deleted.
+- **Log:** every operation and error is written at the bottom.
+
+For FTPES and FTPS, if the server uses its own certificate, turn off **Verify the server certificate** in its profile.
+
 ## Writing plugins
 
 The plugin interface (`edita_plugin.h`) is installed with Edita (in `share/edita/plugin-sdk`),

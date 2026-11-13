@@ -81,6 +81,7 @@ Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git e
 - **Editor hexadecimal**, propio de Edita: muestra y edita los bytes de cualquier archivo, también binarios.
 - **Detector de secretos**, propio de Edita: subraya las claves de API, tokens y contraseñas escritas en tus archivos y avisa antes de hacer commit de una.
 - Un [catálogo firmado](https://github.com/alktrip/edita-plugins) con 22 plugins de Notepad++ compilados para Linux desde su código original (XML Tools, JSON Viewer, MIME Tools, Npp Converter, un formateador de SQL, plugins de lenguaje…), instalables desde **Plugins › Administrador de plugins**.
+- **FTP y SFTP**, propio de Edita y en el catálogo: lo que hace NppFTP. Explora servidores por SFTP, FTP, FTPES o FTPS, abre sus archivos y los sube al guardar.
 - Un SDK para escribir plugins nuevos o portar los de Notepad++ ([guía](docs/plugins.md)).
 
 ## Instalar

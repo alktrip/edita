@@ -118,6 +118,28 @@ En **Plugins › Detector de secretos**:
 
 Antes de hacer un commit desde {{actionGitCommit}}, revisa las líneas que se van a confirmar. Si encuentra algo, lo enumera y pregunta si hacer el commit de todos modos. Los commits hechos desde la terminal no pasan por aquí.
 
+## FTP y SFTP (del catálogo)
+
+Es un plugin propio de Edita que hace lo que NppFTP en Notepad++. No viene incluido: se instala desde **Plugins › Administrador de plugins**, en la pestaña del catálogo (**FTP and SFTP**). Usa los programas del sistema: `ssh` y `sftp` (OpenSSH) para SFTP, con tu configuración de `~/.ssh`, tus claves y tu agente, y `curl` para FTP. Casi todas las distribuciones los traen.
+
+**Plugins › FTP › Panel de FTP** abre el panel. Con **Perfiles…** agregas los servidores: nombre, protocolo, servidor, puerto (vacío: el del protocolo), usuario, carpeta inicial y, en SFTP, la clave privada.
+
+| Protocolo | Qué es |
+|---|---|
+| **SFTP** | Archivos por SSH. Es el recomendado |
+| **FTPES** | FTP cifrado con TLS explícito, en el puerto 21 |
+| **FTPS** | FTP cifrado con TLS implícito, en el puerto 990 |
+| **FTP** | Sin cifrar: la contraseña viaja a la vista. Úsalo solo en tu red |
+
+- **Conectar** abre la sesión y muestra la carpeta inicial. Al abrir una carpeta del árbol se lista.
+- **Contraseñas:** no se guardan en el disco. En SFTP, Edita prueba primero tus claves y el agente, y si no alcanzan, pide la contraseña o la frase de paso de la clave. En FTP la pide al conectar. Se recuerdan solo mientras Edita está abierto.
+- **Servidores nuevos:** la primera vez que te conectas a un servidor SFTP, Edita muestra la huella de su clave y pregunta si confiar en él. Al aceptar, la guarda en `~/.ssh/known_hosts`, como `ssh`. Si la clave de un servidor conocido cambia, Edita no se conecta y explica cómo quitar la anterior.
+- **Abrir:** doble clic en un archivo lo descarga a una copia local (en `~/.cache/edita/ftp/<perfil>/`) y lo abre. **Al guardarlo en Edita, se sube solo.** Si ya no estás conectado, se guarda solo en el equipo y Edita te avisa.
+- **Botones del panel:** actualizar, subir el documento actual a la carpeta seleccionada, descargar el archivo seleccionado en otra carpeta, crear carpeta, cambiar el nombre y eliminar. También están en el menú contextual del árbol. Solo se eliminan carpetas vacías.
+- **Registro:** abajo se anota cada operación y cada error.
+
+En FTPES y FTPS, si el servidor usa un certificado propio, desactiva **Verificar el certificado del servidor** en su perfil.
+
 ## Escribir plugins
 
 La interfaz de plugins (`edita_plugin.h`) se instala con Edita (en `share/edita/plugin-sdk`), y el

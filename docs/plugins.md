@@ -66,6 +66,13 @@ Con estas variables se puede usar otro catálogo (uno propio, o uno local para p
 
 Con `catalog.py keygen` de edita-plugins se crea una clave.
 
+**Un plugin propio de Edita en el catálogo** (como [FTP y SFTP](../plugins/EditaFTP), ver [fase90.md](fase90.md)):
+
+- **El código** vive en `plugins/<Nombre>/` de Edita, con sus pruebas, y se compila con `edita_add_plugin(<Nombre> NO_INSTALL …)`, que no lo instala con Edita.
+- **Su `sdk/CMakeLists.txt`** lo compila con el SDK: `edita_native_plugin`.
+- **La receta del catálogo** descarga el código de Edita de un commit (`https://github.com/alktrip/edita/archive/<commit>.zip`) y compila esa carpeta (`"build-dir": "plugins/<Nombre>/sdk"`).
+- **Sin herramientas de Qt.** El SDK trae las cabeceras de Qt, pero no `moc`, `rcc` ni `lrelease`. El plugin no usa `Q_OBJECT` (conexiones a lambdas), y sus traducciones son `.qm` que van en el repositorio y en el paquete (`package-files`), y que el plugin carga de la carpeta del `.so`.
+
 ## Compilar un plugin de Notepad++ desde su código (recetas)
 
 Muchos plugins de N++ tienen el código en GitHub. Una **receta** le dice al administrador de plugins cómo descargar ese código, adaptarlo y compilarlo en el equipo del usuario, sin publicar ningún binario (ver [fase15.md](fase15.md)). Se ponen en `~/.config/edita/plugins/recipes/<Carpeta>/` (o en `share/edita/plugins/recipes/`):
