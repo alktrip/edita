@@ -129,7 +129,9 @@ que está al pie de la página o en {{actionPreferences}} (página General).
 ## Obtener ayuda
 
 - {{actionUserManual}} abre este manual. Las flechas van atrás y adelante por las páginas que
-  visitaste; la casa va al primer capítulo. {{key:actionCommandPalette}} abre la paleta de
+  visitaste; la casa va al primer capítulo. En un diálogo o un panel (Buscar, Preferencias, la
+  lista de funciones, la terminal…), {{key:actionUserManual}} abre directamente el apartado que
+  lo explica; si el diálogo no deja usar otras ventanas, el manual se abre encima de él. {{key:actionCommandPalette}} abre la paleta de
   órdenes, la forma más rápida de encontrar una orden cuando no recuerdas en qué menú está.
 - {{actionAbout}} muestra la versión de Edita, con la arquitectura (x86_64 o arm64), cómo la instalaste (AppImage, .deb, .rpm) y la compilación. Dice si hay una versión nueva y tiene enlaces a la página del proyecto, el manual, reportar un problema, el catálogo de plugins y las notas de la versión. **Copiar la información de la versión** la deja lista para pegar en un reporte. La pestaña **Componentes** lista los proyectos sobre los que está hecho Edita, con su versión y su licencia, y **Licencia** muestra el texto de la GPL.
 - {{actionCheckForUpdates}} pregunta si hay una versión nueva. Edita también lo comprueba al

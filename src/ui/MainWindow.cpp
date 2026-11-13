@@ -18,6 +18,7 @@
 
 #include "ui/MainWindow.h"
 #include "ui/AboutDialog.h"
+#include "ui/ContextHelp.h"
 
 #include "AppInfo.h"
 #include "core/AboutInfo.h"
@@ -110,7 +111,9 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QDialog>
 #include <QDockWidget>
+#include <QKeyEvent>
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -168,6 +171,43 @@
 #include <vector>
 
 namespace edita {
+
+namespace {
+
+// F1 en un diálogo abierto desde esta ventana (fase 95): la sección del manual de ese diálogo.
+// En la ventana principal lo hace el atajo de Ayuda › Manual de usuario
+class HelpKeyFilter : public QObject
+{
+public:
+    explicit HelpKeyFilter(edita::MainWindow* window)
+        : QObject(window)
+        , _window(window)
+    {
+    }
+
+protected:
+    bool eventFilter(QObject* watched, QEvent* event) override
+    {
+        if (event->type() != QEvent::KeyPress || !static_cast<QKeyEvent*>(event)->matches(QKeySequence::HelpContents))
+            return false;
+        auto* widget = qobject_cast<QWidget*>(watched);
+        QWidget* top = widget ? widget->window() : nullptr;
+        if (!top || top == _window || !qobject_cast<QDialog*>(top))
+            return false;
+        for (QWidget* w = top->parentWidget(); w; w = w->parentWidget()) {
+            if (w == _window) {
+                _window->showContextHelp(widget);
+                return true;
+            }
+        }
+        return false;
+    }
+
+private:
+    edita::MainWindow* _window;
+};
+
+} // namespace
 
 namespace {
 
@@ -1790,7 +1830,10 @@ void MainWindow::createMenus()
     // Sin tecla de acceso en inglés: Alt+H es Ver › Ocultar líneas, como en N++ (cuyo menú
     // de ayuda es «?»)
     QMenu* help = menuBar()->addMenu(tr("Help"));
-    addAction(help, tr("User &Manual"), "actionUserManual", QKeySequence::HelpContents, [this] { showManual(); });
+    addAction(help, tr("User &Manual"), "actionUserManual", QKeySequence::HelpContents,
+              [this] { showContextHelp(QApplication::focusWidget()); });
+    // F1 en los diálogos de esta ventana (el atajo del menú no llega a una ventana aparte)
+    qApp->installEventFilter(new HelpKeyFilter(this));
     addAction(help, tr("&Welcome Page"), "actionWelcomePage", QKeySequence(), [this] { showWelcomePage(); });
     if (kUpdateCheck) // un paquete de una distribución se actualiza con su gestor de paquetes
         addAction(help, tr("Check for &Updates…"), "actionCheckForUpdates", QKeySequence(), [this] { checkForUpdates(true); });
@@ -8201,7 +8244,36 @@ void MainWindow::showManual(const QString& chapter, const QString& anchor)
 {
     if (!_manual)
         _manual = new ManualWindow([this] { return manualCommands(); }, this);
+    // Con un diálogo modal abierto (Preferencias…), el manual va encima de él: si no, el diálogo
+    // lo bloquearía. Desde la ventana principal, es una ventana normal
+    QWidget* modal = QApplication::activeModalWidget();
+    const Qt::WindowModality modality = modal && modal != _manual ? Qt::ApplicationModal : Qt::NonModal;
+    if (_manual->windowModality() != modality) {
+        _manual->hide(); // la modalidad solo cambia con la ventana oculta
+        _manual->setWindowModality(modality);
+    }
     _manual->open(chapter, anchor);
+}
+
+void MainWindow::showManualFor(const QString& command)
+{
+    if (!_manual)
+        _manual = new ManualWindow([this] { return manualCommands(); }, this);
+    const Manual::Place place = _manual->manual().placeOf(command);
+    if (place.chapter < 0) {
+        showManual();
+        return;
+    }
+    showManual(_manual->manual().chapters()[static_cast<size_t>(place.chapter)].fileName, place.anchor);
+}
+
+void MainWindow::showContextHelp(QWidget* widget)
+{
+    const QString command = context_help::commandFor(widget);
+    if (command.isEmpty())
+        showManual();
+    else
+        showManualFor(command);
 }
 
 void MainWindow::hideWelcome(bool focusEditor)

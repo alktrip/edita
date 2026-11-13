@@ -196,6 +196,7 @@ bool Manual::load(const QString& directory, const Commands& commands)
     _directory = directory;
     _chapters.clear();
     _unresolved.clear();
+    _places.clear();
     const QDir dir(directory);
     const QStringList files = dir.entryList({QStringLiteral("*.md")}, QDir::Files, QDir::Name);
     for (const QString& name : files) {
@@ -204,7 +205,8 @@ bool Manual::load(const QString& directory, const Commands& commands)
             continue;
         Chapter chapter;
         chapter.fileName = name;
-        chapter.markdown = expand(QString::fromUtf8(file.readAll()).remove(QLatin1Char('\r')), commands, &_unresolved);
+        const QString raw = QString::fromUtf8(file.readAll()).remove(QLatin1Char('\r'));
+        chapter.markdown = expand(raw, commands, &_unresolved);
         QHash<QString, int> used;
         bool fenced = false;
         const auto lines = chapter.markdown.split(QLatin1Char('\n'));
@@ -228,6 +230,41 @@ bool Manual::load(const QString& directory, const Commands& commands)
             chapter.headings.push_back(h);
         }
         chapter.title = chapter.headings.empty() ? QFileInfo(name).completeBaseName() : chapter.headings.front().text;
+        // Dónde se cita cada orden por primera vez: en el texto original, con sus {{actionX}};
+        // los encabezados se cuentan igual que arriba, para que los anclajes coincidan
+        {
+            const int index = static_cast<int>(_chapters.size());
+            QHash<QString, int> seen;
+            bool inFence = false;
+            QString anchor;
+            for (const QString& line : raw.split(QLatin1Char('\n'))) {
+                if (fencePattern().match(line).hasMatch()) {
+                    inFence = !inFence;
+                    continue;
+                }
+                if (!inFence) {
+                    // Una línea puede dar varias al expandirse ({{shortcuts}}: un apartado por menú)
+                    bool heading = false;
+                    for (const QString& expanded : expand(line, commands).split(QLatin1Char('\n'))) {
+                        const auto m = headingPattern().match(expanded);
+                        if (!m.hasMatch())
+                            continue;
+                        heading = true;
+                        anchor = slug(headingText(m.captured(2)));
+                        const int n = seen.value(anchor, 0);
+                        seen.insert(anchor, n + 1);
+                        if (n > 0)
+                            anchor += QLatin1Char('-') + QString::number(n);
+                    }
+                    if (heading)
+                        continue;
+                }
+                for (const QString& command : commandsIn(line)) {
+                    if (!_places.contains(command))
+                        _places.insert(command, {index, anchor});
+                }
+            }
+        }
         _chapters.push_back(std::move(chapter));
     }
     _unresolved.removeDuplicates();

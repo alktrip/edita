@@ -368,6 +368,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 92 — Plugins para arm64 | `nppPluginList` de N++ (un zip por arquitectura en cada entrada); CI del catálogo en x86_64 y arm64, `plugins-linux-aarch64.json`, `remote_catalog::settings(dir, arch)` con respaldo a `plugins.json`; `tst_catalog`, `tst_pluginsadmin` | ✅ [fase92.md](fase92.md) |
 | 93 — Sanitizers en la CI | `EDITA_SANITIZE`, trabajo `sanitizers` (ASan + UBSan) que bloquea la publicación; corregidos `SnippetController::eventFilter` (downcast durante la destrucción), uchardet `nsSMState` (parche 0009) y una carrera en `tst_lsp` | ✅ [fase93.md](fase93.md) |
 | 94 — Paneles: sitio y tamaño | `DockingManager` de N++ (`<GUIConfig name="DockingManager">`); `saveState`/`restoreState` en `EditaDockState`, `restoreDockWidget` para los paneles de plugins | ✅ [fase94.md](fase94.md) |
+| 95 — F1 contextual | N++: F1 es Acerca de, sin ayuda contextual; `Manual::placeOf` (la primera cita de cada orden), `ui/ContextHelp` (28 diálogos y paneles), `HelpKeyFilter` para los diálogos, manual modal sobre un diálogo modal | ✅ [fase95.md](fase95.md) |
 
 ---
 

@@ -68,6 +68,12 @@ public:
         int order = 0;    // su lugar en los menús (para la tabla de atajos)
     };
     using Commands = QHash<QString, Command>; // por nombre del objeto ("actionFind")
+    // Dónde se explica una orden: el apartado de su primera cita ({{actionFind}})
+    struct Place
+    {
+        int chapter = -1;
+        QString anchor;
+    };
 
     // La carpeta del manual en ese idioma ("es", "es_MX"…) o, si no la hay, la del inglés
     static QString directoryFor(const QString& language);
@@ -82,6 +88,8 @@ public:
     std::vector<Hit> search(const QString& query) const;
     // Las órdenes de {{…}} que no están en las que se dieron a load()
     QStringList unresolved() const { return _unresolved; }
+    // El apartado que explica una orden (para F1 en un diálogo o un panel: fase 95)
+    Place placeOf(const QString& command) const { return _places.value(command); }
 
     // "Buscar y reemplazar" → "buscar-y-reemplazar" (sin acentos)
     static QString slug(const QString& heading);
@@ -98,6 +106,7 @@ public:
 private:
     QString _directory;
     std::vector<Chapter> _chapters;
+    QHash<QString, Place> _places;
     QStringList _unresolved;
 };
 

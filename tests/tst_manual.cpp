@@ -8,7 +8,14 @@
 #include "FakePrompter.h"
 #include "core/Paths.h"
 #include "ui/MainWindow.h"
+#include "ui/ContextHelp.h"
+#include "ui/EditorView.h"
 #include "ui/ManualWindow.h"
+
+#include <QApplication>
+#include <QDialog>
+#include <QDockWidget>
+#include <QTimer>
 
 #include <QAction>
 #include <QDir>
@@ -301,6 +308,93 @@ private slots:
         manual->browser()->setSource(manual->browser()->source().resolved(QUrl(QStringLiteral("02-files.md#sessions-and-backups"))));
         QCOMPARE(manual->browser()->source().fragment(), QStringLiteral("sessions-and-backups"));
         QCOMPARE(manual->currentChapter(), QStringLiteral("02-files.md"));
+    }
+
+    // --- Fase 95: F1 abre la sección del diálogo o del panel en el que estás --------------
+
+    // Dónde se cita cada orden: el apartado del primer {{actionX}}, en cada idioma
+    void placesOfCommands()
+    {
+        for (const QString& language : kLanguages) {
+            Manual m;
+            QVERIFY(m.load(sourceDir(language)));
+            const Manual::Place find = m.placeOf(QStringLiteral("actionFind"));
+            QVERIFY2(find.chapter >= 0, qPrintable(language));
+            const Manual::Chapter& chapter = m.chapters()[static_cast<size_t>(find.chapter)];
+            QCOMPARE(chapter.fileName, QStringLiteral("04-search.md"));
+            QVERIFY(std::any_of(chapter.headings.begin(), chapter.headings.end(),
+                                [&](const Manual::Heading& h) { return h.anchor == find.anchor; }));
+            QVERIFY(m.placeOf(QStringLiteral("actionNoExiste")).chapter < 0);
+        }
+    }
+
+    // Cada diálogo y panel con ayuda tiene su sección en los dos idiomas
+    void everyContextIsDocumented()
+    {
+        QVERIFY(context_help::table().size() >= 20);
+        for (const QString& language : kLanguages) {
+            Manual m;
+            QVERIFY(m.load(sourceDir(language)));
+            for (const auto& [context, command] : context_help::table()) {
+                const Manual::Place place = m.placeOf(QLatin1String(command));
+                QVERIFY2(place.chapter >= 0 && !place.anchor.isEmpty(), qPrintable(language + QStringLiteral(": ") + QLatin1String(context)));
+            }
+        }
+    }
+
+    void f1InAPanelOpensItsSection()
+    {
+        auto w = window();
+        w->resize(1000, 700);
+        w->show();
+        QVERIFY(QTest::qWaitForWindowExposed(w.get()));
+        QDockWidget* dock = w->panelDock(QStringLiteral("functionList"));
+        dock->show();
+        dock->widget()->setFocus();
+        w->activateWindow();
+        QTRY_VERIFY(dock->isAncestorOf(QApplication::focusWidget()) || dock->widget() == QApplication::focusWidget());
+        w->findChild<QAction*>(QStringLiteral("actionUserManual"))->trigger();
+        ManualWindow* manual = w->manualWindow();
+        QVERIFY(manual && manual->isVisible());
+        const Manual::Place place = manual->manual().placeOf(QStringLiteral("actionFunctionList"));
+        QCOMPARE(manual->currentChapter(), manual->manual().chapters()[static_cast<size_t>(place.chapter)].fileName);
+        QCOMPARE(manual->browser()->source().fragment(), place.anchor);
+        QCOMPARE(manual->windowModality(), Qt::NonModal);
+        // En el editor: el manual, como siempre
+        manual->close();
+        w->editor()->setFocus();
+        QTRY_COMPARE(QApplication::focusWidget(), static_cast<QWidget*>(w->editor()));
+        w->findChild<QAction*>(QStringLiteral("actionUserManual"))->trigger();
+        QVERIFY(manual->isVisible());
+    }
+
+    // En un diálogo modal (Preferencias): F1 abre su sección, y el manual va encima del diálogo
+    void f1InADialogOpensItsSection()
+    {
+        auto w = window();
+        w->show();
+        QVERIFY(QTest::qWaitForWindowExposed(w.get()));
+        bool checked = false;
+        QTimer::singleShot(0, w.get(), [&] {
+            auto* dialog = qobject_cast<QDialog*>(QApplication::activeModalWidget());
+            QVERIFY(dialog);
+            QWidget* target = dialog->focusWidget() ? dialog->focusWidget() : dialog;
+            QTest::keyClick(target, Qt::Key_F1);
+            ManualWindow* manual = w->manualWindow();
+            QVERIFY(manual && manual->isVisible());
+            const Manual::Place place = manual->manual().placeOf(QStringLiteral("actionPreferences"));
+            QCOMPARE(manual->currentChapter(), manual->manual().chapters()[static_cast<size_t>(place.chapter)].fileName);
+            QCOMPARE(manual->browser()->source().fragment(), place.anchor);
+            QCOMPARE(manual->windowModality(), Qt::ApplicationModal);
+            manual->close();
+            checked = true;
+            dialog->reject();
+        });
+        w->findChild<QAction*>(QStringLiteral("actionPreferences"))->trigger();
+        QVERIFY(checked);
+        // Después, desde la ventana principal, el manual ya no es modal
+        w->findChild<QAction*>(QStringLiteral("actionUserManual"))->trigger();
+        QCOMPARE(w->manualWindow()->windowModality(), Qt::NonModal);
     }
 };
 

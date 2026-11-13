@@ -233,6 +233,8 @@ add_library(edita_ui STATIC
     ui/CompareSession.cpp
     ui/AboutDialog.cpp
     ui/AboutDialog.h
+    ui/ContextHelp.cpp
+    ui/ContextHelp.h
     ui/CommandPalette.cpp
     ui/EolAnnotations.cpp
     ui/FileIcons.cpp

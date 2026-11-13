@@ -126,7 +126,9 @@ at the bottom of the page or in {{actionPreferences}} (General page).
 ## Getting help
 
 - {{actionUserManual}} opens this manual. The arrows go back and forward through the pages you
-  visited; the house goes to the first chapter. {{key:actionCommandPalette}} opens the command
+  visited; the house goes to the first chapter. In a dialog or a panel (Find, Preferences, the
+  function list, the terminal…), {{key:actionUserManual}} opens the section that explains it;
+  if the dialog blocks the other windows, the manual opens on top of it. {{key:actionCommandPalette}} opens the command
   palette, the fastest way to find a command when you don't remember its menu.
 - {{actionAbout}} shows the version of Edita, with the architecture (x86_64 or arm64), how you installed it (AppImage, .deb, .rpm) and the build. It tells you if there is a new version and links to the home page, the manual, reporting a problem, the plugin catalog and the release notes. **Copy Version Info** gets it ready to paste in a bug report. The **Components** tab lists the projects Edita is built on, with their version and license, and **License** shows the text of the GPL.
 - {{actionCheckForUpdates}} asks whether there is a new version. Edita also checks at startup:

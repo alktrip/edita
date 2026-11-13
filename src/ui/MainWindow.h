@@ -576,6 +576,11 @@ public:
     void showWelcomePage();
     // El manual de usuario en ese capítulo y apartado ("03-editing.md", "multiple-selection")
     void showManual(const QString& chapter = {}, const QString& anchor = {});
+    // F1 (fase 95): la sección del manual del diálogo o panel de ese widget (context_help), o el
+    // manual si no tiene una
+    void showContextHelp(QWidget* widget);
+    // La sección del manual que explica una orden (Manual::placeOf)
+    void showManualFor(const QString& command);
     ManualWindow* manualWindow() const { return _manual; }
     // Menú y atajo de cada orden con nombre ("actionFind"), para el manual
     Manual::Commands manualCommands() const;
