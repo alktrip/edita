@@ -40,7 +40,7 @@ const char* const kSource = R"(#include <algorithm>
 #include <string>
 #include <vector>
 
-// Un pedido: sus artículos y el total con descuento
+// @COMMENT@
 struct Item {
     std::string name;
     double price = 0;
@@ -152,9 +152,14 @@ int main(int argc, char** argv)
     i18n::install(language);
 
     const QString project = tmp.filePath(QStringLiteral("order"));
-    write(project + QStringLiteral("/src/order.cpp"), kSource);
+    // Los textos del ejemplo, en el idioma de la captura
+    const bool english = language.startsWith(QLatin1String("en"));
+    QByteArray source(kSource);
+    source.replace("@COMMENT@", english ? "An order: its items and the total with a discount"
+                                        : "Un pedido: sus artículos y el total con descuento");
+    write(project + QStringLiteral("/src/order.cpp"), source);
     write(project + QStringLiteral("/src/order.h"), "#pragma once\n");
-    write(project + QStringLiteral("/tests/test_order.cpp"), "// pruebas\n");
+    write(project + QStringLiteral("/tests/test_order.cpp"), english ? "// tests\n" : "// pruebas\n");
     write(project + QStringLiteral("/CMakeLists.txt"), "cmake_minimum_required(VERSION 3.20)\nproject(order CXX)\n");
     write(project + QStringLiteral("/README.md"), kReadme);
 
@@ -163,6 +168,7 @@ int main(int argc, char** argv)
     prefs.darkModeFollowSystem = false;
     prefs.darkModeEnabled = false;
     prefs.showWelcome = false;
+    prefs.spellCheck = false; // sin subrayados del diccionario del equipo en los comentarios
     w.setPreferences(prefs);
     w.resize(1280, 760);
     w.show();
@@ -220,7 +226,7 @@ int main(int argc, char** argv)
              QTimer::singleShot(400, &app, [&] {
                  for (auto* field : w.findChildren<QLineEdit*>(QStringLiteral("commandPaletteInput"))) {
                      if (field->isVisible())
-                         field->setText(QStringLiteral(">coment"));
+                         field->setText(english ? QStringLiteral(">comment") : QStringLiteral(">coment"));
                  }
              });
          },
@@ -247,7 +253,8 @@ int main(int argc, char** argv)
              EditorView* view = w.editor();
              view->send(SCI_GOTOLINE, 22);
              view->send(SCI_LINEDELETE);
-             view->sends(SCI_REPLACESEL, 0, "            sum += item.price * item.quantity * 1.16; // con IVA\n");
+             view->sends(SCI_REPLACESEL, 0, english ? "            sum += item.price * item.quantity * 1.16; // with VAT\n"
+                                                  : "            sum += item.price * item.quantity * 1.16; // con IVA\n");
              view->send(SCI_GOTOLINE, 10);
              view->sends(SCI_REPLACESEL, 0, "    std::string sku;\n");
              action("actionCompareSaved")->trigger();

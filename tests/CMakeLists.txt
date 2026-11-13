@@ -203,5 +203,9 @@ add_custom_target(edita_readme_images
     COMMAND ${CMAKE_COMMAND} -E env QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 EDITA_LSP=0 EDITA_UPDATE_URL=none
             EDITA_PLUGIN_PATH=${PROJECT_BINARY_DIR}/plugins
             $<TARGET_FILE:readme_screenshots> es ${PROJECT_SOURCE_DIR}/docs/images
+    # Las del README en inglés (README.md); las de arriba son las de README.es.md
+    COMMAND ${CMAKE_COMMAND} -E env QT_QPA_PLATFORM=offscreen QT_SCALE_FACTOR=2 EDITA_LSP=0 EDITA_UPDATE_URL=none
+            EDITA_PLUGIN_PATH=${PROJECT_BINARY_DIR}/plugins
+            $<TARGET_FILE:readme_screenshots> en ${PROJECT_SOURCE_DIR}/docs/images/en
     DEPENDS readme_screenshots
     COMMENT "Capturas del README")
