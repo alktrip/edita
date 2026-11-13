@@ -172,7 +172,7 @@ Settings live in `~/.config/edita/`, with the same files as Notepad++ (`config.x
 | | |
 |---|---|
 | **Current release** | [1.0.0-rc.2](https://github.com/alktrip/edita/releases/latest), a release candidate, so it may still contain bugs |
-| **Next milestone** | 1.0.0: the same version with a new number, if testers find nothing serious |
+| **Next milestone** | 1.0.0: the same version with a new number, if testers find nothing serious. After that, 1.1: see the [roadmap](ROADMAP.md) |
 | **Platforms** | Linux x86_64 and arm64. macOS is paused until 1.0 for Linux is out |
 | **Notepad++ parity** | Almost every Notepad++ command is implemented. What is still missing (right-to-left text and project panels) is listed in [docs/paridad-npp.md](docs/paridad-npp.md) |
 | **Quality** | 71 automated test suites, run in CI on x86_64 and arm64; the packages are installed on Fedora and Debian in CI before every release |
@@ -203,7 +203,7 @@ Edita is not trying to replace everything. Here is where it fits:
 
 ## Contributing
 
-Edita is an open source project, and it grows with the people who use it.
+Edita is an open source project, and it grows with the people who use it. The [contributing guide](CONTRIBUTING.md) explains each way to help.
 
 - **Try it and report bugs.** The [testing guide](PROBAR.md#testing-edita) says what to test. **Help › Report a Problem…** opens a bug report with your version and system already filled in.
 - **Propose features** in [Issues](https://github.com/alktrip/edita/issues/new/choose).
@@ -276,6 +276,7 @@ docs/          design notes, one document per development phase, guides and imag
 - **[Plugin guide and SDK](docs/plugins.md)** and the **[plugin catalog](https://github.com/alktrip/edita-plugins)**
 - **[Packaging](docs/empaquetado.md)**: AppImage, `.deb`, `.rpm`, x86_64 and arm64
 - **[Notepad++ parity](docs/paridad-npp.md)**: what Notepad++ has and Edita does not yet
+- **[Roadmap](ROADMAP.md)** and **[contributing guide](CONTRIBUTING.md)**
 - **[Development history](docs/historial.md)**: every phase, with its analysis of Notepad++
 
 Most of the design documents are in Spanish; the manual, the release notes and this page are also in English.
