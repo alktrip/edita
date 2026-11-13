@@ -45,6 +45,10 @@ Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git e
 | **Tema oscuro**, con el explorador y la lista de funciones | **Paleta de órdenes** (Ctrl+Mayús+A): cualquier orden por su nombre |
 | ![Comparar con la versión guardada](docs/images/edita-compare.png) | ![Vista previa de Markdown](docs/images/edita-markdown.png) |
 | **Comparar** con lo guardado o entre dos archivos | **Vista previa de Markdown** mientras escribes (MarkdownViewer++) |
+| ![Panel Git y marcas de cambios en el margen](docs/images/edita-git.png) | ![Salida de una tarea con un error del compilador](docs/images/edita-tasks.png) |
+| **Git**: cambios en el margen, blame en la línea y el panel para confirmar | **Tareas del proyecto** (Ctrl+Mayús+B): doble clic en un error lleva a la línea |
+| ![Terminal integrada debajo del editor](docs/images/edita-terminal.png) | |
+| **Terminal integrada** (Ctrl+` o Ctrl+Ñ), con pestañas | |
 
 <p align="center">
   <img src="docs/images/edita-plugins.png" alt="Administrador de plugins con el catálogo" width="80%"><br>

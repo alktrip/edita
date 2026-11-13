@@ -126,12 +126,20 @@ flowchart LR
 <td align="center"><b>Markdown preview</b> while you type (MarkdownViewer++)</td>
 </tr>
 <tr>
-<td width="50%"><img src="data/manual/en/images/localhistory.png" alt="Local History panel comparing an earlier version"></td>
-<td width="50%"><img src="data/manual/en/images/regex.png" alt="Regex tester with matches and groups"></td>
+<td width="50%"><img src="docs/images/en/edita-git.png" alt="Git panel with a modified file and change marks in the margin"></td>
+<td width="50%"><img src="docs/images/en/edita-tasks.png" alt="Task Output with a compiler error underlined"></td>
 </tr>
 <tr>
+<td align="center"><b>Git</b>: changes in the margin, inline blame and the commit panel</td>
+<td align="center"><b>Project tasks</b> (Ctrl+Shift+B): compiler errors you can double click</td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/images/en/edita-terminal.png" alt="Integrated terminal below the editor"></td>
+<td width="50%"><img src="data/manual/en/images/localhistory.png" alt="Local History panel comparing an earlier version"></td>
+</tr>
+<tr>
+<td align="center"><b>Integrated terminal</b> (Ctrl+`), with tabs</td>
 <td align="center"><b>Local history</b>: every saved version, ready to compare or restore</td>
-<td align="center"><b>Regex tester</b> with live matches, groups and replace preview</td>
 </tr>
 </table>
 

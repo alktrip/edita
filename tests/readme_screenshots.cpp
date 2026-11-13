@@ -14,6 +14,8 @@
 
 #include "ui/EditorView.h"
 #include "ui/MainWindow.h"
+#include "ui/Terminal.h"
+#include "ui/TerminalPanel.h"
 #include "ui/PluginManager.h"
 #include "ui/Translations.h"
 
@@ -24,10 +26,13 @@
 #include <QFile>
 #include <QLineEdit>
 #include <QPainter>
+#include <QProcess>
+#include <QStatusBar>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <QTreeWidget>
 
+#include <cstring>
 #include <functional>
 #include <vector>
 
@@ -132,7 +137,17 @@ struct Step
 {
     std::function<void()> prepare;
     std::function<void()> capture;
+    int delay = 1500; // lo que se espera entre preparar y capturar
 };
+
+// git en `dir`, con un autor genérico y sin la configuración del usuario
+void git(const QString& dir, const QStringList& args)
+{
+    QProcess p;
+    p.setWorkingDirectory(dir);
+    p.start(QStringLiteral("git"), args);
+    p.waitForFinished(15000);
+}
 
 } // namespace
 
@@ -150,6 +165,19 @@ int main(int argc, char** argv)
     QTemporaryDir tmp;
     qputenv("XDG_CONFIG_HOME", tmp.filePath(QStringLiteral("config")).toUtf8());
     i18n::install(language);
+    // Nada del usuario en las capturas: git sin su configuración y una shell sin la suya
+    qputenv("GIT_CONFIG_GLOBAL", "/dev/null");
+    qputenv("GIT_CONFIG_NOSYSTEM", "1");
+    for (const char* var : {"GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME"})
+        qputenv(var, "Edita");
+    for (const char* var : {"GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL"})
+        qputenv(var, "edita@example.invalid");
+    qputenv("SHELL", "/bin/sh");
+    qputenv("ENV", "");
+    qputenv("PS1", "$ ");
+    qputenv("GIT_PAGER", "cat");
+    if (language.startsWith(QLatin1String("en")))
+        qputenv("LC_ALL", "C.UTF-8"); // los mensajes de la shell, en inglés
 
     const QString project = tmp.filePath(QStringLiteral("order"));
     // Los textos del ejemplo, en el idioma de la captura
@@ -162,6 +190,11 @@ int main(int argc, char** argv)
     write(project + QStringLiteral("/tests/test_order.cpp"), english ? "// tests\n" : "// pruebas\n");
     write(project + QStringLiteral("/CMakeLists.txt"), "cmake_minimum_required(VERSION 3.20)\nproject(order CXX)\n");
     write(project + QStringLiteral("/README.md"), kReadme);
+    write(project + QStringLiteral("/Makefile"), "build:\n\tg++ -std=c++20 -Wall -c src/order.cpp -o /dev/null\n");
+    git(project, {QStringLiteral("init"), QStringLiteral("-q"), QStringLiteral("-b"), QStringLiteral("main")});
+    git(project, {QStringLiteral("add"), QStringLiteral(".")});
+    git(project, {QStringLiteral("commit"), QStringLiteral("-q"), QStringLiteral("-m"),
+                  english ? QStringLiteral("First version of the order") : QStringLiteral("Primera versión del pedido")});
 
     MainWindow w;
     auto prefs = w.preferences();
@@ -201,6 +234,20 @@ int main(int argc, char** argv)
                     w.plugins()->runCommand(c.cmdId);
             }
         }
+    };
+
+    // order.cpp como en el commit, guardado
+    auto restoreSource = [&] {
+        w.openFile(project + QStringLiteral("/src/order.cpp"));
+        w.editor()->setText(std::string(source.constData(), static_cast<std::size_t>(source.size())));
+        w.saveBuffer(w.currentBuffer());
+    };
+    auto replaceInSource = [&](const char* from, const char* to) {
+        std::string text = w.editor()->text();
+        if (const auto at = text.find(from); at != std::string::npos)
+            text.replace(at, std::strlen(from), to);
+        w.editor()->setText(text);
+        w.saveBuffer(w.currentBuffer());
     };
 
     const std::vector<Step> steps{
@@ -265,7 +312,55 @@ int main(int argc, char** argv)
              while (w.editor()->send(SCI_CANUNDO))
                  w.editor()->send(SCI_UNDO);
          }},
-        // 6. El administrador de plugins con el catálogo (modal: la captura va antes)
+        // 6. Git: cambios en el margen y el panel Ver › Git
+        {[&] {
+             hideDocks();
+             w.statusBar()->clearMessage();
+             w.openFile(project + QStringLiteral("/src/order.cpp"));
+             replaceInSource("    int quantity = 1;\n", "    int quantity = 1;\n    std::string sku;\n");
+             replaceInSource("return sum * (1 - discount);", "return std::max(0.0, sum * (1 - discount));");
+             action("actionGitCommit")->trigger();
+             w.editor()->send(SCI_GOTOLINE, 23);
+         },
+         [&] {
+             save(w.grab().toImage(), "edita-git.png");
+             hideDocks();
+             restoreSource();
+         },
+         2500},
+        // 7. Una tarea del proyecto (make build) con un error del compilador
+        {[&] {
+             hideDocks();
+             replaceInSource("sum += item.price * item.quantity;", "sum += item.price * item.qty;");
+             w.runTask({QStringLiteral("make build"), QStringLiteral("make build"), project, QStringLiteral("Makefile")});
+         },
+         [&] {
+             save(w.grab().toImage(), "edita-tasks.png");
+             hideDocks();
+             restoreSource();
+         },
+         6000},
+        // 8. La terminal integrada
+        {[&] {
+             hideDocks();
+             w.openTerminal(project);
+             w.statusBar()->clearMessage();
+             // Una orden cada vez, cuando la anterior ya terminó
+             const QStringList commands{QStringLiteral("git log --oneline"), QStringLiteral("ls src tests"),
+                                        QStringLiteral("cat Makefile")};
+             for (int i = 0; i < commands.size(); ++i) {
+                 QTimer::singleShot(1500 + 600 * i, &app, [&w, command = commands[i]] {
+                     if (auto* panel = w.findChild<TerminalPanel*>(); panel && panel->currentTerminal())
+                         panel->currentTerminal()->sendText(command + QLatin1Char('\n'));
+                 });
+             }
+         },
+         [&] {
+             save(w.grab().toImage(), "edita-terminal.png");
+             hideDocks();
+         },
+         4500},
+        // 9. El administrador de plugins con el catálogo (modal: la captura va antes)
         {[&] {
              hideDocks();
              QTimer::singleShot(3500, &app, [&] {
@@ -293,7 +388,7 @@ int main(int argc, char** argv)
             return;
         }
         steps[i].prepare();
-        QTimer::singleShot(1500, &app, [&, i] {
+        QTimer::singleShot(steps[i].delay, &app, [&, i] {
             steps[i].capture();
             QTimer::singleShot(300, &app, [&, i] { run(i + 1); });
         });
