@@ -27,5 +27,19 @@ Open an [issue](https://github.com/alktrip/edita/issues/new/choose) that describ
 4. When a feature exists in Notepad++, study how Notepad++ does it first (its source is the reference) and keep its file formats and command IDs.
 5. New user-visible text goes through `tr()`, with its Spanish translation in `translations/edita_es.ts`. New commands are documented in the [user manual](data/manual/en), in English and Spanish: `tst_manual` checks that every menu command is in it.
 6. Keep pull requests focused on one change, and explain the why in the description.
+7. Commit messages follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/): `<type>(<optional scope>): <description>`, then an optional body and footers.
+   - **Types:** `feat` (new feature), `fix` (bug fix), `docs`, `test`, `refactor`, `perf`, `build` (CMake, packaging), `ci`, `chore`, `style`, `revert`. Lowercase, in English.
+   - **Scope:** the area touched, in lowercase: `ftp`, `hex`, `git`, `plugins`, `sdk`, `catalog`, `manual`, `i18n`, `release`…
+   - **Description:** short, imperative, without a final period. It may be in English or Spanish; the project's own commits use Spanish.
+   - **Breaking changes** (for example in the [plugin API](docs/plugins.md#qué-no-cambia-en-edita-1x)): `!` before the colon (`feat(sdk)!: …`) and a `BREAKING CHANGE:` footer.
+   - **Footers** go after a blank line, as git trailers: `Refs: #123`, `Co-Authored-By: …`.
+
+   ```
+   feat(ftp): panel de FTP y SFTP con subida al guardar
+
+   Lo que hace NppFTP en Notepad++, escrito desde cero (fase 90).
+
+   Refs: #42
+   ```
 
 By contributing, you agree that your contribution is licensed under the [GPL v3 or later](COPYING), like the rest of Edita.
