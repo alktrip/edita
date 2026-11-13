@@ -362,6 +362,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 86 — .rpm y arm64 | N++ solo publica para Windows (instalador NSIS y zip); `packaging/rpm/build-rpm.sh`, arquitectura con `uname -m`, CI con runners x86_64 y arm64 e instalación en Fedora y Debian | ✅ [fase86.md](fase86.md) |
 | 87 — Más plugins de N++ | Ranking de descargas de la lista oficial; winver, `GetIconInfo`, uxtheme, `itoa`/`ltoa`, `CXX_STANDARD` en el SDK; recetas de JSON Viewer, Npp Converter y NppExport | ✅ [fase87.md](fase87.md) |
 | 88 — Detector de secretos | Ningún plugin de N++ lo hace; `plugins/SecretScanner` (24 reglas, entropía, marcadores de permiso), `edita_plugin_before_commit` en la API; `tst_secretscanner` | ✅ [fase88.md](fase88.md) |
+| 89 — Editor hexadecimal | HEX-Editor 0.9.14 (vista de lista dibujada por el plugin: no se porta); `plugins/EditaHex` (`HexBuffer`, `HexView`); `tst_hexeditor` | ✅ [fase89.md](fase89.md) |
 
 ---
 

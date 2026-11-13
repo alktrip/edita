@@ -87,7 +87,23 @@ copia a la carpeta de plugins y se carga al reiniciar Edita. Los `.dll` de Windo
 |---|---|
 | **MarkdownViewer++** | Muestra una vista previa del documento Markdown en un panel (Ctrl+Mayús+M), con desplazamiento sincronizado, y lo exporta a HTML o PDF, lo imprime o lo copia como HTML. |
 | **Python Script** | Ejecuta scripts de Python que controlan el editor, con la API del plugin PythonScript de Notepad++ (`notepad`, `editor`, `console`), así que muchos de sus scripts funcionan sin cambios. Tiene una consola interactiva. (Aún no se incluye en la versión para macOS.) |
+| **Editor hexadecimal** | Muestra y edita los bytes de un archivo, también de un binario. Ver abajo. |
 | **Detector de secretos** | Subraya en rojo las claves de API, tokens, claves privadas y contraseñas escritas en tus archivos, y avisa antes de un commit desde el panel Git si lo preparado contiene alguno. Ver abajo. |
+
+### Editor hexadecimal
+
+Es un plugin propio de Edita, escrito desde cero. Hace lo mismo que el plugin HEX-Editor de Notepad++, pero sobre los bytes del archivo en el disco y no sobre el texto del editor, que Edita guarda en UTF-8. Por eso también abre archivos binarios y muestra los bytes reales de un archivo en otra codificación.
+
+**Plugins › Editor hexadecimal** abre su panel con el archivo actual (Ctrl+Alt+Mayús+H, como en Notepad++). **Abrir un archivo en el editor hexadecimal…** abre cualquier otro, aunque no esté abierto en Edita.
+
+- Tres columnas: la posición, los bytes en hexadecimal y los mismos como ASCII (los que no se pueden mostrar, como `·`). **Tab** cambia entre la de bytes y la de ASCII.
+- En la columna de bytes se escriben dígitos hexadecimales y en la de ASCII, caracteres. **Insert** cambia entre sobrescribir (**SOB**) e insertar (**INS**). Retroceso y Supr borran. Ctrl+Z y Ctrl+Y deshacen y rehacen.
+- Mayús con las flechas o el ratón seleccionan. Ctrl+C copia: en la columna de bytes, como `4F 6B`, y en la de ASCII, como texto. Ctrl+V pega bytes escritos en hexadecimal, o texto.
+- **Ir a la posición** acepta `0x1F`, `1Fh` o `31`. **Buscar** busca bytes en hexadecimal o texto, hacia delante o hacia atrás.
+- La línea de abajo muestra el valor que empieza en el cursor como entero de 8, 16, 32 y 64 bits (con dos números, little endian y big endian), como flotante y como carácter UTF-8.
+- **Guardar** escribe el archivo. Si está abierto en Edita, Edita pregunta si volver a cargarlo, como con cualquier cambio hecho fuera.
+
+Abre archivos de hasta 512 MB.
 
 ### Detector de secretos
 

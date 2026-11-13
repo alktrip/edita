@@ -88,7 +88,23 @@ folder and loaded when Edita restarts. Windows `.dll` files do not work.
 |---|---|
 | **MarkdownViewer++** | Shows a preview of the Markdown document in a panel (Ctrl+Shift+M), with synchronized scrolling, and exports it to HTML or PDF, prints it or copies it as HTML. |
 | **Python Script** | Runs Python scripts that control the editor, with the API of the PythonScript plugin of Notepad++ (`notepad`, `editor`, `console`), so many of its scripts work unchanged. It has an interactive console. (Not included in the macOS version yet.) |
+| **Hex Editor** | Shows and edits the bytes of a file, binary files included. See below. |
 | **Secret Scanner** | Underlines in red the API keys, tokens, private keys and passwords written in your files, and warns before a commit from the Git panel if the staged changes contain one. See below. |
+
+### Hex Editor
+
+It is Edita's own plugin, written from scratch. It does what the HEX-Editor plugin of Notepad++ does, but on the bytes of the file on disk and not on the text of the editor, which Edita keeps in UTF-8. That is why it also opens binary files and shows the real bytes of a file in another encoding.
+
+**Plugins › Hex Editor** opens its panel with the current file (Ctrl+Alt+Shift+H, as in Notepad++). **Open File in Hex Editor…** opens any other file, even one that is not open in Edita.
+
+- Three columns: the offset, the bytes in hexadecimal and the same bytes as ASCII (those that cannot be shown, as `·`). **Tab** switches between the bytes and the ASCII column.
+- In the bytes column you type hexadecimal digits, and in the ASCII column, characters. **Insert** switches between overwrite (**OVR**) and insert (**INS**). Backspace and Delete delete. Ctrl+Z and Ctrl+Y undo and redo.
+- Shift with the arrows, or the mouse, selects. Ctrl+C copies: in the bytes column as `4F 6B`, in the ASCII column as text. Ctrl+V pastes bytes written in hexadecimal, or text.
+- **Go to offset** accepts `0x1F`, `1Fh` or `31`. **Find** searches for bytes in hexadecimal or for text, forwards or backwards.
+- The bottom line shows the value that starts at the cursor as an 8, 16, 32 and 64-bit integer (with two numbers, little endian and big endian), as a float and as a UTF-8 character.
+- **Save** writes the file. If it is open in Edita, Edita asks whether to reload it, as with any change made outside.
+
+It opens files of up to 512 MB.
 
 ### Secret Scanner
 
