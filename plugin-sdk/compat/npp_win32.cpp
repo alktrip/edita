@@ -2186,6 +2186,8 @@ char* _strrev(char* s)
 }
 
 char* _itoa(int value, char* buffer, int radix) { return toText(value, buffer, radix); }
+char* itoa(int value, char* buffer, int radix) { return toText(value, buffer, radix); }
+char* ltoa(long value, char* buffer, int radix) { return _ltoa(value, buffer, radix); }
 wchar_t* _itow(int value, wchar_t* buffer, int radix) { return toText(value, buffer, radix); }
 char* _ltoa(long value, char* buffer, int radix) { return toText(value, buffer, radix); }
 wchar_t* _ltow(long value, wchar_t* buffer, int radix) { return toText(value, buffer, radix); }

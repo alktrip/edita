@@ -360,6 +360,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 84 — Tareas del proyecto | `RunDlg` (F5, sin salida) y el plugin NppExec (consola y filtros a mano); `core/Tasks`, `ui/TaskRunner`, `ui/TaskOutputPanel`, diagnósticos de tareas en Problemas; `tst_tasks` | ✅ [fase84.md](fase84.md) |
 | 85 — Git desde el margen | N++ no tiene Git (GitSCM abre TortoiseGit); `core/GitHunks`, `revertGitHunk`, `stageGitHunk` (índice + `hash-object` + `update-index`), `GitCommitPanel`; `tst_githunks` | ✅ [fase85.md](fase85.md) |
 | 86 — .rpm y arm64 | N++ solo publica para Windows (instalador NSIS y zip); `packaging/rpm/build-rpm.sh`, arquitectura con `uname -m`, CI con runners x86_64 y arm64 e instalación en Fedora y Debian | ✅ [fase86.md](fase86.md) |
+| 87 — Más plugins de N++ | Ranking de descargas de la lista oficial; winver, `GetIconInfo`, uxtheme, `itoa`/`ltoa`, `CXX_STANDARD` en el SDK; recetas de JSON Viewer, Npp Converter y NppExport | ✅ [fase87.md](fase87.md) |
 
 ---
 

@@ -163,6 +163,8 @@ edita_npp_plugin(MiPlugin UNICODE
 
 **Como MSVC.** El código de los plugins se compila con `-fpermissive` (MSVC acepta conversiones que GCC rechaza) y `-fno-operator-names` (`and`, `or` y `not` son nombres válidos en MSVC). El C, con lo que MSVC solo avisa: punteros de tipos distintos, enteros como punteros y funciones sin declarar. Los avisos del código original no se muestran (`-w`). Las funciones de cadenas del CRT de MSVC (`_stricmp`, `_wcsicmp`, `_strdup`…) existen sin incluir nada, como con MSVC (`compat/msvc_crt.h`, que se incluye antes de cada fuente).
 
+**Estándar de C++ (`CXX_STANDARD`).** Los plugins se compilan como C++17. Uno escrito en C++20 (`starts_with`, `<ranges>`…) lo pide con `edita_npp_plugin(… CXX_STANDARD 20)`. `std::format` no sirve todavía: el catálogo compila con GCC 12, que no lo tiene, así que la receta lo cambia con un parche (ver [`recipes/NPPJSONViewer`](https://github.com/alktrip/edita-plugins/tree/main/recipes/NPPJSONViewer)).
+
 **Exportaciones (`EXPORTS`).** Si el plugin exporta más funciones que las de la API de plugins con un `.def` de Windows (en vez de `__declspec(dllexport)`), `edita_npp_plugin(… EXPORTS ../exports.def)` hace lo mismo en Linux: el `.so` exporta los nombres del `.def` y la API de Edita, y nada más (un *version script*).
 
 Antes de compilar, el administrador corrige los `#include` que solo funcionan en Windows: `<Windows.h>`, `"..\PluginInterface.h"`, `"Resource.H"`. Un `#include` se reescribe solo si en Linux no encuentra su archivo. Se desactiva con `"fix-includes": false` en la receta.

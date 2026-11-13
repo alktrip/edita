@@ -387,6 +387,10 @@
 #define TVC_BYKEYBOARD 0x0002
 #define TVHT_NOWHERE 0x0001
 #define TVHT_ONITEMLABEL 0x0004
+#define TVHT_ONITEMICON 0x0002
+#define TVHT_ONITEMINDENT 0x0008
+#define TVHT_ONITEMBUTTON 0x0010
+#define TVHT_ONITEMRIGHT 0x0020
 #define TVHT_ONITEM 0x0046
 
 /* --- Barras de progreso y deslizadores ---------------------------------------------- */

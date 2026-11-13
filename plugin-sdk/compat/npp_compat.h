@@ -438,6 +438,7 @@ typedef PWIN32_FIND_DATAA PWIN32_FIND_DATA;
 #define SWP_FRAMECHANGED 0x0020
 #define SWP_SHOWWINDOW 0x0040
 #define SWP_HIDEWINDOW 0x0080
+#define SWP_NOCOPYBITS 0x0100
 #define HWND_TOP ((HWND)0)
 #define SW_HIDE 0
 #define SW_SHOWNORMAL 1
@@ -521,6 +522,7 @@ typedef PWIN32_FIND_DATAA PWIN32_FIND_DATA;
 #define ERROR_ALREADY_EXISTS 183L
 #define ERROR_MORE_DATA 234L
 #define ERROR_NO_UNICODE_TRANSLATION 1113L
+#define ERROR_RESOURCE_TYPE_NOT_FOUND 1813L
 #define S_OK ((HRESULT)0L)
 #define S_FALSE ((HRESULT)1L)
 #define E_FAIL ((HRESULT)0x80004005L)
@@ -859,6 +861,10 @@ errno_t _wcsupr_s(wchar_t* s, size_t size);
 wchar_t* _wcsrev(wchar_t* s);
 char* _strrev(char* s);
 char* _itoa(int value, char* buffer, int radix);
+/* Los nombres antiguos, que MSVC también acepta (funciones y no macros: un plugin puede
+ * tener una variable o un método con ese nombre) */
+char* itoa(int value, char* buffer, int radix);
+char* ltoa(long value, char* buffer, int radix);
 wchar_t* _itow(int value, wchar_t* buffer, int radix);
 char* _ltoa(long value, char* buffer, int radix);
 wchar_t* _ltow(long value, wchar_t* buffer, int radix);

@@ -5648,6 +5648,38 @@ HANDLE LoadImageW(HINSTANCE, LPCWSTR, UINT, int, int, UINT) { return nullptr; }
 HBITMAP LoadBitmapA(HINSTANCE, LPCSTR) { return nullptr; }
 HBITMAP LoadBitmapW(HINSTANCE, LPCWSTR) { return nullptr; }
 BOOL DestroyIcon(HICON) { return TRUE; }
+BOOL GetIconInfo(HICON, PICONINFO info)
+{
+    if (info)
+        *info = ICONINFO{};
+    return FALSE;
+}
+HRESULT EnableThemeDialogTexture(HWND, DWORD) { return S_OK; }
+
+// Sin recurso VERSIONINFO en los .so (como un archivo sin él en Windows)
+DWORD GetFileVersionInfoSizeA(LPCSTR, LPDWORD handle)
+{
+    if (handle)
+        *handle = 0;
+    SetLastError(ERROR_RESOURCE_TYPE_NOT_FOUND);
+    return 0;
+}
+DWORD GetFileVersionInfoSizeW(LPCWSTR, LPDWORD handle) { return GetFileVersionInfoSizeA(nullptr, handle); }
+BOOL GetFileVersionInfoA(LPCSTR, DWORD, DWORD, LPVOID)
+{
+    SetLastError(ERROR_RESOURCE_TYPE_NOT_FOUND);
+    return FALSE;
+}
+BOOL GetFileVersionInfoW(LPCWSTR, DWORD, DWORD, LPVOID) { return GetFileVersionInfoA(nullptr, 0, 0, nullptr); }
+BOOL VerQueryValueA(LPCVOID, LPCSTR, LPVOID* buffer, PUINT length)
+{
+    if (buffer)
+        *buffer = nullptr;
+    if (length)
+        *length = 0;
+    return FALSE;
+}
+BOOL VerQueryValueW(LPCVOID, LPCWSTR, LPVOID* buffer, PUINT length) { return VerQueryValueA(nullptr, nullptr, buffer, length); }
 BOOL DestroyCursor(HCURSOR) { return TRUE; }
 
 // --- Recursos ----------------------------------------------------------------------------------------

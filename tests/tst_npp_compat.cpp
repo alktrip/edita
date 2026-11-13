@@ -2183,6 +2183,35 @@ private slots:
             CoTaskMemFree(pidl);
     }
 
+    // Lo que piden JSON Viewer y Converter (catálogo, noviembre de 2026): sin recurso de versión
+    // en los .so, iconos sin mapas de bits, temas que no hacen falta y los nombres viejos del CRT
+    void versionInfoIconsAndOldCrtNames()
+    {
+        DWORD handle = 7;
+        QCOMPARE(GetFileVersionInfoSize(L"/usr/lib/libc.so.6", &handle), DWORD{0});
+        QCOMPARE(handle, DWORD{0});
+        QCOMPARE(GetLastError(), DWORD{ERROR_RESOURCE_TYPE_NOT_FOUND});
+        unsigned char block[16]{};
+        QVERIFY(!GetFileVersionInfo(L"/usr/lib/libc.so.6", 0, sizeof block, block));
+        LPVOID info = block;
+        UINT length = 5;
+        QVERIFY(!VerQueryValue(block, L"\\", &info, &length));
+        QVERIFY(!info);
+        QCOMPARE(length, UINT{0});
+        ICONINFO icon;
+        icon.hbmColor = reinterpret_cast<HBITMAP>(1);
+        QVERIFY(!GetIconInfo(nullptr, &icon));
+        QVERIFY(!icon.hbmColor);
+        QCOMPARE(EnableThemeDialogTexture(nullptr, ETDT_ENABLETAB), S_OK);
+        char text[16];
+        // Como en MSVC: el signo solo en base 10; en otra base, el complemento a dos
+        QCOMPARE(QByteArray(itoa(-255, text, 10)), QByteArray("-255"));
+        QCOMPARE(QByteArray(itoa(-255, text, 16)), QByteArray("ffffff01"));
+        QCOMPARE(QByteArray(ltoa(1234567L, text, 10)), QByteArray("1234567"));
+        QCOMPARE(SWP_NOCOPYBITS, 0x0100);
+        QCOMPARE(TVHT_ONITEMBUTTON, 0x0010);
+    }
+
     void processes()
     {
         // Una orden con su salida por una tubería (STARTF_USESTDHANDLES)

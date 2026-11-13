@@ -135,7 +135,11 @@ function(_edita_plugin_resources name)
 endfunction()
 
 function(edita_npp_plugin name)
-    cmake_parse_arguments(ARG "UNICODE" "EXPORTS" "SOURCES;RESOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
+    cmake_parse_arguments(ARG "UNICODE" "EXPORTS;CXX_STANDARD" "SOURCES;RESOURCES;INCLUDES;LIBRARIES;DEFINITIONS" ${ARGN})
+    # C++17 por omisión; los plugins de N++ escritos en C++20 lo piden con CXX_STANDARD 20
+    if(NOT ARG_CXX_STANDARD)
+        set(ARG_CXX_STANDARD 17)
+    endif()
     add_library(${name} MODULE ${ARG_SOURCES}
         "${EDITA_PLUGIN_SDK}/compat/npp_compat.cpp" "${EDITA_PLUGIN_SDK}/compat/npp_win32.cpp"
         "${EDITA_PLUGIN_SDK}/compat/npp_window.cpp")
@@ -145,7 +149,7 @@ function(edita_npp_plugin name)
     endif()
     set_target_properties(${name} PROPERTIES
         PREFIX ""
-        CXX_STANDARD 17
+        CXX_STANDARD ${ARG_CXX_STANDARD}
         CXX_STANDARD_REQUIRED ON
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden)

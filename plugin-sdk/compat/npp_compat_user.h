@@ -1091,6 +1091,28 @@ HANDLE LoadImageW(HINSTANCE instance, LPCWSTR name, UINT type, int cx, int cy, U
 HBITMAP LoadBitmapA(HINSTANCE instance, LPCSTR name);
 HBITMAP LoadBitmapW(HINSTANCE instance, LPCWSTR name);
 BOOL DestroyIcon(HICON icon);
+/* Los iconos de la capa no tienen mapas de bits de Windows: GetIconInfo los deja a NULL */
+typedef struct _ICONINFO { BOOL fIcon; DWORD xHotspot; DWORD yHotspot; HBITMAP hbmMask; HBITMAP hbmColor; } ICONINFO, *PICONINFO;
+BOOL GetIconInfo(HICON icon, PICONINFO info);
+/* uxtheme: los diálogos ya tienen el aspecto de Qt */
+#define ETDT_DISABLE 0x00000001
+#define ETDT_ENABLE 0x00000002
+#define ETDT_USETABTEXTURE 0x00000004
+#define ETDT_ENABLETAB (ETDT_ENABLE | ETDT_USETABTEXTURE)
+HRESULT EnableThemeDialogTexture(HWND hwnd, DWORD flags);
+/* winver: la información de versión de un archivo. Los .so no tienen recurso VERSIONINFO, así
+ * que no hay (como un .exe sin ese recurso en Windows): tamaño 0 y FALSE */
+typedef struct tagVS_FIXEDFILEINFO {
+    DWORD dwSignature; DWORD dwStrucVersion; DWORD dwFileVersionMS; DWORD dwFileVersionLS; DWORD dwProductVersionMS;
+    DWORD dwProductVersionLS; DWORD dwFileFlagsMask; DWORD dwFileFlags; DWORD dwFileOS; DWORD dwFileType;
+    DWORD dwFileSubtype; DWORD dwFileDateMS; DWORD dwFileDateLS;
+} VS_FIXEDFILEINFO;
+DWORD GetFileVersionInfoSizeA(LPCSTR file, LPDWORD handle);
+DWORD GetFileVersionInfoSizeW(LPCWSTR file, LPDWORD handle);
+BOOL GetFileVersionInfoA(LPCSTR file, DWORD handle, DWORD size, LPVOID data);
+BOOL GetFileVersionInfoW(LPCWSTR file, DWORD handle, DWORD size, LPVOID data);
+BOOL VerQueryValueA(LPCVOID block, LPCSTR subBlock, LPVOID* buffer, PUINT length);
+BOOL VerQueryValueW(LPCVOID block, LPCWSTR subBlock, LPVOID* buffer, PUINT length);
 BOOL DestroyCursor(HCURSOR cursor);
 
 /* Recursos del .rc: los que generó edita_rc al compilar el plugin (RESOURCES en
@@ -1242,6 +1264,9 @@ EDITA_COMPAT_END
 #define GetMonitorInfo EDITA_COMPAT_AW(GetMonitorInfo)
 #define LoadCursor EDITA_COMPAT_AW(LoadCursor)
 #define LoadIcon EDITA_COMPAT_AW(LoadIcon)
+#define GetFileVersionInfoSize EDITA_COMPAT_AW(GetFileVersionInfoSize)
+#define GetFileVersionInfo EDITA_COMPAT_AW(GetFileVersionInfo)
+#define VerQueryValue EDITA_COMPAT_AW(VerQueryValue)
 #define LoadImage EDITA_COMPAT_AW(LoadImage)
 #define LoadBitmap EDITA_COMPAT_AW(LoadBitmap)
 #define FindResource EDITA_COMPAT_AW(FindResource)
