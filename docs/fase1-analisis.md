@@ -372,6 +372,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 96 — Panel TODO | N++ no lo trae (plugins aparte); `core/TodoScan`, `ui/TodoPanel` con alcance documento o carpetas (en otro hilo, con el texto sin guardar); `tst_todo` | ✅ [fase96.md](fase96.md) |
 | 97 — Filtro de carpetas | Folder as Workspace de N++ no tiene filtro; campo Filtrar (palabras en la ruta o comodines), recorrido en otro hilo, árbol filtrado con los mismos elementos y el de antes al vaciar | ✅ [fase97.md](fase97.md) |
 | 98 — Historial de Git | N++ sin Git integrado; pestaña Historial: `git log` (repositorio o `--follow` del archivo), archivos por commit con renombrados, diff de solo lectura; `tst_githistory` | ✅ [fase98.md](fase98.md) |
+| 99 — Herramientas de CSV | N++ sin nada para CSV; `core/CsvTable` (separador, campos RFC 4180, alinear, compactar, ordenar con encabezado), `ui/CsvColumns` (un color por columna, solo lo visible), Editar › CSV; `tst_csv` | ✅ [fase99.md](fase99.md) |
 
 ---
 

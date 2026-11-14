@@ -106,6 +106,7 @@ class GitChanges;
 class NotificationBar;
 class QuickPicker;
 class RainbowBrackets;
+class CsvColumns;
 class Breadcrumbs;
 class StickyScroll;
 class FindBar;
@@ -850,6 +851,10 @@ private:
     QPointer<ScrollBarMarks> _scrollMarks[2];
     QPointer<ColorPreview> _colorPreview[2];
     QPointer<RainbowBrackets> _rainbow[2];
+    // CSV (fase 99): los colores por columna de cada vista y las órdenes de Editar › CSV
+    QPointer<CsvColumns> _csv[2];
+    void updateCsvColumns();
+    void transformCsv(const std::function<QString(const QString&, QChar, int)>& transform);
     QPointer<Breadcrumbs> _breadcrumbs[2];
     QPointer<StickyScroll> _sticky[2];
     QPointer<FindBar> _findBar[2];

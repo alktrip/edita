@@ -20,10 +20,12 @@
 #include "ui/AboutDialog.h"
 #include "ui/ContextHelp.h"
 #include "ui/TodoPanel.h"
+#include "ui/CsvColumns.h"
 
 #include "AppInfo.h"
 #include "core/AboutInfo.h"
 #include "core/TodoScan.h"
+#include "core/CsvTable.h"
 #include "core/Backup.h"
 #include "core/Codec.h"
 #include "core/CrashReport.h"
@@ -676,6 +678,7 @@ void MainWindow::connectPane(EditorPane* pane)
     _scrollMarks[index] = new ScrollBarMarks(pane->editor(), _git[index]);
     _colorPreview[index] = new ColorPreview(pane->editor());
     _rainbow[index] = new RainbowBrackets(pane->editor());
+    _csv[index] = new CsvColumns(pane->editor());
     // Ruta de navegación entre las pestañas y el editor, y encabezado fijo en el editor
     _breadcrumbs[index] = new Breadcrumbs(pane);
     if (auto* paneLayout = qobject_cast<QVBoxLayout*>(pane->layout()))
@@ -1395,6 +1398,26 @@ void MainWindow::createMenus()
               [this] { convertTabs(*editor(), TabConversion::SpacesToTabsAll); });
     addAction(blanks, tr("S&pace to TAB (Leading)"), "actionSpaceToTabLeading", QKeySequence(),
               [this] { convertTabs(*editor(), TabConversion::SpacesToTabsLeading); });
+    // CSV (fase 99; N++ no tiene nada para CSV): colores por columna en los .csv y .tsv, alinear,
+    // compactar y ordenar por la columna del cursor
+    QMenu* csvMenu = edit->addMenu(tr("CS&V"));
+    QAction* csvColors = addAction(csvMenu, tr("&Color Columns of .csv and .tsv Files"), "actionCsvColors", QKeySequence(), [this](bool on) {
+        _syntax.config().setGuiConfig(QStringLiteral("EditaCsv"), QStringLiteral("colors"), on ? QStringLiteral("yes") : QStringLiteral("no"));
+        _syntax.config().save();
+        updateCsvColumns();
+    });
+    csvColors->setCheckable(true);
+    csvColors->setChecked(_syntax.config().guiConfig(QStringLiteral("EditaCsv"), QStringLiteral("colors")) != QLatin1String("no"));
+    csvMenu->addSeparator();
+    addAction(csvMenu, tr("&Align Columns"), "actionCsvAlign", QKeySequence(),
+              [this] { transformCsv([](const QString& text, QChar d, int) { return csv::align(text, d); }); });
+    addAction(csvMenu, tr("&Shrink Columns"), "actionCsvShrink", QKeySequence(),
+              [this] { transformCsv([](const QString& text, QChar d, int) { return csv::shrink(text, d); }); });
+    csvMenu->addSeparator();
+    addAction(csvMenu, tr("Sort by This Column (Asc&ending)"), "actionCsvSortAscending", QKeySequence(),
+              [this] { transformCsv([](const QString& text, QChar d, int column) { return csv::sortByColumn(text, d, column, false); }); });
+    addAction(csvMenu, tr("Sort by This Column (&Descending)"), "actionCsvSortDescending", QKeySequence(),
+              [this] { transformCsv([](const QString& text, QChar d, int column) { return csv::sortByColumn(text, d, column, true); }); });
     // Autocompletado (los atajos de N++)
     QMenu* complete = edit->addMenu(tr("&Auto-Completion"));
     addAction(complete, tr("&Function Completion"), "actionCompleteFunction", QKeySequence(Qt::CTRL | Qt::Key_Space),
@@ -8387,6 +8410,64 @@ void MainWindow::showManualFor(const QString& command)
     showManual(_manual->manual().chapters()[static_cast<size_t>(place.chapter)].fileName, place.anchor);
 }
 
+// --- CSV (fase 99) --------------------------------------------------------------------------
+
+void MainWindow::updateCsvColumns()
+{
+    const bool colors = _syntax.config().guiConfig(QStringLiteral("EditaCsv"), QStringLiteral("colors")) != QLatin1String("no");
+    for (int i = 0; i < 2; ++i) {
+        EditorPane* pane = i == 0 ? _mainPane : _subPane;
+        if (!_csv[i] || !pane)
+            continue;
+        const Buffer* buf = _documents.buffer(pane->currentBuffer());
+        const QString suffix = buf && !buf->isUntitled() ? QFileInfo(buf->filePath()).suffix().toLower() : QString();
+        const bool isCsv = suffix == QLatin1String("csv") || suffix == QLatin1String("tsv") || suffix == QLatin1String("psv");
+        if (!colors || !isCsv) {
+            _csv[i]->setActive(false, QLatin1Char(','));
+            continue;
+        }
+        // El separador: el de la extensión o, en un .csv, el que dé columnas (también ; o |)
+        QChar delimiter = suffix == QLatin1String("tsv") ? QLatin1Char('\t') : suffix == QLatin1String("psv") ? QLatin1Char('|') : QChar();
+        if (delimiter.isNull()) {
+            EditorView* v = pane->editor();
+            const sptr_t length = std::min<sptr_t>(v->sci(SCI_GETLENGTH), 64 * 1024);
+            const auto* raw = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, 0, length));
+            delimiter = csv::detectDelimiter(QString::fromUtf8(raw, static_cast<qsizetype>(length)));
+        }
+        _csv[i]->setActive(true, delimiter);
+    }
+}
+
+void MainWindow::transformCsv(const std::function<QString(const QString&, QChar, int)>& transform)
+{
+    EditorView* v = editor();
+    if (v->sci(SCI_GETREADONLY))
+        return;
+    const QString text = QString::fromStdString(v->text());
+    const CsvColumns* columns = _csv[_activePane == _subPane ? 1 : 0];
+    const QChar delimiter = columns && columns->isActive() ? columns->delimiter() : csv::detectDelimiter(text);
+    // La columna del cursor (para ordenar), en caracteres de su línea
+    const sptr_t caret = v->sci(SCI_GETCURRENTPOS);
+    const sptr_t line = v->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(caret));
+    const sptr_t lineStart = v->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+    const sptr_t lineEnd = v->sci(SCI_GETLINEENDPOSITION, static_cast<uptr_t>(line));
+    const auto* raw = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, static_cast<uptr_t>(lineStart), lineEnd - lineStart));
+    const QByteArray lineBytes(raw, static_cast<qsizetype>(lineEnd - lineStart));
+    const QString lineText = QString::fromUtf8(lineBytes);
+    const qsizetype caretInLine = QString::fromUtf8(lineBytes.left(static_cast<qsizetype>(caret - lineStart))).size();
+    const int column = csv::columnAt(lineText, delimiter, caretInLine);
+    const QString result = transform(text, delimiter, column);
+    if (result == text)
+        return;
+    // Todo el documento, en un solo paso de deshacer; el cursor, en el mismo sitio
+    const QByteArray utf8 = result.toUtf8();
+    v->sci(SCI_BEGINUNDOACTION);
+    v->sci(SCI_TARGETWHOLEDOCUMENT);
+    v->sci(SCI_REPLACETARGET, static_cast<uptr_t>(utf8.size()), reinterpret_cast<sptr_t>(utf8.constData()));
+    v->sci(SCI_ENDUNDOACTION);
+    v->sci(SCI_GOTOPOS, static_cast<uptr_t>(std::min<sptr_t>(caret, v->sci(SCI_GETLENGTH))));
+}
+
 // --- Ver › TODO (fase 96) -----------------------------------------------------------------
 
 QStringList MainWindow::workspaceRoots() const
@@ -10149,6 +10230,7 @@ void MainWindow::updateFindDialogHighlight()
 void MainWindow::refreshCurrentDocument()
 {
     updatePanels();
+    updateCsvColumns();
     updateFindDialogHighlight();
     const Buffer* buf = _documents.buffer(currentBuffer());
     _statusBar->updateDocument(buf);

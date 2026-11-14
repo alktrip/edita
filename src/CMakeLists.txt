@@ -41,6 +41,8 @@ add_custom_target(edita_build_info
 # Núcleo sin widgets (documentos, encoding, configuración…): testeable por separado
 add_library(edita_core STATIC
     core/AboutInfo.cpp
+    core/CsvTable.cpp
+    core/CsvTable.h
     core/TodoScan.cpp
     core/TodoScan.h
     core/AboutInfo.h
@@ -236,6 +238,8 @@ add_library(edita_ui STATIC
     ui/AboutDialog.cpp
     ui/AboutDialog.h
     ui/ContextHelp.cpp
+    ui/CsvColumns.cpp
+    ui/CsvColumns.h
     ui/TodoPanel.cpp
     ui/TodoPanel.h
     ui/ContextHelp.h

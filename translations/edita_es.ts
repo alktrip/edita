@@ -2402,24 +2402,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+547"/>
-        <location line="+5354"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+549"/>
+        <location line="+5375"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-5354"/>
-        <location line="+2515"/>
+        <location line="-5375"/>
+        <location line="+2536"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-2417"/>
+        <location line="-2438"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+430"/>
+        <location line="+431"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2679,7 +2679,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Espacios &amp;a tabulaciones (solo la sangría)</translation>
     </message>
     <message>
-        <location line="+3"/>
+        <location line="+23"/>
         <source>&amp;Auto-Completion</source>
         <translation>&amp;Autocompletado</translation>
     </message>
@@ -3083,12 +3083,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-3068"/>
+        <location line="-3088"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
     <message>
-        <location line="-1081"/>
+        <location line="-1082"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -3168,13 +3168,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+834"/>
-        <location line="+1357"/>
+        <location line="+835"/>
+        <location line="+1377"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1299"/>
+        <location line="-1319"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -3200,12 +3200,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+6184"/>
+        <location line="+6204"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-6183"/>
+        <location line="-6203"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3390,7 +3390,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;AlEaToRiO</translation>
     </message>
     <message>
-        <location line="+59"/>
+        <location line="+79"/>
         <source>Rena&amp;me Symbol…</source>
         <translation>Renom&amp;brar símbolo…</translation>
     </message>
@@ -3490,8 +3490,8 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Lista de &amp;funciones</translation>
     </message>
     <message>
-        <location line="-432"/>
-        <location line="+432"/>
+        <location line="-452"/>
+        <location line="+452"/>
         <source>Folder as Wor&amp;kspace</source>
         <translation>E&amp;xplorador de carpetas</translation>
     </message>
@@ -3501,13 +3501,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>P&amp;roblemas</translation>
     </message>
     <message>
-        <location line="-438"/>
-        <location line="+454"/>
+        <location line="-458"/>
+        <location line="+474"/>
         <source>Termin&amp;al</source>
         <translation>&amp;Terminal</translation>
     </message>
     <message>
-        <location line="-464"/>
+        <location line="-484"/>
         <source>Open Containing &amp;Folder</source>
         <translation>Abrir &amp;la carpeta contenedora</translation>
     </message>
@@ -3592,7 +3592,37 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Reducir la sangría</translation>
     </message>
     <message>
-        <location line="+161"/>
+        <location line="+137"/>
+        <source>CS&amp;V</source>
+        <translation>CS&amp;V</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Color Columns of .csv and .tsv Files</source>
+        <translation>&amp;Colorear las columnas de los archivos .csv y .tsv</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>&amp;Align Columns</source>
+        <translation>&amp;Alinear las columnas</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Shrink Columns</source>
+        <translation>Co&amp;mpactar las columnas</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Sort by This Column (Asc&amp;ending)</source>
+        <translation>Ordenar por esta columna (asc&amp;endente)</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Sort by This Column (&amp;Descending)</source>
+        <translation>Ordenar por esta columna (&amp;descendente)</translation>
+    </message>
+    <message>
+        <location line="+28"/>
         <source>&amp;On Selection</source>
         <translation>S&amp;obre la selección</translation>
     </message>
@@ -5708,7 +5738,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+544"/>
+        <location line="+602"/>
         <source>This line is not committed yet</source>
         <translation>Esta línea aún no está confirmada</translation>
     </message>

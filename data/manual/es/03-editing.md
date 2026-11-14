@@ -99,6 +99,24 @@ enteras.
 
 Si en un orden numérico una línea no es un número, no se cambia nada y Edita dice qué línea es.
 
+## CSV
+
+En los archivos `.csv`, `.tsv` y `.psv`, cada columna se pinta de un color (ocho que se repiten),
+así se ve a qué columna pertenece cada valor. El separador se detecta solo: coma, punto y coma,
+tabulador o barra vertical. Los campos entre comillas pueden tener el separador dentro. Lo
+desactiva {{actionCsvColors}}.
+
+Las órdenes de **Editar › CSV** sirven en cualquier documento con columnas:
+
+- {{actionCsvAlign}} rellena cada campo con espacios hasta el ancho de su columna, para leer la
+  tabla alineada. {{actionCsvShrink}} quita esos espacios (y los de alrededor de cada campo; lo de
+  dentro de unas comillas no se toca).
+- {{actionCsvSortAscending}} y {{actionCsvSortDescending}} ordenan las filas por la columna del
+  cursor: de menor a mayor si son números, si no, alfabéticamente sin distinguir mayúsculas. Si la
+  primera fila es un encabezado (texto encima de una columna de números), se queda arriba.
+
+Cada orden cambia el documento entero de una vez: Ctrl+Z la deshace.
+
 ## Mayúsculas y minúsculas
 
 Las órdenes del submenú **Editar › Convertir** cambian la selección (o cada selección, si hay

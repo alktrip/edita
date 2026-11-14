@@ -96,6 +96,23 @@ Sorting works on the selected lines, on the whole document when nothing is selec
 
 If a line is not a number in a numeric sort, nothing is changed and Edita says which line it is.
 
+## CSV
+
+In `.csv`, `.tsv` and `.psv` files, every column is painted in a color (eight that repeat), so you
+can see which column each value belongs to. The delimiter is detected: comma, semicolon, tab or
+vertical bar. Quoted fields may contain the delimiter. {{actionCsvColors}} turns it off.
+
+The commands of **Edit › CSV** work on any document with columns:
+
+- {{actionCsvAlign}} pads each field with spaces up to the width of its column, to read the table
+  aligned. {{actionCsvShrink}} removes those spaces (and the ones around each field; what is inside
+  quotes is not touched).
+- {{actionCsvSortAscending}} and {{actionCsvSortDescending}} sort the rows by the column of the
+  caret: in numeric order if they are numbers, otherwise alphabetically ignoring case. If the first
+  row is a header (text above a column of numbers), it stays at the top.
+
+Every command changes the whole document at once: Ctrl+Z undoes it.
+
 ## Uppercase and lowercase
 
 The commands of the case submenu change the selection (or each selection, with several):
