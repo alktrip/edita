@@ -1499,7 +1499,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocumentListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="+125"/>
+        <location filename="../src/ui/Panels.cpp" line="+131"/>
         <source>Name</source>
         <translation>Nombre</translation>
     </message>
@@ -1557,12 +1557,22 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Plegar todo</translation>
     </message>
     <message>
-        <location line="+74"/>
+        <location line="+13"/>
+        <source>Filter files (words or *.cpp *.h)</source>
+        <translation>Filtrar archivos (palabras o *.cpp *.h)</translation>
+    </message>
+    <message>
+        <location line="+126"/>
+        <source>More files match: refine the filter</source>
+        <translation>Hay más archivos que coinciden: precisa el filtro</translation>
+    </message>
+    <message>
+        <location line="+76"/>
         <source>Git branch: %1</source>
         <translation>Rama de Git: %1</translation>
     </message>
     <message>
-        <location line="+161"/>
+        <location line="+184"/>
         <source>Add folder…</source>
         <translation>Añadir carpeta…</translation>
     </message>
@@ -1972,7 +1982,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::FunctionListPanel</name>
     <message>
-        <location filename="../src/ui/Panels.cpp" line="-428"/>
+        <location filename="../src/ui/Panels.cpp" line="-592"/>
         <source>Search</source>
         <translation>Buscar</translation>
     </message>

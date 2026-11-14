@@ -28,10 +28,13 @@
 #include <QPointer>
 #include <QWidget>
 
+#include <atomic>
 #include <functional>
+#include <memory>
 #include <vector>
 
 class QFileSystemWatcher;
+class QThread;
 class QLineEdit;
 class QTimer;
 class QToolButton;
@@ -174,6 +177,10 @@ public:
     // El estado de Git de cada archivo (color y letra); se repinta cuando cambia
     void setGitStatus(const GitStatus* status);
     void refreshGitDecorations();
+    // El filtro (fase 97): solo los archivos que coinciden, con sus carpetas desplegadas
+    void setFilter(const QString& text);
+    bool isFiltering() const { return _filtering; }
+    QLineEdit* filterField() const { return _filter; }
 
 signals:
     // Algo cambió en una carpeta desplegada (para volver a leer el estado de Git)
@@ -192,9 +199,25 @@ private:
 
     void decorate(QTreeWidgetItem* item) const;
 
+    // El filtro: el árbol de antes se guarda y vuelve al vaciarlo
+    void applyFilter();
+    void endFilter();
+    void showFiltered(const QStringList& roots, const QStringList& matches, bool truncated);
+    void stopFilterScan();
+
     QTreeWidget* _tree = nullptr;
     QFileSystemWatcher* _watcher = nullptr;
     QPointer<const GitStatus> _git;
+    QLineEdit* _filter = nullptr;
+    QTimer* _filterTimer = nullptr;
+    bool _filtering = false;
+    std::vector<Session::FolderRoot> _savedState;
+    QString _savedSelected;
+    QThread* _filterScan = nullptr;
+    std::shared_ptr<std::atomic_bool> _filterCancel;
+
+public:
+    ~FileBrowserPanel() override;
 };
 
 } // namespace edita

@@ -23,6 +23,8 @@
 #include "ui/FunctionParser.h"
 #include "ui/GitStatus.h"
 #include "ui/Icons.h"
+#include "core/FileScan.h"
+#include "search/FileSearch.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -36,6 +38,10 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPointer>
+#include <QRegularExpression>
+#include <QSignalBlocker>
+#include <QThread>
 #include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
@@ -531,10 +537,151 @@ FileBrowserPanel::FileBrowserPanel(QWidget* parent)
     bar->addWidget(add);
     bar->addWidget(locateButton);
     bar->addWidget(collapse);
+    // El filtro (fase 97): palabras en la ruta, o comodines en el nombre (*.cpp *.h)
+    _filter = new QLineEdit(this);
+    _filter->setObjectName(QStringLiteral("folderFilter"));
+    _filter->setPlaceholderText(tr("Filter files (words or *.cpp *.h)"));
+    _filter->setClearButtonEnabled(true);
+    _filterTimer = new QTimer(this);
+    _filterTimer->setSingleShot(true);
+    _filterTimer->setInterval(250);
+    connect(_filter, &QLineEdit::textChanged, _filterTimer, qOverload<>(&QTimer::start));
+    connect(_filterTimer, &QTimer::timeout, this, &FileBrowserPanel::applyFilter);
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addLayout(bar);
+    layout->addWidget(_filter);
     layout->addWidget(_tree, 1);
+}
+
+FileBrowserPanel::~FileBrowserPanel()
+{
+    stopFilterScan();
+}
+
+void FileBrowserPanel::setFilter(const QString& text)
+{
+    _filter->setText(text);
+    applyFilter();
+}
+
+void FileBrowserPanel::stopFilterScan()
+{
+    if (!_filterScan)
+        return;
+    _filterCancel->store(true);
+    _filterScan->wait();
+    delete _filterScan;
+    _filterScan = nullptr;
+}
+
+void FileBrowserPanel::applyFilter()
+{
+    _filterTimer->stop();
+    const QString text = _filter->text().trimmed();
+    if (text.isEmpty()) {
+        endFilter();
+        return;
+    }
+    if (!_filtering) {
+        _savedState = state();
+        _savedSelected = selectedPath();
+        _filtering = true;
+    }
+    stopFilterScan();
+    QStringList roots;
+    for (const Session::FolderRoot& root : _savedState)
+        roots << root.folder;
+    // Con comodines, por nombre (como Buscar en archivos); si no, cada palabra en la ruta relativa
+    const QStringList words = text.split(QRegularExpression(QStringLiteral("[\\s;]+")), Qt::SkipEmptyParts);
+    const bool wildcards = text.contains(QLatin1Char('*')) || text.contains(QLatin1Char('?'));
+    _filterCancel = std::make_shared<std::atomic_bool>(false);
+    auto cancel = _filterCancel;
+    QPointer<FileBrowserPanel> self(this);
+    _filterScan = QThread::create([self, roots, words, wildcards, cancel] {
+        constexpr int kMaxShown = 5000;
+        QStringList matches;
+        bool truncated = false;
+        scanFiles(roots, *cancel, [&](const QStringList& chunk) {
+            for (const QString& path : chunk) {
+                if (matches.size() >= kMaxShown) {
+                    truncated = true;
+                    return;
+                }
+                bool ok = false;
+                if (wildcards) {
+                    const QString name = QFileInfo(path).fileName();
+                    ok = std::any_of(words.begin(), words.end(), [&](const QString& w) { return wildcardMatch(name, w); });
+                } else {
+                    QString relative = path;
+                    for (const QString& root : roots) {
+                        if (path.startsWith(root + QLatin1Char('/'))) {
+                            relative = path.mid(root.size() + 1);
+                            break;
+                        }
+                    }
+                    ok = std::all_of(words.begin(), words.end(),
+                                     [&](const QString& w) { return relative.contains(w, Qt::CaseInsensitive); });
+                }
+                if (ok)
+                    matches << path;
+            }
+        });
+        if (cancel->load())
+            return;
+        matches.sort(Qt::CaseInsensitive);
+        QMetaObject::invokeMethod(self, [self, cancel, roots, matches, truncated] {
+            if (self && !cancel->load() && self->_filtering)
+                self->showFiltered(roots, matches, truncated);
+        }, Qt::QueuedConnection);
+    });
+    _filterScan->start();
+}
+
+void FileBrowserPanel::showFiltered(const QStringList& roots, const QStringList& matches, bool truncated)
+{
+    _tree->clear();
+    for (const QString& root : roots) {
+        QTreeWidgetItem* rootItem = makeItem(root, true);
+        _tree->addTopLevelItem(rootItem);
+        // Las carpetas, creadas a medida que aparecen sus archivos
+        QHash<QString, QTreeWidgetItem*> dirs{{root, rootItem}};
+        std::function<QTreeWidgetItem*(const QString&)> dirItem = [&](const QString& dir) -> QTreeWidgetItem* {
+            if (QTreeWidgetItem* found = dirs.value(dir))
+                return found;
+            QTreeWidgetItem* parent = dirItem(QFileInfo(dir).absolutePath());
+            QTreeWidgetItem* item = makeItem(dir, true);
+            parent->addChild(item);
+            dirs.insert(dir, item);
+            return item;
+        };
+        for (const QString& path : matches) {
+            if (path.startsWith(root + QLatin1Char('/')))
+                dirItem(QFileInfo(path).absolutePath())->addChild(makeItem(path, false));
+        }
+        // Todo desplegado; las carpetas sin nada, sin el triángulo
+        for (QTreeWidgetItem* item : std::as_const(dirs)) {
+            item->setChildIndicatorPolicy(item->childCount() ? QTreeWidgetItem::ShowIndicator : QTreeWidgetItem::DontShowIndicator);
+            item->setExpanded(true);
+        }
+    }
+    if (truncated && _tree->topLevelItemCount() > 0) {
+        auto* more = new QTreeWidgetItem(_tree, {tr("More files match: refine the filter")});
+        more->setFlags(Qt::ItemIsEnabled);
+        QFont italic = more->font(0);
+        italic.setItalic(true);
+        more->setFont(0, italic);
+    }
+}
+
+void FileBrowserPanel::endFilter()
+{
+    stopFilterScan();
+    if (!_filtering)
+        return;
+    _filtering = false;
+    const auto saved = std::exchange(_savedState, {});
+    setState(saved, _savedSelected);
 }
 
 void FileBrowserPanel::refreshIcons()
@@ -614,6 +761,8 @@ void FileBrowserPanel::decorate(QTreeWidgetItem* item) const
 
 void FileBrowserPanel::populate(QTreeWidgetItem* item)
 {
+    if (_filtering) // el árbol filtrado ya tiene lo que muestra
+        return;
     // Carpetas primero y luego archivos, por nombre; sin los ocultos
     const QString path = item->data(0, kPathRole).toString();
     QStringList expanded;
@@ -638,6 +787,10 @@ void FileBrowserPanel::populate(QTreeWidgetItem* item)
 
 bool FileBrowserPanel::addRoot(const QString& folder)
 {
+    if (_filtering) {
+        _filter->clear();
+        endFilter();
+    }
     const QString path = QDir(folder).absolutePath();
     if (!QFileInfo(path).isDir() || roots().contains(path))
         return false;
@@ -650,6 +803,10 @@ bool FileBrowserPanel::addRoot(const QString& folder)
 
 void FileBrowserPanel::removeRoot(const QString& folder)
 {
+    if (_filtering) {
+        _filter->clear();
+        endFilter();
+    }
     for (int i = 0; i < _tree->topLevelItemCount(); ++i) {
         if (_tree->topLevelItem(i)->data(0, kPathRole).toString() == folder)
             delete _tree->takeTopLevelItem(i);
@@ -666,6 +823,13 @@ QStringList FileBrowserPanel::roots() const
 
 void FileBrowserPanel::setState(const std::vector<Session::FolderRoot>& folders, const QString& selected)
 {
+    // Una sesión nueva (o el fin del filtro): sin filtro
+    if (_filtering) {
+        stopFilterScan();
+        _filtering = false;
+        const QSignalBlocker block(_filter);
+        _filter->clear();
+    }
     _tree->clear();
     for (const Session::FolderRoot& folder : folders) {
         if (!addRoot(folder.folder))
@@ -694,6 +858,8 @@ void FileBrowserPanel::setState(const std::vector<Session::FolderRoot>& folders,
 
 std::vector<Session::FolderRoot> FileBrowserPanel::state() const
 {
+    if (_filtering) // el árbol de antes de filtrar (el que vuelve al vaciar el filtro)
+        return _savedState;
     std::vector<Session::FolderRoot> list;
     for (int i = 0; i < _tree->topLevelItemCount(); ++i) {
         QTreeWidgetItem* root = _tree->topLevelItem(i);
@@ -732,6 +898,10 @@ QTreeWidgetItem* FileBrowserPanel::rootFor(const QString& path) const
 
 bool FileBrowserPanel::locate(const QString& filePath)
 {
+    if (_filtering) {
+        _filter->clear();
+        endFilter();
+    }
     const QString path = QFileInfo(filePath).absoluteFilePath();
     QTreeWidgetItem* item = rootFor(path);
     while (item && item->data(0, kPathRole).toString() != path) {

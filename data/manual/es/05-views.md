@@ -227,6 +227,16 @@ contiene, **Abrir en la terminal**, **Buscar en archivos…** en esa carpeta, vo
 quitar la carpeta del espacio de trabajo. Los botones de arriba **localizan el archivo actual**
 en el árbol y **pliegan todo**.
 
+El campo **Filtrar** deja en el árbol solo los archivos que coinciden, con sus carpetas
+desplegadas:
+
+- Palabras: cada una tiene que estar en la ruta, sin importar mayúsculas (`src main` encuentra
+  `src/main.cpp`).
+- Comodines, separados por espacios: por nombre, como en Buscar en archivos (`*.cpp *.h`).
+
+No se miran las carpetas ocultas (como `.git`) ni `node_modules`. Al vaciar el filtro, el árbol
+vuelve a como estaba.
+
 En un repositorio de Git, el panel muestra la rama y colorea los archivos modificados, nuevos e
 ignorados.
 

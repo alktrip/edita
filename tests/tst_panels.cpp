@@ -367,6 +367,64 @@ private slots:
         QVERIFY(!y.window.panelDock(QStringLiteral("documentMap"))->isVisibleTo(&y.window));
     }
 
+    // Fase 97: el filtro de Carpeta como espacio de trabajo
+    void folderFilter()
+    {
+        const QString root = _tmp.filePath(QStringLiteral("filtro"));
+        file(QStringLiteral("filtro/src/main.cpp"), "x");
+        file(QStringLiteral("filtro/src/util.h"), "x");
+        file(QStringLiteral("filtro/src/deep/more/main_test.cpp"), "x");
+        file(QStringLiteral("filtro/docs/readme.md"), "x");
+        file(QStringLiteral("filtro/node_modules/lib/main.cpp"), "x");
+        Window x;
+        MainWindow& w = x.window;
+        QVERIFY(w.addFolderToWorkspace(root));
+        FileBrowserPanel* panel = w.folderPanel();
+        QVERIFY(panel->locate(root + "/docs/readme.md"));
+        const auto before = panel->state();
+        // Lo que se ve: «carpeta/…/archivo», en orden
+        auto shown = [panel] {
+            QStringList out;
+            std::function<void(QTreeWidgetItem*, const QString&)> walk = [&](QTreeWidgetItem* item, const QString& prefix) {
+                const QString name = prefix.isEmpty() ? item->text(0) : prefix + QLatin1Char('/') + item->text(0);
+                if (item->childCount() == 0 && item->parent())
+                    out << name;
+                for (int i = 0; i < item->childCount(); ++i)
+                    walk(item->child(i), name);
+            };
+            for (int i = 0; i < panel->tree()->topLevelItemCount(); ++i)
+                walk(panel->tree()->topLevelItem(i), QString());
+            return out;
+        };
+        QLineEdit* field = w.findChild<QLineEdit*>(QStringLiteral("folderFilter"));
+        QVERIFY(field);
+        // Palabras: en la ruta, sin importar mayúsculas; sin node_modules
+        field->setText(QStringLiteral("MAIN"));
+        QTRY_COMPARE(shown(), QStringList({QStringLiteral("filtro/src/deep/more/main_test.cpp"), QStringLiteral("filtro/src/main.cpp")}));
+        QVERIFY(panel->isFiltering());
+        field->setText(QStringLiteral("src main"));
+        QTRY_COMPARE(shown().size(), 2);
+        // Comodines: por nombre
+        field->setText(QStringLiteral("*.h *.md"));
+        QTRY_COMPARE(shown(), QStringList({QStringLiteral("filtro/docs/readme.md"), QStringLiteral("filtro/src/util.h")}));
+        // Mientras se filtra, la sesión guarda el árbol de antes; doble clic abre
+        QCOMPARE(panel->state(), before);
+        QCOMPARE(panel->roots(), QStringList{root});
+        QTreeWidgetItem* util = panel->tree()->findItems(QStringLiteral("util.h"), Qt::MatchExactly | Qt::MatchRecursive).value(0);
+        QVERIFY(util);
+        emit panel->tree()->itemDoubleClicked(util, 0);
+        QCOMPARE(w.documents().buffer(w.currentBuffer())->filePath(), root + "/src/util.h");
+        // Sin coincidencias: la carpeta, vacía
+        field->setText(QStringLiteral("nada-coincide"));
+        QTRY_COMPARE(shown(), QStringList());
+        QCOMPARE(panel->tree()->topLevelItemCount(), 1);
+        // Al vaciarlo, el árbol como estaba (con docs desplegada y readme seleccionado)
+        field->clear();
+        QTRY_VERIFY(!panel->isFiltering());
+        QCOMPARE(panel->state(), before);
+        QCOMPARE(panel->selectedPath(), root + "/docs/readme.md");
+    }
+
     // Fase 94: dónde está cada panel, su tamaño, si flota y con cuáles comparte pestañas
     // (DockingManager de N++), de una sesión a la siguiente
     void panelsRememberTheirPlaceAndSize()

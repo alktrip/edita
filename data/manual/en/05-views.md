@@ -219,6 +219,14 @@ The right click menu has: open, copy the path or the name, open the containing f
 Terminal**, **Find in Files…** in that folder, reload, and remove the folder from the workspace.
 The buttons at the top **locate the current file** in the tree and **collapse all**.
 
+The **Filter** field leaves in the tree only the files that match, with their folders expanded:
+
+- Words: each one has to be in the path, ignoring case (`src main` finds `src/main.cpp`).
+- Wildcards, separated by spaces: by name, as in Find in Files (`*.cpp *.h`).
+
+Hidden folders (such as `.git`) and `node_modules` are not checked. When you clear the filter, the
+tree goes back to how it was.
+
 In a Git repository, the panel shows the branch and colors the modified, new and ignored files.
 
 ### Search Results

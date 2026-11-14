@@ -370,6 +370,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 94 — Paneles: sitio y tamaño | `DockingManager` de N++ (`<GUIConfig name="DockingManager">`); `saveState`/`restoreState` en `EditaDockState`, `restoreDockWidget` para los paneles de plugins | ✅ [fase94.md](fase94.md) |
 | 95 — F1 contextual | N++: F1 es Acerca de, sin ayuda contextual; `Manual::placeOf` (la primera cita de cada orden), `ui/ContextHelp` (28 diálogos y paneles), `HelpKeyFilter` para los diálogos, manual modal sobre un diálogo modal | ✅ [fase95.md](fase95.md) |
 | 96 — Panel TODO | N++ no lo trae (plugins aparte); `core/TodoScan`, `ui/TodoPanel` con alcance documento o carpetas (en otro hilo, con el texto sin guardar); `tst_todo` | ✅ [fase96.md](fase96.md) |
+| 97 — Filtro de carpetas | Folder as Workspace de N++ no tiene filtro; campo Filtrar (palabras en la ruta o comodines), recorrido en otro hilo, árbol filtrado con los mismos elementos y el de antes al vaciar | ✅ [fase97.md](fase97.md) |
 
 ---
 
