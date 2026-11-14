@@ -117,6 +117,28 @@ Las órdenes de **Editar › CSV** sirven en cualquier documento con columnas:
 
 Cada orden cambia el documento entero de una vez: Ctrl+Z la deshace.
 
+## JSON y YAML
+
+Las órdenes de **Editar › JSON/YAML** trabajan con el documento actual. Se usa el lenguaje del
+documento o su extensión (`.json`, `.yml`, `.yaml`); si no, un texto que empieza por `{` o `[` es
+JSON y cualquier otro, YAML.
+
+- {{actionDataValidate}} comprueba que el documento está bien escrito. Si no, lleva el cursor al
+  error y dice la línea, la columna y qué falta («Se esperaba «:» después de la clave»).
+- {{actionDataCopyPath}} copia la ruta del valor del cursor, como `$.services.web.ports[1]`, para
+  usarla con `jq`, `yq` o en la documentación.
+- {{actionJsonFormat}} escribe el JSON con una línea por valor, con la sangría del documento
+  (tabuladores o espacios), y {{actionJsonCompact}} lo deja en una sola línea. Las claves quedan
+  en su orden y los números, tal cual (`1.50` sigue siendo `1.50`). Ctrl+Z lo deshace.
+- {{actionJsonToYaml}} y {{actionYamlToJson}} convierten el documento y abren el resultado en un
+  documento nuevo. Al pasar a YAML, el texto que se leería como otra cosa (`"1.0"`, `"yes"`, `""`)
+  va entre comillas.
+
+YAML: se entiende lo que se usa en archivos de configuración (Docker Compose, GitHub Actions,
+Kubernetes): mapas y listas, `[ ]` y `{ }`, texto entre comillas y en bloque (`|` y `>`),
+comentarios, anclas y alias (`&base`, `*base`). Un archivo con varios documentos (`---` entre
+ellos) se lee hasta el primero.
+
 ## Mayúsculas y minúsculas
 
 Las órdenes del submenú **Editar › Convertir** cambian la selección (o cada selección, si hay

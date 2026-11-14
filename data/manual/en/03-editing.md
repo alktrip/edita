@@ -113,6 +113,29 @@ The commands of **Edit › CSV** work on any document with columns:
 
 Every command changes the whole document at once: Ctrl+Z undoes it.
 
+## JSON and YAML
+
+The commands of **Edit › JSON/YAML** work on the current document. Edita uses the language of the
+document or its extension (`.json`, `.yml`, `.yaml`); otherwise, a text that starts with `{` or `[`
+is JSON and anything else is YAML.
+
+- {{actionDataValidate}} checks that the document is well written. If it is not, it moves the
+  caret to the error and tells the line, the column and what is missing ("Expected «:» after the
+  key").
+- {{actionDataCopyPath}} copies the path of the value at the caret, such as
+  `$.services.web.ports[1]`, to use it with `jq`, `yq` or in documentation.
+- {{actionJsonFormat}} writes the JSON with one line per value, with the indentation of the
+  document (tabs or spaces), and {{actionJsonCompact}} puts it on a single line. Keys keep their
+  order and numbers stay as they are (`1.50` is still `1.50`). Ctrl+Z undoes it.
+- {{actionJsonToYaml}} and {{actionYamlToJson}} convert the document and open the result in a new
+  document. When converting to YAML, text that would be read as something else (`"1.0"`, `"yes"`,
+  `""`) goes between quotes.
+
+YAML: Edita understands what configuration files use (Docker Compose, GitHub Actions,
+Kubernetes): maps and lists, `[ ]` and `{ }`, quoted and block text (`|` and `>`), comments,
+anchors and aliases (`&base`, `*base`). A file with several documents (`---` between them) is read
+up to the first one.
+
 ## Uppercase and lowercase
 
 The commands of the case submenu change the selection (or each selection, with several):

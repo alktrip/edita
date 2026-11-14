@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "core/StructuredData.h"
+
 #include "lsp/LspServers.h"
 
 #include "core/ContextMenuXml.h"
@@ -854,6 +856,13 @@ private:
     // CSV (fase 99): los colores por columna de cada vista y las órdenes de Editar › CSV
     QPointer<CsvColumns> _csv[2];
     void updateCsvColumns();
+    // JSON y YAML (fase 100): Editar › JSON/YAML
+    bool currentIsYaml() const;
+    std::optional<data::Node> parseStructuredData(bool yaml, bool reportErrors);
+    void validateStructuredData();
+    void copyStructuredDataPath();
+    void reformatJson(bool pretty);
+    void convertStructuredData(bool toYaml);
     void transformCsv(const std::function<QString(const QString&, QChar, int)>& transform);
     QPointer<Breadcrumbs> _breadcrumbs[2];
     QPointer<StickyScroll> _sticky[2];

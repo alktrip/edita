@@ -948,6 +948,161 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
 </context>
 <context>
+    <name>StructuredData</name>
+    <message>
+        <location filename="../src/core/StructuredData.cpp" line="+76"/>
+        <source>The document is empty</source>
+        <translation>El documento está vacío</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <source>Unexpected text after the end of the document</source>
+        <translation>Hay texto después del final del documento</translation>
+    </message>
+    <message>
+        <location line="+32"/>
+        <location line="+33"/>
+        <location line="+23"/>
+        <location line="+30"/>
+        <source>Unexpected end of the document</source>
+        <translation>El documento termina antes de tiempo</translation>
+    </message>
+    <message>
+        <location line="-71"/>
+        <source>Unexpected character «%1»</source>
+        <translation>Carácter inesperado «%1»</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Expected a key between quotes</source>
+        <translation>Se esperaba una clave entre comillas</translation>
+    </message>
+    <message>
+        <location line="+7"/>
+        <source>Expected «:» after the key</source>
+        <translation>Se esperaba «:» después de la clave</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Expected «,» or «}»</source>
+        <translation>Se esperaba «,» o «}»</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Unexpected «]»: a comma too many?</source>
+        <translation>«]» inesperado: ¿sobra una coma?</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>Expected «,» or «]»</source>
+        <translation>Se esperaba «,» o «]»</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>A control character inside a string (use \n, \t…)</source>
+        <translation>Un carácter de control dentro de una cadena (usa \n, \t…)</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Invalid \u escape</source>
+        <translation>Escape \u no válido</translation>
+    </message>
+    <message>
+        <location line="+6"/>
+        <location line="+517"/>
+        <source>Invalid escape «\%1»</source>
+        <translation>Escape no válido «\%1»</translation>
+    </message>
+    <message>
+        <location line="-509"/>
+        <source>The string is not closed</source>
+        <translation>La cadena no está cerrada</translation>
+    </message>
+    <message>
+        <location line="+8"/>
+        <source>Invalid number</source>
+        <translation>Número no válido</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Invalid number (a number cannot start with 0)</source>
+        <translation>Número no válido (un número no puede empezar con 0)</translation>
+    </message>
+    <message>
+        <location line="+18"/>
+        <source>Unknown value «%1» (true, false or null?)</source>
+        <translation>Valor desconocido «%1» (¿true, false o null?)</translation>
+    </message>
+    <message>
+        <location line="+75"/>
+        <location line="+162"/>
+        <location line="+33"/>
+        <source>Unexpected indentation</source>
+        <translation>Sangría inesperada</translation>
+    </message>
+    <message>
+        <location line="-115"/>
+        <source>Tabs are not allowed in the indentation</source>
+        <translation>No se permiten tabuladores en la sangría</translation>
+    </message>
+    <message>
+        <location line="+58"/>
+        <source>A list item where a key was expected</source>
+        <translation>Un elemento de lista donde se esperaba una clave</translation>
+    </message>
+    <message>
+        <location line="+3"/>
+        <source>Expected «key: value»</source>
+        <translation>Se esperaba «clave: valor»</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>The key «%1» is repeated</source>
+        <translation>La clave «%1» está repetida</translation>
+    </message>
+    <message>
+        <location line="+72"/>
+        <location line="+266"/>
+        <source>The alias «*%1» has no anchor «&amp;%1»</source>
+        <translation>El alias «*%1» no tiene un ancla «&amp;%1»</translation>
+    </message>
+    <message>
+        <location line="-177"/>
+        <source>«%1» is not closed</source>
+        <translation>«%1» no está cerrado</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>Unexpected text after «%1»</source>
+        <translation>Texto inesperado después de «%1»</translation>
+    </message>
+    <message>
+        <location line="+39"/>
+        <source>Unexpected text after the quotes</source>
+        <translation>Texto inesperado después de las comillas</translation>
+    </message>
+    <message>
+        <location line="+40"/>
+        <source>Invalid escape</source>
+        <translation>Escape no válido</translation>
+    </message>
+    <message>
+        <location line="+13"/>
+        <source>The quotes are not closed</source>
+        <translation>Las comillas no están cerradas</translation>
+    </message>
+    <message>
+        <location line="+12"/>
+        <source>Unexpected end of the line</source>
+        <translation>La línea termina antes de tiempo</translation>
+    </message>
+    <message>
+        <location line="+53"/>
+        <source>Expected «,» or «%1»</source>
+        <translation>Se esperaba «,» o «%1»</translation>
+    </message>
+</context>
+<context>
     <name>StyleSheet</name>
     <message>
         <location filename="../src/syntax/StyleSheet.cpp" line="+88"/>
@@ -2402,19 +2557,19 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+549"/>
-        <location line="+5375"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+550"/>
+        <location line="+5385"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-5375"/>
-        <location line="+2536"/>
+        <location line="-5385"/>
+        <location line="+2546"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-2438"/>
+        <location line="-2448"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2679,7 +2834,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Espacios &amp;a tabulaciones (solo la sangría)</translation>
     </message>
     <message>
-        <location line="+23"/>
+        <location line="+33"/>
         <source>&amp;Auto-Completion</source>
         <translation>&amp;Autocompletado</translation>
     </message>
@@ -3083,7 +3238,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-3088"/>
+        <location line="-3098"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
@@ -3169,12 +3324,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+835"/>
-        <location line="+1377"/>
+        <location line="+1387"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1319"/>
+        <location line="-1329"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -3200,12 +3355,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+6204"/>
+        <location line="+6214"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-6203"/>
+        <location line="-6213"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3390,7 +3545,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;AlEaToRiO</translation>
     </message>
     <message>
-        <location line="+79"/>
+        <location line="+89"/>
         <source>Rena&amp;me Symbol…</source>
         <translation>Renom&amp;brar símbolo…</translation>
     </message>
@@ -3490,8 +3645,8 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Lista de &amp;funciones</translation>
     </message>
     <message>
-        <location line="-452"/>
-        <location line="+452"/>
+        <location line="-462"/>
+        <location line="+462"/>
         <source>Folder as Wor&amp;kspace</source>
         <translation>E&amp;xplorador de carpetas</translation>
     </message>
@@ -3501,13 +3656,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>P&amp;roblemas</translation>
     </message>
     <message>
-        <location line="-458"/>
-        <location line="+474"/>
+        <location line="-468"/>
+        <location line="+484"/>
         <source>Termin&amp;al</source>
         <translation>&amp;Terminal</translation>
     </message>
     <message>
-        <location line="-484"/>
+        <location line="-494"/>
         <source>Open Containing &amp;Folder</source>
         <translation>Abrir &amp;la carpeta contenedora</translation>
     </message>
@@ -3622,7 +3777,42 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ordenar por esta columna (&amp;descendente)</translation>
     </message>
     <message>
-        <location line="+28"/>
+        <location line="+3"/>
+        <source>&amp;JSON/YAML</source>
+        <translation>&amp;JSON/YAML</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Validate</source>
+        <translation>&amp;Validar</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Copy &amp;Path at Cursor</source>
+        <translation>Copiar la &amp;ruta del cursor</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>&amp;Format JSON</source>
+        <translation>&amp;Formatear JSON</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>&amp;Compact JSON</source>
+        <translation>&amp;Compactar JSON</translation>
+    </message>
+    <message>
+        <location line="+2"/>
+        <source>Convert JSON to &amp;YAML (New Document)</source>
+        <translation>Convertir JSON a &amp;YAML (documento nuevo)</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Convert YAML to JSO&amp;N (New Document)</source>
+        <translation>Convertir YAML a JSO&amp;N (documento nuevo)</translation>
+    </message>
+    <message>
+        <location line="+27"/>
         <source>&amp;On Selection</source>
         <translation>S&amp;obre la selección</translation>
     </message>
@@ -5738,7 +5928,37 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+602"/>
+        <location line="+161"/>
+        <source>The YAML is not valid</source>
+        <translation>El YAML no es válido</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>The JSON is not valid</source>
+        <translation>El JSON no es válido</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Line %1, column %2: %3</source>
+        <translation>Línea %1, columna %2: %3</translation>
+    </message>
+    <message>
+        <location line="+9"/>
+        <source>This is valid YAML.</source>
+        <translation>Es YAML válido.</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>This is valid JSON.</source>
+        <translation>Es JSON válido.</translation>
+    </message>
+    <message>
+        <location line="+16"/>
+        <source>Path copied</source>
+        <translation>Ruta copiada</translation>
+    </message>
+    <message>
+        <location line="+516"/>
         <source>This line is not committed yet</source>
         <translation>Esta línea aún no está confirmada</translation>
     </message>

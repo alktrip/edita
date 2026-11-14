@@ -26,6 +26,7 @@
 #include "core/AboutInfo.h"
 #include "core/TodoScan.h"
 #include "core/CsvTable.h"
+#include "core/StructuredData.h"
 #include "core/Backup.h"
 #include "core/Codec.h"
 #include "core/CrashReport.h"
@@ -1418,6 +1419,16 @@ void MainWindow::createMenus()
               [this] { transformCsv([](const QString& text, QChar d, int column) { return csv::sortByColumn(text, d, column, false); }); });
     addAction(csvMenu, tr("Sort by This Column (&Descending)"), "actionCsvSortDescending", QKeySequence(),
               [this] { transformCsv([](const QString& text, QChar d, int column) { return csv::sortByColumn(text, d, column, true); }); });
+    // JSON y YAML (fase 100): validar, formatear, compactar, convertir y la ruta del cursor
+    QMenu* dataMenu = edit->addMenu(tr("&JSON/YAML"));
+    addAction(dataMenu, tr("&Validate"), "actionDataValidate", QKeySequence(), [this] { validateStructuredData(); });
+    addAction(dataMenu, tr("Copy &Path at Cursor"), "actionDataCopyPath", QKeySequence(), [this] { copyStructuredDataPath(); });
+    dataMenu->addSeparator();
+    addAction(dataMenu, tr("&Format JSON"), "actionJsonFormat", QKeySequence(), [this] { reformatJson(true); });
+    addAction(dataMenu, tr("&Compact JSON"), "actionJsonCompact", QKeySequence(), [this] { reformatJson(false); });
+    dataMenu->addSeparator();
+    addAction(dataMenu, tr("Convert JSON to &YAML (New Document)"), "actionJsonToYaml", QKeySequence(), [this] { convertStructuredData(true); });
+    addAction(dataMenu, tr("Convert YAML to JSO&N (New Document)"), "actionYamlToJson", QKeySequence(), [this] { convertStructuredData(false); });
     // Autocompletado (los atajos de N++)
     QMenu* complete = edit->addMenu(tr("&Auto-Completion"));
     addAction(complete, tr("&Function Completion"), "actionCompleteFunction", QKeySequence(Qt::CTRL | Qt::Key_Space),
@@ -8408,6 +8419,107 @@ void MainWindow::showManualFor(const QString& command)
         return;
     }
     showManual(_manual->manual().chapters()[static_cast<size_t>(place.chapter)].fileName, place.anchor);
+}
+
+// --- JSON y YAML (fase 100) -------------------------------------------------------------------
+
+bool MainWindow::currentIsYaml() const
+{
+    // El lenguaje del documento, su extensión o, si no, lo que parece (JSON empieza por { o [)
+    const Buffer* buf = _documents.buffer(currentBuffer());
+    if (buf && (buf->language() == LangType::Yaml))
+        return true;
+    if (buf && (buf->language() == LangType::Json || buf->language() == LangType::Json5))
+        return false;
+    const QString suffix = buf && !buf->isUntitled() ? QFileInfo(buf->filePath()).suffix().toLower() : QString();
+    if (suffix == QLatin1String("yml") || suffix == QLatin1String("yaml"))
+        return true;
+    if (suffix == QLatin1String("json"))
+        return false;
+    const QString text = QString::fromStdString(editor()->text()).trimmed();
+    return !(text.startsWith(QLatin1Char('{')) || text.startsWith(QLatin1Char('[')));
+}
+
+std::optional<data::Node> MainWindow::parseStructuredData(bool yaml, bool reportErrors)
+{
+    const QString text = QString::fromStdString(editor()->text());
+    data::Error error;
+    std::optional<data::Node> node = yaml ? data::parseYaml(text, &error) : data::parseJson(text, &error);
+    if (!node && reportErrors) {
+        // Al error, y el aviso con la línea y la columna
+        EditorView* v = editor();
+        v->sci(SCI_GOTOPOS, static_cast<uptr_t>(text.left(error.offset).toUtf8().size()));
+        v->setFocus();
+        _notifications->show(NotificationBar::Kind::Warning, yaml ? tr("The YAML is not valid") : tr("The JSON is not valid"),
+                             tr("Line %1, column %2: %3").arg(error.line).arg(error.column).arg(error.message));
+    }
+    return node;
+}
+
+void MainWindow::validateStructuredData()
+{
+    const bool yaml = currentIsYaml();
+    if (parseStructuredData(yaml, true))
+        _notifications->show(NotificationBar::Kind::Info, yaml ? tr("This is valid YAML.") : tr("This is valid JSON."), QString());
+}
+
+void MainWindow::copyStructuredDataPath()
+{
+    const bool yaml = currentIsYaml();
+    const std::optional<data::Node> node = parseStructuredData(yaml, true);
+    if (!node)
+        return;
+    // La posición del cursor, en caracteres (el árbol cuenta caracteres, no bytes)
+    EditorView* v = editor();
+    const sptr_t caret = v->sci(SCI_GETCURRENTPOS);
+    const auto* raw = reinterpret_cast<const char*>(v->sci(SCI_GETRANGEPOINTER, 0, caret));
+    const qsizetype offset = QString::fromUtf8(raw, static_cast<qsizetype>(caret)).size();
+    const QString path = data::pathAt(*node, offset);
+    QApplication::clipboard()->setText(path);
+    _notifications->show(NotificationBar::Kind::Info, tr("Path copied"), path);
+}
+
+void MainWindow::reformatJson(bool pretty)
+{
+    EditorView* v = editor();
+    if (v->sci(SCI_GETREADONLY))
+        return;
+    const std::optional<data::Node> node = parseStructuredData(false, true);
+    if (!node)
+        return;
+    // Con la sangría del documento (espacios o tabuladores)
+    const bool tabs = v->sci(SCI_GETUSETABS) != 0;
+    int indent = static_cast<int>(v->sci(SCI_GETINDENT));
+    if (indent <= 0)
+        indent = static_cast<int>(v->sci(SCI_GETTABWIDTH));
+    const QByteArray utf8 = data::formatJson(*node, pretty ? std::max(indent, 1) : 0, tabs).toUtf8();
+    const sptr_t caret = v->sci(SCI_GETCURRENTPOS);
+    v->sci(SCI_BEGINUNDOACTION);
+    v->sci(SCI_TARGETWHOLEDOCUMENT);
+    v->sci(SCI_REPLACETARGET, static_cast<uptr_t>(utf8.size()), reinterpret_cast<sptr_t>(utf8.constData()));
+    v->sci(SCI_ENDUNDOACTION);
+    v->sci(SCI_GOTOPOS, static_cast<uptr_t>(std::min<sptr_t>(caret, v->sci(SCI_GETLENGTH))));
+}
+
+void MainWindow::convertStructuredData(bool toYaml)
+{
+    const std::optional<data::Node> node = parseStructuredData(!toYaml, true);
+    if (!node)
+        return;
+    newDocument();
+    EditorView* v = editor();
+    QString text;
+    if (toYaml) {
+        text = data::toYaml(*node);
+    } else {
+        int indent = static_cast<int>(v->sci(SCI_GETINDENT));
+        if (indent <= 0)
+            indent = static_cast<int>(v->sci(SCI_GETTABWIDTH));
+        text = data::formatJson(*node, std::max(indent, 1), v->sci(SCI_GETUSETABS) != 0);
+    }
+    v->setText(text.toStdString());
+    v->sci(SCI_GOTOPOS, 0);
+    setLanguage(toYaml ? LangType::Yaml : LangType::Json);
 }
 
 // --- CSV (fase 99) --------------------------------------------------------------------------

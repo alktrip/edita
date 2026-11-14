@@ -43,6 +43,8 @@ add_library(edita_core STATIC
     core/AboutInfo.cpp
     core/CsvTable.cpp
     core/CsvTable.h
+    core/StructuredData.cpp
+    core/StructuredData.h
     core/TodoScan.cpp
     core/TodoScan.h
     core/AboutInfo.h
