@@ -178,6 +178,20 @@ placed as tabs over each other, or detached as floating windows. When you open E
 panel is where you left it: the side, the size, whether it was floating and which panels it shared
 tabs with. Plugin panels too.
 
+### TODO
+
+{{actionTodo}} shows the comments with **TODO**, **FIXME**, **HACK**, **XXX**, **BUG** or
+**NOTE**, grouped by file. The word is in capitals, right after the comment mark (`// TODO: …`,
+`# FIXME …`, `/* HACK */`, `-- NOTE`, `<!-- BUG -->`), so a `TODO_LIST` variable or a `"TODO"`
+string do not count. Double-click or Enter goes to the line.
+
+At the top you choose what to check:
+
+- **Current document**: updated as you type.
+- **Workspace folders**: every file of Folder as Workspace (or, without one, of the folder of
+  the document), without hidden folders such as `.git`, nor `node_modules`. Open documents
+  count with their unsaved text. The reload button searches again.
+
 ### Document List
 
 {{actionDocumentList}} lists the open documents of both views. Click one to switch to it. It is

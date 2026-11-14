@@ -92,6 +92,7 @@ class GitBlame;
 class SnippetLibrary;
 class SnippetController;
 class ProblemsPanel;
+class TodoPanel;
 class LocalHistory;
 class LocalHistoryPanel;
 class TaskOutputPanel;
@@ -890,6 +891,17 @@ private:
     void goToGitChange(bool forward);
     QThread* _paletteScan = nullptr;
     std::shared_ptr<std::atomic_bool> _paletteScanCancel;
+    // Ver › TODO (fase 96): el documento actual al momento; las carpetas de trabajo, en otro hilo
+    TodoPanel* _todoPanel = nullptr;
+    QTimer* _todoTimer = nullptr;
+    QThread* _todoScan = nullptr;
+    std::shared_ptr<std::atomic_bool> _todoScanCancel;
+    void scheduleTodo();
+    void refreshTodo();
+    void stopTodoScan();
+    void openTodo(const QString& path, int line, int column);
+    // Las carpetas de Carpeta como espacio de trabajo o, sin ellas, la del documento
+    QStringList workspaceRoots() const;
     QSet<QString> _paletteFiles; // las rutas que ya están en «Ir a archivo»
     void fillPalette(CommandPalette::Mode mode);
     std::vector<CommandPalette::Item> paletteCommands() const;

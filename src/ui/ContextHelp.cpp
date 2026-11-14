@@ -40,6 +40,7 @@ const std::vector<std::pair<const char*, const char*>>& table()
         {"SearchResultsPanel", "actionFindInFiles"},
         {"TaskOutputPanel", "actionTaskOutput"},
         {"TerminalPanel", "actionTerminal"},
+        {"TodoPanel", "actionTodo"},
         {"WelcomePage", "actionWelcomePage"},
     };
     return entries;

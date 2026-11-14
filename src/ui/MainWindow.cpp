@@ -19,9 +19,11 @@
 #include "ui/MainWindow.h"
 #include "ui/AboutDialog.h"
 #include "ui/ContextHelp.h"
+#include "ui/TodoPanel.h"
 
 #include "AppInfo.h"
 #include "core/AboutInfo.h"
+#include "core/TodoScan.h"
 #include "core/Backup.h"
 #include "core/Codec.h"
 #include "core/CrashReport.h"
@@ -890,6 +892,11 @@ void MainWindow::connectPane(EditorPane* pane)
         case SCN_DWELLEND:
             _lsp->hideHover();
             break;
+        case SCN_MODIFIED:
+            if ((static_cast<int>(n->modificationType) & (SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT)) && pane == _activePane && _todoPanel
+                && _todoPanel->scope() == TodoPanel::Scope::Document)
+                scheduleTodo();
+            break;
         default:
             break;
         }
@@ -966,6 +973,7 @@ MainWindow::~MainWindow()
         _fileJob->wait();
     }
     stopPaletteFileScan();
+    stopTodoScan();
     _lsp->shutdownAll(); // shutdown y exit a cada servidor
     // Las vistas sueltan sus documentos antes de que se destruya el DocumentManager
     _searchView->send(SCI_RELEASEDOCUMENT, 0, _searchViewDefaultDoc);
@@ -1522,7 +1530,7 @@ void MainWindow::createMenus()
     const std::pair<const char*, QString> panelEntries[] = {
         {"documentMap", tr("&Document Map")}, {"documentList", tr("Document &List")},
         {"functionList", tr("&Function List")}, {"folderAsWorkspace", tr("Folder as Wor&kspace")},
-        {"problems", tr("P&roblems")}, {"gitCommit", tr("G&it")},
+        {"problems", tr("P&roblems")}, {"gitCommit", tr("G&it")}, {"todo", tr("T&ODO")},
     };
     for (const auto& [name, text] : panelEntries) {
         QDockWidget* dock = panelDock(QString::fromLatin1(name));
@@ -2325,6 +2333,7 @@ void MainWindow::createPanels()
     _taskRunner = new TaskRunner(this);
     _charPanel = new CharacterPanel;
     _clipboardPanel = new ClipboardHistoryPanel;
+    _todoPanel = new TodoPanel;
     // Dónde los pone N++: la lista de documentos y las carpetas a la izquierda; el
     // mapa y las funciones a la derecha
     const std::tuple<QWidget*, const char*, QString, Qt::DockWidgetArea> panels[] = {
@@ -2340,6 +2349,7 @@ void MainWindow::createPanels()
         {_gitCommit, "gitCommit", tr("Git"), Qt::LeftDockWidgetArea},                       // no existe en N++
         {_charPanel, "charPanel", tr("Character Panel"), Qt::RightDockWidgetArea},
         {_clipboardPanel, "clipboardHistory", tr("Clipboard History"), Qt::RightDockWidgetArea},
+        {_todoPanel, "todo", tr("TODO"), Qt::BottomDockWidgetArea}, // no existe en N++
     };
     // <GUIConfig name="multiInst" … documentList="yes" documentMap="no" fuctionList="no" folderAsWorkspace="no">
     // (los nombres de N++, con su "fuctionList")
@@ -2363,6 +2373,25 @@ void MainWindow::createPanels()
         });
         _panelDocks.push_back(dock);
     }
+    // Ver › TODO: el alcance se recuerda en config.xml; al mostrarse o cambiar de alcance, se busca
+    _todoTimer = new QTimer(this);
+    _todoTimer->setSingleShot(true);
+    _todoTimer->setInterval(400);
+    connect(_todoTimer, &QTimer::timeout, this, [this] { refreshTodo(); });
+    if (_syntax.config().guiConfig(QStringLiteral("EditaTodo"), QStringLiteral("scope")) == QLatin1String("workspace"))
+        _todoPanel->setScope(TodoPanel::Scope::Workspace);
+    connect(_todoPanel, &TodoPanel::scopeChanged, this, [this](TodoPanel::Scope scope) {
+        _syntax.config().setGuiConfig(QStringLiteral("EditaTodo"), QStringLiteral("scope"),
+                                      scope == TodoPanel::Scope::Workspace ? QStringLiteral("workspace") : QStringLiteral("document"));
+        _syntax.config().save();
+        refreshTodo();
+    });
+    connect(_todoPanel, &TodoPanel::refreshRequested, this, [this] { refreshTodo(); });
+    connect(_todoPanel, &TodoPanel::activated, this, &MainWindow::openTodo);
+    connect(panelDock(QStringLiteral("todo")), &QDockWidget::visibilityChanged, this, [this](bool visible) {
+        if (visible)
+            refreshTodo();
+    });
     connect(_docListPanel, &DocumentListPanel::activated, this, [this](BufferId id, int view) {
         EditorPane* pane = view == 1 ? _subPane : _mainPane;
         pane->activateBuffer(id);
@@ -3740,6 +3769,9 @@ void MainWindow::updatePanels()
             refreshGitCommitPanel();
         });
     }
+    // TODO del documento activo
+    if (shown("todo") && _todoPanel->scope() == TodoPanel::Scope::Document)
+        scheduleTodo();
     // Funciones del documento activo
     if (shown("functionList") && buf)
         _functionListPanel->setSource(editor(), buf->language(), buf->userLanguage(), buf->displayName());
@@ -8265,6 +8297,107 @@ void MainWindow::showManualFor(const QString& command)
         return;
     }
     showManual(_manual->manual().chapters()[static_cast<size_t>(place.chapter)].fileName, place.anchor);
+}
+
+// --- Ver › TODO (fase 96) -----------------------------------------------------------------
+
+QStringList MainWindow::workspaceRoots() const
+{
+    QStringList roots = _folderPanel ? _folderPanel->roots() : QStringList();
+    if (roots.isEmpty()) {
+        const Buffer* buf = _documents.buffer(currentBuffer());
+        const QString dir = buf && !buf->isUntitled() ? QFileInfo(buf->filePath()).absolutePath() : QString();
+        // Sin carpeta de trabajo, la del documento (no la carpeta personal ni la raíz enteras)
+        if (!dir.isEmpty() && dir != QDir::homePath() && dir != QDir::rootPath())
+            roots << dir;
+    }
+    return roots;
+}
+
+void MainWindow::scheduleTodo()
+{
+    const QDockWidget* dock = panelDock(QStringLiteral("todo"));
+    if (_todoTimer && dock && dock->isVisibleTo(this))
+        _todoTimer->start();
+}
+
+void MainWindow::stopTodoScan()
+{
+    if (!_todoScan)
+        return;
+    _todoScanCancel->store(true);
+    _todoScan->wait();
+    delete _todoScan;
+    _todoScan = nullptr;
+}
+
+void MainWindow::refreshTodo()
+{
+    if (!_todoPanel)
+        return;
+    _todoTimer->stop();
+    stopTodoScan();
+    if (_todoPanel->scope() == TodoPanel::Scope::Document) {
+        const BufferId id = currentBuffer();
+        const Buffer* buf = _documents.buffer(id);
+        if (!buf) {
+            _todoPanel->setItems({}, QString());
+            return;
+        }
+        const QString path = buf->isUntitled() ? QString() : buf->filePath();
+        _todoPanel->setItems(todo::scanText(QString::fromStdString(_documents.text(id)), path), QString());
+        return;
+    }
+    // Las carpetas de trabajo, en otro hilo; los documentos abiertos, con su texto sin guardar
+    const QStringList roots = workspaceRoots();
+    if (roots.isEmpty()) {
+        _todoPanel->setItems({}, QString());
+        return;
+    }
+    QHash<QString, QString> open;
+    for (const BufferId id : allBuffers()) {
+        if (const Buffer* buf = _documents.buffer(id); buf && !buf->isUntitled())
+            open.insert(QFileInfo(buf->filePath()).absoluteFilePath(), QString::fromStdString(_documents.text(id)));
+    }
+    // Las rutas, relativas a la carpeta de trabajo (con varias, a la que las contiene)
+    const QString shownRoot = roots.size() == 1 ? roots.front() : QFileInfo(roots.front()).absolutePath();
+    _todoPanel->setBusy(true);
+    _todoScanCancel = std::make_shared<std::atomic_bool>(false);
+    auto cancel = _todoScanCancel;
+    QPointer<MainWindow> self(this);
+    _todoScan = QThread::create([self, roots, open, cancel, shownRoot] {
+        std::vector<todo::Item> items;
+        scanFiles(roots, *cancel, [&](const QStringList& chunk) {
+            for (const QString& path : chunk) {
+                if (cancel->load())
+                    return;
+                const QString absolute = QFileInfo(path).absoluteFilePath();
+                const auto it = open.constFind(absolute);
+                std::vector<todo::Item> found = it != open.constEnd() ? todo::scanText(*it, absolute) : todo::scanFile(absolute);
+                items.insert(items.end(), found.begin(), found.end());
+            }
+        });
+        if (cancel->load())
+            return;
+        QMetaObject::invokeMethod(self, [self, cancel, items = std::move(items), shownRoot] {
+            if (self && !cancel->load() && self->_todoPanel)
+                self->_todoPanel->setItems(items, shownRoot);
+        }, Qt::QueuedConnection);
+    });
+    _todoScan->start();
+}
+
+void MainWindow::openTodo(const QString& path, int line, int column)
+{
+    // Sin ruta: el documento actual (sin guardar todavía)
+    if (!path.isEmpty() && openFile(path) == kInvalidBuffer)
+        return;
+    EditorView* v = editor();
+    const sptr_t lineStart = v->sci(SCI_POSITIONFROMLINE, static_cast<uptr_t>(line));
+    const sptr_t pos = v->sci(SCI_POSITIONRELATIVE, static_cast<uptr_t>(lineStart), column);
+    v->sci(SCI_ENSUREVISIBLEENFORCEPOLICY, static_cast<uptr_t>(line));
+    v->sci(SCI_GOTOPOS, static_cast<uptr_t>(pos > 0 || column == 0 ? pos : lineStart));
+    v->setFocus();
 }
 
 void MainWindow::showContextHelp(QWidget* widget)

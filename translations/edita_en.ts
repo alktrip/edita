@@ -99,7 +99,7 @@
 <context>
     <name>edita::MainWindow</name>
     <message numerus="yes">
-        <location filename="../src/ui/MainWindow.cpp" line="+2967"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+3039"/>
         <source>Compare: %1 changed, %2 added, %3 removed lines in %n block(s)</source>
         <translation>
             <numerusform>Compare: %1 changed, %2 added, %3 removed lines in %n block</numerusform>
@@ -131,7 +131,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+2290"/>
+        <location line="+2293"/>
         <source> time(s)</source>
         <translation>
             <numerusform> time</numerusform>
@@ -139,7 +139,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+3328"/>
+        <location line="+3462"/>
         <source>Replace All: %Ln occurrence(s) were replaced %1</source>
         <translation>
             <numerusform>Replace All: %Ln occurrence was replaced %1</numerusform>
@@ -242,7 +242,7 @@
 <context>
     <name>edita::PluginsAdminDialog</name>
     <message numerus="yes">
-        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+434"/>
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+444"/>
         <source>%n plugin(s) will be installed.</source>
         <translation>
             <numerusform>%n plugin will be installed.</numerusform>
@@ -363,6 +363,17 @@
         <translation>
             <numerusform>%n warning</numerusform>
             <numerusform>%n warnings</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>edita::TodoPanel</name>
+    <message numerus="yes">
+        <location filename="../src/ui/TodoPanel.cpp" line="+115"/>
+        <source>%n comment(s)</source>
+        <translation>
+            <numerusform>%n comment</numerusform>
+            <numerusform>%n comments</numerusform>
         </translation>
     </message>
 </context>

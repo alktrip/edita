@@ -184,6 +184,21 @@ ventana, ponerse como pestañas uno encima de otro o separarse como ventanas flo
 a abrir Edita, cada panel está donde lo dejaste: el lado, el tamaño, si flotaba y con qué otros
 paneles compartía pestañas. También los paneles de los plugins.
 
+### TODO
+
+{{actionTodo}} muestra los comentarios con **TODO**, **FIXME**, **HACK**, **XXX**, **BUG** o
+**NOTE**, agrupados por archivo. La palabra va en mayúsculas, justo después de la marca de
+comentario (`// TODO: …`, `# FIXME …`, `/* HACK */`, `-- NOTE`, `<!-- BUG -->`); así no
+cuentan una variable `TODO_LIST` ni una cadena `"TODO"`. Doble clic o Intro van a la línea.
+
+Arriba se elige qué revisar:
+
+- **Documento actual**: se actualiza mientras escribes.
+- **Carpetas de trabajo**: todos los archivos de Carpeta como espacio de trabajo (o, si no
+  hay ninguna, de la carpeta del documento), sin las carpetas ocultas como `.git` ni
+  `node_modules`. Los documentos abiertos cuentan con lo que tienen sin guardar. El botón de
+  recargar vuelve a buscar.
+
 ### Lista de documentos
 
 {{actionDocumentList}} muestra los documentos abiertos de las dos vistas. Pulsa uno para cambiar

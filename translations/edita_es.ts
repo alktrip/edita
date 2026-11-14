@@ -630,7 +630,7 @@
 <context>
     <name>Manual</name>
     <message>
-        <location filename="../src/ui/ManualWindow.cpp" line="+369"/>
+        <location filename="../src/ui/ManualWindow.cpp" line="+406"/>
         <source>Command</source>
         <translation>Orden</translation>
     </message>
@@ -2352,24 +2352,24 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::MainWindow</name>
     <message>
-        <location filename="../src/ui/MainWindow.cpp" line="+505"/>
-        <location line="+5233"/>
+        <location filename="../src/ui/MainWindow.cpp" line="+547"/>
+        <location line="+5266"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-5233"/>
-        <location line="+2400"/>
+        <location line="-5266"/>
+        <location line="+2430"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-2302"/>
+        <location line="-2332"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
     <message>
-        <location line="+424"/>
+        <location line="+430"/>
         <source>&amp;File</source>
         <translation>&amp;Archivo</translation>
     </message>
@@ -2800,7 +2800,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location line="+105"/>
+        <location line="+108"/>
         <source>&amp;About %1</source>
         <translation>&amp;Acerca de %1</translation>
     </message>
@@ -2810,7 +2810,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+1953"/>
+        <location line="+1977"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -3033,12 +3033,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-2953"/>
+        <location line="-2980"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
     <message>
-        <location line="-1075"/>
+        <location line="-1081"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -3118,13 +3118,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+828"/>
-        <location line="+1333"/>
+        <location line="+834"/>
+        <location line="+1357"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1275"/>
+        <location line="-1299"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -3150,12 +3150,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+6065"/>
+        <location line="+6096"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-6064"/>
+        <location line="-6095"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3597,6 +3597,11 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>G&amp;it</translation>
     </message>
     <message>
+        <location line="+0"/>
+        <source>T&amp;ODO</source>
+        <translation>T&amp;ODO</translation>
+    </message>
+    <message>
         <location line="+19"/>
         <source>New Te&amp;rminal</source>
         <translation>Nueva te&amp;rminal</translation>
@@ -3928,7 +3933,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Manual de usuario</translation>
     </message>
     <message>
-        <location line="+1"/>
+        <location line="+4"/>
         <source>&amp;Welcome Page</source>
         <translation>Página de &amp;inicio</translation>
     </message>
@@ -4052,12 +4057,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+5117"/>
+        <location line="+5145"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-5116"/>
+        <location line="-5144"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -4087,7 +4092,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Barra de herramientas</translation>
     </message>
     <message>
-        <location line="+39"/>
+        <location line="+40"/>
         <source>Document Map</source>
         <translation>Mapa del documento</translation>
     </message>
@@ -4123,12 +4128,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+218"/>
+        <location line="+238"/>
         <source>Local History</source>
         <translation>Historial local</translation>
     </message>
     <message>
-        <location line="-217"/>
+        <location line="-237"/>
         <source>Task Output</source>
         <translation>Salida de la tarea</translation>
     </message>
@@ -4148,7 +4153,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Historial del portapapeles</translation>
     </message>
     <message>
-        <location line="+214"/>
+        <location line="+1"/>
+        <source>TODO</source>
+        <translation>TODO</translation>
+    </message>
+    <message>
+        <location line="+233"/>
         <source>Delete this version from the local history?</source>
         <translation>¿Borrar esta versión del historial local?</translation>
     </message>
@@ -4434,7 +4444,7 @@ Commit anyway?</source>
         </translation>
     </message>
     <message>
-        <location line="+309"/>
+        <location line="+312"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -4721,12 +4731,12 @@ Commit anyway?</source>
         <location line="+1"/>
         <location line="+270"/>
         <location line="+20"/>
-        <location line="+1985"/>
+        <location line="+1989"/>
         <source>Reload</source>
         <translation>Recargar</translation>
     </message>
     <message>
-        <location line="-2271"/>
+        <location line="-2275"/>
         <source>Copy Full File Path</source>
         <translation>Copiar la ruta completa</translation>
     </message>
@@ -5093,7 +5103,7 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-2398"/>
+        <location line="-2401"/>
         <source>Format Document</source>
         <translation>Dar formato al documento</translation>
     </message>
@@ -5125,7 +5135,7 @@ Do you want to save the file anyway?</source>
         <translation>Formateado con %1</translation>
     </message>
     <message>
-        <location line="+2334"/>
+        <location line="+2337"/>
         <source>Run until the end of file</source>
         <translation>Hasta el final del archivo</translation>
     </message>
@@ -5180,7 +5190,7 @@ Do you want to save the file anyway?</source>
         <translation>Plugins</translation>
     </message>
     <message>
-        <location line="+479"/>
+        <location line="+483"/>
         <source>editaPluginList.json not found</source>
         <translation>no se encuentra editaPluginList.json</translation>
     </message>
@@ -5637,7 +5647,7 @@ Continue?</source>
         <translation>Configurar la sangría…</translation>
     </message>
     <message>
-        <location line="+414"/>
+        <location line="+544"/>
         <source>This line is not committed yet</source>
         <translation>Esta línea aún no está confirmada</translation>
     </message>
@@ -6022,7 +6032,7 @@ Continue?</source>
     <name>edita::PluginsAdminDialog</name>
     <message>
         <location filename="../src/ui/PluginsAdminDialog.cpp" line="+76"/>
-        <location line="+343"/>
+        <location line="+353"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
     </message>
@@ -6179,7 +6189,7 @@ Continue?</source>
         <translation>Instalar plugins</translation>
     </message>
     <message>
-        <location line="-369"/>
+        <location line="-379"/>
         <source>This computer builds the plugins of the catalog: %1</source>
         <translation>Esta computadora compila los plugins del catálogo: %1</translation>
     </message>
@@ -6189,7 +6199,7 @@ Continue?</source>
         <translation>Actualizando la lista de plugins…</translation>
     </message>
     <message>
-        <location line="+38"/>
+        <location line="+48"/>
         <source>Plugin list updated (version %1).</source>
         <translation>Lista de plugins actualizada (versión %1).</translation>
     </message>
@@ -8806,6 +8816,67 @@ Do you want to save your changes before switching themes?</source>
     </message>
 </context>
 <context>
+    <name>edita::TodoPanel</name>
+    <message>
+        <location filename="../src/ui/TodoPanel.cpp" line="+38"/>
+        <source>Current document</source>
+        <translation>Documento actual</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>Workspace folders</source>
+        <translation>Carpetas de trabajo</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>The folders of Folder as Workspace or, without them, the folder of the document</source>
+        <translation>Las carpetas de Carpeta como espacio de trabajo o, sin ellas, la carpeta del documento</translation>
+    </message>
+    <message>
+        <location line="+5"/>
+        <source>Search again</source>
+        <translation>Volver a buscar</translation>
+    </message>
+    <message>
+        <location line="+10"/>
+        <source>Comment</source>
+        <translation>Comentario</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Text</source>
+        <translation>Texto</translation>
+    </message>
+    <message>
+        <location line="+0"/>
+        <source>Line</source>
+        <translation>Línea</translation>
+    </message>
+    <message>
+        <location line="+31"/>
+        <source>Searching…</source>
+        <translation>Buscando…</translation>
+    </message>
+    <message>
+        <location line="+14"/>
+        <source>(new document)</source>
+        <translation>(documento nuevo)</translation>
+    </message>
+    <message>
+        <location line="+15"/>
+        <source>No TODO comments</source>
+        <translation>No hay comentarios TODO</translation>
+    </message>
+    <message numerus="yes">
+        <location line="+0"/>
+        <source>%n comment(s)</source>
+        <translation>
+            <numerusform>%n comentario</numerusform>
+            <numerusform>%n comentarios</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>edita::UserLanguageDialog</name>
     <message>
         <location filename="../src/ui/UserLanguageDialog.cpp" line="+138"/>
@@ -9601,7 +9672,7 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>edita::remote_catalog</name>
     <message>
-        <location filename="../src/core/RemoteCatalog.cpp" line="+95"/>
+        <location filename="../src/core/RemoteCatalog.cpp" line="+105"/>
         <source>the plugin list is not signed by the Edita plugin catalog: %1</source>
         <translation>la lista de plugins no está firmada por el catálogo de plugins de Edita: %1</translation>
     </message>

@@ -41,6 +41,8 @@ add_custom_target(edita_build_info
 # Núcleo sin widgets (documentos, encoding, configuración…): testeable por separado
 add_library(edita_core STATIC
     core/AboutInfo.cpp
+    core/TodoScan.cpp
+    core/TodoScan.h
     core/AboutInfo.h
     core/ApiFile.cpp
     core/ApiFile.h
@@ -234,6 +236,8 @@ add_library(edita_ui STATIC
     ui/AboutDialog.cpp
     ui/AboutDialog.h
     ui/ContextHelp.cpp
+    ui/TodoPanel.cpp
+    ui/TodoPanel.h
     ui/ContextHelp.h
     ui/CommandPalette.cpp
     ui/EolAnnotations.cpp
