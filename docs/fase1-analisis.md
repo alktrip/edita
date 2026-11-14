@@ -371,6 +371,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 95 — F1 contextual | N++: F1 es Acerca de, sin ayuda contextual; `Manual::placeOf` (la primera cita de cada orden), `ui/ContextHelp` (28 diálogos y paneles), `HelpKeyFilter` para los diálogos, manual modal sobre un diálogo modal | ✅ [fase95.md](fase95.md) |
 | 96 — Panel TODO | N++ no lo trae (plugins aparte); `core/TodoScan`, `ui/TodoPanel` con alcance documento o carpetas (en otro hilo, con el texto sin guardar); `tst_todo` | ✅ [fase96.md](fase96.md) |
 | 97 — Filtro de carpetas | Folder as Workspace de N++ no tiene filtro; campo Filtrar (palabras en la ruta o comodines), recorrido en otro hilo, árbol filtrado con los mismos elementos y el de antes al vaciar | ✅ [fase97.md](fase97.md) |
+| 98 — Historial de Git | N++ sin Git integrado; pestaña Historial: `git log` (repositorio o `--follow` del archivo), archivos por commit con renombrados, diff de solo lectura; `tst_githistory` | ✅ [fase98.md](fase98.md) |
 
 ---
 

@@ -616,6 +616,10 @@ private:
     void connectLocalHistory();
     void connectTasks();
     void connectGitCommit();
+    // El historial del panel Git (fase 98): los commits y el diff de uno en un documento
+    void refreshGitHistory();
+    void openCommitDiff(const QString& hash, const QStringList& paths);
+    QString _gitHistoryTop; // el repositorio del historial que se ve
     void showGitHunkMenu(int line, const QPoint& globalPos);
     void reloadGitDecorations();
     void compareChanged();

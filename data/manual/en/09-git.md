@@ -53,6 +53,17 @@ branch. The **Staged** files are at the top and the unstaged **Changes** below:
 
 The commit uses your Git settings (name, email, hooks). If Git gives an error, Edita shows it as is.
 
+### History
+
+The **History** tab of the panel shows the last 200 commits of the repository, with their author,
+date and short hash. With **Only the current file**, the ones that changed the document, also under
+its earlier names (`git log --follow`); the list changes when you move to another document.
+
+- When you choose a commit, the files it changed appear below: **A** added, **M** modified,
+  **D** deleted and **R** renamed (with the earlier name).
+- Double-click a file to open its diff in that commit; double-click the commit for the whole diff,
+  with the full message. They open in a new read-only document, highlighted as Diff.
+
 ## Who changed each line (blame)
 
 At the end of the line of the cursor, in gray, Edita shows who changed it last and when:

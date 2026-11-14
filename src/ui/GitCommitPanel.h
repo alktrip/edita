@@ -15,6 +15,7 @@ class QCheckBox;
 class QLabel;
 class QPlainTextEdit;
 class QPushButton;
+class QTabWidget;
 class QTreeWidget;
 class QTreeWidgetItem;
 
@@ -34,6 +35,27 @@ public:
     // `git status --porcelain=v1 -z`
     static QList<Entry> parseStatus(const QByteArray& output);
 
+    // El historial (fase 98)
+    struct Commit
+    {
+        QString hash;
+        QString shortHash;
+        QString author;
+        QString date; // AAAA-MM-DD
+        QString subject;
+        QStringList parents;
+    };
+    struct FileChange
+    {
+        QChar status;    // A, M, D, R, C, T
+        QString path;
+        QString oldPath; // renombrados y copiados
+    };
+    // `git log --format=%H%x1f%h%x1f%an%x1f%ad%x1f%s%x1f%P%x1e --date=short`
+    static QList<Commit> parseLog(const QByteArray& output);
+    // `git diff --name-status -z -M`
+    static QList<FileChange> parseNameStatus(const QByteArray& output);
+
     explicit GitCommitPanel(QWidget* parent = nullptr);
 
     // `top` vacío: el documento no está en un repositorio
@@ -43,6 +65,10 @@ public:
     QPlainTextEdit* message() const { return _message; }
     QLabel* header() const { return _header; }
     void clearMessage();
+    void setHistory(const QList<Commit>& commits, const QString& note = QString());
+    void setCommitFiles(const QString& hash, const QList<FileChange>& files);
+    bool historyCurrentFileOnly() const;
+    bool isHistoryVisible() const;
 
 signals:
     void stageRequested(const QStringList& paths);
@@ -50,6 +76,11 @@ signals:
     void commitRequested(const QString& message, bool amend);
     void refreshRequested();
     void openRequested(const QString& path);
+    // El historial: hay que (volver a) leerlo; los archivos de un commit; su diff (paths vacío:
+    // el commit entero)
+    void historyRequested();
+    void commitSelected(const QString& hash, const QStringList& parents);
+    void diffRequested(const QString& hash, const QStringList& paths);
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
@@ -69,6 +100,11 @@ private:
     QPlainTextEdit* _message = nullptr;
     QCheckBox* _amend = nullptr;
     QPushButton* _commit = nullptr;
+    QTabWidget* _tabs = nullptr;
+    QCheckBox* _historyCurrentFile = nullptr;
+    QTreeWidget* _history = nullptr;
+    QTreeWidget* _historyFiles = nullptr;
+    QLabel* _historyNote = nullptr;
 };
 
 } // namespace edita

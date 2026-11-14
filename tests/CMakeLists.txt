@@ -66,6 +66,8 @@ edita_add_test(tst_updatecheck LIBS edita_ui)
 edita_add_test(tst_about LIBS edita_ui)
 # Fase 96: Ver › TODO
 edita_add_test(tst_todo LIBS edita_ui)
+# Fase 98: el historial del panel Git
+edita_add_test(tst_githistory LIBS edita_ui)
 edita_add_test(tst_morelanguages LIBS edita_ui)
 # Fase 66: un proceso que falla de verdad, con el manejador de fallos
 add_executable(crash_helper crash_helper.cpp)

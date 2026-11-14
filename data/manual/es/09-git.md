@@ -55,6 +55,17 @@ Arriba van los **Preparados** y abajo los **Cambios** sin preparar:
 El commit usa tu configuración de Git (nombre, correo, *hooks*). Si Git da un error, Edita lo muestra
 tal cual.
 
+### Historial
+
+La pestaña **Historial** del panel muestra los últimos 200 commits del repositorio, con su autor, su
+fecha y el hash corto. Con **Solo el archivo actual**, los que cambiaron el documento, también con
+sus nombres anteriores (`git log --follow`); la lista cambia al pasar a otro documento.
+
+- Al elegir un commit, abajo aparecen los archivos que cambió: **A** añadido, **M** modificado,
+  **D** borrado y **R** renombrado (con el nombre anterior).
+- Doble clic en un archivo abre su diff en ese commit; doble clic en el commit, el diff entero, con
+  el mensaje completo. Se abren en un documento nuevo de solo lectura, coloreado como Diff.
+
 ## Quién cambió cada línea (blame)
 
 Al final de la línea del cursor, en gris, Edita muestra quién la cambió por última vez y cuándo:

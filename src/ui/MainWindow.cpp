@@ -2754,6 +2754,74 @@ void MainWindow::refreshGitCommitPanel()
                               status.code == 0 ? GitCommitPanel::parseStatus(status.out) : QList<GitCommitPanel::Entry>());
 }
 
+void MainWindow::refreshGitHistory()
+{
+    if (!_gitCommit)
+        return;
+    // El repositorio del documento actual; desde un documento sin repositorio (un diff abierto
+    // desde aquí), el del historial que se ve
+    QString top = gitTopLevel();
+    if (top.isEmpty() && !_gitCommit->historyCurrentFileOnly())
+        top = _gitHistoryTop;
+    _gitHistoryTop = top;
+    if (top.isEmpty()) {
+        _gitCommit->setHistory({});
+        return;
+    }
+    constexpr int kMaxCommits = 200;
+    QStringList args{QStringLiteral("log"), QStringLiteral("-n"), QString::number(kMaxCommits), QStringLiteral("--date=short"),
+                     QStringLiteral("--format=%H%x1f%h%x1f%an%x1f%ad%x1f%s%x1f%P%x1e")};
+    // Solo el archivo actual: con sus nombres anteriores (--follow)
+    QString file;
+    if (_gitCommit->historyCurrentFileOnly()) {
+        if (const Buffer* buf = _documents.buffer(currentBuffer()); buf && !buf->isUntitled())
+            file = QDir(top).relativeFilePath(buf->filePath());
+        if (file.isEmpty() || file.startsWith(QLatin1String(".."))) {
+            _gitCommit->setHistory({}, tr("The current document is not a file of this repository."));
+            return;
+        }
+        args << QStringLiteral("--follow") << QStringLiteral("--") << file;
+    }
+    const GitResult r = runGit(top, args);
+    const QList<GitCommitPanel::Commit> commits = r.code == 0 ? GitCommitPanel::parseLog(r.out) : QList<GitCommitPanel::Commit>();
+    QString note;
+    if (r.code != 0 && !r.err.contains(QLatin1String("does not have any commits")))
+        note = r.err.trimmed();
+    else if (commits.size() >= kMaxCommits)
+        note = tr("The last %1 commits.").arg(kMaxCommits);
+    _gitCommit->setHistory(commits, note);
+}
+
+void MainWindow::openCommitDiff(const QString& hash, const QStringList& paths)
+{
+    const QString top = _gitHistoryTop;
+    if (top.isEmpty())
+        return;
+    QStringList args{QStringLiteral("show"), QStringLiteral("--format=fuller"), QStringLiteral("-M"), QStringLiteral("--stat"),
+                     QStringLiteral("-p"), hash};
+    if (!paths.isEmpty())
+        args << QStringLiteral("--") << paths;
+    const GitResult r = runGit(top, args);
+    if (r.code != 0) {
+        _prompter->warn(this, tr("Git"), r.err);
+        return;
+    }
+    // Un documento nuevo de solo lectura, coloreado como Diff, con el commit en el nombre
+    const BufferId id = newDocument();
+    const QString shortHash = hash.left(7);
+    _documents.setUntitledName(id, paths.isEmpty() ? QStringLiteral("%1.diff").arg(shortHash)
+                                                   : QStringLiteral("%1 %2.diff").arg(shortHash, QFileInfo(paths.last()).fileName()));
+    EditorView* v = editor();
+    v->setText(std::string_view(r.out.constData(), static_cast<size_t>(r.out.size())));
+    v->sci(SCI_EMPTYUNDOBUFFER);
+    v->sci(SCI_SETSAVEPOINT);
+    v->sci(SCI_GOTOPOS, 0);
+    setLanguage(LangType::Diff);
+    if (Buffer* buf = _documents.buffer(id))
+        buf->setUserReadOnly(true);
+    v->setFocus();
+}
+
 void MainWindow::reloadGitDecorations()
 {
     GitChanges::clearCache();
@@ -2883,6 +2951,23 @@ void MainWindow::showGitHunkMenu(int line, const QPoint& globalPos)
 void MainWindow::connectGitCommit()
 {
     connect(_gitCommit, &GitCommitPanel::refreshRequested, this, &MainWindow::refreshGitCommitPanel);
+    // El historial (fase 98)
+    connect(_gitCommit, &GitCommitPanel::historyRequested, this, &MainWindow::refreshGitHistory);
+    connect(_gitCommit, &GitCommitPanel::commitSelected, this, [this](const QString& hash, const QStringList& parents) {
+        const QString top = _gitHistoryTop;
+        if (top.isEmpty())
+            return;
+        // Contra el primer padre (los de un merge, lo que trajo); el primer commit, contra nada
+        const QStringList args = parents.isEmpty()
+                                     ? QStringList{QStringLiteral("diff-tree"), QStringLiteral("-r"), QStringLiteral("-z"),
+                                                   QStringLiteral("--name-status"), QStringLiteral("-M"), QStringLiteral("--root"),
+                                                   QStringLiteral("--no-commit-id"), hash}
+                                     : QStringList{QStringLiteral("diff"), QStringLiteral("-z"), QStringLiteral("--name-status"),
+                                                   QStringLiteral("-M"), parents.front(), hash};
+        const GitResult r = runGit(top, args);
+        _gitCommit->setCommitFiles(hash, r.code == 0 ? GitCommitPanel::parseNameStatus(r.out) : QList<GitCommitPanel::FileChange>());
+    });
+    connect(_gitCommit, &GitCommitPanel::diffRequested, this, &MainWindow::openCommitDiff);
     auto run = [this](const QStringList& args, const QString& title) {
         const QString top = _gitCommit->repository();
         if (top.isEmpty())
@@ -3761,6 +3846,9 @@ void MainWindow::updatePanels()
     }
     if (shown("localHistory"))
         refreshLocalHistory();
+    // El historial del archivo actual sigue al documento
+    if (shown("gitCommit") && _gitCommit->isHistoryVisible() && _gitCommit->historyCurrentFileOnly())
+        refreshGitHistory();
     if (shown("gitCommit") && !_gitCommitRefreshPending) {
         // git status puede tardar en un repositorio grande: una vez cada poco
         _gitCommitRefreshPending = true;
