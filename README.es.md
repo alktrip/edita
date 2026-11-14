@@ -71,13 +71,16 @@ Encima de eso, suma lo que hoy se espera de un editor: paleta de órdenes, Git e
 
 **Lo que Notepad++ no tiene**
 - Paleta de órdenes, ir a archivo y ir a símbolo.
-- Git: cambios en el margen, blame y estado en el explorador.
+- Git: cambios en el margen, blame, estado en el explorador y el historial del repositorio o del archivo.
+- CSV, JSON y YAML: columnas de CSV por colores, alinear y ordenar por columna; validar, formatear y convertir JSON y YAML, y copiar la ruta del cursor.
+- Panel TODO del documento o del proyecto, y filtro en el explorador de carpetas.
 - Terminal integrada.
 - Servidores de lenguaje: diagnósticos, completado, ir a la definición, renombrar e inlay hints.
 - Comparación de archivos, fragmentos (snippets) y probador de expresiones regulares.
 - Barra de búsqueda en línea, ruta de navegación y encabezado fijo.
 - Temas claros y oscuros modernos que siguen al sistema.
-- Manual de usuario integrado (F1), en español e inglés.
+- Manual de usuario integrado, en español e inglés: F1 abre la sección del diálogo o panel en el que estás.
+- Los paneles recuerdan dónde los dejaste.
 
 **Plugins**
 - **Python Script**, con la API del plugin de Notepad++: muchos de sus scripts funcionan sin cambios.

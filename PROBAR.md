@@ -37,6 +37,11 @@ Si Edita se cierra de golpe, al volver a abrirlo te ofrece reportar el fallo con
 - **Lo que usabas en Notepad++**: macros, edición en columna, sesiones, el mapa del documento, la lista de funciones, los atajos (Configuración › Asignación de atajos).
 - **Tu escritorio**: el tema claro y el oscuro, la escala de la pantalla (HiDPI), Wayland y X11.
 - **El manual** (F1): si algo no se entiende o no coincide con lo que ves, también es un error.
+- **Lo nuevo de la rc.4**:
+  - **CSV** (Editar › CSV): abre un `.csv` grande, mira los colores por columna, alinea, compacta y ordena por una columna.
+  - **JSON y YAML** (Editar › JSON/YAML): valida un archivo con un error, formatea, convierte de uno a otro y copia la ruta del cursor. Con tus archivos de Docker Compose, GitHub Actions o Kubernetes, sobre todo.
+  - **Panel TODO** (Ver › TODO), el **historial de Git** (Ver › Git, pestaña Historial) y el **filtro** del explorador de carpetas.
+  - **F1** en un diálogo o un panel, **Ayuda › Acerca de Edita**, y que los paneles vuelvan a su sitio al reabrir Edita.
 
 ### Plugins
 
@@ -111,6 +116,11 @@ Use it as your everyday editor: that helps the most. If you have time, also chec
 - **What you used in Notepad++**: macros, column editing, sessions, the document map, the function list, the shortcuts (Settings › Shortcut Mapper).
 - **Your desktop**: the light and dark themes, display scaling (HiDPI), Wayland and X11.
 - **The manual** (F1): if something is unclear or does not match what you see, that is a bug too.
+- **New in rc.4**:
+  - **CSV** (Edit › CSV): open a large `.csv`, look at the column colors, align, shrink and sort by a column.
+  - **JSON and YAML** (Edit › JSON/YAML): validate a file with an error, format, convert from one to the other and copy the path at the caret. With your Docker Compose, GitHub Actions or Kubernetes files, above all.
+  - **TODO panel** (View › TODO), the **Git history** (View › Git, History tab) and the **filter** of the folder explorer.
+  - **F1** in a dialog or a panel, **Help › About Edita**, and that panels go back to their place when you reopen Edita.
 
 ### Plugins
 

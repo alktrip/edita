@@ -4,24 +4,20 @@ This is the planned work, not a promise of dates. Priorities change with what te
 
 ## Now: 1.0
 
-- **Release candidates.** [1.0.0-rc.3](https://github.com/alktrip/edita/releases/latest) is out. If testers find nothing serious, 1.0.0 is the same version with a new number; otherwise there will be another candidate.
-- **Plugins on arm64.** Done: the catalog builds every plugin for arm64 too, and Edita on arm64 installs them prebuilt (from the next version on; 1.0.0-rc.3 and earlier build them from the recipe).
+- **Release candidates.** [1.0.0-rc.4](https://github.com/alktrip/edita/releases/latest) is out. If testers find nothing serious, 1.0.0 is the same version with a new number; otherwise there will be another candidate.
+- **Brought forward from 1.1** (in rc.4): panels remember their position and size, F1 opens the manual section of the current dialog or panel, a TODO panel, a filter for Folder as Workspace, a history tab in the Git panel, and tools for CSV, JSON and YAML.
+- **Plugins on arm64.** Done: the catalog builds every plugin for arm64 too, and Edita on arm64 installs them prebuilt (from rc.4 on).
 - **Memory checks in CI.** Done: every test also runs with AddressSanitizer and UndefinedBehaviorSanitizer, and packages are not published if they fail.
 
 ## Next: 1.1
 
 Planned features, none of them in Notepad++ yet:
 
-- Remember the position and size of panels between sessions
-- A history tab (`git log`) in the Git panel
-- A filter for Folder as Workspace
-- Contextual help (F1 opens the manual chapter of the current dialog or panel)
-- A TODO panel for the project (`TODO`, `FIXME`…)
-- Tools for CSV, JSON and YAML: aligned and colored columns, sorting by column, validation, formatting, the path of the current node, conversion between JSON and YAML
 - More interface languages, from the Notepad++ translation files
 - Run a macro on all the files of a folder
 - A fuzzy (typo-tolerant) mode in the Find dialog
 - Multi-line tab bar
+- Accessibility review (screen readers, keyboard only, contrast)
 
 ## Notepad++ parity
 

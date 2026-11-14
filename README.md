@@ -72,14 +72,16 @@ Notepad++ is one of the most loved editors on Windows, and it only runs on Windo
 
 ### Modern development tools
 - **Language servers (LSP):** diagnostics, completion, hover, signature help, go to definition, references, rename, formatting, code actions, workspace symbols and inlay hints
-- **Git:** changes in the margin, revert or stage a single block, a commit panel, blame and status in the file explorer
+- **Git:** changes in the margin, revert or stage a single block, a commit panel with the history of the repository or the file, blame and status in the file explorer
 - **Integrated terminal** with tabs (libvterm)
 - **Project tasks:** Make, CMake, npm/pnpm/yarn/bun, Cargo, Go, pytest, Meson and just, with clickable errors
 - **Command palette**, go to file and go to symbol
 - **Compare** two files, or a file with its saved or Git version
 - **Local history** of every saved version
+- **CSV, JSON and YAML:** colored CSV columns, align and sort by column; validate, format and convert JSON and YAML, and copy the path at the caret
+- **TODO panel** for the document or the whole project, and a **filter** in Folder as Workspace
 - **Secret scanner:** API keys, tokens and passwords are underlined as you type, and a commit that contains one asks first
-- Snippets (VS Code format), regex tester, spell checking (Hunspell), external formatters, breadcrumbs, sticky scroll
+- Snippets (VS Code format), regex tester, spell checking (Hunspell), external formatters, breadcrumbs, sticky scroll; panels remember where you put them, and F1 opens the manual section of the current dialog
 
 </td>
 </tr>
