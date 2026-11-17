@@ -48,7 +48,28 @@ QToolButton* makeFieldButton(QWidget* parent, const char* name)
     button->setToolButtonStyle(Qt::ToolButtonTextOnly);
     button->setCursor(Qt::PointingHandCursor);
     button->setFocusPolicy(Qt::NoFocus);
+    // Sin ancho mínimo por su texto: con la ventana estrecha, el campo se recorta en vez de
+    // ensanchar la ventana (fase 101)
+    button->setMinimumWidth(16);
     return button;
+}
+
+// Un texto en un campo, en una línea y de 80 caracteres como mucho: la barra pide el
+// ancho de sus campos y la ventana, el de la barra (con un texto de un complemento o el
+// nombre de un lenguaje de miles de caracteres, en Wayland la ventana salía negra, fase
+// 101). El texto completo queda en una propiedad, para los getters
+template <typename Field>
+void setFieldButtonText(Field* button, const QString& text)
+{
+    constexpr int kMaxField = 80;
+    const QString line = text.size() > kMaxField || text.contains(QLatin1Char('\n')) ? text.simplified() : text;
+    button->setText(line.size() > kMaxField ? line.left(kMaxField) + QChar(0x2026) : line);
+    button->setProperty("fullText", text);
+}
+
+QString fieldButtonText(const QWidget* button)
+{
+    return button->property("fullText").toString();
 }
 
 } // namespace
@@ -82,6 +103,7 @@ DocStatusBar::DocStatusBar(QWidget* parent)
     addPermanentWidget(_eol);
     addPermanentWidget(_encoding);
     addPermanentWidget(_insertMode);
+    _length->setMinimumWidth(16);
     _insertMode->setMinimumWidth(_insertMode->fontMetrics().horizontalAdvance(QStringLiteral("SOB ")) + 12);
     _language->setToolTip(tr("Language (click to change it)"));
     _position->setToolTip(tr("Click to go to a line"));
@@ -141,19 +163,19 @@ void DocStatusBar::updateDocument(const Buffer* buffer)
         return;
     // Como N++: la descripción larga del lenguaje ("C++ source file")
     if (buffer->language() == LangType::User && !buffer->userLanguage().isEmpty())
-        _language->setText(tr("User Defined language - %1").arg(buffer->userLanguage()));
+        setFieldButtonText(_language, tr("User Defined language - %1").arg(buffer->userLanguage()));
     else if (buffer->language() == LangType::External && !buffer->userLanguage().isEmpty())
-        _language->setText(buffer->userLanguage()); // getLangDesc: el nombre del lexer
+        setFieldButtonText(_language, buffer->userLanguage()); // getLangDesc: el nombre del lexer
     else
-        _language->setText(QCoreApplication::translate("LangType", languageInfo(buffer->language()).longName));
-    _eol->setText(QString::fromLatin1(eolDisplayName(buffer->eol())));
-    _encoding->setText(QString::fromStdString(encodingDisplayName(buffer->encoding())));
+        setFieldButtonText(_language, QCoreApplication::translate("LangType", languageInfo(buffer->language()).longName));
+    setFieldButtonText(_eol, QString::fromLatin1(eolDisplayName(buffer->eol())));
+    setFieldButtonText(_encoding, QString::fromStdString(encodingDisplayName(buffer->encoding())));
 }
 
 void DocStatusBar::updateCaret(const EditorView* editor)
 {
     const sptr_t length = editor->sci(SCI_GETLENGTH);
-    _length->setText(tr("length: %1    lines: %2").arg(grouped(length), grouped(editor->sci(SCI_GETLINECOUNT))));
+    setFieldButtonText(_length, tr("length: %1    lines: %2").arg(grouped(length), grouped(editor->sci(SCI_GETLINECOUNT))));
 
     const sptr_t pos = editor->sci(SCI_GETCURRENTPOS);
     const sptr_t line = editor->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(pos));
@@ -182,9 +204,9 @@ void DocStatusBar::updateCaret(const EditorView* editor)
         text += tr("Sel: %1 | %2").arg(grouped(chars), grouped(selections));
     else
         text += tr("Sel %1 : %2").arg(grouped(selections), grouped(chars));
-    _position->setText(text);
+    setFieldButtonText(_position, text);
 
-    _insertMode->setText(editor->sci(SCI_GETOVERTYPE) ? tr("OVR") : tr("INS"));
+    setFieldButtonText(_insertMode, editor->sci(SCI_GETOVERTYPE) ? tr("OVR") : tr("INS"));
     const sptr_t indent = editor->sci(SCI_GETINDENT);
     updateIndentation(editor->sci(SCI_GETUSETABS) != 0, static_cast<int>(indent > 0 ? indent : editor->sci(SCI_GETTABWIDTH)));
 }
@@ -192,21 +214,21 @@ void DocStatusBar::updateCaret(const EditorView* editor)
 void DocStatusBar::setFieldText(int field, const QString& text)
 {
     switch (field) {
-    case 0: _language->setText(text); break;
-    case 1: _length->setText(text); break;
-    case 2: _position->setText(text); break;
-    case 3: _eol->setText(text); break;
-    case 4: _encoding->setText(text); break;
-    case 5: _insertMode->setText(text); break;
+    case 0: setFieldButtonText(_language, text); break;
+    case 1: setFieldButtonText(_length, text); break;
+    case 2: setFieldButtonText(_position, text); break;
+    case 3: setFieldButtonText(_eol, text); break;
+    case 4: setFieldButtonText(_encoding, text); break;
+    case 5: setFieldButtonText(_insertMode, text); break;
     default: break;
     }
 }
 
-QString DocStatusBar::languageText() const { return _language->text(); }
-QString DocStatusBar::lengthText() const { return _length->text(); }
-QString DocStatusBar::positionText() const { return _position->text(); }
-QString DocStatusBar::eolText() const { return _eol->text(); }
-QString DocStatusBar::encodingText() const { return _encoding->text(); }
-QString DocStatusBar::insertModeText() const { return _insertMode->text(); }
+QString DocStatusBar::languageText() const { return fieldButtonText(_language); }
+QString DocStatusBar::lengthText() const { return fieldButtonText(_length); }
+QString DocStatusBar::positionText() const { return fieldButtonText(_position); }
+QString DocStatusBar::eolText() const { return fieldButtonText(_eol); }
+QString DocStatusBar::encodingText() const { return fieldButtonText(_encoding); }
+QString DocStatusBar::insertModeText() const { return fieldButtonText(_insertMode); }
 
 } // namespace edita

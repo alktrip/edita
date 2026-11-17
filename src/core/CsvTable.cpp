@@ -292,7 +292,7 @@ QString sortByColumn(const QString& text, QChar delimiter, int column, bool desc
         if (va.isEmpty() || vb.isEmpty())
             return va.isEmpty() && !vb.isEmpty();
         if (numeric)
-            return *numberOf(cell(a)) < *numberOf(cell(b));
+            return numberOf(cell(a)).value_or(0) < numberOf(cell(b)).value_or(0); // todos son números: ya se miró
         return QString::compare(va, vb, Qt::CaseInsensitive) < 0;
     };
     std::stable_sort(begin, rows.end(), [&](const Record& a, const Record& b) { return descending ? less(b, a) : less(a, b); });

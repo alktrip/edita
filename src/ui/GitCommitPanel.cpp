@@ -274,13 +274,21 @@ QStringList GitCommitPanel::selectedPaths(bool staged) const
     return paths;
 }
 
+void GitCommitPanel::setCommitting(bool committing)
+{
+    _committing = committing;
+    _commit->setText(committing ? tr("Committing…") : tr("&Commit"));
+    _message->setReadOnly(committing);
+    updateButtons();
+}
+
 void GitCommitPanel::updateButtons()
 {
     const bool repo = !_top.isEmpty();
     _stage->setEnabled(repo && !selectedPaths(false).isEmpty());
     _unstage->setEnabled(repo && !selectedPaths(true).isEmpty());
     _stageAll->setEnabled(repo && _changesGroup->childCount() > 0);
-    _commit->setEnabled(repo && !_message->toPlainText().trimmed().isEmpty()
+    _commit->setEnabled(repo && !_committing && !_message->toPlainText().trimmed().isEmpty()
                         && (_stagedGroup->childCount() > 0 || _amend->isChecked()));
 }
 

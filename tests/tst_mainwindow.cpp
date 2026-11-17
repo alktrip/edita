@@ -16,6 +16,8 @@
 #include "ui/MainWindow.h"
 
 #include <QAction>
+#include <QActionGroup>
+#include <QMenu>
 #include <QDir>
 #include <QFile>
 #include <QMenuBar>
@@ -697,6 +699,19 @@ private slots:
         QCOMPARE(w.editor()->text(), "hola mundo"s);
         QTest::keyClick(w.editor(), Qt::Key_Z, Qt::ControlModifier);
         QVERIFY(w.editor()->text() != "hola mundo");
+    }
+
+    // Fase 101: el menú Ver › Tema se rehace al abrirse; antes dejaba un grupo de acciones
+    // de más cada vez
+    void themeMenuDoesNotAccumulateGroups()
+    {
+        Window w;
+        auto* menu = w.window.findChild<QMenu*>(QStringLiteral("menuTheme"));
+        QVERIFY(menu);
+        for (int i = 0; i < 5; ++i)
+            emit menu->aboutToShow();
+        QCOMPARE(menu->findChildren<QActionGroup*>(Qt::FindDirectChildrenOnly).size(), qsizetype{1});
+        QVERIFY(!menu->actions().isEmpty());
     }
 };
 

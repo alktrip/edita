@@ -1375,7 +1375,7 @@ int replaceChangedLines(ScintillaEditBase& view, std::string_view text)
     const std::vector<std::string_view> oldLines = linesWithEnds(current);
     const std::vector<std::string_view> newLines = linesWithEnds(text);
     bool complete = true;
-    std::vector<LineChange> changes = diffLines(oldLines, newLines, 20000, &complete);
+    std::vector<LineChange> changes = diffLines(oldLines, newLines, kMaxDiffEdits, &complete);
     view.send(SCI_BEGINUNDOACTION);
     if (!complete) { // demasiado distintos: todo de una vez
         view.send(SCI_SETTARGETRANGE, 0, length);

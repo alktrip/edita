@@ -31,6 +31,10 @@ struct LineChange
 // fin de línea no tiene una línea vacía de más
 std::vector<std::string_view> splitLines(std::string_view text);
 
+// El tope de maxEdits: la memoria del camino crece con el cuadrado de las ediciones
+// (con 5000, unos 100 MB; con 20000 eran 1.5 GB). Un maxEdits mayor se baja a este
+constexpr int kMaxDiffEdits = 5000;
+
 // Si hay más de maxEdits líneas distintas, lo que queda entre lo común del principio y
 // del final se da como un solo cambio, y *complete queda en false
 std::vector<LineChange> diffLines(const std::vector<std::string_view>& oldLines, const std::vector<std::string_view>& newLines,

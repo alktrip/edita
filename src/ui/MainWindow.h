@@ -68,6 +68,7 @@
 class QActionGroup;
 class QDate;
 class QNetworkAccessManager;
+class QProcess;
 class QDockWidget;
 class QJsonObject;
 class QFileSystemWatcher;
@@ -621,8 +622,11 @@ private:
     void connectGitCommit();
     // El historial del panel Git (fase 98): los commits y el diff de uno en un documento
     void refreshGitHistory();
+    void stopGitHistory();
     void openCommitDiff(const QString& hash, const QStringList& paths);
     QString _gitHistoryTop; // el repositorio del historial que se ve
+    QProcess* _gitHistoryProcess = nullptr; // git log del panel (sin esperar)
+    QProcess* _gitCommitProcess = nullptr; // el commit en curso (sin esperar: los hooks tardan)
     void showGitHunkMenu(int line, const QPoint& globalPos);
     void reloadGitDecorations();
     void compareChanged();

@@ -27,6 +27,9 @@ TaskOutputPanel::TaskOutputPanel(QWidget* parent)
     auto* top = new QHBoxLayout;
     _status = new QLabel(tr("Run › Run Task… lists the tasks of the project."), this);
     _status->setObjectName(QStringLiteral("taskStatus"));
+    // El nombre de la tarea puede ser largo: se recorta en vez de ensanchar la ventana (fase 101)
+    _status->setMinimumWidth(16);
+    _status->setTextFormat(Qt::PlainText);
     top->addWidget(_status, 1);
     auto button = [this, top](const QString& text, const char* name) {
         auto* b = new QToolButton(this);
@@ -63,7 +66,9 @@ void TaskOutputPanel::begin(const tasks::Task& task)
     _output->clear();
     _problems.clear();
     _output->appendPlainText(QStringLiteral("$ %1    (%2)").arg(task.command, task.cwd));
-    _status->setText(tr("Running: %1").arg(task.label));
+    const QString label = task.label.simplified();
+    _status->setText(tr("Running: %1").arg(label.size() > 120 ? label.left(120) + QChar(0x2026) : label));
+    _status->setToolTip(task.label.left(2000));
     setRunning(true);
     _rerun->setEnabled(true);
 }

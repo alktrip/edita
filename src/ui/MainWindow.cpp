@@ -976,6 +976,12 @@ MainWindow::~MainWindow()
         _fileJob->cancel();
         _fileJob->wait();
     }
+    stopGitHistory();
+    // Un commit a medias (un hook que tarda): que termine, no matarlo con la ventana
+    if (_gitCommitProcess) {
+        _gitCommitProcess->disconnect(this);
+        _gitCommitProcess->waitForFinished(60000);
+    }
     stopPaletteFileScan();
     stopTodoScan();
     _lsp->shutdownAll(); // shutdown y exit a cada servidor
@@ -1650,6 +1656,7 @@ void MainWindow::createMenus()
     });
     _showAllAction->setCheckable(true);
     QMenu* themeMenu = view->addMenu(tr("&Theme"));
+    themeMenu->setObjectName(QStringLiteral("menuTheme"));
     connect(themeMenu, &QMenu::aboutToShow, this, [this, themeMenu] { populateThemeMenu(themeMenu); });
     populateThemeMenu(themeMenu);
     // Zoom (IDM_VIEW_ZOOMIN/ZOOMOUT/ZOOMRESTORE)
@@ -2816,14 +2823,47 @@ void MainWindow::refreshGitHistory()
         }
         args << QStringLiteral("--follow") << QStringLiteral("--") << file;
     }
-    const GitResult r = runGit(top, args);
-    const QList<GitCommitPanel::Commit> commits = r.code == 0 ? GitCommitPanel::parseLog(r.out) : QList<GitCommitPanel::Commit>();
-    QString note;
-    if (r.code != 0 && !r.err.contains(QLatin1String("does not have any commits")))
-        note = r.err.trimmed();
-    else if (commits.size() >= kMaxCommits)
-        note = tr("The last %1 commits.").arg(kMaxCommits);
-    _gitCommit->setHistory(commits, note);
+    // Sin esperar: con --follow, en un repositorio grande, tarda segundos, y se pide al cambiar
+    // de documento (fase 101). El de antes, si sigue, ya no sirve
+    stopGitHistory();
+    auto* git = new QProcess(this);
+    _gitHistoryProcess = git;
+    git->setWorkingDirectory(top);
+    connect(git, &QProcess::finished, this, [this, git](int exitCode, QProcess::ExitStatus status) {
+        git->deleteLater();
+        if (_gitHistoryProcess != git)
+            return;
+        _gitHistoryProcess = nullptr;
+        const int code = status == QProcess::NormalExit ? exitCode : -1;
+        const QString err = QString::fromUtf8(git->readAllStandardError()).trimmed();
+        const QList<GitCommitPanel::Commit> commits = code == 0 ? GitCommitPanel::parseLog(git->readAllStandardOutput())
+                                                                : QList<GitCommitPanel::Commit>();
+        QString note;
+        if (code != 0 && !err.contains(QLatin1String("does not have any commits")))
+            note = err;
+        else if (commits.size() >= kMaxCommits)
+            note = tr("The last %1 commits.").arg(kMaxCommits);
+        _gitCommit->setHistory(commits, note);
+    });
+    connect(git, &QProcess::errorOccurred, this, [this, git](QProcess::ProcessError error) {
+        if (error != QProcess::FailedToStart || _gitHistoryProcess != git)
+            return;
+        _gitHistoryProcess = nullptr;
+        git->deleteLater();
+        _gitCommit->setHistory({}, QCoreApplication::translate("edita::MainWindow", "Git is not installed."));
+    });
+    git->start(QStringLiteral("git"), args);
+}
+
+void MainWindow::stopGitHistory()
+{
+    QProcess* git = std::exchange(_gitHistoryProcess, nullptr);
+    if (!git)
+        return;
+    git->disconnect(this);
+    git->kill();
+    git->waitForFinished(1000);
+    git->deleteLater();
 }
 
 void MainWindow::openCommitDiff(const QString& hash, const QStringList& paths)
@@ -3047,15 +3087,39 @@ void MainWindow::connectGitCommit()
         QStringList args{QStringLiteral("commit"), QStringLiteral("-q"), QStringLiteral("-F"), QStringLiteral("-")};
         if (amend)
             args << QStringLiteral("--amend");
-        const GitResult r = runGit(top, args, message.toUtf8());
-        if (r.code != 0) {
-            _prompter->warn(this, tr("Commit"), r.err.isEmpty() ? QString::fromUtf8(r.out) : r.err);
+        // Sin esperar ni límite de tiempo: los hooks (pre-commit con linters o pruebas) o la
+        // frase de paso de una firma GPG tardan lo que tardan; antes se mataba a los 30 s y
+        // la ventana se quedaba parada (fase 101)
+        if (_gitCommitProcess)
             return;
-        }
-        _gitCommit->clearMessage();
-        const GitResult head = runGit(top, {QStringLiteral("log"), QStringLiteral("-1"), QStringLiteral("--format=%h %s")});
-        statusBar()->showMessage(tr("Committed %1").arg(QString::fromUtf8(head.out).trimmed()), 8000);
-        reloadGitDecorations();
+        auto* git = new QProcess(this);
+        _gitCommitProcess = git;
+        git->setWorkingDirectory(top);
+        _gitCommit->setCommitting(true);
+        auto done = [this, git, top](int code, const QString& error) {
+            git->deleteLater();
+            _gitCommitProcess = nullptr;
+            _gitCommit->setCommitting(false);
+            if (code != 0) {
+                _prompter->warn(this, tr("Commit"), error);
+                return;
+            }
+            _gitCommit->clearMessage();
+            const GitResult head = runGit(top, {QStringLiteral("log"), QStringLiteral("-1"), QStringLiteral("--format=%h %s")});
+            statusBar()->showMessage(tr("Committed %1").arg(QString::fromUtf8(head.out).trimmed()), 8000);
+            reloadGitDecorations();
+        };
+        connect(git, &QProcess::finished, this, [git, done](int exitCode, QProcess::ExitStatus status) {
+            const QString err = QString::fromUtf8(git->readAllStandardError()).trimmed();
+            done(status == QProcess::NormalExit ? exitCode : -1, err.isEmpty() ? QString::fromUtf8(git->readAllStandardOutput()) : err);
+        });
+        connect(git, &QProcess::errorOccurred, this, [done](QProcess::ProcessError error) {
+            if (error == QProcess::FailedToStart)
+                done(-1, QCoreApplication::translate("edita::MainWindow", "Git is not installed."));
+        });
+        git->start(QStringLiteral("git"), args);
+        git->write(message.toUtf8());
+        git->closeWriteChannel();
     });
 }
 
@@ -4099,6 +4163,8 @@ void MainWindow::populateLanguageMenu()
 void MainWindow::populateThemeMenu(QMenu* menu)
 {
     menu->clear();
+    // clear() borra las acciones pero no el grupo: uno por vez que se abría el menú (fase 101)
+    qDeleteAll(menu->findChildren<QActionGroup*>(Qt::FindDirectChildrenOnly));
     auto* group = new QActionGroup(menu);
     const QString active = _syntax.activeThemePath();
     for (const SyntaxManager::Theme& theme : _syntax.themes()) {
@@ -8626,7 +8692,26 @@ void MainWindow::refreshTodo()
             return;
         }
         const QString path = buf->isUntitled() ? QString() : buf->filePath();
-        _todoPanel->setItems(todo::scanText(QString::fromStdString(_documents.text(id)), path), QString());
+        QString text = QString::fromStdString(_documents.text(id));
+        // Uno grande, en otro hilo: en uno de 60 MB, cada pausa al escribir paraba la ventana
+        // casi medio segundo (fase 101)
+        constexpr qsizetype kSyncScan = 4 * 1024 * 1024;
+        if (text.size() <= kSyncScan) {
+            _todoPanel->setItems(todo::scanText(text, path), QString());
+            return;
+        }
+        _todoPanel->setBusy(true);
+        _todoScanCancel = std::make_shared<std::atomic_bool>(false);
+        auto cancel = _todoScanCancel;
+        QPointer<MainWindow> self(this);
+        _todoScan = QThread::create([self, cancel, path, text = std::move(text)] {
+            std::vector<todo::Item> items = todo::scanText(text, path);
+            QMetaObject::invokeMethod(self, [self, cancel, items = std::move(items)] {
+                if (self && !cancel->load() && self->_todoPanel)
+                    self->_todoPanel->setItems(items, QString());
+            }, Qt::QueuedConnection);
+        });
+        _todoScan->start();
         return;
     }
     // Las carpetas de trabajo, en otro hilo; los documentos abiertos, con su texto sin guardar

@@ -13,6 +13,8 @@
 #include "ui/MainWindow.h"
 #include "ui/QuickPicker.h"
 #include "ui/RainbowBrackets.h"
+#include "ui/TaskOutputPanel.h"
+#include "core/Tasks.h"
 
 #include <QDir>
 #include <QFile>
@@ -67,6 +69,31 @@ private slots:
                  QStringLiteral("Ubuntu,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1,,0,0"));
         QCOMPARE(desktopfonts::kdeglobalsValue(QStringLiteral("fixed"), {file}).section(QLatin1Char(','), 0, 0),
                  QStringLiteral("Ubuntu Mono"));
+    }
+
+    // Fase 101: un texto largo en la barra de estado (un complemento con NPPM_SETSTATUSBAR,
+    // el nombre de un lenguaje definido por el usuario) o en el estado de una tarea no
+    // estira la ventana (lo mismo que las migas de pan en la rc.5: en Wayland, negra)
+    void longStatusTextsDoNotWidenTheWindow()
+    {
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        w.resize(1000, 700);
+        w.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w));
+        const QString huge(3000, QLatin1Char('x'));
+        for (int field = 0; field <= 5; ++field)
+            w.docStatusBar()->setFieldText(field, huge);
+        tasks::Task task;
+        task.label = huge;
+        task.command = QStringLiteral("true");
+        w.taskOutputPanel()->begin(task);
+        QTest::qWait(100); // las disposiciones se recalculan en el bucle de eventos
+        QVERIFY2(w.minimumSizeHint().width() < 1500, qPrintable(QString::number(w.minimumSizeHint().width())));
+        QVERIFY2(w.docStatusBar()->minimumSizeHint().width() < 1500, qPrintable(QString::number(w.docStatusBar()->minimumSizeHint().width())));
+        QVERIFY(w.taskOutputPanel()->minimumSizeHint().width() < 1500);
+        // El texto completo sigue a mano, en la descripción emergente
+        QCOMPARE(w.docStatusBar()->languageText(), huge);
     }
 
     void statusBarFieldsOpenPickers()

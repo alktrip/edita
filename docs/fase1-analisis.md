@@ -374,6 +374,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 98 — Historial de Git | N++ sin Git integrado; pestaña Historial: `git log` (repositorio o `--follow` del archivo), archivos por commit con renombrados, diff de solo lectura; `tst_githistory` | ✅ [fase98.md](fase98.md) |
 | 99 — Herramientas de CSV | N++ sin nada para CSV; `core/CsvTable` (separador, campos RFC 4180, alinear, compactar, ordenar con encabezado), `ui/CsvColumns` (un color por columna, solo lo visible), Editar › CSV; `tst_csv` | ✅ [fase99.md](fase99.md) |
 | 100 — JSON y YAML | N++ solo colorea (JSON Viewer: solo JSON); `core/StructuredData` (analizadores propios en orden, errores con línea y columna, formatear, `toYaml`, `pathAt`), Editar › JSON/YAML; `tst_structured` | ✅ [fase100.md](fase100.md) |
+| 101 — Revisión de errores | Barra de estado y panel de tareas acotados (no ensanchan la ventana), `kMaxDiffEdits`, commit e historial de Git sin esperar, TODO en otro hilo en documentos grandes, cadenas de enlaces al guardar, grupos del menú de temas | ✅ [fase101.md](fase101.md) |
 
 ---
 

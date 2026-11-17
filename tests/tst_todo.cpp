@@ -146,6 +146,31 @@ private slots:
         QCOMPARE(w.editor()->sci(SCI_LINEFROMPOSITION, static_cast<uptr_t>(w.editor()->sci(SCI_GETCURRENTPOS))), sptr_t{2});
     }
 
+    // Fase 101: un documento grande se busca en otro hilo (la ventana no se para al escribir)
+    void largeDocumentIsScannedInTheBackground()
+    {
+        const QString path = _tmp.filePath(QStringLiteral("doc/grande.py"));
+        QByteArray data;
+        data.reserve(6 * 1024 * 1024);
+        while (data.size() < 5 * 1024 * 1024)
+            data += "valor = calcular(x, y)  # un comentario normal\n";
+        data += "# TODO: al final\n";
+        writeFile(path, data);
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        QVERIFY(w.openFile(path) != kInvalidBuffer);
+        w.findChild<QAction*>(QStringLiteral("actionTodo"))->trigger();
+        auto* tree = w.findChild<QTreeWidget*>(QStringLiteral("todoTree"));
+        QVERIFY(tree);
+        QTRY_COMPARE(treeText(tree).size(), 1);
+        QVERIFY(treeText(tree).front().endsWith(QStringLiteral("TODO al final")));
+        // Al escribir, otra vez (y la búsqueda anterior se cancela sin colgarse)
+        w.editor()->sci(SCI_DOCUMENTEND);
+        w.editor()->sci(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("# FIXME: otra\n"));
+        w.editor()->sci(SCI_REPLACESEL, 0, reinterpret_cast<sptr_t>("# NOTE: y otra\n"));
+        QTRY_COMPARE(treeText(tree).size(), 3);
+    }
+
     void workspaceScopeScansTheFolders()
     {
         const QString root = _tmp.filePath(QStringLiteral("proyecto"));

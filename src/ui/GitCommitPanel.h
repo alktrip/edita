@@ -69,6 +69,9 @@ public:
     void setCommitFiles(const QString& hash, const QList<FileChange>& files);
     bool historyCurrentFileOnly() const;
     bool isHistoryVisible() const;
+    // Mientras corre `git commit`: el botón, apagado y con «Committing…»
+    void setCommitting(bool committing);
+    bool isCommitting() const { return _committing; }
 
 signals:
     void stageRequested(const QStringList& paths);
@@ -100,6 +103,7 @@ private:
     QPlainTextEdit* _message = nullptr;
     QCheckBox* _amend = nullptr;
     QPushButton* _commit = nullptr;
+    bool _committing = false;
     QTabWidget* _tabs = nullptr;
     QCheckBox* _historyCurrentFile = nullptr;
     QTreeWidget* _history = nullptr;

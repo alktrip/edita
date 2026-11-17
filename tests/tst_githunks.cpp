@@ -14,6 +14,7 @@
 
 #include <QAction>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QDockWidget>
 #include <QFile>
 #include <QLabel>
@@ -286,11 +287,53 @@ private slots:
         QTRY_COMPARE(tree->topLevelItem(0)->childCount(), 1);
         QVERIFY(commit->isEnabled());
         commit->click();
+        QTRY_VERIFY(!panel->isCommitting()); // el commit no se espera (fase 101)
         QVERIFY(_prompter->warnings.isEmpty());
         QCOMPARE(git(dir, {QStringLiteral("log"), QStringLiteral("-1"), QStringLiteral("--format=%s")}).trimmed(), QByteArray("Segundo commit"));
         QVERIFY(panel->message()->toPlainText().isEmpty());
         QCOMPARE(tree->topLevelItem(0)->childCount(), 0);
         QCOMPARE(tree->topLevelItem(1)->childCount(), 1);
+    }
+
+    // Fase 101: un hook pre-commit lento no para la ventana ni se mata (antes, a los 30 s)
+    void slowHookDoesNotBlockTheWindow()
+    {
+        if (QStandardPaths::findExecutable(QStringLiteral("git")).isEmpty())
+            QSKIP("sin git");
+        const QString dir = repo(QStringLiteral("hook"));
+        writeFile(dir + QStringLiteral("/.git/hooks/pre-commit"), "#!/bin/sh\nsleep 1\n");
+        QFile::setPermissions(dir + QStringLiteral("/.git/hooks/pre-commit"), QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+        writeFile(dir + QStringLiteral("/b.txt"), "nuevo\n");
+        git(dir, {QStringLiteral("add"), QStringLiteral("b.txt")});
+        auto w = window();
+        w->openFile(dir + QStringLiteral("/a.txt"));
+        w->findChild<QAction*>(QStringLiteral("actionGitCommit"))->trigger();
+        GitCommitPanel* panel = w->gitCommitPanel();
+        QTRY_COMPARE(panel->tree()->topLevelItem(0)->childCount(), 1);
+        panel->message()->setPlainText(QStringLiteral("Con hook"));
+        auto* commit = panel->findChild<QPushButton*>(QStringLiteral("gitCommit"));
+        QElapsedTimer clock;
+        clock.start();
+        commit->click();
+        QVERIFY(clock.elapsed() < 500); // vuelve enseguida
+        QVERIFY(panel->isCommitting());
+        QVERIFY(!commit->isEnabled());
+        commit->click(); // apagado: no lanza otro
+        QTRY_VERIFY_WITH_TIMEOUT(!panel->isCommitting(), 15000);
+        QVERIFY(_prompter->warnings.isEmpty());
+        QCOMPARE(git(dir, {QStringLiteral("log"), QStringLiteral("-1"), QStringLiteral("--format=%s")}).trimmed(), QByteArray("Con hook"));
+        QVERIFY(panel->message()->toPlainText().isEmpty());
+        // Un hook que falla: el aviso con lo que dijo
+        writeFile(dir + QStringLiteral("/.git/hooks/pre-commit"), "#!/bin/sh\necho 'lint: 3 errores' >&2\nexit 1\n");
+        writeFile(dir + QStringLiteral("/c.txt"), "otro\n");
+        git(dir, {QStringLiteral("add"), QStringLiteral("c.txt")});
+        w->refreshGitCommitPanel();
+        panel->message()->setPlainText(QStringLiteral("Falla"));
+        QTRY_VERIFY(commit->isEnabled());
+        commit->click();
+        QTRY_COMPARE(_prompter->warnings.size(), 1);
+        QVERIFY(_prompter->warnings.last().contains(QStringLiteral("lint: 3 errores")));
+        QCOMPARE(panel->message()->toPlainText(), QStringLiteral("Falla")); // el mensaje se queda
     }
 
     void outsideARepository()

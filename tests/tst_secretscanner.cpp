@@ -326,6 +326,7 @@ private slots:
         // Sí: se confirma igual
         _prompter->confirmations.enqueue(true);
         commit->click();
+        QTRY_VERIFY(!panel->isCommitting()); // el commit no se espera (fase 101)
         QCOMPARE(git(dir, {QStringLiteral("rev-list"), QStringLiteral("--count"), QStringLiteral("HEAD")}).trimmed(), QByteArray("2"));
         // Sin secretos: ni pregunta
         writeFile(dir + QStringLiteral("/notes.txt"), "nada que ver\n");
@@ -334,6 +335,7 @@ private slots:
         panel->message()->setPlainText(QStringLiteral("Sin secretos"));
         const int asked = static_cast<int>(_prompter->asked.size());
         commit->click();
+        QTRY_VERIFY(!panel->isCommitting());
         QCOMPARE(static_cast<int>(_prompter->asked.size()), asked);
         QCOMPARE(git(dir, {QStringLiteral("rev-list"), QStringLiteral("--count"), QStringLiteral("HEAD")}).trimmed(), QByteArray("3"));
     }

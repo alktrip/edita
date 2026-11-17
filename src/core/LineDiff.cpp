@@ -37,7 +37,7 @@ bool myers(const std::vector<int>& a, const std::vector<int>& b, int maxEdits, s
 {
     const int n = static_cast<int>(a.size());
     const int m = static_cast<int>(b.size());
-    const int max = std::min(n + m, maxEdits);
+    const int max = std::min({n + m, maxEdits, kMaxDiffEdits});
     const int offset = max + 1;
     std::vector<int> v(static_cast<size_t>(2 * max + 3), 0);
     // Antes de cada paso d, los valores de V para k en [-d, d] (en k + d): lo que hace

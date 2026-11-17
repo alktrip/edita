@@ -132,7 +132,13 @@ SaveResult saveTextFile(const QString& path, std::string_view utf8, const TextEn
 
     // Escribir en el destino del enlace para no sustituir el enlace por un archivo
     const QFileInfo info(path);
-    const QString target = info.isSymLink() ? info.symLinkTarget() : path;
+    // (hasta el final de la cadena: symLinkTarget da solo el primer destino, fase 101; un
+    // enlace roto, a donde apunta)
+    QString target = path;
+    if (info.isSymLink()) {
+        const QString canonical = info.canonicalFilePath();
+        target = canonical.isEmpty() ? info.symLinkTarget() : canonical;
+    }
     if (QFileInfo(target).isDir())
         return saveError(FileError::IsDirectory, QCoreApplication::translate("TextFile", "It is a directory: %1").arg(target));
 

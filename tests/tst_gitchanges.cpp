@@ -91,6 +91,18 @@ private slots:
         const auto changes = diffLines(splitLines("x\n1\n2\n3\n4\ny\n"), splitLines("x\na\nb\nc\nd\ny\n"), 2, &complete);
         QVERIFY(!complete);
         QCOMPARE(changes, (std::vector<LineChange>{{Kind::Modified, 1, 4, 1, 4}}));
+
+        // Un maxEdits enorme se baja al tope: con todas las líneas distintas (más que el
+        // tope), un solo cambio en vez de gigas de memoria (fase 101)
+        std::string before, after;
+        for (int i = 0; i < kMaxDiffEdits + 10; ++i) {
+            before += "x" + std::to_string(i) + "\n";
+            after += "  x" + std::to_string(i) + "\n";
+        }
+        complete = true;
+        const auto big = diffLines(splitLines(before), splitLines(after), 1000000, &complete);
+        QVERIFY(!complete);
+        QCOMPARE(big.size(), size_t{1});
     }
 
     void marksFollowTheRepository()

@@ -310,6 +310,29 @@ private slots:
         QCOMPARE(readAll(target), QByteArray("después"));
     }
 
+    // Fase 101: una cadena de enlaces (a → b → real), hasta el final; antes se guardaba en b
+    // (el primer destino) y el enlace b pasaba a ser un archivo. Y uno roto: crea el destino
+    void saveWritesThroughSymlinkChain()
+    {
+        const QString target = _tmp.filePath("cadena-real.txt");
+        const QString middle = _tmp.filePath("cadena-b.txt");
+        const QString link = _tmp.filePath("cadena-a.txt");
+        QVERIFY(saveTextFile(target, "antes", TextEncoding::utf8()).ok());
+        QVERIFY(QFile::link(target, middle));
+        QVERIFY(QFile::link(middle, link));
+        QVERIFY(saveTextFile(link, "después", TextEncoding::utf8()).ok());
+        QVERIFY(QFileInfo(link).isSymLink());
+        QVERIFY(QFileInfo(middle).isSymLink());
+        QCOMPARE(readAll(target), QByteArray("después"));
+
+        const QString missing = _tmp.filePath("roto-destino.txt");
+        const QString broken = _tmp.filePath("roto.txt");
+        QVERIFY(QFile::link(missing, broken));
+        QVERIFY(saveTextFile(broken, "nuevo", TextEncoding::utf8()).ok());
+        QVERIFY(QFileInfo(broken).isSymLink());
+        QCOMPARE(readAll(missing), QByteArray("nuevo"));
+    }
+
     void saveEmptyDocument()
     {
         const QString path = _tmp.filePath("vacio.txt");
