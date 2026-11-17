@@ -111,6 +111,35 @@ private slots:
         QVERIFY(crumbs->isHidden());
     }
 
+    // Un reporte: un XML con una etiqueta de miles de caracteres en una sola línea. La ruta de
+    // navegación la mostraba entera, pedía ese ancho y la ventana (y Wayland) se estiraba hasta
+    // 22 000 píxeles: Edita se veía en negro
+    void longBreadcrumbDoesNotWidenTheWindow()
+    {
+        const QString path = _tmp.filePath(QStringLiteral("largo.xml"));
+        const QByteArray tag = "<registro atributos=\"" + QByteArray(3000, 'x') + "\">";
+        writeFile(path, "<raiz>\n" + tag + "\n  <hijo/>\n</registro>\n</raiz>\n");
+        MainWindow w;
+        w.setPrompter(std::make_unique<FakePrompter>());
+        Preferences p = w.preferences(); // breadcrumbsFollowTheCaret la deja apagada
+        p.breadcrumbs = true;
+        w.setPreferences(p);
+        w.resize(1200, 800);
+        w.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&w));
+        QVERIFY(w.openFile(path) != kInvalidBuffer);
+        Breadcrumbs* crumbs = w.breadcrumbsOfCurrentView();
+        // Las etiquetas del XML (su analizador de funciones), en cuanto están
+        QTRY_VERIFY((crumbs->setCaretLine(2), crumbs->segments().last().startsWith(QLatin1String("registro"))));
+        const QStringList segments = crumbs->segments();
+        // El tramo, recortado (el texto completo, en la descripción emergente)
+        QVERIFY(segments.last().size() <= 61);
+        QVERIFY(segments.last().endsWith(QChar(0x2026)));
+        // Y la ventana no se estira por la barra
+        QVERIFY2(w.minimumSizeHint().width() < 1500, qPrintable(QString::number(w.minimumSizeHint().width())));
+        QVERIFY(w.width() <= 1200);
+    }
+
     // Fase 77: los símbolos se guardan por documento (analizar uno grande tarda), pero se
     // rehacen si cambia el texto, aunque lo cambie otra orden con el documento en segundo plano
     void breadcrumbsSymbolsFollowChanges()

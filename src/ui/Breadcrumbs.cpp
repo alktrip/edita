@@ -21,6 +21,7 @@ namespace {
 
 constexpr int kMaxFolders = 3;   // carpetas que se ven (las de más arriba, «…»)
 constexpr int kMaxFiles = 300;   // archivos en la lista de una carpeta
+constexpr int kMaxSegment = 60;  // caracteres de un tramo (el texto completo, en la descripción)
 
 QToolButton* segment(QWidget* parent, const QString& text, const QIcon& icon = QIcon())
 {
@@ -28,7 +29,12 @@ QToolButton* segment(QWidget* parent, const QString& text, const QIcon& icon = Q
     button->setAutoRaise(true);
     button->setFocusPolicy(Qt::NoFocus);
     button->setCursor(Qt::PointingHandCursor);
-    button->setText(text);
+    // Un tramo puede ser una línea entera del documento (una etiqueta XML de miles de
+    // caracteres): recortado, para que la barra no pida ese ancho a la ventana
+    const QString line = text.simplified();
+    button->setText(line.size() > kMaxSegment ? line.left(kMaxSegment) + QChar(0x2026) : line);
+    if (line.size() > kMaxSegment)
+        button->setToolTip(line.left(2000));
     button->setProperty("breadcrumb", true);
     if (!icon.isNull()) {
         button->setIcon(icon);
@@ -52,6 +58,9 @@ Breadcrumbs::Breadcrumbs(QWidget* parent)
     setStyleSheet(QStringLiteral("QToolButton[breadcrumb=\"true\"] { padding: 1px 3px; border: none; } "
                                  "QToolButton[breadcrumb=\"true\"]:hover { text-decoration: underline; }"));
     setMaximumHeight(icon + 8);
+    // Nunca impone su ancho: si los tramos no caben, se recorta (antes, una ruta muy larga
+    // ensanchaba la ventana entera, y en Wayland se veía en negro)
+    setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     rebuild();
 }
 
