@@ -2,7 +2,7 @@
 
 Fecha: 2026-11-05, revisado el 2026-11-11 con Notepad++ 8.9.9 ([fase 78](fase78.md)). Base: Notepad++ de `referencia/npp`, todas las órdenes del menú principal según su `english.xml` (339) y las páginas de Preferencias. Del lado de Edita, todas las acciones de sus menús (482, sacadas de la ventana real) y el menú contextual de las pestañas. Una orden cuenta como hecha si Edita tiene la misma (`IDM_*`) o una con el mismo nombre. Después se revisaron a mano las que tienen otro nombre: las codificaciones («Encode in UTF-8»), la búsqueda incremental (la barra de búsqueda en línea de la [fase 33](fase33.md)), cerrar a la izquierda o a la derecha y copiar la ruta (en el menú de las pestañas), y los archivos recientes.
 
-**Resultado:** en la primera revisión Edita tenía unas 220 de las 339 órdenes. Las que faltaban se hicieron después (✅), desde la [fase 67](fase67.md) hasta la [76](fase76.md). De lo que tiene sentido en Linux solo faltan cinco órdenes: el texto de derecha a izquierda (2) y los paneles de proyecto (3). Otras 20 no aplican o se descartaron. Las novedades de la 8.9.9 están al final.
+**Resultado:** en la primera revisión Edita tenía unas 220 de las 339 órdenes. Las que faltaban se hicieron después (✅), desde la [fase 67](fase67.md) hasta la [76](fase76.md). De lo que tiene sentido en Linux solo faltan cinco órdenes: el texto de derecha a izquierda (2) y los paneles de proyecto (3). Otras 20 no aplican o se descartaron. Las novedades de la 8.9.9 y posteriores están al final.
 
 ## Faltan, y tienen sentido en Linux
 
@@ -87,6 +87,18 @@ Fecha: 2026-11-05, revisado el 2026-11-11 con Notepad++ 8.9.9 ([fase 78](fase78.
 | ✅ After replacing, don't move to the following occurrence | La opción pasó de Preferencias a una casilla junto a «Reemplazar» |
 | ✅ Scintilla 5.6.9, Lexilla 5.5.5, boost 1.92 | Las versiones de los componentes |
 | ✅ Lista de funciones de Bash, INI y PowerShell; escapes de R; puntos de los espacios con el zoom | Arreglos pequeños |
+
+## Novedades de Notepad++ 8.9.9.1 y posteriores (hasta el 23 de noviembre de 2026)
+
+Revisadas en la [fase 102](fase102.md).
+
+| Novedad | Qué hace |
+|---|---|
+| ✅ Highlight all matches for Find dialog (8.9.9.1) | Ya estaba desde la fase 78 |
+| ✅ Estilo USERLITERAL de C++ | Los literales de usuario (`10_km`) con su color en el modelo y en todos los temas |
+| ✅ Recortar espacios sin mover la vista | También al ordenar líneas y convertir tabuladores |
+| ✅ Ordenar pestañas respeta las fijadas | En Ventana › Ordenar por y en el diálogo Ventanas |
+| ✅ Actualizar los estilos del usuario desde el modelo (`updateStylesXml`, de antes) | Lo nuevo de los estilos llega al `stylers.xml` y a los temas copiados |
 
 ## No aplican en Linux, o se descartaron
 

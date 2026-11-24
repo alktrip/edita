@@ -162,6 +162,9 @@ void EditorPane::reorder(const std::vector<BufferId>& order)
             _tabs->moveTab(index, target);
         ++target;
     }
+    // Ordenar (menú Ventana o el diálogo Ventanas) no saca las fijadas de su zona: se ordenan
+    // entre ellas y las demás entre ellas (N++ lo corrigió en el diálogo Ventanas; fase 102)
+    keepPinnedFirst();
 }
 
 void EditorPane::removeBuffer(BufferId id)

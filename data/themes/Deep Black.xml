@@ -11,7 +11,7 @@ License:            Feel free to modify this style and re-release it. This style
 Keep Notepad++ development active, donate!:
 https://notepad-plus-plus.org/donate/
 -->
-<NotepadPlus modelDate="20251214" modelFileLastModifiedDate="20251227">
+<NotepadPlus modelDate="20261117" modelFileLastModifiedDate="20251227">
     <LexerStyles>
         <LexerType name="c" desc="C" ext="">
             <WordsStyle name="PREPROCESSOR" styleID="9" fgColor="C0C0C0" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
@@ -69,6 +69,7 @@ https://notepad-plus-plus.org/donate/
             <WordsStyle name="USER KEYWORDS 8" styleID="135" fgColor="FF6600" bgColor="000000" fontName="" fontStyle="1" fontSize="" keywordClass="substyle8" />
             <WordsStyle name="PREPROCESSOR COMMENT" styleID="23" fgColor="FFFFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT DOC" styleID="24" fgColor="FFFFFF" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="USERLITERAL" styleID="25" fgColor="FFA040" bgColor="000000" fontName="" fontStyle="0" fontSize="" />
         </LexerType>
         <LexerType name="go" desc="Go" ext="">
             <WordsStyle name="PREPROCESSOR" styleID="9" fgColor="C0C0C0" bgColor="000000" fontName="" fontStyle="0" fontSize="" />

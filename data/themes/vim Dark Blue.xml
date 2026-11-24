@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<NotepadPlus modelDate="20251214" modelFileLastModifiedDate="20251227">
+<NotepadPlus modelDate="20261117" modelFileLastModifiedDate="20251227">
     <LexerStyles>
         <LexerType name="actionscript" desc="ActionScript" ext="">
             <!--
@@ -191,6 +191,7 @@
             <WordsStyle name="USER KEYWORDS 8" styleID="135" fgColor="FFFF00" bgColor="000040" fontName="" fontStyle="1" fontSize="" keywordClass="substyle8" />
             <WordsStyle name="PREPROCESSOR COMMENT" styleID="23" fgColor="FFFFBF" bgColor="000040" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT DOC" styleID="24" fgColor="FFFFBF" bgColor="000040" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="USERLITERAL" styleID="25" fgColor="FFB8B8" bgColor="000040" fontName="" fontStyle="0" fontSize="" />
         </LexerType>
         <LexerType name="cs" desc="C#" ext="">
             <WordsStyle name="PREPROCESSOR" styleID="9" fgColor="FFFFFF" bgColor="000040" fontName="" fontStyle="0" fontSize="" />

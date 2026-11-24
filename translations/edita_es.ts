@@ -1105,7 +1105,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>StyleSheet</name>
     <message>
-        <location filename="../src/syntax/StyleSheet.cpp" line="+88"/>
+        <location filename="../src/syntax/StyleSheet.cpp" line="+90"/>
         <source>&lt;NotepadPlus&gt;&lt;LexerStyles&gt; is missing</source>
         <translation>Falta &lt;NotepadPlus&gt;&lt;LexerStyles&gt;</translation>
     </message>
@@ -1116,6 +1116,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+87"/>
+        <location line="+174"/>
         <source>Cannot write %1</source>
         <translation>No se puede escribir %1</translation>
     </message>
@@ -9006,7 +9007,7 @@ Do you want to save your changes before switching themes?</source>
         <translation>Tampoco se puede leer langs.model.xml: no habrá palabras clave</translation>
     </message>
     <message>
-        <location line="+7"/>
+        <location line="+25"/>
         <source>Cannot read %1 (%2); using stylers.model.xml</source>
         <translation>No se puede leer %1 (%2); se usa stylers.model.xml</translation>
     </message>

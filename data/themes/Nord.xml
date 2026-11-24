@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Nord: tema inspirado en la paleta «Nord» (MIT), generado por tools/make-edita-themes.py a partir de
      stylers.model.xml de Notepad++ (GPL v3). -->
-<NotepadPlus modelDate="20260525">
+<NotepadPlus modelDate="20261117">
     <LexerStyles>
         <LexerType name="actionscript" desc="ActionScript" ext="">
             <WordsStyle name="DEFAULT" styleID="11" fgColor="D8DEE9" bgColor="2E3440" fontName="" fontStyle="0" fontSize="" />
@@ -252,6 +252,7 @@
             <WordsStyle name="COMMENT DOC KEYWORD ERROR" styleID="18" fgColor="88C0D0" bgColor="2E3440" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT" styleID="23" fgColor="7B88A1" bgColor="2E3440" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT DOC" styleID="24" fgColor="88C0D0" bgColor="2E3440" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="USERLITERAL" styleID="25" fgColor="C7AAC2" bgColor="2E3440" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="USER KEYWORDS 1" styleID="128" fgColor="81A1C1" bgColor="2E3440" fontName="" fontStyle="1" fontSize="" keywordClass="substyle1" />
             <WordsStyle name="USER KEYWORDS 2" styleID="129" fgColor="81A1C1" bgColor="2E3440" fontName="" fontStyle="1" fontSize="" keywordClass="substyle2" />
             <WordsStyle name="USER KEYWORDS 3" styleID="130" fgColor="81A1C1" bgColor="2E3440" fontName="" fontStyle="1" fontSize="" keywordClass="substyle3" />

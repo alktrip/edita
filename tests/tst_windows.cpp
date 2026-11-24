@@ -6,6 +6,7 @@
 // documentos del menú y el diálogo Ventanas.
 
 #include "FakePrompter.h"
+#include "ui/DocTabBar.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
 #include "ui/MainWindow.h"
@@ -88,6 +89,36 @@ private slots:
         const BufferId current = w->currentBuffer();
         w->sortTabs(MainWindow::TabSort::Type, true);
         QCOMPARE(w->currentBuffer(), current);
+    }
+
+    // Fase 102: ordenar (menú y diálogo Ventanas) deja las fijadas al principio, ordenadas entre
+    // ellas, como N++ desde ff2530a47
+    void sortingKeepsPinnedTabsFirst()
+    {
+        auto w = window();
+        // Fijar Medio.c (la última)
+        w->pane()->tabBar()->setCurrentIndex(2);
+        w->findChild<QAction*>(QStringLiteral("actionPinTab"))->trigger();
+        QCOMPARE(tabNames(*w), (QStringList{"Medio.c", "zeta.py", "alfa.txt"}));
+        w->sortTabs(MainWindow::TabSort::Name, false);
+        QCOMPARE(tabNames(*w), (QStringList{"Medio.c", "zeta.py", "alfa.txt"}));
+        w->sortTabs(MainWindow::TabSort::Name, true);
+        QCOMPARE(tabNames(*w), (QStringList{"Medio.c", "alfa.txt", "zeta.py"})); // no detrás de alfa
+        QVERIFY(w->pane()->tabBar()->isPinnedAt(0));
+        // Dos fijadas: se ordenan entre ellas
+        w->pane()->tabBar()->setCurrentIndex(2);
+        w->findChild<QAction*>(QStringLiteral("actionPinTab"))->trigger();
+        QCOMPARE(tabNames(*w), (QStringList{"Medio.c", "zeta.py", "alfa.txt"}));
+        w->sortTabs(MainWindow::TabSort::Name, false);
+        QCOMPARE(tabNames(*w), (QStringList{"zeta.py", "Medio.c", "alfa.txt"}));
+        // Y desde el diálogo Ventanas
+        w->findChild<QAction*>(QStringLiteral("actionWindowsList"))->trigger();
+        WindowsDialog* dialog = w->windowsDialog();
+        dialog->list()->sortByColumn(0, Qt::AscendingOrder);
+        dialog->findChild<QPushButton*>(QStringLiteral("windowsSort"))->click();
+        QCOMPARE(tabNames(*w), (QStringList{"Medio.c", "zeta.py", "alfa.txt"}));
+        QVERIFY(w->pane()->tabBar()->isPinnedAt(0) && w->pane()->tabBar()->isPinnedAt(1));
+        QVERIFY(!w->pane()->tabBar()->isPinnedAt(2));
     }
 
     void listsTheDocumentsInTheMenu()

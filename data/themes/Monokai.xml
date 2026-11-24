@@ -42,7 +42,7 @@ Credits:
 
 					 2023-09-30: update Perl support.
 //-->
-<NotepadPlus modelDate="20251214" modelFileLastModifiedDate="20251227">
+<NotepadPlus modelDate="20261117" modelFileLastModifiedDate="20251227">
     <LexerStyles>
         <LexerType name="c" desc="C" ext="">
             <WordsStyle name="PREPROCESSOR" styleID="9" fgColor="F92672" bgColor="272822" fontName="" fontStyle="" fontSize="" />
@@ -100,6 +100,7 @@ Credits:
             <WordsStyle name="USER KEYWORDS 8" styleID="135" fgColor="66D9EF" bgColor="272822" fontName="" fontStyle="" fontSize="" keywordClass="substyle8" />
             <WordsStyle name="PREPROCESSOR COMMENT" styleID="23" fgColor="F8F8F2" bgColor="272822" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT DOC" styleID="24" fgColor="F8F8F2" bgColor="272822" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="USERLITERAL" styleID="25" fgColor="C19FFC" bgColor="272822" fontName="" fontStyle="" fontSize="" />
         </LexerType>
         <LexerType name="go" desc="Go" ext="">
             <WordsStyle name="PREPROCESSOR" styleID="9" fgColor="F92672" bgColor="272822" fontName="" fontStyle="" fontSize="" />

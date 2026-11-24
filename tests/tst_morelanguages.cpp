@@ -8,6 +8,7 @@
 #include "FakePrompter.h"
 #include "doc/Buffer.h"
 #include "syntax/LanguageRegistry.h"
+#include "syntax/StyleSheet.h"
 #include "syntax/SyntaxManager.h"
 #include "ui/EditorView.h"
 #include "ui/MainWindow.h"
@@ -19,6 +20,7 @@
 #include <QDir>
 #include <QFile>
 #include <QRegularExpression>
+#include "core/Paths.h"
 #include <QTemporaryDir>
 #include <QTest>
 
@@ -246,6 +248,120 @@ private slots:
         auto w = window();
         QCOMPARE(w->syntax().detect(_tmp.filePath("x.dpk"), {}), LangType::Pascal);
         QVERIFY(readFile(_tmp.filePath("config/edita/langs.xml")).contains(QStringLiteral("modelDate=\"%1\"").arg(modelDate).toUtf8()));
+    }
+
+    // Fase 102: el estilo de los literales de usuario de C++ (USERLITERAL, 25), nuevo en N++, y
+    // lo nuevo de los estilos llega al stylers.xml y a los temas que el usuario ya tenía
+    void stylesFromModel()
+    {
+        const QString user = _tmp.filePath("merge/stylers.xml");
+        const QString model = _tmp.filePath("merge/stylers.model.xml");
+        writeFile(user, R"xml(<?xml version="1.0" encoding="UTF-8" ?>
+<NotepadPlus modelDate="20251214">
+    <LexerStyles>
+        <!-- del usuario -->
+        <LexerType name="cpp" desc="C++" ext="mio">
+            <WordsStyle name="NUMBER" styleID="4" fgColor="112233" bgColor="000000" fontStyle="" />
+        </LexerType>
+    </LexerStyles>
+    <GlobalStyles>
+        <WidgetStyle name="Default Style" styleID="32" fgColor="EEEEEE" bgColor="101010" />
+    </GlobalStyles>
+</NotepadPlus>
+)xml");
+        writeFile(model, R"xml(<?xml version="1.0" encoding="UTF-8" ?>
+<NotepadPlus modelDate="20261117">
+    <LexerStyles>
+        <LexerType name="cpp" desc="C++" ext="">
+            <WordsStyle name="NUMBER" styleID="4" fgColor="FF8000" bgColor="FFFFFF" fontStyle="0" fontSize="" />
+            <WordsStyle name="USERLITERAL" styleID="25" fgColor="BF6000" bgColor="FFFFFF" fontStyle="0" />
+        </LexerType>
+        <LexerType name="nuevo" desc="Nuevo" ext="">
+            <WordsStyle name="DEFAULT" styleID="0" fgColor="123456" bgColor="FFFFFF" />
+        </LexerType>
+    </LexerStyles>
+    <GlobalStyles>
+        <WidgetStyle name="Default Style" styleID="32" fgColor="000000" bgColor="FFFFFF" />
+        <WidgetStyle name="Nuevo global" styleID="0" fgColor="ABCDEF" bgColor="FFFFFF" />
+    </GlobalStyles>
+</NotepadPlus>
+)xml");
+        QString error;
+        QVERIFY2(updateStylesFromModel(user, model, false, &error), qPrintable(error));
+        QByteArray xml = readFile(user);
+        QVERIFY(xml.contains("<!-- del usuario -->"));
+        QVERIFY(xml.contains("fgColor=\"112233\"")); // lo del usuario, igual
+        QVERIFY(xml.contains("fontStyle=\"\""));     // vacío a propósito: se respeta
+        QVERIFY(xml.contains("fontSize=\"\""));      // el atributo que faltaba
+        QVERIFY(xml.contains("ext=\"mio\""));
+        QVERIFY(xml.contains("name=\"USERLITERAL\" styleID=\"25\" fgColor=\"BF6000\""));
+        QVERIFY(xml.contains("<LexerType name=\"nuevo\""));
+        QVERIFY(xml.contains("name=\"Nuevo global\""));
+        QVERIFY(xml.contains("modelDate=\"20261117\""));
+        QVERIFY(!updateStylesFromModel(user, model, false)); // ya al día
+        QCOMPARE(readFile(user), xml);
+
+        // Un tema propio del usuario desde el modelo: lo nuevo, con su texto y su fondo
+        xml.replace("modelDate=\"20261117\"", "modelDate=\"20251214\"");
+        writeFile(user, R"xml(<?xml version="1.0" encoding="UTF-8" ?>
+<NotepadPlus modelDate="20251214">
+    <LexerStyles>
+        <LexerType name="cpp" desc="C++" ext="" />
+    </LexerStyles>
+    <GlobalStyles>
+        <WidgetStyle name="Default Style" styleID="32" fgColor="EEEEEE" bgColor="101010" />
+    </GlobalStyles>
+</NotepadPlus>
+)xml");
+        QVERIFY(updateStylesFromModel(user, model, true));
+        xml = readFile(user);
+        QVERIFY(xml.contains("name=\"USERLITERAL\" styleID=\"25\" fgColor=\"EEEEEE\" bgColor=\"101010\""));
+        QVERIFY(!xml.contains("BF6000"));
+
+        // Al arrancar: un stylers.xml de la versión anterior recibe el color de los literales
+        const QString cppFile = _tmp.filePath("literales.cpp");
+        const QByteArray code = "auto d = 10_km;\n";
+        writeFile(cppFile, code);
+        const QString stylers = _tmp.filePath("config/edita/stylers.xml");
+        QFile::remove(stylers);
+        {
+            auto first = window(); // crea stylers.xml desde el modelo
+        }
+        QByteArray old = readFile(stylers);
+        QVERIFY(old.contains("name=\"USERLITERAL\""));
+        old = QString::fromUtf8(old).remove(QRegularExpression(QStringLiteral("[^\\n]*name=\"USERLITERAL\"[^\\n]*\\n"))).toUtf8();
+        QVERIFY(!old.contains("USERLITERAL"));
+        old = QString::fromUtf8(old).replace(QRegularExpression(QStringLiteral("modelDate=\"\\d+\"")), QStringLiteral("modelDate=\"20251214\"")).toUtf8();
+        writeFile(stylers, old);
+        {
+            auto w = window();
+            QVERIFY(w->openFile(cppFile) != kInvalidBuffer);
+            QCOMPARE(styleOf(*w, code, "10_km"), SCE_C_USERLITERAL);
+            // Con el tema predeterminado (Edita Light), su color: 043C82, en BGR
+            QCOMPARE(w->editor()->sci(SCI_STYLEGETFORE, SCE_C_USERLITERAL), sptr_t{0x823C04});
+        }
+        QVERIFY(readFile(stylers).contains("name=\"USERLITERAL\""));
+
+        // La copia de un tema de la aplicación que el usuario modificó: desde ese tema, con su color
+        const QString appTheme = paths::findDataFile(QStringLiteral("themes/Monokai.xml"));
+        QVERIFY(!appTheme.isEmpty());
+        QByteArray theme = readFile(appTheme);
+        theme = QString::fromUtf8(theme).remove(QRegularExpression(QStringLiteral("[^\\n]*name=\"USERLITERAL\"[^\\n]*\\n"))).toUtf8();
+        theme = QString::fromUtf8(theme).replace(QRegularExpression(QStringLiteral("modelDate=\"\\d+\"")), QStringLiteral("modelDate=\"20251214\"")).toUtf8();
+        const QString copy = _tmp.filePath("config/edita/themes/Monokai.xml");
+        QDir().mkpath(QFileInfo(copy).absolutePath());
+        writeFile(copy, theme);
+        {
+            auto w = window();
+            QVERIFY(w->syntax().setTheme(copy));
+        }
+        {
+            auto w = window(); // al arrancar con el tema copiado
+            QVERIFY(w->openFile(cppFile) != kInvalidBuffer);
+            QCOMPARE(w->editor()->sci(SCI_STYLEGETFORE, SCE_C_USERLITERAL), sptr_t{0xFC9FC1}); // C19FFC
+            QVERIFY(w->syntax().setTheme(QString()));
+        }
+        QVERIFY(readFile(copy).contains("name=\"USERLITERAL\" styleID=\"25\" fgColor=\"C19FFC\""));
     }
 };
 

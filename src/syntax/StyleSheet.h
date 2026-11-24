@@ -120,4 +120,12 @@ private:
     GlobalOverride _globalOverride;
 };
 
+// NppParameters::updateFromModelXml + updateStylesXml (fase 102): si el modelo tiene un modelDate
+// más nuevo que el archivo del usuario (su stylers.xml o la copia de un tema), le añade lo que
+// falte sin cambiar lo que ya tiene: estilos globales, lexers enteros, estilos de un lexer y sus
+// atributos. Con useDefaultColors (un tema del usuario actualizado desde stylers.model.xml), lo
+// nuevo toma los colores del «Default Style» del archivo del usuario, como N++, para no meter
+// colores de un tema claro en uno oscuro. Devuelve si cambió el archivo
+bool updateStylesFromModel(const QString& userPath, const QString& modelPath, bool useDefaultColors, QString* error = nullptr);
+
 } // namespace edita

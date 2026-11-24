@@ -375,6 +375,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 99 — Herramientas de CSV | N++ sin nada para CSV; `core/CsvTable` (separador, campos RFC 4180, alinear, compactar, ordenar con encabezado), `ui/CsvColumns` (un color por columna, solo lo visible), Editar › CSV; `tst_csv` | ✅ [fase99.md](fase99.md) |
 | 100 — JSON y YAML | N++ solo colorea (JSON Viewer: solo JSON); `core/StructuredData` (analizadores propios en orden, errores con línea y columna, formatear, `toYaml`, `pathAt`), Editar › JSON/YAML; `tst_structured` | ✅ [fase100.md](fase100.md) |
 | 101 — Revisión de errores | Barra de estado y panel de tareas acotados (no ensanchan la ventana), `kMaxDiffEdits`, commit e historial de Git sin esperar, TODO en otro hilo en documentos grandes, cadenas de enlaces al guardar, grupos del menú de temas | ✅ [fase101.md](fase101.md) |
+| 102 — Al día con N++ (noviembre) | N++ 8.9.9.1 y 25 cambios posteriores; `USERLITERAL` (25) en el modelo y los temas, `updateStylesFromModel` (`updateStylesXml`), `reselectLines` (recortar, ordenar, tabuladores sin mover la vista), `EditorPane::reorder` con las fijadas primero | ✅ [fase102.md](fase102.md) |
 
 ---
 

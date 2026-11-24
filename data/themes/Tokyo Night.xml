@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Tokyo Night: tema inspirado en la paleta «Tokyo Night» (MIT), generado por tools/make-edita-themes.py a partir de
      stylers.model.xml de Notepad++ (GPL v3). -->
-<NotepadPlus modelDate="20260525">
+<NotepadPlus modelDate="20261117">
     <LexerStyles>
         <LexerType name="actionscript" desc="ActionScript" ext="">
             <WordsStyle name="DEFAULT" styleID="11" fgColor="C0CAF5" bgColor="1A1B26" fontName="" fontStyle="0" fontSize="" />
@@ -252,6 +252,7 @@
             <WordsStyle name="COMMENT DOC KEYWORD ERROR" styleID="18" fgColor="73DACA" bgColor="1A1B26" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT" styleID="23" fgColor="565F89" bgColor="1A1B26" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT DOC" styleID="24" fgColor="73DACA" bgColor="1A1B26" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="USERLITERAL" styleID="25" fgColor="FFB68B" bgColor="1A1B26" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="USER KEYWORDS 1" styleID="128" fgColor="BB9AF7" bgColor="1A1B26" fontName="" fontStyle="1" fontSize="" keywordClass="substyle1" />
             <WordsStyle name="USER KEYWORDS 2" styleID="129" fgColor="BB9AF7" bgColor="1A1B26" fontName="" fontStyle="1" fontSize="" keywordClass="substyle2" />
             <WordsStyle name="USER KEYWORDS 3" styleID="130" fgColor="BB9AF7" bgColor="1A1B26" fontName="" fontStyle="1" fontSize="" keywordClass="substyle3" />

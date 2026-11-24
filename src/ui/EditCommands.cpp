@@ -176,10 +176,40 @@ std::pair<sptr_t, sptr_t> selectionLinesRange(View& v)
     return {line1, line2};
 }
 
+namespace {
+
+// Lo que hay que conservar al reescribir las líneas de una selección: la primera línea visible
+// y hacia dónde va la selección. Volver a seleccionarlas con SCI_SETSEL deja el cursor al final
+// y desplaza la vista hasta él (N++ lo corrigió al recortar espacios, #17496; fase 102)
+struct LinesView
+{
+    sptr_t firstVisible = 0;
+    bool caretAtStart = false;
+};
+
+LinesView saveLinesView(View& v)
+{
+    return {v.send(SCI_GETFIRSTVISIBLELINE), v.send(SCI_GETCURRENTPOS) < v.send(SCI_GETANCHOR)};
+}
+
+void reselectLines(View& v, sptr_t fromLine, sptr_t toLine, const LinesView& saved)
+{
+    const sptr_t start = lineStart(v, fromLine);
+    const sptr_t end = lineEnd(v, toLine);
+    if (saved.caretAtStart)
+        v.send(SCI_SETSEL, U(end), start);
+    else
+        v.send(SCI_SETSEL, U(start), end);
+    v.send(SCI_SETFIRSTVISIBLELINE, U(saved.firstVisible));
+}
+
+} // namespace
+
 // --- Líneas ----------------------------------------------------------------------------------
 
 sptr_t sortLines(View& v, const SortRequest& request)
 {
+    const LinesView view = saveLinesView(v);
     sptr_t fromLine = 0;
     sptr_t toLine = 0;
     std::vector<std::string> keys;
@@ -223,7 +253,7 @@ sptr_t sortLines(View& v, const SortRequest& request)
     writeLines(v, fromLine, toLine, lines);
     v.send(SCI_ENDUNDOACTION);
     if (hasLineSelection)
-        v.send(SCI_SETSEL, U(lineStart(v, fromLine)), lineEnd(v, toLine));
+        reselectLines(v, fromLine, toLine, view);
     return 0;
 }
 
@@ -329,6 +359,7 @@ void trimLines(View& v, bool leading, bool trailing)
     if (!entireDoc)
         std::tie(fromLine, toLine) = selectionLinesRange(v);
 
+    const LinesView view = saveLinesView(v);
     std::vector<std::string> lines = readLines(v, fromLine, toLine);
     for (std::string& line : lines) {
         if (trailing) {
@@ -342,7 +373,7 @@ void trimLines(View& v, bool leading, bool trailing)
     const bool changed = writeLines(v, fromLine, toLine, lines);
     v.send(SCI_ENDUNDOACTION);
     if (changed && !entireDoc)
-        v.send(SCI_SETSEL, U(lineStart(v, fromLine)), lineEnd(v, toLine));
+        reselectLines(v, fromLine, toLine, view);
 }
 
 void eolToSpace(View& v)
@@ -378,6 +409,7 @@ void convertTabs(View& v, TabConversion conversion)
     if (!entireDoc)
         std::tie(fromLine, toLine) = selectionLinesRange(v);
 
+    const LinesView view = saveLinesView(v);
     std::ptrdiff_t caretOffset = caret - lineStart(v, caretLine);
     std::vector<sptr_t> folded;
     bool changed = false;
@@ -401,7 +433,7 @@ void convertTabs(View& v, TabConversion conversion)
     if (entireDoc)
         v.send(SCI_GOTOPOS, U(lineStart(v, caretLine) + caretOffset));
     else
-        v.send(SCI_SETSEL, U(lineStart(v, fromLine)), lineEnd(v, toLine));
+        reselectLines(v, fromLine, toLine, view);
     for (const sptr_t line : folded)
         foldLine(v, line, false);
 }

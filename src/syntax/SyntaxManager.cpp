@@ -152,6 +152,24 @@ QStringList SyntaxManager::loadAll()
     }
 
     const QString stylers = ensureUserFile(QStringLiteral("stylers.xml"), QStringLiteral("stylers.model.xml"), warnings);
+    // Lo nuevo de los estilos de esta versión, como N++ (fase 102): en el stylers.xml, desde el
+    // modelo; en la copia de un tema de la aplicación, desde ese tema; en un tema propio del
+    // usuario, desde el modelo con sus colores de fondo y de texto
+    if (const QString model = paths::findDataFile(QStringLiteral("stylers.model.xml")); !model.isEmpty()) {
+        QString updateError;
+        if (!stylers.isEmpty() && stylers != model && !updateStylesFromModel(stylers, model, false, &updateError)
+            && !updateError.isEmpty())
+            warnings << updateError;
+        const QString userThemes = QDir(_configDir).filePath(QStringLiteral("themes"));
+        if (!_themePath.isEmpty() && QFileInfo(_themePath).absolutePath() == QFileInfo(userThemes).absoluteFilePath()) {
+            const QString appTheme = paths::findDataFile(QStringLiteral("themes/") + QFileInfo(_themePath).fileName());
+            updateError.clear();
+            if (!(appTheme.isEmpty() ? updateStylesFromModel(_themePath, model, true, &updateError)
+                                     : updateStylesFromModel(_themePath, appTheme, false, &updateError))
+                && !updateError.isEmpty())
+                warnings << updateError;
+        }
+    }
     const QString styles = _themePath.isEmpty() ? stylers : _themePath;
     if (styles.isEmpty() || !_styles.load(styles, &error)) {
         if (!styles.isEmpty())

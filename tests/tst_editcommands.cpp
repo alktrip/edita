@@ -341,6 +341,24 @@ private slots:
         x.run("actionTrimBoth");
         QCOMPARE(x.text(), "a\nb\n c "s);
 
+        // Fase 102: con una selección de abajo arriba más alta que la ventana, la vista no salta
+        // al final ni la selección se da la vuelta (N++ #17496): recortar, ordenar, tabuladores
+        for (const char* action : {"actionTrimTrailing", "actionSortLexAsc", "actionTabToSpace"}) {
+            std::string many;
+            for (int i = 2000; i > 0; --i)
+                many += "línea\t" + std::to_string(i) + "   \n";
+            x.setText(many.c_str());
+            x.w().resize(800, 600);
+            const sptr_t from = x.sci(SCI_POSITIONFROMLINE, 1500);
+            const sptr_t to = x.sci(SCI_POSITIONFROMLINE, 110);
+            x.select(from, to); // el cursor arriba, en la línea 110
+            x.sci(SCI_SETFIRSTVISIBLELINE, 100);
+            x.run(action);
+            QCOMPARE(x.sci(SCI_GETFIRSTVISIBLELINE), sptr_t{100});
+            QVERIFY2(x.sci(SCI_GETCURRENTPOS) < x.sci(SCI_GETANCHOR), action);
+            QCOMPARE(x.currentLine(), sptr_t{110});
+        }
+
         x.setText("uno\ndos\ntres");
         x.run("actionEolToSpace");
         QCOMPARE(x.text(), "uno dos tres"s);

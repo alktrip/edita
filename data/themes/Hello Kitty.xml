@@ -6,7 +6,7 @@ This theme is not complete. If you enhance it, please send it back to me :
 so your enhanced file can be included in Notepad++ future release.
 					 2023-09-30: update Perl support.
  -->
-<NotepadPlus modelDate="20251214" modelFileLastModifiedDate="20251227">
+<NotepadPlus modelDate="20261117" modelFileLastModifiedDate="20251227">
     <LexerStyles>
         <LexerType name="actionscript" desc="ActionScript" ext="">
             <WordsStyle name="DEFAULT" styleID="11" fgColor="000000" bgColor="FFB0FF" fontName="" fontStyle="0" fontSize="" />
@@ -195,6 +195,7 @@ so your enhanced file can be included in Notepad++ future release.
             <WordsStyle name="USER KEYWORDS 8" styleID="135" fgColor="0000FF" bgColor="FFB0FF" fontName="" fontStyle="1" fontSize="" keywordClass="substyle8" />
             <WordsStyle name="PREPROCESSOR COMMENT" styleID="23" fgColor="000000" bgColor="FFB0FF" fontName="" fontStyle="0" fontSize="" />
             <WordsStyle name="PREPROCESSOR COMMENT DOC" styleID="24" fgColor="000000" bgColor="FFB0FF" fontName="" fontStyle="0" fontSize="" />
+            <WordsStyle name="USERLITERAL" styleID="25" fgColor="BF6000" bgColor="FFB0FF" fontName="" fontStyle="0" fontSize="" />
         </LexerType>
         <LexerType name="cs" desc="C#" ext="">
             <WordsStyle name="PREPROCESSOR" styleID="9" fgColor="804000" bgColor="FFB0FF" fontName="" fontStyle="0" fontSize="" />
