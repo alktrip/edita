@@ -24,7 +24,7 @@ jobs:
       # Los dos permisos que Flathub concede como excepción al revisar la aplicación (justificados en
       # packaging/flatpak/README.md); cualquier otro problema hace fallar la CI
       - name: Linter de Flathub (manifiesto)
-        run: flatpak-builder-lint --user-exceptions packaging/flatpak/lint-exceptions.json manifest packaging/flatpak/io.github.alktrip.Edita.yml
+        run: flatpak-builder-lint --exceptions --user-exceptions packaging/flatpak/lint-exceptions.json manifest packaging/flatpak/io.github.alktrip.Edita.yml
       - name: Compilar
         uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
         with:
