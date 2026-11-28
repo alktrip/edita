@@ -55,6 +55,8 @@ QIcon stateIcon(DocTabBar::TabState state)
     const bool dark = appearance::isDarkApplied();
     if (state == DocTabBar::TabState::ReadOnly)
         return icons::icon(QStringLiteral("lock"), QApplication::palette().color(QPalette::PlaceholderText));
+    if (state == DocTabBar::TabState::Monitoring)
+        return icons::icon(QStringLiteral("eye"), QApplication::palette().color(QPalette::Link));
     QIcon icon;
     for (const int size : {16, 32}) {
         QPixmap pixmap(size, size);
@@ -78,16 +80,10 @@ QIcon fileTabIcon(const QString& fileName, DocTabBar::TabState state)
     if (!fileicons::enabled())
         return stateIcon(state);
     const auto fileState = state == DocTabBar::TabState::Dirty      ? fileicons::State::Dirty
-                         : state == DocTabBar::TabState::ReadOnly ? fileicons::State::ReadOnly
+                         : state == DocTabBar::TabState::ReadOnly   ? fileicons::State::ReadOnly
+                         : state == DocTabBar::TabState::Monitoring ? fileicons::State::Monitoring
                                                                     : fileicons::State::Saved;
     return fileicons::forFile(fileName, fileState);
-}
-
-DocTabBar::TabState stateOf(const Buffer& buffer)
-{
-    if (buffer.isReadOnly())
-        return DocTabBar::TabState::ReadOnly;
-    return buffer.isDirty() ? DocTabBar::TabState::Dirty : DocTabBar::TabState::Saved;
 }
 
 } // namespace
@@ -275,6 +271,15 @@ void DocTabBar::mouseReleaseEvent(QMouseEvent* event)
     QTabBar::mouseReleaseEvent(event);
     if (event->button() == Qt::LeftButton)
         emit dragFinished();
+}
+
+DocTabBar::TabState DocTabBar::stateOf(const Buffer& buffer)
+{
+    if (buffer.isMonitoring())
+        return TabState::Monitoring;
+    if (buffer.isReadOnly())
+        return TabState::ReadOnly;
+    return buffer.isDirty() ? TabState::Dirty : TabState::Saved;
 }
 
 QIcon DocTabBar::iconForState(TabState state)

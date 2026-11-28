@@ -177,6 +177,20 @@ QPixmap draw(const FileType& type, State state, int size, bool dark)
         p.setPen(QPen(lock, std::max(1.0, s / 14.0)));
         const qreal shackle = w * 0.56;
         p.drawArc(QRectF(body.center().x() - shackle / 2, body.top() - shackle * 0.62, shackle, shackle * 1.1), 0, 180 * 16);
+    } else if (state == State::Monitoring) {
+        // Un ojo (Ver › Seguimiento)
+        const qreal w = s * 0.5;
+        const QRectF eye(s - w - s * 0.02, s - w * 0.6 - s * 0.02, w, w * 0.6);
+        const QColor ink = QApplication::palette().color(QPalette::Link);
+        p.setPen(QPen(QApplication::palette().color(QPalette::Window), s / 16.0 + 0.5));
+        p.setBrush(QApplication::palette().color(QPalette::Base));
+        p.drawEllipse(eye);
+        p.setPen(QPen(ink, std::max(1.0, s / 16.0)));
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(eye.adjusted(s * 0.02, s * 0.02, -s * 0.02, -s * 0.02));
+        p.setPen(Qt::NoPen);
+        p.setBrush(ink);
+        p.drawEllipse(eye.center(), eye.height() * 0.26, eye.height() * 0.26);
     }
     return pixmap;
 }

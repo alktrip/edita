@@ -353,8 +353,7 @@ void EditorView::updateLineNumberWidth(bool force)
 
 void EditorView::applyPreferences(const Preferences& p)
 {
-    // Ajuste de línea (setWrapMode y wrap) y su símbolo
-    sci(SCI_SETWRAPMODE, p.wrap ? SC_WRAP_WORD : SC_WRAP_NONE);
+    // El símbolo y la sangría del ajuste de línea (el ajuste es de cada documento: EditorPane)
     static constexpr int kWrapIndent[] = {SC_WRAPINDENT_FIXED, SC_WRAPINDENT_SAME, SC_WRAPINDENT_INDENT};
     sci(SCI_SETWRAPINDENTMODE, static_cast<uptr_t>(kWrapIndent[static_cast<int>(p.wrapIndent)]));
     sci(SCI_SETWRAPVISUALFLAGS, p.wrapSymbolShow ? SC_WRAPVISUALFLAG_END : SC_WRAPVISUALFLAG_NONE);

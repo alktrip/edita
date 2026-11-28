@@ -11,7 +11,7 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 |---|---|
 | General | Idioma de la interfaz (cambia al reiniciar), apariencia (claro, oscuro o seguir al sistema), instancias, diálogos de archivos de Edita, barra de estado, página de inicio y barra de pestañas. |
 | Barra de herramientas | Ocultarla y el tamaño de sus iconos. |
-| Edición | Resaltado de la línea actual, cursor, edición múltiple, espacio virtual, desplazar más allá de la última línea, copiar la línea sin selección, letra monoespaciada del sistema, mostrar espacios y fines de línea, guías de sangría, vista previa de colores, paréntesis por colores, ruta de navegación, encabezado fijo y ajuste de línea. |
+| Edición | Resaltado de la línea actual, cursor, edición múltiple, espacio virtual, desplazar más allá de la última línea, copiar la línea sin selección, letra monoespaciada del sistema, mostrar espacios y fines de línea, guías de sangría, vista previa de colores, paréntesis por colores, ruta de navegación, encabezado fijo y ajuste de línea (con el que empiezan los documentos nuevos, su sangría y su símbolo). |
 | Márgenes | Números de línea, estilo del plegado, líneas de margen, margen de marcadores, historial de cambios, número de la línea actual, cambios de Git, Git en el explorador, blame y marcas en la barra de desplazamiento. |
 | Documento nuevo | Fin de línea, codificación y lenguaje de los documentos nuevos, y la carpeta de los diálogos de abrir y guardar. |
 | Archivos recientes | Número de archivos recientes, submenú y cómo se muestran sus nombres. |
@@ -24,7 +24,7 @@ mayoría de las opciones se describen en el capítulo de su función; esto es un
 | Impresión | Números de línea, colores, saltos de página, márgenes, cabecera y pie. |
 | Copias de seguridad | Sesión, modo snapshot, la copia de la versión anterior al guardar y la extensión de los archivos de sesión. |
 | Delimitadores | Los caracteres que también forman parte de una palabra (para el doble clic, «solo palabras completas», el resaltado inteligente…) y los delimitadores de Ctrl+doble clic, en una línea o en varias. |
-| Rendimiento | Desde qué tamaño un archivo es grande (por defecto 200 MB): se abre sin colores y, si no se permiten, sin autocompletado, resaltado inteligente, paréntesis pareja ni enlaces; y si se apaga el ajuste de línea al abrirlo. |
+| Rendimiento | Desde qué tamaño un archivo es grande (por defecto 200 MB): se abre sin colores y, si no se permiten, sin autocompletado, resaltado inteligente, paréntesis pareja ni enlaces; y si se abre sin ajuste de línea. |
 | Nube y enlaces | Una carpeta (sincronizada, por ejemplo) donde guardar toda la configuración, que se usa al reiniciar; y los enlaces: si se marcan, subrayados o no, con recuadro al pasar el ratón y otros esquemas además de http, https, ftp, file y mailto. |
 | Buscador | El buscador de **Editar › Sobre la selección › Buscar en internet**. |
 | Varios | Detección de cambios hechos por otros programas, detección de la codificación, juego de caracteres por defecto, la shell de la terminal y la búsqueda de versiones nuevas de Edita al arrancar. |

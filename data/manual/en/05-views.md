@@ -103,7 +103,7 @@ or Shift) and:
 
 | Command | What it does |
 |---|---|
-| {{actionWrap}} | Wraps the long lines to the width of the window. |
+| {{actionWrap}} | Wraps the long lines of the current document to the width of the window. Each document keeps its own setting (also in the session); new documents start with the one of Preferences › Editing. |
 | {{actionShowWhiteSpace}} | Shows spaces as dots and tabs as arrows. |
 | {{actionShowEol}} | Shows the end of line characters (CR, LF). |
 | {{actionShowIndentGuides}} | Shows vertical lines at each indentation level. |

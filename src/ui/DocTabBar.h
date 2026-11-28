@@ -35,7 +35,12 @@ class DocTabBar : public QTabBar
     Q_OBJECT
 
 public:
-    enum class TabState { Saved, Dirty, ReadOnly };
+    // Monitoring: Ver › Seguimiento (tail -f), como el icono propio de N++ (fase 103)
+    enum class TabState { Saved, Dirty, ReadOnly, Monitoring };
+
+    // El estado de un documento, el mismo en las pestañas, la Lista de documentos y la paleta:
+    // seguimiento, solo lectura, con cambios o guardado (N++ f76317145)
+    static TabState stateOf(const Buffer& buffer);
 
     explicit DocTabBar(QWidget* parent = nullptr);
 

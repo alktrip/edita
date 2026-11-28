@@ -124,6 +124,7 @@ void EditorPane::activateBuffer(BufferId id)
     _current = id;
     _editor->sci(SCI_SETDOCPOINTER, 0, buf->document());
     _editor->sci(SCI_SETREADONLY, buf->isReadOnly() ? 1 : 0);
+    _editor->setWrap(buf->wordWrap()); // de cada documento (fase 103), antes de la posición
     // Como N++: los estilos antes de restaurar la posición (cambian la altura de línea)
     if (_styler)
         _styler(*_editor, *buf);

@@ -177,6 +177,33 @@ private slots:
                  (QStringList{"prompt", "Sauve+Confirm"}));
     }
 
+    // Fase 103: Bash con el delimitador de un here-document entre comillas (<<'EOF', <<"EOF",
+    // <<\EOF, <<-'EOF'): una comilla suelta dentro ya no esconde las funciones de después
+    // (N++ 16c9864b0, su unitTest quoted_heredoc)
+    void bashQuotedHereDocuments()
+    {
+        FunctionParsers parsers;
+        ScintillaEditBase view;
+        const char* text = "#!/bin/bash\n"
+                           ": <<'EOF'\nHEREDOC with a single ' quote\nEOF\n\n"
+                           "function unlisted_function1 { :\n}\n\n"
+                           "function break_listing1 { :\n\techo 'Text in single quotes.'\n}\n\n"
+                           "cat <<\"END\"\nA lone ' or \" in here\nEND\n\n"
+                           "function after_double_quoted { :\n\techo 'a' \"b\"\n}\n\n"
+                           "cat <<\\END\nA lone ' or \" in here\nEND\n\n"
+                           "function after_backslash_quoted { :\n\techo 'a' \"b\"\n}\n\n"
+                           "\tcat <<-'END'\n\tA lone ' or \" in here\n\tEND\n\n"
+                           "function after_indented { :\n\techo 'a' \"b\"\n}\n";
+        view.send(SCI_SETTEXT, 0, reinterpret_cast<sptr_t>(text));
+        std::vector<FunctionInfo> found;
+        parsers.parse(view, LangType::Bash, {}, found);
+        QStringList names;
+        for (const FunctionInfo& f : found)
+            names << QString::fromStdString(f.name);
+        QCOMPARE(names, (QStringList{"unlisted_function1", "break_listing1", "after_double_quoted", "after_backslash_quoted",
+                                     "after_indented"}));
+    }
+
     void functionListFollowsTheDocument()
     {
         Window x;

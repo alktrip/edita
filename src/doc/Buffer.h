@@ -132,6 +132,10 @@ public:
     // Ver › Seguimiento (tail -f): el archivo se vuelve a leer en cuanto cambia y se va al final
     bool isMonitoring() const { return _monitoring; }
     void setMonitoring(bool on);
+    // Ver › Ajuste de línea, de cada documento (Buffer::_isWordWrap de N++, desde c3ed07bda;
+    // fase 103): empieza con la preferencia «por omisión» y se guarda en la sesión
+    bool wordWrap() const { return _wordWrap; }
+    void setWordWrap(bool on);
     bool isReadOnly() const { return _fileReadOnly || _userReadOnly; }
 
     // Archivos de más de 200 MB: sin estilos (N++: _largeFileRestriction)
@@ -178,6 +182,7 @@ private:
     bool _pinned = false;
     int _tabColor = -1;
     bool _monitoring = false;
+    bool _wordWrap = false;
     bool _largeFile = false;
     QDateTime _lastModified;
     std::uint64_t _contentVersion = 0;

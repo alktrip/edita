@@ -220,9 +220,15 @@ private slots:
         p.urlMode = 2; // las pruebas anteriores lo dejan guardado en config.xml
         w->setPreferences(p);
         QCOMPARE(w->documents().settings().largeFileThreshold, 1024LL * 1024);
+        const BufferId small = w->newDocument();
+        QVERIFY(w->documents().buffer(small)->wordWrap());
         const BufferId id = w->openFile(path);
         QVERIFY(w->documents().buffer(id)->isLargeFile());
-        QTRY_VERIFY(!w->preferences().wrap); // «Desactivar el ajuste de línea»
+        // «Desactivar el ajuste de línea»: solo el grande (fase 103: antes, en todos)
+        QVERIFY(!w->documents().buffer(id)->wordWrap());
+        QCOMPARE(w->editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_NONE});
+        QVERIFY(w->documents().buffer(small)->wordWrap());
+        QVERIFY(w->preferences().wrap);
         EditorView* v = w->editor();
         v->sci(SCI_GOTOPOS, 5); // junto a «(»
         v->matchBraces();

@@ -587,9 +587,11 @@ MainWindow::MainWindow(QWidget* parent)
     connect(&_documents, &DocumentManager::bufferAdded, this, [this](BufferId id) {
         scheduleWelcomeUpdate();
         syncWatchedFiles();
-        // Rendimiento › Desactivar el ajuste de línea: al abrir un archivo grande, para todos
-        if (const Buffer* buf = _documents.buffer(id); buf && buf->isLargeFile() && _prefs.largeFileNoWordWrap && _prefs.wrap)
-            QTimer::singleShot(0, this, [this] { toggleViewOption(&Preferences::wrap, false); });
+        // El ajuste de línea de cada documento empieza con la preferencia por omisión; un archivo
+        // grande, sin él si lo pide Rendimiento › Desactivar el ajuste de línea (fase 103: antes
+        // se quitaba a todos)
+        if (Buffer* buf = _documents.buffer(id))
+            buf->setWordWrap(_prefs.wrap && !(buf->isLargeFile() && _prefs.largeFileNoWordWrap));
         // Un archivo abierto deja de estar en "recientes" (como N++)
         if (const Buffer* buf = _documents.buffer(id); buf && !buf->isUntitled()) {
             removeRecentFile(buf->filePath());
@@ -1627,9 +1629,8 @@ void MainWindow::createMenus()
     addAction(compare, tr("C&lear Comparison"), "actionCompareClear", QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_X), [this] { stopCompare(); });
     view->addSeparator();
     _wrapAction = addAction(view, tr("&Word wrap"), "actionWrap", QKeySequence(),
-                            [this](bool checked) { toggleViewOption(&Preferences::wrap, checked); });
+                            [this](bool checked) { setCurrentWordWrap(checked); });
     _wrapAction->setCheckable(true);
-    _viewOptionActions.emplace_back(&Preferences::wrap, _wrapAction);
     // Ver > Mostrar símbolo (IDM_VIEW_TAB_SPACE, IDM_VIEW_EOL, IDM_VIEW_ALL_CHARACTERS…)
     QMenu* symbols = view->addMenu(tr("Show S&ymbol"));
     const std::pair<bool Preferences::*, std::pair<QString, const char*>> symbolOptions[] = {
@@ -3904,9 +3905,7 @@ void MainWindow::updatePanels()
         for (EditorPane* pane : {_mainPane, _subPane}) {
             for (const BufferId id : pane->buffers()) {
                 if (const Buffer* buf = _documents.buffer(id)) {
-                    const DocTabBar::TabState state = buf->isReadOnly() ? DocTabBar::TabState::ReadOnly
-                                                    : buf->isDirty()    ? DocTabBar::TabState::Dirty
-                                                                        : DocTabBar::TabState::Saved;
+                    const DocTabBar::TabState state = DocTabBar::stateOf(*buf);
                     docs.push_back({id, buf->displayName(), buf->isUntitled() ? QString() : buf->filePath(), state,
                                     pane == _subPane ? 1 : 0});
                 }
@@ -7355,6 +7354,27 @@ QString MainWindow::documentSummary() const
     return lines.join(QLatin1Char('\n'));
 }
 
+void MainWindow::setCurrentWordWrap(bool on)
+{
+    // IDM_VIEW_WRAP desde c3ed07bda de N++: solo el documento actual (en las dos vistas si está
+    // clonado); la preferencia es la de los documentos nuevos
+    const BufferId id = currentBuffer();
+    Buffer* buf = _documents.buffer(id);
+    if (!buf)
+        return;
+    buf->setWordWrap(on);
+    for (EditorPane* pane : {_mainPane, _subPane}) {
+        if (!pane || pane->currentBuffer() != id)
+            continue;
+        // La misma línea arriba antes y después (al ajustar cambian las líneas que se ven)
+        EditorView* v = pane->editor();
+        const sptr_t topLine = v->sci(SCI_DOCLINEFROMVISIBLE, static_cast<uptr_t>(v->sci(SCI_GETFIRSTVISIBLELINE)));
+        v->setWrap(on);
+        v->sci(SCI_SETFIRSTVISIBLELINE, static_cast<uptr_t>(v->sci(SCI_VISIBLEFROMDOCLINE, static_cast<uptr_t>(topLine))));
+    }
+    refreshMenuChecks();
+}
+
 void MainWindow::toggleMonitoring()
 {
     // IDM_VIEW_MONITORING: el archivo, en solo lectura, se vuelve a leer al cambiar y va al final
@@ -9287,9 +9307,7 @@ void MainWindow::startPaletteFileScan()
     _paletteFiles.clear();
     std::vector<CommandPalette::Item> items;
     auto stateIcon = [](const Buffer& buf) {
-        using State = DocTabBar::TabState;
-        return DocTabBar::iconFor(buf.isUntitled() ? QString() : QFileInfo(buf.filePath()).fileName(),
-                                  buf.isReadOnly() ? State::ReadOnly : buf.isDirty() ? State::Dirty : State::Saved);
+        return DocTabBar::iconFor(buf.isUntitled() ? QString() : QFileInfo(buf.filePath()).fileName(), DocTabBar::stateOf(buf));
     };
     auto fileItem = [this](const QString& path, const QString& folder, int order) {
         // La carpeta personal como «~», para que las rutas largas quepan
@@ -10176,6 +10194,7 @@ Session MainWindow::captureSession(bool named, bool withFolders)
             f.userReadOnly = buf->isUserReadOnly();
             f.tabPinned = buf->isPinned();
             f.tabColor = buf->tabColor();
+            f.wordWrap = buf->wordWrap();
             f.position = buf->position(pane->editor());
             withSearchView(*buf, [&f](ScintillaEditBase& view) {
                 for (const sptr_t line : bookmarkedLines(view))
@@ -10255,6 +10274,9 @@ void MainWindow::restoreSession(const Session& session, QStringList* missing)
             buf->setUserReadOnly(f.userReadOnly);
             buf->setPinned(f.tabPinned);
             buf->setTabColor(f.tabColor);
+            // Un archivo grande sigue sin ajuste si así lo pide Rendimiento, como N++
+            if (f.wordWrap && !(buf->isLargeFile() && _prefs.largeFileNoWordWrap))
+                buf->setWordWrap(*f.wordWrap);
             buf->setPosition(pane->editor(), f.position);
             if (!f.bookmarks.empty()) {
                 withSearchView(*buf, [&f](ScintillaEditBase& view) {
@@ -10454,6 +10476,7 @@ void MainWindow::refreshMenuChecks()
     const Buffer* buf = _documents.buffer(currentBuffer());
     if (!buf)
         return;
+    _wrapAction->setChecked(buf->wordWrap()); // el del documento actual (fase 103)
 
     QAction* checked = nullptr;
     const TextEncoding& enc = buf->encoding();

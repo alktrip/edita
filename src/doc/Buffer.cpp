@@ -104,6 +104,14 @@ void Buffer::setPinned(bool pinned)
     notify(BufferChange::Tab);
 }
 
+void Buffer::setWordWrap(bool on)
+{
+    if (on == _wordWrap)
+        return;
+    _wordWrap = on;
+    notify(BufferChange::Status);
+}
+
 void Buffer::setMonitoring(bool on)
 {
     if (on == _monitoring)

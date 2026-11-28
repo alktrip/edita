@@ -65,6 +65,8 @@ bool parseSession(const pugi::xml_document& doc, Session& session, QString* erro
             f.userReadOnly = std::string_view(node.attribute("userReadOnly").as_string("no")) == "yes";
             f.tabPinned = std::string_view(node.attribute("tabPinned").as_string("no")) == "yes";
             f.tabColor = node.attribute("tabColourId").as_int(-1);
+            if (const pugi::xml_attribute wrap = node.attribute("wordWrap"))
+                f.wordWrap = std::string_view(wrap.as_string()) == "yes";
             if (f.tabColor < -1 || f.tabColor > 4)
                 f.tabColor = -1;
             f.backupFilePath = QString::fromUtf8(node.attribute("backupFilePath").as_string("")).replace(QLatin1Char('\\'), QLatin1Char('/'));
@@ -128,6 +130,8 @@ void writeFileNode(pugi::xml_node parent, const SessionFile& f)
     node.append_attribute("tabColourId") = f.tabColor;
     node.append_attribute("RTL") = "no";
     node.append_attribute("tabPinned") = f.tabPinned ? "yes" : "no";
+    if (f.wordWrap)
+        node.append_attribute("wordWrap") = *f.wordWrap ? "yes" : "no";
     for (const std::size_t line : f.bookmarks)
         node.append_child("Mark").append_attribute("line") = static_cast<unsigned long long>(line);
     for (const std::size_t line : f.foldedLines)

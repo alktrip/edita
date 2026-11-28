@@ -222,6 +222,8 @@ public:
     QString documentSummary() const;
     // Ver › Seguimiento (tail -f) del documento actual
     void toggleMonitoring();
+    // Ver › Ajuste de línea: el del documento actual, en las vistas que lo muestran (fase 103)
+    void setCurrentWordWrap(bool on);
     // Herramientas › … › Generar desde la selección al portapapeles
     bool hashSelectionToClipboard(QCryptographicHash::Algorithm algorithm);
     // Archivo › Renombrar: el archivo en disco (con el diálogo de guardar) o, sin archivo, el

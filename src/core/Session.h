@@ -25,6 +25,7 @@
 #include <QStringList>
 
 #include <cstddef>
+#include <optional>
 #include <vector>
 
 namespace edita {
@@ -38,6 +39,7 @@ struct SessionFile
     bool userReadOnly = false;
     bool tabPinned = false;  // la pestaña está fijada (tabPinned)
     int tabColor = -1;       // color de la pestaña: 0…4, -1 sin color (tabColourId)
+    std::optional<bool> wordWrap; // ajuste de línea (wordWrap); sin él, la preferencia por omisión
     Position position;
     std::vector<std::size_t> foldedLines; // <Fold line="…"/> (se leen y se conservan)
     std::vector<std::size_t> bookmarks;   // <Mark line="…"/> (se leen y se conservan)

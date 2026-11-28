@@ -88,9 +88,9 @@ Fecha: 2026-11-05, revisado el 2026-11-11 con Notepad++ 8.9.9 ([fase 78](fase78.
 | ✅ Scintilla 5.6.9, Lexilla 5.5.5, boost 1.92 | Las versiones de los componentes |
 | ✅ Lista de funciones de Bash, INI y PowerShell; escapes de R; puntos de los espacios con el zoom | Arreglos pequeños |
 
-## Novedades de Notepad++ 8.9.9.1 y posteriores (hasta el 23 de noviembre de 2026)
+## Novedades de Notepad++ 8.9.9.1 y posteriores (hasta el 28 de noviembre de 2026)
 
-Revisadas en la [fase 102](fase102.md).
+Revisadas en las fases [102](fase102.md) y [103](fase103.md).
 
 | Novedad | Qué hace |
 |---|---|
@@ -99,6 +99,10 @@ Revisadas en la [fase 102](fase102.md).
 | ✅ Recortar espacios sin mover la vista | También al ordenar líneas y convertir tabuladores |
 | ✅ Ordenar pestañas respeta las fijadas | En Ventana › Ordenar por y en el diálogo Ventanas |
 | ✅ Actualizar los estilos del usuario desde el modelo (`updateStylesXml`, de antes) | Lo nuevo de los estilos llega al `stylers.xml` y a los temas copiados |
+| ✅ Ajuste de línea por documento (c3ed07bda) | Ver › Ajuste de línea cambia el del documento actual; la preferencia, el de los nuevos; se guarda en la sesión ([fase 103](fase103.md)) |
+| ✅ Lista de funciones de Bash con `<<'EOF'` | El `bash.xml` de N++ |
+| ✅ Iconos de estado iguales en pestañas y Lista de documentos | Con un icono propio para Seguimiento |
+| ✅ Structured Text en Deep Black | El tema de N++ |
 
 ## No aplican en Linux, o se descartaron
 

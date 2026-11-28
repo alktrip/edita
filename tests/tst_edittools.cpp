@@ -10,6 +10,7 @@
 #include "core/DateTimeFormat.h"
 #include "core/Preferences.h"
 #include "doc/Buffer.h"
+#include "ui/DocTabBar.h"
 #include "ui/EditorPane.h"
 #include "ui/EditorView.h"
 #include "ui/HashDialog.h"
@@ -181,6 +182,9 @@ private slots:
         QVERIFY(buf->isMonitoring());
         QVERIFY(buf->isUserReadOnly());
         QVERIFY(action(*w, "actionMonitoring")->isChecked());
+        // Su icono propio, el mismo en la pestaña y en la Lista de documentos (fase 103)
+        QCOMPARE(DocTabBar::stateOf(*buf), DocTabBar::TabState::Monitoring);
+        QTRY_COMPARE(w->pane()->tabBar()->stateAt(w->pane()->tabBar()->indexOf(buf->id())), DocTabBar::TabState::Monitoring);
         QFile f(path);
         QVERIFY(f.open(QIODevice::Append));
         f.write("dos\ntres\n");
@@ -191,6 +195,7 @@ private slots:
         action(*w, "actionMonitoring")->trigger();
         QVERIFY(!buf->isMonitoring());
         QVERIFY(!buf->isUserReadOnly());
+        QTRY_COMPARE(w->pane()->tabBar()->stateAt(w->pane()->tabBar()->indexOf(buf->id())), DocTabBar::TabState::Saved);
         // Un documento sin guardar no se puede seguir
         w->newDocument();
         action(*w, "actionMonitoring")->trigger();

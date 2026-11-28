@@ -106,7 +106,7 @@ Mayús) y:
 
 | Orden | Qué hace |
 |---|---|
-| {{actionWrap}} | Ajusta las líneas largas al ancho de la ventana. |
+| {{actionWrap}} | Ajusta las líneas largas del documento actual al ancho de la ventana. Cada documento conserva el suyo (también en la sesión); los nuevos empiezan con el de Preferencias › Edición. |
 | {{actionShowWhiteSpace}} | Muestra los espacios como puntos y las tabulaciones como flechas. |
 | {{actionShowEol}} | Muestra los caracteres de fin de línea (CR, LF). |
 | {{actionShowIndentGuides}} | Muestra líneas verticales en cada nivel de sangría. |

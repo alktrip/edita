@@ -333,7 +333,8 @@ void PreferencesDialog::buildEditing()
     _breadcrumbs = addCheck(form, tr("Breadcrumbs above the editor (folder › file › class › function)"), "breadcrumbs");
     _stickyScroll = addCheck(form, tr("Sticky scroll (keep the first line of the current block at the top)"), "stickyScroll");
     form->addRow(new QLabel(tr("<b>Line wrap</b>")));
-    _wrap = addCheck(form, tr("Wrap long lines"), "wrap");
+    _wrap = addCheck(form, tr("Enable word wrap by default for each document"), "wrap");
+    _wrap->setToolTip(tr("View › Word wrap changes it for the current document only."));
     _wrapIndent = addCombo(form, tr("Wrap indent:"), "wrapIndent",
                            {{tr("Default"), 0}, {tr("Aligned"), 1}, {tr("Indent"), 2}});
     _wrapSymbol = addCheck(form, tr("Wrap symbol at the end"), "wrapSymbolShow");
@@ -827,7 +828,8 @@ void PreferencesDialog::buildPerformance()
     form->addRow(new QLabel(tr("<b>Large File Restriction</b>")));
     _largeFile = addCheck(form, tr("Enable Large File Restriction (no syntax highlighting)"), "largeFileRestriction");
     _largeFileSize = addSpin(form, tr("Define Large File Size:"), "largeFileSizeMB", 1, 4096, tr(" MB"));
-    _largeFileNoWrap = addCheck(form, tr("Deactivate Word Wrap globally"), "largeFileNoWordWrap");
+    _largeFileNoWrap = addCheck(form, tr("Deactivate Word Wrap"), "largeFileNoWordWrap");
+    _largeFileNoWrap->setToolTip(tr("A large file opens without word wrap; the other documents keep theirs."));
     _largeFileAutoc = addCheck(form, tr("Allow Auto-Completion"), "largeFileAutoCompletion");
     _largeFileSmart = addCheck(form, tr("Allow Smart Highlighting"), "largeFileSmartHighlight");
     _largeFileBrace = addCheck(form, tr("Allow Brace Match"), "largeFileBraceMatch");

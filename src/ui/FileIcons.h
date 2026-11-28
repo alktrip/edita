@@ -15,7 +15,7 @@
 
 namespace edita::fileicons {
 
-enum class State { Saved, Dirty, ReadOnly };
+enum class State { Saved, Dirty, ReadOnly, Monitoring };
 
 struct FileType
 {

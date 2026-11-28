@@ -370,7 +370,6 @@ private slots:
         x.w().openFile(file("a.cpp"));
         x.w().cloneToOtherView();
         x.setPrefs([](Preferences& p) {
-            p.wrap = true;
             p.whiteSpaceShow = true;
             p.eolShow = true;
             p.caretWidth = 0;
@@ -386,7 +385,6 @@ private slots:
         });
         for (EditorPane* pane : {x.w().mainPane(), x.w().subPane()}) {
             EditorView* v = pane->editor();
-            QCOMPARE(v->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_WORD});
             QCOMPARE(v->sci(SCI_GETVIEWWS), sptr_t{SCWS_VISIBLEALWAYS});
             QCOMPARE(v->sci(SCI_GETVIEWEOL), sptr_t{1});
             QCOMPARE(v->sci(SCI_GETCARETSTYLE) & CARETSTYLE_BLOCK, sptr_t{CARETSTYLE_BLOCK});
@@ -422,8 +420,68 @@ private slots:
 
         // Se guardan en config.xml y la próxima ventana arranca con ellas
         Window y;
-        QVERIFY(y.w().preferences().wrap);
-        QCOMPARE(y.editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_WORD});
+        QCOMPARE(y.editor()->sci(SCI_GETVIEWWS), sptr_t{SCWS_VISIBLEALWAYS});
+        y.setPrefs([](Preferences& p) { p = Preferences{}; });
+    }
+
+    // Fase 103: el ajuste de línea es de cada documento (N++ c3ed07bda). La preferencia es la de
+    // los documentos nuevos; Ver › Ajuste de línea cambia solo el actual, en las dos vistas si
+    // está clonado, y la sesión lo guarda
+    void wordWrapPerDocument()
+    {
+        writeFile(file("largo.txt"), QByteArray(500, 'x') + "\n");
+        writeFile(file("otro.txt"), "corto\n");
+        Window x;
+        x.setPrefs([](Preferences& p) { p.wrap = false; });
+        const BufferId a = x.w().openFile(file("largo.txt"));
+        const BufferId b = x.w().openFile(file("otro.txt"));
+        x.w().pane()->activateBuffer(a);
+        QVERIFY(!x.action("actionWrap")->isChecked());
+        x.action("actionWrap")->trigger();
+        QVERIFY(x.w().documents().buffer(a)->wordWrap());
+        QCOMPARE(x.editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_WORD});
+        QVERIFY(!x.w().preferences().wrap); // la preferencia no cambia
+        // El otro documento, sin ajuste; el menú sigue al documento
+        x.w().pane()->activateBuffer(b);
+        QCOMPARE(x.editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_NONE});
+        QVERIFY(!x.action("actionWrap")->isChecked());
+        x.w().pane()->activateBuffer(a);
+        QCOMPARE(x.editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_WORD});
+        QVERIFY(x.action("actionWrap")->isChecked());
+        // Clonado: las dos vistas
+        x.w().cloneToOtherView();
+        QCOMPARE(x.w().subPane()->editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_WORD});
+        x.action("actionWrap")->trigger();
+        QCOMPARE(x.w().mainPane()->editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_NONE});
+        QCOMPARE(x.w().subPane()->editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_NONE});
+        x.action("actionWrap")->trigger();
+        // Cambiar la preferencia no toca los abiertos; un documento nuevo empieza con ella
+        x.setPrefs([](Preferences& p) { p.wrap = true; });
+        QVERIFY(!x.w().documents().buffer(b)->wordWrap());
+        x.w().newDocument();
+        QVERIFY(x.w().documents().buffer(x.w().currentBuffer())->wordWrap());
+        QCOMPARE(x.editor()->sci(SCI_GETWRAPMODE), sptr_t{SC_WRAP_WORD});
+        // La sesión: el de cada archivo (wordWrap="yes"/"no", como N++)
+        QVERIFY(x.w().saveSession());
+        const QByteArray session = readAll(QDir(configDir()).filePath("session.xml"));
+        QVERIFY(session.contains("wordWrap=\"yes\""));
+        QVERIFY(session.contains("wordWrap=\"no\""));
+        x.setPrefs([](Preferences& p) { p.wrap = false; });
+        Window y;
+        QVERIFY(y.w().restoreLastSession());
+        bool sawLargo = false, sawOtro = false;
+        for (std::size_t i = 0; i < y.w().documents().count(); ++i) {
+            const Buffer* buf = y.w().documents().bufferAt(i);
+            if (buf->filePath().endsWith(QLatin1String("largo.txt"))) {
+                QVERIFY(buf->wordWrap());
+                sawLargo = true;
+            } else if (buf->filePath().endsWith(QLatin1String("otro.txt"))) {
+                QVERIFY(!buf->wordWrap());
+                sawOtro = true;
+            }
+        }
+        QVERIFY(sawLargo && sawOtro);
+        y.setPrefs([](Preferences& p) { p = Preferences{}; });
     }
 
     void generalPreferencesAffectTheWindow()
@@ -452,11 +510,9 @@ private slots:
         x.action("actionShowAll")->trigger();
         QVERIFY(x.w().preferences().eolShow);
         QVERIFY(x.action("actionShowEol")->isChecked());
-        x.action("actionWrap")->trigger();
-        QVERIFY(x.w().preferences().wrap);
         ConfigXml config;
         QVERIFY(config.load(QDir(configDir()).filePath("config.xml")));
-        QVERIFY(loadPreferences(config).wrap);
+        QVERIFY(loadPreferences(config).eolShow);
     }
 
     void newDocumentSettings()

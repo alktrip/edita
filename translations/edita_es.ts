@@ -932,7 +932,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Falta &lt;NotepadPlus&gt;&lt;Session&gt;</translation>
     </message>
     <message>
-        <location line="+100"/>
+        <location line="+104"/>
         <source>%1 does not exist</source>
         <translation>No existe %1</translation>
     </message>
@@ -1647,7 +1647,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
 <context>
     <name>edita::DocTabBar</name>
     <message>
-        <location filename="../src/ui/DocTabBar.cpp" line="+157"/>
+        <location filename="../src/ui/DocTabBar.cpp" line="+153"/>
         <source>Unpin Tab</source>
         <translation>Desfijar la pestaña</translation>
     </message>
@@ -2565,18 +2565,18 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     <name>edita::MainWindow</name>
     <message>
         <location filename="../src/ui/MainWindow.cpp" line="+550"/>
-        <location line="+5451"/>
+        <location line="+5450"/>
         <source>Macros</source>
         <translation>Macros</translation>
     </message>
     <message>
-        <location line="-5451"/>
-        <location line="+2610"/>
+        <location line="-5450"/>
+        <location line="+2611"/>
         <source>Could not read %1</source>
         <translation>No se pudo leer %1</translation>
     </message>
     <message>
-        <location line="-2512"/>
+        <location line="-2511"/>
         <source>Settings</source>
         <translation>Configuración</translation>
     </message>
@@ -2881,7 +2881,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Ajuste de línea</translation>
     </message>
     <message>
-        <location line="+5"/>
+        <location line="+4"/>
         <source>Show S&amp;ymbol</source>
         <translation>Mostrar &amp;símbolo</translation>
     </message>
@@ -3022,7 +3022,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Acerca de &amp;Qt</translation>
     </message>
     <message>
-        <location line="+2122"/>
+        <location line="+2120"/>
         <source>&amp;EOL Conversion</source>
         <translation>Conversión de &amp;fin de línea</translation>
     </message>
@@ -3245,12 +3245,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Ir al anterior estilo</translation>
     </message>
     <message>
-        <location line="-3158"/>
+        <location line="-3155"/>
         <source>&amp;Reverse Line Order</source>
         <translation>Invertir el &amp;orden</translation>
     </message>
     <message>
-        <location line="-1088"/>
+        <location line="-1090"/>
         <source>Arabic</source>
         <translation>Árabe</translation>
     </message>
@@ -3330,13 +3330,13 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Vietnamita</translation>
     </message>
     <message>
-        <location line="+841"/>
-        <location line="+1388"/>
+        <location line="+843"/>
+        <location line="+1387"/>
         <source>Open Folder as Workspace</source>
         <translation>Abrir carpeta como espacio de trabajo</translation>
     </message>
     <message>
-        <location line="-1330"/>
+        <location line="-1329"/>
         <source>Close &amp;Multiple Documents</source>
         <translation>Cerrar &amp;varios documentos</translation>
     </message>
@@ -3362,12 +3362,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+6"/>
-        <location line="+6274"/>
+        <location line="+6292"/>
         <source>All types (*)</source>
         <translation>Todos los tipos (*)</translation>
     </message>
     <message>
-        <location line="-6273"/>
+        <location line="-6291"/>
         <source>Session file (*.%1)</source>
         <translation>Archivo de sesión (*.%1)</translation>
     </message>
@@ -3940,7 +3940,7 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>&amp;Quitar la comparación</translation>
     </message>
     <message>
-        <location line="+13"/>
+        <location line="+12"/>
         <source>Show &amp;Non-Printing Characters</source>
         <translation>Mostrar los caracteres &amp;no imprimibles</translation>
     </message>
@@ -4334,12 +4334,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
     </message>
     <message>
         <location line="+2"/>
-        <location line="+5292"/>
+        <location line="+5290"/>
         <source>unknown</source>
         <translation>desconocido</translation>
     </message>
     <message>
-        <location line="-5291"/>
+        <location line="-5289"/>
         <source>Report…</source>
         <translation>Reportar…</translation>
     </message>
@@ -4734,7 +4734,7 @@ Commit anyway?</source>
         </translation>
     </message>
     <message>
-        <location line="+315"/>
+        <location line="+313"/>
         <source>E&amp;ncoding</source>
         <translation>C&amp;odificación</translation>
     </message>
@@ -5393,7 +5393,7 @@ Do you want to save the file anyway?</source>
         <translation>Ejecutar</translation>
     </message>
     <message>
-        <location line="-2406"/>
+        <location line="-2404"/>
         <source>Format Document</source>
         <translation>Dar formato al documento</translation>
     </message>
@@ -5425,7 +5425,7 @@ Do you want to save the file anyway?</source>
         <translation>Formateado con %1</translation>
     </message>
     <message>
-        <location line="+2342"/>
+        <location line="+2340"/>
         <source>Run until the end of file</source>
         <translation>Hasta el final del archivo</translation>
     </message>
@@ -5610,7 +5610,7 @@ Keep this file in editor?</source>
         <translation>%1 caracteres seleccionados (%2 bytes) en %3 rangos</translation>
     </message>
     <message>
-        <location line="+14"/>
+        <location line="+35"/>
         <location line="+2"/>
         <source>Monitoring problem</source>
         <translation>No se puede seguir el archivo</translation>
@@ -5977,7 +5977,7 @@ Continue?</source>
         <translation>Esta línea no tiene historia en Git</translation>
     </message>
     <message>
-        <location line="+242"/>
+        <location line="+240"/>
         <source>open</source>
         <translation>abierto</translation>
     </message>
@@ -6242,7 +6242,7 @@ Continue?</source>
         <translation>¿Reemplazar todas las apariciones de «%1» por «%2» en los archivos «%3» de %4?</translation>
     </message>
     <message>
-        <location line="+293"/>
+        <location line="+297"/>
         <location line="+14"/>
         <source>Load Session</source>
         <translation>Cargar una sesión</translation>
@@ -6950,12 +6950,7 @@ Continue?</source>
         <translation>&lt;b&gt;Ajuste de línea&lt;/b&gt;</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Wrap long lines</source>
-        <translation>Ajustar las líneas largas</translation>
-    </message>
-    <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>Wrap indent:</source>
         <translation>Sangría al ajustar:</translation>
     </message>
@@ -6997,12 +6992,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+502"/>
+        <location line="+503"/>
         <source>Folder:</source>
         <translation>Plegado:</translation>
     </message>
     <message>
-        <location line="-501"/>
+        <location line="-502"/>
         <source>Simple</source>
         <translation>Simple</translation>
     </message>
@@ -7053,13 +7048,13 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+642"/>
+        <location line="+643"/>
         <location line="+57"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-699"/>
+        <location line="-700"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -7623,12 +7618,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+176"/>
+        <location line="+177"/>
         <source>Every:</source>
         <translation>Cada:</translation>
     </message>
     <message>
-        <location line="-176"/>
+        <location line="-177"/>
         <source> s</source>
         <translation> s</translation>
     </message>
@@ -7778,12 +7773,7 @@ Continue?</source>
         <translation> MB</translation>
     </message>
     <message>
-        <location line="+1"/>
-        <source>Deactivate Word Wrap globally</source>
-        <translation>Desactivar el ajuste de línea para todos</translation>
-    </message>
-    <message>
-        <location line="+1"/>
+        <location line="+3"/>
         <source>Allow Auto-Completion</source>
         <translation>Permitir el autocompletado</translation>
     </message>
@@ -7934,7 +7924,27 @@ Continue?</source>
         <translation>Avisar</translation>
     </message>
     <message>
-        <location line="-63"/>
+        <location line="-572"/>
+        <source>Enable word wrap by default for each document</source>
+        <translation>Activar el ajuste de línea por omisión en cada documento</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>View › Word wrap changes it for the current document only.</source>
+        <translation>Ver › Ajuste de línea lo cambia solo en el documento actual.</translation>
+    </message>
+    <message>
+        <location line="+494"/>
+        <source>Deactivate Word Wrap</source>
+        <translation>Desactivar el ajuste de línea</translation>
+    </message>
+    <message>
+        <location line="+1"/>
+        <source>A large file opens without word wrap; the other documents keep theirs.</source>
+        <translation>Un archivo grande se abre sin ajuste de línea; los demás documentos conservan el suyo.</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>Cloud and Link</source>
         <translation>Nube y enlaces</translation>
     </message>
@@ -8014,8 +8024,8 @@ Continue?</source>
         <translation>Buscar una versión nueva de Edita al arrancar</translation>
     </message>
     <message>
-        <location line="-161"/>
-        <location line="+162"/>
+        <location line="-162"/>
+        <location line="+163"/>
         <source> days</source>
         <translation> días</translation>
     </message>
