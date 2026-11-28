@@ -5,6 +5,10 @@ namespace edita {
 
 inline constexpr const char* kAppId = "@EDITA_APP_ID@";
 inline constexpr const char* kAppName = "@PROJECT_NAME@";
+// El nombre del .desktop sin la extensión (edita; io.github.alktrip.Edita en Flatpak)
+inline constexpr const char* kDesktopId = "@EDITA_DESKTOP_ID@";
+// El ID de AppStream
+inline constexpr const char* kMetainfoId = "@EDITA_METAINFO_ID@";
 // La versión completa, la que ve el usuario (0.9.0-beta.1)
 inline constexpr const char* kAppVersion = "@EDITA_VERSION@";
 // Solo los números (0.9.0): para los plugins (NPPM_GETNPPVERSION) y las comparaciones

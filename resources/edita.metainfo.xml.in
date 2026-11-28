@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generado por CMake a partir de resources/edita.metainfo.xml.in (fase 104). AppStream: lo
+     que muestran GNOME Software, KDE Discover y Flathub. Al publicar una versión, añadirla en
+     <releases> (tst_metainfo lo comprueba) -->
+<component type="desktop-application">
+  <id>@EDITA_METAINFO_ID@</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Edita</name>
+  <summary>Text and code editor with the Notepad++ workflow</summary>
+  <summary xml:lang="es">Editor de texto y código con el flujo de trabajo de Notepad++</summary>
+
+  <developer id="io.github.alktrip">
+    <name>Edita contributors</name>
+    <name xml:lang="es">Colaboradores de Edita</name>
+  </developer>
+
+  <description>
+    <p>
+      Edita is a native Linux editor for people who know Notepad++: the same menus, shortcuts,
+      search modes, macros, sessions, themes and configuration files, on the same editing engine
+      (Scintilla and Lexilla). It runs Notepad++ plugins too, through a compatible plugin API.
+    </p>
+    <p xml:lang="es">
+      Edita es un editor nativo para Linux para quien conoce Notepad++: los mismos menús, atajos,
+      modos de búsqueda, macros, sesiones, temas y archivos de configuración, sobre el mismo motor
+      de edición (Scintilla y Lexilla). También ejecuta plugins de Notepad++, con una API de
+      plugins compatible.
+    </p>
+    <p>On top of that, it has what a developer expects from a modern editor:</p>
+    <p xml:lang="es">Además, tiene lo que se espera de un editor moderno:</p>
+    <ul>
+      <li>Language servers (LSP): diagnostics, completion, go to definition, rename and formatting</li>
+      <li xml:lang="es">Servidores de lenguaje (LSP): diagnósticos, autocompletado, ir a la definición, renombrar y formatear</li>
+      <li>Git: changes in the margin, staging of single blocks, a commit panel and the history of a file</li>
+      <li xml:lang="es">Git: los cambios en el margen, preparar un solo bloque, un panel de commit y el historial de un archivo</li>
+      <li>An integrated terminal, project tasks with clickable errors and file comparison</li>
+      <li xml:lang="es">Una terminal integrada, tareas del proyecto con los errores enlazados y comparar archivos</li>
+      <li>A command palette, CSV, JSON and YAML tools, a TODO panel and a secret scanner</li>
+      <li xml:lang="es">Una paleta de órdenes, herramientas de CSV, JSON y YAML, un panel TODO y un detector de secretos</li>
+      <li>95 languages, 30 themes, a catalog of signed plugins and a built-in manual</li>
+      <li xml:lang="es">95 lenguajes, 30 temas, un catálogo de plugins firmados y un manual incluido</li>
+    </ul>
+    <p>The interface is available in English and Spanish.</p>
+    <p xml:lang="es">La interfaz está en inglés y en español.</p>
+  </description>
+
+  <launchable type="desktop-id">@EDITA_DESKTOP_ID@.desktop</launchable>
+  <provides>
+    <binary>@EDITA_APP_ID@</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/alktrip/edita</url>
+  <url type="bugtracker">https://github.com/alktrip/edita/issues</url>
+  <url type="vcs-browser">https://github.com/alktrip/edita</url>
+  <url type="contribute">https://github.com/alktrip/edita/blob/main/CONTRIBUTING.md</url>
+
+  <categories>
+    <category>Utility</category>
+    <category>TextEditor</category>
+    <category>Development</category>
+  </categories>
+  <keywords>
+    <keyword>text</keyword>
+    <keyword>editor</keyword>
+    <keyword>code</keyword>
+    <keyword>notepad</keyword>
+    <keyword>Notepad++</keyword>
+    <keyword>programming</keyword>
+    <keyword xml:lang="es">texto</keyword>
+    <keyword xml:lang="es">editor</keyword>
+    <keyword xml:lang="es">código</keyword>
+    <keyword xml:lang="es">programación</keyword>
+  </keywords>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Folder as Workspace, C++ code with breadcrumbs and the Document Map</caption>
+      <caption xml:lang="es">Carpeta como espacio de trabajo, código C++ con la ruta de navegación y el mapa del documento</caption>
+      <image>https://raw.githubusercontent.com/alktrip/edita/main/docs/images/en/edita-light.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>A dark theme with the Function List</caption>
+      <caption xml:lang="es">Un tema oscuro con la lista de funciones</caption>
+      <image>https://raw.githubusercontent.com/alktrip/edita/main/docs/images/en/edita-dark.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The Git panel and the change marks in the margin</caption>
+      <caption xml:lang="es">Git: los cambios en el margen y el panel de commit</caption>
+      <image>https://raw.githubusercontent.com/alktrip/edita/main/docs/images/en/edita-git.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Plugins Admin with the plugins of the signed catalog</caption>
+      <caption xml:lang="es">Plugins de Notepad++ del catálogo firmado</caption>
+      <image>https://raw.githubusercontent.com/alktrip/edita/main/docs/images/en/edita-plugins.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The integrated terminal</caption>
+      <caption xml:lang="es">La terminal integrada</caption>
+      <image>https://raw.githubusercontent.com/alktrip/edita/main/docs/images/en/edita-terminal.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Comparing a document with its saved version</caption>
+      <caption xml:lang="es">Comparar un documento con su versión guardada</caption>
+      <image>https://raw.githubusercontent.com/alktrip/edita/main/docs/images/en/edita-compare.png</image>
+    </screenshot>
+  </screenshots>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#c6e2ff</color>
+    <color type="primary" scheme_preference="dark">#1b3a5c</color>
+  </branding>
+
+  <content_rating type="oars-1.1"/>
+
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+
+  <releases>
+    <release version="1.0.0~rc.7" date="2026-11-24" type="development">
+      <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0-rc.7</url>
+      <description>
+        <p>Catches up with the latest Notepad++ changes: trimming spaces keeps your place, sorting tabs respects pinned tabs, a color for C++ user-defined literals, and new styles reach existing users.</p>
+        <p xml:lang="es">Al día con los últimos cambios de Notepad++: recortar espacios sin perder el sitio, ordenar las pestañas respetando las fijadas, un color para los literales de usuario de C++, y los estilos nuevos llegan a quien ya usaba Edita.</p>
+      </description>
+    </release>
+    <release version="1.0.0~rc.6" date="2026-11-18" type="development">
+      <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0-rc.6</url>
+    </release>
+    <release version="1.0.0~rc.4" date="2026-11-14" type="development">
+      <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0-rc.4</url>
+    </release>
+    <release version="1.0.0~rc.1" date="2026-11-12" type="development">
+      <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0-rc.1</url>
+    </release>
+    <release version="0.9.0~beta.1" date="2026-11-04" type="development">
+      <url type="details">https://github.com/alktrip/edita/releases/tag/v0.9.0-beta.1</url>
+    </release>
+  </releases>
+</component>

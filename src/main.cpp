@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     // Si Edita falla, deja el reporte para ofrecerlo al volver a abrirlo
     edita::crash_report::install(edita::crash_report::defaultDirectory(), QString::fromUtf8(edita::kAppVersion));
     QApplication::setWindowIcon(edita::MainWindow::applicationIcon());
-    QGuiApplication::setDesktopFileName(QString::fromUtf8(edita::kAppId)); // Wayland: une la ventana con su .desktop
+    QGuiApplication::setDesktopFileName(QString::fromUtf8(edita::kDesktopId)); // Wayland: une la ventana con su .desktop
     edita::paths::useOwnQtSettings(); // el diálogo de archivos de Qt, sin compartir QtProject.conf
     if (recipeCommand) {
         QTextStream out(stdout);

@@ -52,6 +52,11 @@ endif()
 
 # Nombre del binario y del directorio de configuración (~/.config/<EDITA_APP_ID>/)
 set(EDITA_APP_ID "edita" CACHE STRING "Identificador de la aplicación")
+# El nombre del .desktop y del icono (fase 104): «edita» en los .deb, .rpm y AppImage (las
+# asociaciones de archivos ya hechas lo usan) y el ID de AppStream en Flatpak, que lo exige
+set(EDITA_DESKTOP_ID "${EDITA_APP_ID}" CACHE STRING "Nombre del .desktop y del icono (io.github.alktrip.Edita en Flatpak)")
+# El ID de AppStream (GNOME Software, KDE Discover, Flathub): un nombre de dominio invertido
+set(EDITA_METAINFO_ID "io.github.alktrip.Edita")
 
 find_package(Qt6 6.7 REQUIRED COMPONENTS Core Gui Widgets PrintSupport Network Core5Compat Svg LinguistTools)
 

@@ -159,6 +159,10 @@ export EXTRA_QT_MODULES="waylandclient"
 export EXTRA_QT_PLUGINS="$EXTRA_QT_MODULES" # nombre en versiones anteriores del plugin
 export LDAI_OUTPUT="$OUT/Edita-$VERSION-$ARCH.AppImage"
 export LINUXDEPLOY_OUTPUT_VERSION=$VERSION
+# El metainfo de AppStream (fase 104) usa etiquetas de AppStream 1.0 (vcs-browser, contribute,
+# developer) que el appstreamcli 0.15 de Ubuntu 22.04 no conoce: lo valida tst_metainfo con uno
+# actual, no appimagetool
+export LDAI_NO_APPSTREAM=1
 rm -f "$LDAI_OUTPUT"
 (
     cd "$WORK"

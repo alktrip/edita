@@ -397,9 +397,12 @@ qt_add_resources(edita_ui edita_translations
 install(TARGETS ${EDITA_APP_ID} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} BUNDLE DESTINATION .)
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data/ DESTINATION ${CMAKE_INSTALL_DATADIR}/${EDITA_APP_ID})
 # Menú del escritorio: <id>.desktop y el ícono <id>.png en el tema hicolor
-configure_file(${PROJECT_SOURCE_DIR}/resources/edita.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/${EDITA_APP_ID}.desktop @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${EDITA_APP_ID}.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+configure_file(${PROJECT_SOURCE_DIR}/resources/edita.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/${EDITA_DESKTOP_ID}.desktop @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${EDITA_DESKTOP_ID}.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 foreach(size IN LISTS EDITA_ICON_SIZES)
     install(FILES ${PROJECT_SOURCE_DIR}/resources/icons/hicolor/${size}x${size}/apps/edita.png
-            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps RENAME ${EDITA_APP_ID}.png)
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps RENAME ${EDITA_DESKTOP_ID}.png)
 endforeach()
+# AppStream (fase 104): lo que muestran GNOME Software, KDE Discover y Flathub
+configure_file(${PROJECT_SOURCE_DIR}/resources/edita.metainfo.xml.in ${CMAKE_CURRENT_BINARY_DIR}/${EDITA_METAINFO_ID}.metainfo.xml @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${EDITA_METAINFO_ID}.metainfo.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
