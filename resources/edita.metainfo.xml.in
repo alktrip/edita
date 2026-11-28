@@ -123,6 +123,13 @@
   </requires>
 
   <releases>
+    <release version="1.0.0" date="2026-11-28" type="stable">
+      <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0</url>
+      <description>
+        <p>The first stable release. Since 1.0.0-rc.7: word wrap per document, the Bash Function List with quoted here-documents, an icon for monitored documents, and AppStream metadata for the Linux software stores.</p>
+        <p xml:lang="es">La primera versión estable. Desde la 1.0.0-rc.7: ajuste de línea por documento, la lista de funciones de Bash con here-documents entre comillas, un icono para los documentos en seguimiento y los metadatos de AppStream para las tiendas de Linux.</p>
+      </description>
+    </release>
     <release version="1.0.0~rc.7" date="2026-11-24" type="development">
       <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0-rc.7</url>
       <description>

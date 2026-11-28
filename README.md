@@ -34,7 +34,7 @@
 ![Edita with the light theme: Folder as Workspace, C++ code with breadcrumbs and the Document Map](docs/images/en/edita-light.png)
 
 > [!NOTE]
-> **Edita 1.0 is in the release-candidate stage.** The current release, [1.0.0-rc.2](https://github.com/alktrip/edita/releases/latest), is a preview of 1.0: use it for real work, but keep copies of what matters and [tell us what you find](https://github.com/alktrip/edita/issues/new/choose).
+> **Edita 1.0 is out.** [Download it](https://github.com/alktrip/edita/releases/latest), and [tell us what you find](https://github.com/alktrip/edita/issues/new/choose).
 
 ---
 
@@ -188,11 +188,11 @@ Settings live in `~/.config/edita/`, with the same files as Notepad++ (`config.x
 
 | | |
 |---|---|
-| **Current release** | [1.0.0-rc.2](https://github.com/alktrip/edita/releases/latest), a release candidate, so it may still contain bugs |
-| **Next milestone** | 1.0.0: the same version with a new number, if testers find nothing serious. After that, 1.1: see the [roadmap](ROADMAP.md) |
-| **Platforms** | Linux x86_64 and arm64. macOS is paused until 1.0 for Linux is out |
+| **Current release** | [1.0.0](https://github.com/alktrip/edita/releases/latest), the first stable release |
+| **Next milestone** | Flathub, then 1.1: see the [roadmap](ROADMAP.md) |
+| **Platforms** | Linux x86_64 and arm64. macOS comes after 1.0 for Linux |
 | **Notepad++ parity** | Almost every Notepad++ command is implemented. What is still missing (right-to-left text and project panels) is listed in [docs/paridad-npp.md](docs/paridad-npp.md) |
-| **Quality** | 71 automated test suites, run in CI on x86_64 and arm64; the packages are installed on Fedora and Debian in CI before every release |
+| **Quality** | 81 automated test suites, run in CI on x86_64 and arm64; the packages are installed on Fedora and Debian in CI before every release |
 
 **Release notes:** [GitHub Releases](https://github.com/alktrip/edita/releases) (English and Spanish) · **Development history:** [docs/historial.md](docs/historial.md), one entry per phase (Spanish).
 
