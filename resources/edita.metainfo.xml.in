@@ -131,6 +131,13 @@
   </requires>
 
   <releases>
+    <release version="1.0.0~rc.8" date="2026-11-28" type="development">
+      <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0-rc.8</url>
+      <description>
+        <p>Word wrap per document, the Bash Function List with quoted here-documents, an icon for monitored documents, AppStream metadata and Flatpak support. Features are frozen until 1.0.</p>
+        <p xml:lang="es">Ajuste de línea por documento, la lista de funciones de Bash con here-documents entre comillas, un icono para los documentos en seguimiento, los metadatos de AppStream y la preparación para Flatpak. Las funciones quedan congeladas hasta la 1.0.</p>
+      </description>
+    </release>
     <release version="1.0.0~rc.7" date="2026-11-24" type="development">
       <url type="details">https://github.com/alktrip/edita/releases/tag/v1.0.0-rc.7</url>
       <description>
