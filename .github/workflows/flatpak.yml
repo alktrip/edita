@@ -31,8 +31,10 @@ jobs:
           path: ~/.local/share/flatpak
           key: flatpak-kde-6.11-${{ hashFiles('packaging/flatpak/io.github.alktrip.Edita.yml') }}
           restore-keys: flatpak-kde-6.11-
-      - name: flatpak-builder
-        run: flatpak install --user -y --noninteractive flathub org.flatpak.Builder
+      - name: flatpak-builder y los runtimes
+        run: >
+          flatpak install --user -y --noninteractive flathub org.flatpak.Builder
+          org.kde.Sdk//6.11 org.kde.Platform//6.11 org.freedesktop.Sdk.Extension.golang//25.08
       # Los dos permisos que Flathub concede como excepción al revisar la aplicación (justificados en
       # packaging/flatpak/README.md); cualquier otro problema hace fallar la CI
       - name: Linter de Flathub (manifiesto)
@@ -41,8 +43,9 @@ jobs:
           --user-exceptions packaging/flatpak/lint-exceptions.json manifest packaging/flatpak/io.github.alktrip.Edita.yml
       - name: Compilar
         working-directory: packaging/flatpak
+        # Sin sesión gráfica en la CI: flatpak-builder necesita un bus de sesión
         run: >
-          flatpak run org.flatpak.Builder --user --force-clean --install-deps-from=flathub
+          dbus-run-session -- flatpak run org.flatpak.Builder --user --force-clean
           --disable-rofiles-fuse --state-dir=.flatpak-builder --repo=repo build-dir io.github.alktrip.Edita.yml
       - name: Paquete .flatpak
         working-directory: packaging/flatpak
