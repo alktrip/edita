@@ -1291,7 +1291,12 @@ Si guarda en %3 se escribirán como «?» y se perderán.</translation>
         <translation>Plugins cargados (%1): %2</translation>
     </message>
     <message>
-        <location line="+6"/>
+        <location line="+7"/>
+        <source>Edita is an independent project, derived from Notepad++ under the GNU GPL v3. It is not affiliated with or endorsed by Don Ho or the Notepad++ project.</source>
+        <translation>Edita es un proyecto independiente, derivado de Notepad++ bajo la GPL v3 de GNU. No está afiliado a Don Ho ni al proyecto Notepad++, ni cuenta con su aval.</translation>
+    </message>
+    <message>
+        <location line="+5"/>
         <source>Copyright © 2026 Edita contributors. Free software under the GNU General Public License, version 3 or later: see the License tab. It comes with no warranty.</source>
         <translation>Copyright © 2026 Edita contributors. Software libre bajo la Licencia Pública General de GNU, versión 3 o posterior: ver la pestaña Licencia. No tiene garantía.</translation>
     </message>

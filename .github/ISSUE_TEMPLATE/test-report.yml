@@ -1,0 +1,70 @@
+# El resultado de recorrer PROBAR.md (fase 108). Cuenta para el criterio de la 1.0 del ROADMAP:
+# al menos dos personas ajenas al proyecto
+name: Informe de pruebas / Test report
+description: Recorriste la guía de pruebas, con o sin problemas / You went through the testing guide, with or without problems
+labels: [test-report]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por probar Edita. Cuéntanos qué probaste, aunque todo funcionara: eso también sirve. Los problemas, mejor cada uno en su [reporte](https://github.com/alktrip/edita/issues/new?template=bug.yml); aquí basta con enlazarlos.
+        Thank you for testing Edita. Tell us what you tested, even if everything worked: that helps too. Problems are better in their own [report](https://github.com/alktrip/edita/issues/new?template=bug.yml) each; just link them here.
+
+        La guía / The guide: [PROBAR.md](https://github.com/alktrip/edita/blob/main/PROBAR.md)
+  - type: input
+    id: version
+    attributes:
+      label: Versión de Edita / Edita version
+      description: Ayuda › Acerca de Edita / Help › About Edita
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Sistema / System
+      description: Distribución, escritorio, Wayland o X11, x86_64 o arm64 / Distribution, desktop, Wayland or X11, x86_64 or arm64
+      placeholder: Ubuntu 24.04, GNOME, Wayland, x86_64
+    validations:
+      required: true
+  - type: dropdown
+    id: package
+    attributes:
+      label: Cómo lo instalaste / How you installed it
+      options:
+        - AppImage
+        - .deb
+        - .rpm
+        - Flatpak
+        - Compilado / Built from source
+    validations:
+      required: true
+  - type: checkboxes
+    id: areas
+    attributes:
+      label: Qué probaste / What you tested
+      options:
+        - label: Abrir y guardar (codificaciones, fines de línea, archivos grandes) / Opening and saving (encodings, line endings, large files)
+        - label: Buscar y reemplazar, también en carpetas / Find and replace, also in folders
+        - label: Lo de Notepad++ (macros, columnas, sesiones, mapa, lista de funciones, atajos) / The Notepad++ features (macros, columns, sessions, map, function list, shortcuts)
+        - label: Ajuste de línea por documento / Word wrap per document
+        - label: CSV, JSON y YAML / CSV, JSON and YAML
+        - label: Git, terminal, tareas y servidores de lenguaje / Git, terminal, tasks and language servers
+        - label: Plugins del catálogo / Catalog plugins
+        - label: Plugins incluidos (Python Script, MarkdownViewer++, editor hexadecimal, detector de secretos) / Bundled plugins (Python Script, MarkdownViewer++, Hex Editor, Secret Scanner)
+        - label: Tema claro y oscuro, escala de la pantalla / Light and dark theme, display scaling
+        - label: El manual (F1) / The manual (F1)
+  - type: textarea
+    id: found
+    attributes:
+      label: Qué encontraste / What you found
+      description: Lo que funcionó bien, lo que no y los enlaces a los reportes / What worked, what did not, and links to the reports
+    validations:
+      required: true
+  - type: dropdown
+    id: ready
+    attributes:
+      label: ¿La usarías como tu editor? / Would you use it as your editor?
+      options:
+        - Sí / Yes
+        - Sí, cuando se arregle lo que reporté / Yes, once what I reported is fixed
+        - Todavía no / Not yet

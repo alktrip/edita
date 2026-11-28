@@ -381,6 +381,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 105 — Puente de Flatpak | `core/Sandbox` (`isFlatpak`, `hostLauncher`, `createBridge`, `setup`), terminal con `host-spawn`, diccionarios de `/run/host`, asociaciones y recetas desactivadas en Flatpak; `tst_sandbox` | ✅ [fase105.md](fase105.md) |
 | 106 — Paquete Flatpak | `packaging/flatpak` (manifiesto KDE 6.11 con libzip y host-spawn, `build.sh`, guía de Flathub), `.github/workflows/flatpak.yml`; probado en sandbox: puente, terminal, 21 plugins del catálogo | ✅ [fase106.md](fase106.md) |
 | 107 — Página del proyecto | `site/` (inglés y español, claro y oscuro, móvil), `packaging/site/assemble.sh`, `.github/workflows/pages.yml` | ✅ [fase107.md](fase107.md) |
+| 108 — Marca y confianza | No afiliación (README, Acerca de, AppStream, web), eslogan y alcance, README.es.md rehecho, comparación ampliada, congelación y criterio de la 1.0, `test-report.yml`, sección de IA en CONTRIBUTING, `SECURITY.md` | ✅ [fase108.md](fase108.md) |
 
 ---
 
