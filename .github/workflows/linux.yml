@@ -280,7 +280,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           git tag -f continuous
-          git push -f origin refs/tags/continuous
+          # El token de la CI no puede mover la etiqueta por encima de commits que cambian
+          # .github/workflows (falta el permiso «workflows»): entonces la etiqueta se queda donde
+          # estaba y solo se actualizan los paquetes, que es lo que usan la CI del catálogo y quien prueba
+          git push -f origin refs/tags/continuous || echo "::warning::No se pudo mover la etiqueta continuous (cambios en .github/workflows); se actualizan solo los paquetes"
           if ! gh release view continuous >/dev/null 2>&1; then
             gh release create continuous --prerelease --title "Edita (versión en desarrollo)" \
               --notes "El AppImage del último cambio en main, generado por la CI. No es una versión estable."
