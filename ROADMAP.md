@@ -36,6 +36,7 @@ Almost every Notepad++ command is in Edita. What is still missing is listed in [
 
 - **macOS**, once 1.0 for Linux is out.
 - **AUR package**, when AUR registration reopens (the `PKGBUILD` is ready in [packaging/aur](packaging/aur)).
+- **Snap package.** The name `edita` is registered in the Snap Store; the snap will be published after Flathub.
 - More Notepad++ plugins in the [catalog](https://github.com/alktrip/edita-plugins).
 
 Ideas and requests are welcome in [Issues](https://github.com/alktrip/edita/issues/new/choose).
