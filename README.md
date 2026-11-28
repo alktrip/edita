@@ -22,6 +22,7 @@
 </p>
 
 <p align="center">
+  <a href="https://alktrip.github.io/edita/"><b>Website</b></a> &nbsp;·&nbsp;
   <a href="#install"><b>Install</b></a> &nbsp;·&nbsp;
   <a href="https://github.com/alktrip/edita/releases"><b>Releases</b></a> &nbsp;·&nbsp;
   <a href="data/manual/en"><b>User manual</b></a> &nbsp;·&nbsp;

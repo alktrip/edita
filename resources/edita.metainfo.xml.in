@@ -51,7 +51,7 @@
     <binary>@EDITA_APP_ID@</binary>
   </provides>
 
-  <url type="homepage">https://github.com/alktrip/edita</url>
+  <url type="homepage">https://alktrip.github.io/edita/</url>
   <url type="bugtracker">https://github.com/alktrip/edita/issues</url>
   <url type="vcs-browser">https://github.com/alktrip/edita</url>
   <url type="contribute">https://github.com/alktrip/edita/blob/main/CONTRIBUTING.md</url>

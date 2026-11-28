@@ -23,6 +23,7 @@
 
 <p align="center">
   <a href="https://github.com/alktrip/edita/releases/latest"><b>⬇ Descargar Edita</b></a> ·
+  <a href="https://alktrip.github.io/edita/es/">Sitio web</a> ·
   <a href="PROBAR.md">Probar Edita</a> ·
   <a href="https://github.com/alktrip/edita/issues/new/choose">Reportar un problema</a> ·
   <a href="README.md">English</a>
