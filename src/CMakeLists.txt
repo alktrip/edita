@@ -108,6 +108,7 @@ add_library(edita_core STATIC
     core/UserCommands.cpp
     core/Macro.h
     core/Paths.cpp
+    core/Sandbox.cpp
     core/Paths.h
     core/PluginCatalog.cpp
     core/PluginCatalog.h

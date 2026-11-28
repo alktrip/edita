@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "core/SpellChecker.h"
+#include "core/Sandbox.h"
 
 #include <QDir>
 #include <QFile>
@@ -177,6 +178,8 @@ QStringList SpellChecker::dictionaryDirs(const QStringList& extraDirs)
     dirs << QDir::home().filePath(QStringLiteral(".local/share/hunspell")) << QStringLiteral("/usr/share/hunspell")
          << QStringLiteral("/usr/share/myspell") << QStringLiteral("/usr/share/myspell/dicts")
          << QStringLiteral("/usr/local/share/hunspell");
+    if (sandbox::isFlatpak()) // los del sistema, vistos desde la sandbox (fase 105)
+        dirs << sandbox::hostDictionaryDirs();
     return dirs;
 }
 

@@ -64,6 +64,8 @@ edita_add_test(tst_welcome LIBS edita_ui)
 edita_add_test(tst_updatecheck LIBS edita_ui)
 # Fase 91: Ayuda › Acerca de
 edita_add_test(tst_about LIBS edita_ui)
+# Fase 105: Edita dentro de Flatpak
+edita_add_test(tst_sandbox LIBS edita_ui)
 # Fase 104: AppStream y el .desktop (los genera src/CMakeLists.txt)
 edita_add_test(tst_metainfo LIBS edita_core)
 target_compile_definitions(tst_metainfo PRIVATE EDITA_GENERATED_DIR="${PROJECT_BINARY_DIR}/src")

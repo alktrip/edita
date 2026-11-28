@@ -6351,7 +6351,7 @@ Continue?</source>
 <context>
     <name>edita::PluginsAdminDialog</name>
     <message>
-        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+76"/>
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+78"/>
         <location line="+353"/>
         <source>Plugins Admin</source>
         <translation>Administrador de plugins</translation>
@@ -6480,7 +6480,7 @@ Continue?</source>
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+183"/>
+        <location line="+189"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>Se va a quitar %n plugin.</numerusform>
@@ -6504,7 +6504,7 @@ Continue?</source>
         </translation>
     </message>
     <message>
-        <location line="-227"/>
+        <location line="-233"/>
         <source>Install plugins</source>
         <translation>Instalar plugins</translation>
     </message>
@@ -6559,7 +6559,12 @@ Continue?</source>
         <translation>Actualizar plugins</translation>
     </message>
     <message>
-        <location line="+25"/>
+        <location line="+18"/>
+        <source>it has to be compiled on this computer, which the Flatpak version of Edita cannot do; install Edita from its AppImage, .deb or .rpm to use it</source>
+        <translation>hay que compilarlo en este equipo, y la versión Flatpak de Edita no puede hacerlo; para usarlo, instala Edita desde su AppImage, .deb o .rpm</translation>
+    </message>
+    <message>
+        <location line="+13"/>
         <source>ships with Edita (there is no package to download)</source>
         <translation>se distribuye con Edita (no hay paquete que descargar)</translation>
     </message>
@@ -6649,7 +6654,7 @@ Continue?</source>
 <context>
     <name>edita::PreferencesDialog</name>
     <message>
-        <location filename="../src/ui/PreferencesDialog.cpp" line="+147"/>
+        <location filename="../src/ui/PreferencesDialog.cpp" line="+149"/>
         <source>Preferences</source>
         <translation>Preferencias</translation>
     </message>
@@ -6956,12 +6961,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+244"/>
+        <location line="+252"/>
         <source>Default</source>
         <translation>Ninguna</translation>
     </message>
     <message>
-        <location line="-244"/>
+        <location line="-252"/>
         <source>Aligned</source>
         <translation>Alineada</translation>
     </message>
@@ -6992,12 +6997,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+503"/>
+        <location line="+511"/>
         <source>Folder:</source>
         <translation>Plegado:</translation>
     </message>
     <message>
-        <location line="-502"/>
+        <location line="-510"/>
         <source>Simple</source>
         <translation>Simple</translation>
     </message>
@@ -7048,13 +7053,13 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+643"/>
+        <location line="+651"/>
         <location line="+57"/>
         <source>Disabled</source>
         <translation>Desactivado</translation>
     </message>
     <message>
-        <location line="-700"/>
+        <location line="-708"/>
         <source>Show in margin</source>
         <translation>En el margen</translation>
     </message>
@@ -7200,12 +7205,12 @@ Continue?</source>
     </message>
     <message>
         <location line="+1"/>
-        <location line="+242"/>
+        <location line="+250"/>
         <source> characters</source>
         <translation> caracteres</translation>
     </message>
     <message>
-        <location line="-234"/>
+        <location line="-242"/>
         <source>File Association</source>
         <translation>Asociación de archivos</translation>
     </message>
@@ -7240,7 +7245,12 @@ Continue?</source>
         <translation>En Linux se asocia el tipo de archivo: las extensiones del mismo tipo (.cpp y .cc, por ejemplo) también se abren con Edita. Cada cambio se hace al momento y solo para tu usuario.</translation>
     </message>
     <message>
-        <location line="+107"/>
+        <location line="+13"/>
+        <source>In the Flatpak version, Edita already opens the usual text and code files. To make it the default application for a file type, use the settings of your desktop.</source>
+        <translation>En la versión Flatpak, Edita ya abre los archivos de texto y de código habituales. Para que sea la aplicación predeterminada de un tipo de archivo, usa la configuración de tu escritorio.</translation>
+    </message>
+    <message>
+        <location line="+102"/>
         <source>Indentation</source>
         <translation>Tabulación y sangría</translation>
     </message>
@@ -7924,7 +7934,7 @@ Continue?</source>
         <translation>Avisar</translation>
     </message>
     <message>
-        <location line="-572"/>
+        <location line="-580"/>
         <source>Enable word wrap by default for each document</source>
         <translation>Activar el ajuste de línea por omisión en cada documento</translation>
     </message>
@@ -7934,7 +7944,7 @@ Continue?</source>
         <translation>Ver › Ajuste de línea lo cambia solo en el documento actual.</translation>
     </message>
     <message>
-        <location line="+494"/>
+        <location line="+502"/>
         <source>Deactivate Word Wrap</source>
         <translation>Desactivar el ajuste de línea</translation>
     </message>
@@ -9112,12 +9122,12 @@ Do you want to save your changes before switching themes?</source>
 <context>
     <name>edita::TerminalPanel</name>
     <message>
-        <location filename="../src/ui/TerminalPanel.cpp" line="+39"/>
+        <location filename="../src/ui/TerminalPanel.cpp" line="+41"/>
         <source>New Terminal</source>
         <translation>Nueva terminal</translation>
     </message>
     <message>
-        <location line="+40"/>
+        <location line="+51"/>
         <source>Could not start %1</source>
         <translation>No se pudo iniciar %1</translation>
     </message>

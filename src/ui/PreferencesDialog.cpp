@@ -19,6 +19,8 @@
 
 #include "ui/PreferencesDialog.h"
 
+#include "core/Sandbox.h"
+
 #include "AppInfo.h"
 
 #include "core/DateTimeFormat.h"
@@ -476,6 +478,14 @@ void PreferencesDialog::buildFileAssociation()
     _assocStatus->setObjectName(QStringLiteral("assocStatus"));
     _assocStatus->setWordWrap(true);
     column->addWidget(_assocStatus);
+    // En Flatpak, los tipos de archivo son los del paquete: se eligen en el sistema (fase 105)
+    if (sandbox::isFlatpak()) {
+        for (QWidget* w : {static_cast<QWidget*>(_assocGroups), static_cast<QWidget*>(_assocExtensions),
+                           static_cast<QWidget*>(_assocRegistered), static_cast<QWidget*>(_assocCustom)})
+            w->setEnabled(false);
+        note->setText(tr("In the Flatpak version, Edita already opens the usual text and code files. To make it the "
+                         "default application for a file type, use the settings of your desktop."));
+    }
 
     connect(_assocGroups, &QListWidget::currentRowChanged, this, [this] { refreshAssociationLists(); });
     connect(_assocExtensions, &QListWidget::currentRowChanged, this,

@@ -4,6 +4,8 @@
 
 #include "ui/TerminalPanel.h"
 
+#include "core/Sandbox.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QHBoxLayout>
@@ -53,6 +55,9 @@ QString TerminalPanel::resolveShell(const QString& preference)
 {
     if (!preference.trimmed().isEmpty())
         return preference.trimmed();
+    // En Flatpak, la del sistema: la de la sandbox no es la del usuario
+    if (sandbox::isFlatpak())
+        return sandbox::hostShell().isEmpty() ? QStringLiteral("/bin/sh") : sandbox::hostShell();
     const QString shell = qEnvironmentVariable("SHELL");
     if (!shell.isEmpty() && QFileInfo(shell).isExecutable())
         return shell;
@@ -68,9 +73,17 @@ TerminalView* TerminalPanel::newTerminal(const QString& directory)
         view->setColors(_colors);
     // La shell y sus argumentos: «zsh -l», «/usr/bin/fish»…
     QStringList command = QProcess::splitCommand(resolveShell(_shell));
-    const QString program = command.isEmpty() ? QStringLiteral("/bin/sh") : command.takeFirst();
+    QString program = command.isEmpty() ? QStringLiteral("/bin/sh") : command.takeFirst();
+    const QString shellName = QFileInfo(program).fileName();
+    // En Flatpak, la shell del sistema (con host-spawn, que le da su terminal; fase 105)
+    if (sandbox::isFlatpak()) {
+        QStringList launcher = sandbox::hostLauncher();
+        command.prepend(program);
+        command = launcher.mid(1) + command;
+        program = launcher.first();
+    }
     const QString dir = QFileInfo(directory).isDir() ? directory : QDir::homePath();
-    const int index = _tabs->addTab(view, QFileInfo(program).fileName());
+    const int index = _tabs->addTab(view, shellName);
     _tabs->setTabToolTip(index, dir);
     _tabs->setCurrentIndex(index);
     connect(view, &TerminalView::titleChanged, this, [this, view] { updateTabTitle(view); });

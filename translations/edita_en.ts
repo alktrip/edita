@@ -242,7 +242,7 @@
 <context>
     <name>edita::PluginsAdminDialog</name>
     <message numerus="yes">
-        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+444"/>
+        <location filename="../src/ui/PluginsAdminDialog.cpp" line="+446"/>
         <source>%n plugin(s) will be installed.</source>
         <translation>
             <numerusform>%n plugin will be installed.</numerusform>
@@ -258,7 +258,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location line="+183"/>
+        <location line="+189"/>
         <source>%n plugin(s) will be removed.</source>
         <translation>
             <numerusform>%n plugin will be removed.</numerusform>

@@ -18,6 +18,8 @@
 
 #include "ui/PluginsAdminDialog.h"
 
+#include "core/Sandbox.h"
+
 #include "core/PluginInstaller.h"
 #include "core/RemoteCatalog.h"
 #include "syntax/DesktopFonts.h"
@@ -499,6 +501,12 @@ const PluginRecipe* PluginsAdminDialog::recipeFor(const PluginInfo& info) const
 
 bool PluginsAdminDialog::obtainPackage(const PluginInfo& info, QByteArray& zip, QString& expectedId, QString* error)
 {
+    // En Flatpak no hay compilador: solo los plugins ya compilados del catálogo (fase 105)
+    if (sandbox::isFlatpak() && (recipeFor(info) || (info.repository.isEmpty() && !info.catalogRecipe.isEmpty()))) {
+        *error = tr("it has to be compiled on this computer, which the Flatpak version of Edita cannot do; "
+                    "install Edita from its AppImage, .deb or .rpm to use it");
+        return false;
+    }
     if (const PluginRecipe* recipe = recipeFor(info)) {
         expectedId.clear(); // lo acaba de compilar Edita
         return buildFromRecipe(*recipe, zip, error);

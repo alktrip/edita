@@ -17,6 +17,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 #include "AppInfo.h"
+#include "core/Sandbox.h"
 #include "core/ConfigXml.h"
 #include "core/CrashReport.h"
 #include "core/Locale.h"
@@ -128,9 +129,14 @@ int main(int argc, char* argv[])
         return 0;
     // Con varias instancias, solo la primera recuerda la sesión
     const bool firstInstance = !edita::InstanceServer::isRunning(socket);
+    // Flatpak (fase 105): los programas del sistema (git, servidores de lenguaje, la shell…)
+    // se lanzan fuera de la sandbox
+    edita::sandbox::setup();
     // Preferencias › Asociación de archivos: si el edita.desktop que escribió un AppImage
-    // apunta a uno que ya no está (otra versión, otra carpeta), pasa a este
-    edita::file_association::FileAssociations().refreshLauncher();
+    // apunta a uno que ya no está (otra versión, otra carpeta), pasa a este (en Flatpak, las
+    // asociaciones son las de su .desktop)
+    if (!edita::sandbox::isFlatpak())
+        edita::file_association::FileAssociations().refreshLauncher();
 
     edita::MainWindow window;
     window.restoreWindowGeometry();
