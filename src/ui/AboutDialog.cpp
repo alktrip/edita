@@ -161,6 +161,12 @@ QWidget* AboutDialog::aboutPage()
     layout->addWidget(pluginLabel);
 
     layout->addStretch(1);
+    // Fase 108: Edita deriva de Notepad++ (GPL v3), pero no es Notepad++ ni cuenta con su aval
+    auto* affiliation = wrappingLabel(tr("Edita is an independent project, derived from Notepad++ under the GNU GPL v3. "
+                                         "It is not affiliated with or endorsed by Don Ho or the Notepad++ project."),
+                                      page);
+    affiliation->setObjectName(QStringLiteral("aboutAffiliation"));
+    layout->addWidget(affiliation);
     layout->addWidget(wrappingLabel(tr("Copyright © 2026 Edita contributors. Free software under the GNU General Public "
                                        "License, version 3 or later: see the License tab. It comes with no warranty."),
                                     page));

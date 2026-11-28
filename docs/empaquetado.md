@@ -1,4 +1,4 @@
-# Empaquetado: AppImage, .deb, .rpm y AUR
+# Empaquetado: AppImage, .deb, .rpm, Flatpak y AUR
 
 `packaging/appimage/build-appimage.sh` genera `dist/Edita-<versión>-<arquitectura>.AppImage` (x86_64 o aarch64, la del equipo donde se ejecuta): un solo archivo ejecutable con Edita, Qt, sus plugins (Python Script y el de ejemplo) y Python.
 
@@ -77,3 +77,9 @@ El catálogo de plugins publica binarios de x86_64. En arm64, el administrador d
 ## AUR
 
 `packaging/aur/PKGBUILD` compila Edita desde el tarball de la etiqueta con el Qt de Arch, sin `-Werror` y con `-DEDITA_UPDATE_CHECK=OFF`, y lo instala en `/usr`. Cómo publicar una versión: [packaging/aur/README.md](../packaging/aur/README.md).
+
+## Flatpak
+
+El manifiesto vive en este repositorio, en [`packaging/flatpak/io.github.alktrip.Edita.yml`](../packaging/flatpak/io.github.alktrip.Edita.yml). Compila Edita con el runtime de KDE de Flathub y añade libzip y host-spawn. `packaging/flatpak/build.sh` lo compila e instala para el usuario. La CI (`.github/workflows/flatpak.yml`) lo compila en cada cambio, pasa el linter de Flathub y guarda el `.flatpak` como artefacto.
+
+Cuando Edita esté en Flathub, Flathub compilará cada versión desde su propio repositorio, `flathub/io.github.alktrip.Edita`, con una copia de este manifiesto que apunta a la etiqueta de la versión. Los pasos para enviarlo y para publicar versiones nuevas están en [`packaging/flatpak/README.md`](../packaging/flatpak/README.md). Cómo funciona Edita dentro de la sandbox está en la [fase 105](fase105.md), y las pruebas del paquete, en la [fase 106](fase106.md).

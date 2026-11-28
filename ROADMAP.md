@@ -4,7 +4,13 @@ This is the planned work, not a promise of dates. Priorities change with what te
 
 ## Now: 1.0
 
-- **Release candidates.** [1.0.0-rc.7](https://github.com/alktrip/edita/releases/latest) is out. If testers find nothing serious, 1.0.0 is the same version with a new number; otherwise there will be another candidate.
+- **Release candidates.** The [latest release](https://github.com/alktrip/edita/releases/latest) is a release candidate for 1.0.
+- **Feature freeze** since 28 November 2026: until 1.0, only bug fixes, documentation and packaging. New features wait for 1.1.
+- **When 1.0 is ready.** 1.0.0 is released when all of these are true:
+  1. no serious bug has been reported for 14 days on the latest release candidate (a crash, data loss, a file saved wrong, or a feature from the [testing guide](PROBAR.md) that does not work);
+  2. at least two people outside the project have gone through the [testing guide](PROBAR.md) and reported the result in an issue;
+  3. CI is green on x86_64 and arm64, with the sanitizers, and the packages install on Fedora and Debian.
+- **Distribution.** The Flatpak package is ready ([packaging/flatpak](packaging/flatpak)) and will be submitted to Flathub with 1.0.
 - **Brought forward from 1.1** (in rc.4): panels remember their position and size, F1 opens the manual section of the current dialog or panel, a TODO panel, a filter for Folder as Workspace, a history tab in the Git panel, and tools for CSV, JSON and YAML.
 - **Plugins on arm64.** Done: the catalog builds every plugin for arm64 too, and Edita on arm64 installs them prebuilt (from rc.4 on).
 - **Memory checks in CI.** Done: every test also runs with AddressSanitizer and UndefinedBehaviorSanitizer, and packages are not published if they fail.

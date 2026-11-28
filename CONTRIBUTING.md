@@ -42,4 +42,23 @@ Open an [issue](https://github.com/alktrip/edita/issues/new/choose) that describ
    Refs: #42
    ```
 
+## How Edita is developed
+
+Edita is written with an AI coding assistant, Claude (by Anthropic). Every commit made that way says so in a `Co-Authored-By: Claude …` trailer, so the history shows it openly. The maintainer sets the direction and the scope of each phase, decides what goes into a release, and uses Edita every day; problems found that way are fixed like any other report. The assistant does most of the writing: the analysis of how Notepad++ does something, the code, the tests and the documentation.
+
+Because a lot of code is produced quickly, the project relies on checks that do not depend on anyone's attention span:
+
+- **Tests first.** Every change comes with its tests, and a bug fix starts with a test that fails without the fix. More than 80 QtTest suites run headless.
+- **Three compilers.** Every phase is built and tested with GCC and Clang (with `-Werror`) and with GCC 12 and Qt 6.8 on Ubuntu 22.04, the oldest supported system.
+- **Sanitizers.** CI runs every test with AddressSanitizer and UndefinedBehaviorSanitizer, and does not publish packages if one fails.
+- **Real packages.** CI builds the AppImage, `.deb` and `.rpm` for x86_64 and arm64 and installs them on Fedora and Debian; the Flatpak is built and checked with the Flathub linter.
+- **A written record.** Each phase has a document in [docs/](docs/historial.md) with what Notepad++ does, what was decided and why, and how it was tested.
+- **Code review passes.** Besides the tests, the code is periodically reviewed for bugs as a whole (for example, [phase 101](docs/fase101.md)).
+
+Contributions written with the help of AI tools are welcome on the same terms as any other: you are responsible for what you submit, it must come with its tests and pass CI, and you should say so in the pull request or with a `Co-Authored-By` trailer.
+
+## Security
+
+Please do not report vulnerabilities in public issues. [SECURITY.md](SECURITY.md) explains how to report them privately.
+
 By contributing, you agree that your contribution is licensed under the [GPL v3 or later](COPYING), like the rest of Edita.

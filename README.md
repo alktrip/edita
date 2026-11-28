@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <b>The Notepad++ experience, built for Linux.</b><br>
-  A native Qt 6 text and code editor with the Notepad++ engine, configuration files and plugin API,<br>
+  <b>A Notepad++-style editor, built for Linux.</b><br>
+  A native Qt 6 text and code editor with the editing engine, configuration files and plugin API of Notepad++,<br>
   plus the tools developers expect today: LSP, Git, an integrated terminal and project tasks.
 </p>
 
@@ -34,7 +34,7 @@
 ![Edita with the light theme: Folder as Workspace, C++ code with breadcrumbs and the Document Map](docs/images/en/edita-light.png)
 
 > [!NOTE]
-> **Edita 1.0 is in the release-candidate stage.** The current release, [1.0.0-rc.2](https://github.com/alktrip/edita/releases/latest), is a preview of 1.0: use it for real work, but keep copies of what matters and [tell us what you find](https://github.com/alktrip/edita/issues/new/choose).
+> **Edita is an independent project, derived from Notepad++ under the GNU GPL v3. It is not affiliated with or endorsed by Don Ho or the Notepad++ project.** Download the [latest release](https://github.com/alktrip/edita/releases/latest), and [tell us what you find](https://github.com/alktrip/edita/issues/new/choose).
 
 ---
 
@@ -42,7 +42,9 @@
 
 Notepad++ is one of the most loved editors on Windows, and it only runs on Windows. People who move to Linux lose the workflow they know: its menus and shortcuts, its search, its macros, its themes and its plugins.
 
-**Edita is a native Linux editor that keeps that workflow.** It is built on the same editing engine as Notepad++ (Scintilla and Lexilla), reads the same configuration files and speaks the same plugin API. On top of that, it adds what a developer expects from a modern editor, without becoming a full IDE.
+**Edita is a native Linux editor that keeps that workflow.** It is built on the same editing engine as Notepad++ (Scintilla and Lexilla), reads the same configuration files and speaks the same plugin API. On top of that, it adds what a developer expects from a modern editor.
+
+**More than a text editor, less than an IDE.** Edita has language servers, Git, a terminal and project tasks, but it stays an editor of files and folders: there is no project model to set up, no debugger, no build system of its own (it runs yours: Make, CMake, npm, Cargo…) and no refactoring beyond what the language server offers. It opens in a fraction of a second and works the same with one file or a whole repository. If you need a debugger or deep project tooling, an IDE is the better choice.
 
 | If you are… | Edita gives you… |
 |---|---|
@@ -188,11 +190,11 @@ Settings live in `~/.config/edita/`, with the same files as Notepad++ (`config.x
 
 | | |
 |---|---|
-| **Current release** | [1.0.0-rc.2](https://github.com/alktrip/edita/releases/latest), a release candidate, so it may still contain bugs |
-| **Next milestone** | 1.0.0: the same version with a new number, if testers find nothing serious. After that, 1.1: see the [roadmap](ROADMAP.md) |
+| **Current release** | The [latest release](https://github.com/alktrip/edita/releases/latest); its notes say what changed |
+| **Next milestone** | See the [roadmap](ROADMAP.md), which also states when 1.0 is considered ready |
 | **Platforms** | Linux x86_64 and arm64. macOS is paused until 1.0 for Linux is out |
 | **Notepad++ parity** | Almost every Notepad++ command is implemented. What is still missing (right-to-left text and project panels) is listed in [docs/paridad-npp.md](docs/paridad-npp.md) |
-| **Quality** | 71 automated test suites, run in CI on x86_64 and arm64; the packages are installed on Fedora and Debian in CI before every release |
+| **Quality** | More than 80 automated test suites, run in CI on x86_64 and arm64; the packages are installed on Fedora and Debian in CI before every release |
 
 **Release notes:** [GitHub Releases](https://github.com/alktrip/edita/releases) (English and Spanish) · **Development history:** [docs/historial.md](docs/historial.md), one entry per phase (Spanish).
 
@@ -200,21 +202,26 @@ Settings live in `~/.config/edita/`, with the same files as Notepad++ (`config.x
 
 ## How Edita compares
 
-Edita is not trying to replace everything. Here is where it fits:
+Several projects bring Notepad++ or something close to it to Linux. Each one is good at something different:
 
-| | Edita | Notepad++ | Kate | VS Code |
-|---|---|---|---|---|
-| **Platform** | Linux | Windows | Linux, Windows, macOS | Linux, Windows, macOS |
-| **Toolkit** | Qt 6 (native) | Win32 (native) | Qt / KDE Frameworks (native) | Electron |
-| **Notepad++ workflow and config files** | Yes | Yes | No | No |
-| **Notepad++ plugins** | Ported from source (API compatible) | Native DLLs | No | No |
-| **LSP, Git, terminal** | Built in | Through plugins | Built in | Built in |
-| **Extension ecosystem** | Small and growing | Large | KDE plugins | Very large marketplace |
+| | Edita | Notepad++ | Nextpad++ | Notepad Next | CudaText | Kate | VS Code |
+|---|---|---|---|---|---|---|---|
+| **What it is** | Derived from Notepad++, rebuilt for Linux | The original | Port of Notepad++ | Reimplementation of Notepad++ | Independent editor | Independent editor | Independent editor |
+| **Platforms** | Linux | Windows | Linux, macOS, iOS | Linux, Windows, macOS | Linux, Windows, macOS | Linux, Windows, macOS | Linux, Windows, macOS |
+| **Toolkit** | Qt 6 | Win32 | GTK 4 (Linux), Cocoa (macOS) | Qt 6 | Lazarus / Free Pascal | Qt / KDE Frameworks | Electron |
+| **Notepad++ plugins** | Ported from source with an API-compatible SDK; signed catalog | Native DLLs | Ported one by one; own catalog | — | — | — | — |
+| **Extensions** | Notepad++ plugins, Python Script | Large plugin list | Its catalog of ported plugins | — | Python add-ons | KDE plugins | Very large marketplace |
+| **License** | GPL-3.0 | GPL-3.0 | GPL-3.0 | GPL-3.0 | MPL-2.0 | LGPL | MIT (source code) |
 
-- **Choose Edita** if you want the Notepad++ way of working on Linux, with its files and plugins, plus modern developer tools in a native application.
-- **Notepad++** remains the reference on Windows. Edita follows its behavior and file formats on purpose.
-- **Kate** is an excellent native editor with deep KDE integration. Edita's difference is Notepad++ compatibility.
+- **Edita**: the Notepad++ workflow and its configuration files on Linux, Notepad++ plugins built from their source, and built-in developer tools (LSP, Git, terminal, tasks). Linux only.
+- **Notepad++** is the reference on Windows. Edita follows its behavior and file formats on purpose.
+- **Nextpad++** also brings Notepad++ to Linux, with a GTK 4 interface, and is the option if you also need it on macOS or iOS. It has its own catalog of ported plugins (29 for Linux, according to its site).
+- **Notepad Next** reimplements Notepad++ on Qt and runs the same on Linux, Windows and macOS, which helps if you switch between systems. Its README still describes it as not ready for critical work.
+- **CudaText** is a fast, independent editor with hundreds of lexers and a rich set of Python add-ons, if you do not need the Notepad++ way of working.
+- **Kate** is an excellent native editor with deep KDE integration.
 - **VS Code** has the largest extension marketplace and is the better choice if you depend on it.
+
+This comparison was checked against each project's own pages in November 2026. If something here is out of date, [tell us](https://github.com/alktrip/edita/issues/new/choose).
 
 ---
 
@@ -254,8 +261,9 @@ Edita needs Qt 6.7 or newer, a C++20 compiler, CMake 3.25+ and Ninja. Hunspell, 
 | `EDITA_UPDATE_CHECK` | `ON` | New version notices; distribution packages turn it off |
 | `EDITA_SOURCE_DATA` | `ON` | Also look for data in the source tree's `data/`, to run without installing |
 | `EDITA_APP_ID` | `edita` | Name of the binary and of `~/.config/<id>/` |
+| `EDITA_DESKTOP_ID` | `edita` | Name of the `.desktop` file and the icon (`io.github.alktrip.Edita` in Flatpak) |
 
-**Packages:** `packaging/appimage/build-portable.sh` builds the AppImage, `.deb` and `.rpm` inside Ubuntu 22.04 (no Docker or root needed). The Linux CI builds them for x86_64 and arm64 on every push. See [docs/empaquetado.md](docs/empaquetado.md).
+**Packages:** `packaging/appimage/build-portable.sh` builds the AppImage, `.deb` and `.rpm` inside Ubuntu 22.04 (no Docker or root needed). The Linux CI builds them for x86_64 and arm64 on every push. `packaging/flatpak/build.sh` builds the Flatpak. See [docs/empaquetado.md](docs/empaquetado.md).
 
 **Screenshots:** the images on this page and in the manual are taken from the real application by `edita_readme_images` and `edita_manual_images`.
 
@@ -277,8 +285,9 @@ data/          langs.model.xml, stylers.model.xml, themes/, autoCompletion/, use
 translations/  edita_es.ts (Spanish) and edita_en.ts (English plurals)
 plugin-sdk/    edita_plugin.h (the plugin API), compat/ and cmake/ (the Win32 layer for Notepad++ plugins)
 plugins/       the example plugin (EditaDemo), Python Script and MarkdownViewer++
-packaging/     appimage/, deb/, rpm/, aur/ and release-notes/
+packaging/     appimage/, deb/, rpm/, aur/, flatpak/, site/ and release-notes/
 docs/          design notes, one document per development phase, guides and images/
+site/          the project website (GitHub Pages)
 ```
 
 `third_party/` is regenerated with `tools/import-third-party.sh`; local patches are listed in [third_party/PATCHES.md](third_party/PATCHES.md).
@@ -291,10 +300,11 @@ docs/          design notes, one document per development phase, guides and imag
 
 - **[User manual](data/manual/en)**, also built into Edita (F1), in English and [Spanish](data/manual/es)
 - **[Plugin guide and SDK](docs/plugins.md)** and the **[plugin catalog](https://github.com/alktrip/edita-plugins)**
-- **[Packaging](docs/empaquetado.md)**: AppImage, `.deb`, `.rpm`, x86_64 and arm64
+- **[Packaging](docs/empaquetado.md)**: AppImage, `.deb`, `.rpm` and Flatpak, x86_64 and arm64
 - **[Notepad++ parity](docs/paridad-npp.md)**: what Notepad++ has and Edita does not yet
 - **[Roadmap](ROADMAP.md)** and **[contributing guide](CONTRIBUTING.md)**
 - **[Development history](docs/historial.md)**: every phase, with its analysis of Notepad++
+- **[Security](SECURITY.md)**: how to report a vulnerability
 
 Most of the design documents are in Spanish; the manual, the release notes and this page are also in English.
 
@@ -302,8 +312,9 @@ Most of the design documents are in Spanish; the manual, the release notes and t
 
 <p align="center">
   <b>Edita</b> is free software, licensed under the <a href="COPYING">GNU GPL v3 or later</a>.<br>
-  It is derived from <a href="https://notepad-plus-plus.org">Notepad++</a> (© Don Ho and the Notepad++ team)
-  and uses <a href="https://www.scintilla.org">Scintilla and Lexilla</a> (© Neil Hodgson), Qt and other open source components,<br>
+  It is derived from <a href="https://notepad-plus-plus.org">Notepad++</a> (© Don Ho and the Notepad++ team),
+  but it is an independent project, not affiliated with or endorsed by Don Ho or the Notepad++ project.<br>
+  It uses <a href="https://www.scintilla.org">Scintilla and Lexilla</a> (© Neil Hodgson), Qt and other open source components,<br>
   credited in <a href="NOTICE">NOTICE</a>. Thank you to everyone who builds and maintains them.
 </p>
 

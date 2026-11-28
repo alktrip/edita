@@ -179,6 +179,10 @@ private slots:
             QVERIFY(version->text().contains(QSysInfo::currentCpuArchitecture()));
             // Buscar versiones nuevas está desactivado en las pruebas
             QVERIFY(d->findChild<QLabel*>(QStringLiteral("aboutUpdate"))->text().contains(QLatin1String("disabled")));
+            // Fase 108: que no está afiliado a Notepad++ ni cuenta con su aval
+            auto* affiliation = d->findChild<QLabel*>(QStringLiteral("aboutAffiliation"));
+            QVERIFY(affiliation);
+            QVERIFY(affiliation->text().contains(QLatin1String("not affiliated with or endorsed by Don Ho")));
 
             // Los enlaces: las notas de esta versión
             auto* links = d->findChild<QLabel*>(QStringLiteral("aboutLinks"));

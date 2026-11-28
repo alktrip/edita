@@ -37,7 +37,8 @@ Si Edita se cierra de golpe, al volver a abrirlo te ofrece reportar el fallo con
 - **Lo que usabas en Notepad++**: macros, edición en columna, sesiones, el mapa del documento, la lista de funciones, los atajos (Configuración › Asignación de atajos).
 - **Tu escritorio**: el tema claro y el oscuro, la escala de la pantalla (HiDPI), Wayland y X11.
 - **El manual** (F1): si algo no se entiende o no coincide con lo que ves, también es un error.
-- **Lo nuevo de la rc.4**:
+- **Ajuste de línea por documento** (Ver › Ajuste de línea): que cambie solo el documento actual, que lo recuerde al reabrir Edita y que los documentos nuevos empiecen con el de Preferencias › Edición.
+- **Lo nuevo de la 1.0** (desde la rc.4):
   - **CSV** (Editar › CSV): abre un `.csv` grande, mira los colores por columna, alinea, compacta y ordena por una columna.
   - **JSON y YAML** (Editar › JSON/YAML): valida un archivo con un error, formatea, convierte de uno a otro y copia la ruta del cursor. Con tus archivos de Docker Compose, GitHub Actions o Kubernetes, sobre todo.
   - **Panel TODO** (Ver › TODO), el **historial de Git** (Ver › Git, pestaña Historial) y el **filtro** del explorador de carpetas.
@@ -77,7 +78,12 @@ Para cada plugin que instales, revisa: que se instale sin errores, que sus órde
 
 También vienen con Edita **Python Script** (scripts de Python que controlan el editor), **MarkdownViewer++** (vista previa de Markdown, Ctrl+Mayús+M), el **editor hexadecimal** (Ctrl+Alt+Mayús+H: editar los bytes de un archivo, también binario) y el **detector de secretos** (escribe una clave de API falsa y revisa que se subraye; prueba el aviso antes de un commit desde Ver › Git).
 
+## Contar qué probaste
+
+Cuando hayas recorrido esta guía (o la parte que te toque), cuéntalo en un [informe de pruebas](https://github.com/alktrip/edita/issues/new?template=test-report.yml): qué probaste, en qué sistema y qué encontraste, aunque no encontraras nada. Para la 1.0 hacen falta al menos dos personas ajenas al proyecto que la hayan recorrido ([criterio de la 1.0](ROADMAP.md)).
+
 ---
+
 
 # Testing Edita
 
@@ -116,7 +122,8 @@ Use it as your everyday editor: that helps the most. If you have time, also chec
 - **What you used in Notepad++**: macros, column editing, sessions, the document map, the function list, the shortcuts (Settings › Shortcut Mapper).
 - **Your desktop**: the light and dark themes, display scaling (HiDPI), Wayland and X11.
 - **The manual** (F1): if something is unclear or does not match what you see, that is a bug too.
-- **New in rc.4**:
+- **Word wrap per document** (View › Word wrap): that it changes only the current document, that it is remembered when you reopen Edita, and that new documents start with the one in Preferences › Editing.
+- **New in 1.0** (since rc.4):
   - **CSV** (Edit › CSV): open a large `.csv`, look at the column colors, align, shrink and sort by a column.
   - **JSON and YAML** (Edit › JSON/YAML): validate a file with an error, format, convert from one to the other and copy the path at the caret. With your Docker Compose, GitHub Actions or Kubernetes files, above all.
   - **TODO panel** (View › TODO), the **Git history** (View › Git, History tab) and the **filter** of the folder explorer.
@@ -131,3 +138,7 @@ For each plugin you install, check that it installs without errors, that its com
 Edita also comes with **Python Script** (Python scripts that control the editor), **MarkdownViewer++** (Markdown preview, Ctrl+Shift+M), the **Hex Editor** (Ctrl+Alt+Shift+H: edit the bytes of a file, binaries too) and **Secret Scanner** (type a fake API key and check that it is underlined; try the warning before a commit from View › Git).
 
 **FTP and SFTP**, Edita's own catalog plugin: save a server in **Profiles…**, connect (SFTP with your key or password, or FTP), open a file with a double click, change it, save it and check that it was uploaded; create, rename and delete on the server.
+
+## Report what you tested
+
+When you have gone through this guide (or the part you chose), tell us in a [test report](https://github.com/alktrip/edita/issues/new?template=test-report.yml): what you tested, on which system and what you found, even if you found nothing. 1.0 needs at least two people outside the project who have gone through it ([1.0 criteria](ROADMAP.md)).
