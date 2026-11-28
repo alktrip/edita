@@ -1,5 +1,7 @@
 # Edita como Flatpak (fase 106): que el manifiesto de packaging/flatpak siga compilando con el
-# runtime de KDE de Flathub, que pase el linter de Flathub y un paquete .flatpak para probarlo
+# runtime de KDE de Flathub, que pase el linter de Flathub y un paquete .flatpak para probarlo.
+# Con org.flatpak.Builder de Flathub, como packaging/flatpak/build.sh (el contenedor
+# flatpak-github-actions falla al actualizar su SDK: «Invalid cross-device link»)
 name: Flatpak
 
 on:
@@ -16,19 +18,36 @@ concurrency:
 jobs:
   flatpak:
     runs-on: ubuntu-24.04
-    container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.11
-      options: --privileged
     steps:
       - uses: actions/checkout@v4
+      - name: Flatpak
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends flatpak
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      # Los runtimes de KDE (unos 2 GB) se guardan entre ejecuciones
+      - uses: actions/cache@v4
+        with:
+          path: ~/.local/share/flatpak
+          key: flatpak-kde-6.11-${{ hashFiles('packaging/flatpak/io.github.alktrip.Edita.yml') }}
+          restore-keys: flatpak-kde-6.11-
+      - name: flatpak-builder
+        run: flatpak install --user -y --noninteractive flathub org.flatpak.Builder
       # Los dos permisos que Flathub concede como excepción al revisar la aplicación (justificados en
       # packaging/flatpak/README.md); cualquier otro problema hace fallar la CI
       - name: Linter de Flathub (manifiesto)
-        run: flatpak-builder-lint --exceptions --user-exceptions packaging/flatpak/lint-exceptions.json manifest packaging/flatpak/io.github.alktrip.Edita.yml
+        run: >
+          flatpak run --command=flatpak-builder-lint org.flatpak.Builder --exceptions
+          --user-exceptions packaging/flatpak/lint-exceptions.json manifest packaging/flatpak/io.github.alktrip.Edita.yml
       - name: Compilar
-        uses: flatpak/flatpak-github-actions/flatpak-builder@v6.8
+        working-directory: packaging/flatpak
+        run: >
+          flatpak run org.flatpak.Builder --user --force-clean --install-deps-from=flathub
+          --disable-rofiles-fuse --state-dir=.flatpak-builder --repo=repo build-dir io.github.alktrip.Edita.yml
+      - name: Paquete .flatpak
+        working-directory: packaging/flatpak
+        run: flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo repo Edita-x86_64.flatpak io.github.alktrip.Edita
+      - uses: actions/upload-artifact@v4
         with:
-          manifest-path: packaging/flatpak/io.github.alktrip.Edita.yml
-          bundle: Edita-x86_64.flatpak
-          cache-key: flatpak-builder-${{ github.sha }}
-          upload-artifact: true
+          name: Edita-flatpak-x86_64
+          path: packaging/flatpak/Edita-x86_64.flatpak
