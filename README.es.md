@@ -110,6 +110,8 @@ En x86_64 funciona en Ubuntu 22.04 o más nuevo, Debian 12, Fedora 36 y posterio
 
 **Arch Linux:** el `PKGBUILD` de [`packaging/aur/`](packaging/aur/) compila Edita con el Qt de Arch: `makepkg -si` en esa carpeta.
 
+**Flatpak:** pronto en Flathub; mientras tanto, `packaging/flatpak/build.sh` lo compila e instala ([`packaging/flatpak`](packaging/flatpak/)).
+
 Para abrir tus archivos con Edita desde el administrador de archivos, elige sus extensiones en **Configuración › Preferencias › Asociación de archivos**.
 
 Uso desde la terminal: `edita [archivos…] [-n línea] [-c columna] [--nosession] [--multiInst] [--openSession archivo]`. La configuración va en `~/.config/edita/`, con los mismos archivos que Notepad++ (`langs.xml`, `stylers.xml`, `config.xml`, `session.xml`, `shortcuts.xml`, `themes/`, `userDefineLangs/`, `plugins/`…).

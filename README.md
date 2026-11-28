@@ -167,6 +167,7 @@ Every [release](https://github.com/alktrip/edita/releases/latest) ships an AppIm
 | **Fedora, openSUSE** and compatible | `edita-<version>-1.x86_64.rpm` / `.aarch64.rpm` | `sudo dnf install ./edita-*.rpm`<br>`sudo zypper install ./edita-*.rpm` |
 | **Any distribution** | `Edita-<version>-x86_64.AppImage` / `-aarch64.AppImage` | `chmod +x Edita-*.AppImage && ./Edita-*.AppImage` |
 | **Arch Linux** | [`packaging/aur/PKGBUILD`](packaging/aur/) (builds with Arch's Qt) | `makepkg -si` in that folder |
+| **Flatpak** | coming to Flathub; meanwhile [`packaging/flatpak`](packaging/flatpak/) builds it | `packaging/flatpak/build.sh` |
 
 **Requirements.** On x86_64: Ubuntu 22.04 or newer, Debian 12, Fedora 36 and later, openSUSE Tumbleweed, and in general any distribution with glibc 2.35 or newer. On arm64: Ubuntu 24.04, Debian 13, Raspberry Pi OS 13 (trixie), Fedora 40 or newer (glibc 2.39). Wayland and X11 are both supported.
 

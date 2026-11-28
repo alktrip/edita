@@ -379,6 +379,7 @@ Pedidas después de terminar el MVP; cada una con el mismo método (estudiar el 
 | 103 — Ajuste de línea por documento | N++ c3ed07bda y 10 cambios más; `Buffer::wordWrap`, `setCurrentWordWrap`, `wordWrap` en la sesión, `bash.xml` y Deep Black de N++, `DocTabBar::stateOf` con `Monitoring` | ✅ [fase103.md](fase103.md) |
 | 104 — AppStream | `resources/edita.metainfo.xml.in` → `io.github.alktrip.Edita.metainfo.xml`, `EDITA_DESKTOP_ID` y `kDesktopId`, `LDAI_NO_APPSTREAM` en el AppImage; `tst_metainfo` | ✅ [fase104.md](fase104.md) |
 | 105 — Puente de Flatpak | `core/Sandbox` (`isFlatpak`, `hostLauncher`, `createBridge`, `setup`), terminal con `host-spawn`, diccionarios de `/run/host`, asociaciones y recetas desactivadas en Flatpak; `tst_sandbox` | ✅ [fase105.md](fase105.md) |
+| 106 — Paquete Flatpak | `packaging/flatpak` (manifiesto KDE 6.11 con libzip y host-spawn, `build.sh`, guía de Flathub), `.github/workflows/flatpak.yml`; probado en sandbox: puente, terminal, 21 plugins del catálogo | ✅ [fase106.md](fase106.md) |
 
 ---
 

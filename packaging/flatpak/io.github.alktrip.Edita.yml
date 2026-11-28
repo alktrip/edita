@@ -1,0 +1,85 @@
+# Edita en Flatpak (fase 106). Este manifiesto compila el código de esta copia del repositorio
+# (para probar: packaging/flatpak/build.sh); el de Flathub es el mismo con la fuente de Edita en
+# una etiqueta de git (packaging/flatpak/README.md).
+app-id: io.github.alktrip.Edita
+runtime: org.kde.Platform
+runtime-version: '6.11'
+sdk: org.kde.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+command: edita
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # El catálogo de plugins, los servidores de lenguaje y los plugins que usan la red (FTP)
+  - --share=network
+  # Un editor abre y guarda archivos en cualquier sitio, también los de sistema que se leen
+  - --filesystem=host
+  # El puente al sistema (core/Sandbox): git, servidores de lenguaje, formateadores, tareas y
+  # la shell de la terminal integrada se ejecutan fuera, con host-spawn
+  - --talk-name=org.freedesktop.Flatpak
+  # Avisos del escritorio (las tareas que terminan)
+  - --talk-name=org.freedesktop.Notifications
+modules:
+  # Instalar los paquetes de plugins (.zip) desde el administrador de plugins
+  - name: libzip
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_TOOLS=OFF
+      - -DBUILD_REGRESS=OFF
+      - -DBUILD_OSSFUZZ=OFF
+      - -DBUILD_EXAMPLES=OFF
+      - -DBUILD_DOC=OFF
+    cleanup:
+      - /bin
+      - /include
+      - /lib/cmake
+      - /lib/pkgconfig
+    sources:
+      - type: archive
+        url: https://github.com/nih-at/libzip/releases/download/v1.12.1/libzip-1.12.1.tar.xz
+        sha256: c40062022a1963c80573d48f6070792297cecd7c6bffe3aefcac0d8b9bee8913
+
+  # host-spawn (MIT-0): ejecuta un programa fuera de la sandbox con un pseudoterminal, como la
+  # terminal integrada necesita (tamaño de la ventana, Ctrl+C, Ctrl+Z)
+  - name: host-spawn
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/golang/bin
+      env:
+        CGO_ENABLED: '0'
+        GOFLAGS: -mod=vendor
+    build-commands:
+      - go build -ldflags "-X main.Version=v1.6.2" -o host-spawn
+      - install -Dm755 host-spawn /app/bin/host-spawn
+      - install -Dm644 LICENSE /app/share/licenses/io.github.alktrip.Edita/host-spawn/LICENSE
+    sources:
+      # El código con sus dependencias (vendor), sin red al compilar
+      - type: archive
+        url: https://github.com/1player/host-spawn/releases/download/v1.6.2/host-spawn-vendor.tar.zst
+        sha256: 9abfddf5c1eba0704d643de06988ff3b8cdd2f594bfb4d1c0027315552dad5cc
+        strip-components: 0
+
+  - name: edita
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      # El .desktop y el icono con el ID de la aplicación, como exige Flathub
+      - -DEDITA_DESKTOP_ID=io.github.alktrip.Edita
+      # Flathub actualiza la aplicación
+      - -DEDITA_UPDATE_CHECK=OFF
+      - -DEDITA_BUILD_TESTS=OFF
+      - -DEDITA_SOURCE_DATA=OFF
+      # Un compilador más nuevo que los de la CI no debe impedir el paquete
+      - -DEDITA_WERROR=OFF
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .git
+          - packaging/flatpak/.flatpak-builder
+          - packaging/flatpak/build-dir
+          - packaging/flatpak/repo
