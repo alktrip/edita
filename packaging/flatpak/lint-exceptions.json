@@ -1,0 +1,6 @@
+{
+    "io.github.alktrip.Edita": {
+        "finish-args-flatpak-spawn-access": "Code editor: the integrated terminal, Git, language servers, formatters and project tasks run the user's own tools on the host (host-spawn), as VS Code and GNOME Builder do",
+        "finish-args-host-filesystem-access": "Text editor: opens and saves files anywhere, including configuration files outside the home directory"
+    }
+}
