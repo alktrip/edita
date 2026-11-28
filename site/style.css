@@ -1,0 +1,98 @@
+/* Edita — página del proyecto (fase 107). Sin dependencias: fuentes del sistema, claro y oscuro */
+:root {
+  --bg: #f7f9fc;
+  --surface: #ffffff;
+  --text: #1b2430;
+  --muted: #5a6675;
+  --accent: #1f6feb;
+  --accent-ink: #ffffff;
+  --border: #dde3ea;
+  --code: #eef2f7;
+  --shadow: 0 10px 30px rgba(20, 40, 80, .12);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f141a;
+    --surface: #161d25;
+    --text: #e6edf3;
+    --muted: #9aa7b4;
+    --accent: #4c9aff;
+    --accent-ink: #0b1220;
+    --border: #273240;
+    --code: #1e2732;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Cantarell, "Noto Sans", Ubuntu, sans-serif;
+}
+a { color: var(--accent); }
+img { max-width: 100%; height: auto; display: block; }
+code {
+  background: var(--code);
+  padding: .1em .35em;
+  border-radius: 5px;
+  font: .92em ui-monospace, "JetBrains Mono", "DejaVu Sans Mono", monospace;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+
+header.top {
+  position: sticky; top: 0; z-index: 10;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+header.top .wrap { display: flex; align-items: center; gap: 16px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; color: var(--text); text-decoration: none; }
+.brand img { width: 32px; height: 32px; }
+nav.links { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+nav.links a { color: var(--muted); text-decoration: none; font-size: .95rem; }
+nav.links a:hover { color: var(--text); }
+
+.hero { padding-top: 64px; padding-bottom: 32px; text-align: center; }
+.hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15; margin: 0 0 16px; letter-spacing: -.02em; }
+.hero p.lead { font-size: clamp(1.05rem, 2.2vw, 1.3rem); color: var(--muted); max-width: 760px; margin: 0 auto 28px; }
+.buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.btn {
+  display: inline-block; padding: 12px 22px; border-radius: 10px; font-weight: 600;
+  text-decoration: none; border: 1px solid var(--border); color: var(--text); background: var(--surface);
+}
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:hover { filter: brightness(1.06); }
+.note { color: var(--muted); font-size: .92rem; }
+.shot { margin: 36px auto 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+section { padding: 56px 0; }
+section h2 { font-size: clamp(1.5rem, 3.4vw, 2.1rem); margin: 0 0 8px; letter-spacing: -.01em; }
+section p.sub { color: var(--muted); margin: 0 0 28px; max-width: 760px; }
+.grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.card p { margin: 0; color: var(--muted); font-size: .96rem; }
+.gallery { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.gallery figure { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.gallery figcaption { padding: 10px 14px; color: var(--muted); font-size: .92rem; }
+
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: .9rem; color: var(--muted); font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+.table-scroll { overflow-x: auto; }
+
+.faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq details p { color: var(--muted); margin: 10px 0 0; }
+
+footer { border-top: 1px solid var(--border); padding: 28px 0 40px; color: var(--muted); font-size: .92rem; }
+footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+
+@media (max-width: 640px) {
+  nav.links { display: none; }
+  .hero { padding-top: 40px; }
+  section { padding: 40px 0; }
+}
